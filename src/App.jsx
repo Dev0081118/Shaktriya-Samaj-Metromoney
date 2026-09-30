@@ -15,6 +15,8 @@ import AdminOperationsPage from "./pages/admin/AdminOperationsPage";
 import MemberLayout from "./layouts/MemberLayout";
 import PublicInfoPage from "./pages/PublicInfoPage";
 import ContactPage from "./pages/ContactPage";
+import MemberBenefitsPage from "./pages/MemberBenefitsPage";
+import ManagerOperationsPage from "./pages/admin/ManagerOperationsPage";
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -47,6 +49,7 @@ export default function App() {
       <Route path="/my-profile" element={<ProfilePage own />} />
       <Route path="/preferences" element={<SettingsPage section="preferences" />} />
       <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/benefits" element={<MemberBenefitsPage />} />
       <Route path="/interests" element={<CollectionPage type="interests" />} />
       <Route path="/matches" element={<CollectionPage type="matches" />} />
       <Route path="/shortlisted" element={<CollectionPage type="shortlisted" />} />
@@ -54,6 +57,7 @@ export default function App() {
     </Route>
     <Route path="/my-profile/biodata" element={<ProtectedRoute><BiodataPage /></ProtectedRoute>} />
     <Route path="/admin/support" element={<ProtectedRoute roles={["admin", "super_admin"]}><AdminOperationsPage type="support" /></ProtectedRoute>} />
+    <Route path="/admin/relationship-managers" element={<ProtectedRoute roles={["admin", "super_admin"]}><ManagerOperationsPage /></ProtectedRoute>} />
     <Route path="/admin/plans" element={<ProtectedRoute roles={["super_admin"]}><AdminOperationsPage type="plans" /></ProtectedRoute>} />
     <Route path="/admin/payments" element={<ProtectedRoute roles={["super_admin"]}><AdminOperationsPage type="payments" /></ProtectedRoute>} />
     <Route path="/admin/settings" element={<ProtectedRoute roles={["super_admin"]}><AdminOperationsPage type="settings" /></ProtectedRoute>} />

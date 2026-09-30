@@ -18,6 +18,8 @@ jobs:
         run: npm ci
       - name: Frontend lint
         run: npm run lint
+      - name: Frontend tests
+        run: npm test
       - name: Frontend build
         run: npm run build
       - name: Backend dependencies

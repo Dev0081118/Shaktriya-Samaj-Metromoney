@@ -6,6 +6,8 @@ import PartnerPreference from './models/PartnerPreference.js';
 import {Plan,Notification} from './models/Platform.js';
 import {Interest,Match,Shortlist} from './models/Interaction.js';
 
+if(process.env.NODE_ENV==='production'&&process.env.ALLOW_PRODUCTION_SEED!=='I_UNDERSTAND_THIS_RESETS_DEMO_DATA')throw new Error('Refusing to run the demo seed in production. Set ALLOW_PRODUCTION_SEED=I_UNDERSTAND_THIS_RESETS_DEMO_DATA only for an intentional, reviewed operation.');
+
 await connectDatabase();
 const userDefs=[
   {email:'admin@ksm.dev',phone:'+919900000001',password:'Admin@123',role:'super_admin'},

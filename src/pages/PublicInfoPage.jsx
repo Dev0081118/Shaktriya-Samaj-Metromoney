@@ -53,6 +53,7 @@ export default function PublicInfoPage({ type }) {
   return <div className="public-shell"><Header solid /><main>
     <section className="public-hero"><div className="page-container"><p className="eyebrow">{page.eyebrow}</p><h1>{page.title}</h1><p>{page.intro}</p></div></section>
     <section className="public-content page-container">
+      {['privacy','terms','refunds'].includes(type)&&<div className="legal-draft-notice"><strong>Pre-launch legal draft</strong><p>This policy requires approval by qualified counsel before commercial launch. It is not presented as final legal advice.</p></div>}
       {page.steps && <ol className="journey-steps">{page.steps.map((step, index)=><li key={step}><span>{String(index+1).padStart(2,"0")}</span><h2>{step}</h2><CheckCircle2 /></li>)}</ol>}
       {page.stories && <div className="story-grid">{page.stories.map(([title,label,body])=><article key={title}><span>{label}</span><h2>{title}</h2><p>{body}</p></article>)}</div>}
       {page.sections && <div className="editorial-grid">{page.sections.map(([title,body],index)=><article key={title}>{index%3===0?<ShieldCheck/>:index%3===1?<HeartHandshake/>:<LockKeyhole/>}<h2>{title}</h2><p>{body}</p></article>)}</div>}
