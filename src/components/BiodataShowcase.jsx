@@ -1,4 +1,5 @@
 import { Download } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function BiodataShowcase() {
   return (
@@ -20,10 +21,10 @@ export default function BiodataShowcase() {
               families.
             </p>
 
-            <button className="mt-9 flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#681d25]">
+            <Link to="/register" className="mt-9 flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#681d25]">
               Explore digital biodata
               <Download size={16} />
-            </button>
+            </Link>
           </div>
 
           <div className="relative mx-auto w-full max-w-[430px]">
@@ -47,6 +48,7 @@ export default function BiodataShowcase() {
               <div className="mx-auto mt-7 h-40 w-32 overflow-hidden rounded-t-[80px]">
                 <img
                   src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600"
+                  loading="lazy"
                   alt=""
                   className="h-full w-full object-cover"
                 />

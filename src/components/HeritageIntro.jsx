@@ -1,4 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function HeritageIntro() {
   return (
@@ -11,6 +12,7 @@ export default function HeritageIntro() {
             <div className="arch-image overflow-hidden">
               <img
                 src="https://i.pinimg.com/originals/d0/23/0b/d0230ba0d769eeb3319158428c3c3fda.jpg"
+                loading="lazy"
                 alt="Rajput heritage architecture"
                 className="h-[520px] w-full object-cover sm:h-[600px] lg:h-[650px]"
               />
@@ -55,14 +57,14 @@ export default function HeritageIntro() {
               </p>
             </div>
 
-            <button className="group mt-10 flex items-center gap-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#741f27]">
+            <Link to="/about" className="group mt-10 flex items-center gap-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#741f27]">
               Our approach
 
               <ArrowUpRight
                 size={15}
                 className="transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
               />
-            </button>
+            </Link>
           </div>
         </div>
       </div>

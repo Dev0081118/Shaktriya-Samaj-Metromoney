@@ -86,10 +86,20 @@ Additional endpoints include `GET /api/dashboard`, `GET /api/matches`, `GET/PUT 
 
 ## Development fallbacks and external providers
 
-- OTP: outside production, a random six-digit code is hashed in MongoDB, expires after ten minutes, and is logged to the API console. Production fails safely until a provider adapter is configured.
-- Images: validated JPG/PNG/WebP files up to 5 MB use `server/uploads`. Add the Cloudinary adapter before distributed production deployment.
-- Payments: development creates a `Created` mock order only; it never marks payment successful. Razorpay checkout and verified webhooks remain deferred until credentials and business rules are supplied.
-- Email/SMS delivery, real-time messaging, contact requests and production analytics are intentionally deferred provider integrations.
+- OTP: `OTP_PROVIDER=development|twilio|msg91`. Development codes are hashed in MongoDB, expire after ten minutes, and are logged locally. Production adapters fail safely when credentials are incomplete.
+- Images: `MEDIA_PROVIDER=local|cloudinary`. JPG/PNG/WebP files up to 5 MB use local storage in development and signed Cloudinary uploads in production.
+- Payments: Razorpay orders use server credentials. Checkout signatures and raw-body webhooks are verified before an idempotent subscription activation. Without keys, development creates a `Created` mock order that can never activate membership.
+- Email: `EMAIL_PROVIDER=development|resend`. Delivery is non-blocking and provider failures are logged without failing the member action.
+
+## Security notes
+
+The current web client keeps the JWT in `localStorage` for compatibility with the existing API. This makes strict XSS prevention important: keep third-party scripts to a minimum, maintain a restrictive Content Security Policy at the reverse proxy, and never render untrusted HTML. A future cookie migration should use secure HTTP-only cookies, `SameSite` controls, and CSRF protection as one coordinated change rather than a partial migration.
+
+Authentication and OTP endpoints are rate-limited. Uploads are type- and size-limited, API bodies are capped, ObjectIds and ownership are checked in sensitive routes, role checks are server-side, private contact data is released only after an accepted contact request, and payment success is never trusted from the browser.
+
+## Production integrations
+
+Configure `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET`, then point Razorpay at `POST /api/webhooks/razorpay`. Configure Cloudinary, OTP and email variables from `server/.env.example`. The readiness endpoint is `GET /api/ready` and returns 503 until MongoDB is connected.
 
 ## Verification
 

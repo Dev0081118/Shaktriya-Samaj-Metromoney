@@ -16,8 +16,9 @@ export default function Hero() {
       <div className="relative min-h-[790px] overflow-hidden lg:min-h-[830px]">
         {/* Background image */}
         <img
-          src="https://www.10wallpaper.com/wallpaper/1920x1200/2412/Sattais_Katcheri_Amber_Fort_Rajasthan_India_Bing_4K_1920x1200.jpg"
+          src="/assets/rajput-hero.webp"
           alt="Rajput heritage architecture"
+          fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
         />
 

@@ -1,71 +1,19 @@
-import {
-  ArrowUpRight,
-  ChevronDown,
-} from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-const fields = [
-  {
-    label: "Profile created for",
-    value: "Myself",
-  },
-  {
-    label: "Looking for",
-    value: "Bride",
-  },
-  {
-    label: "Age",
-    value: "24 – 30",
-  },
-  {
-    label: "Location",
-    value: "Gujarat",
-  },
-];
-
-export default function MatchFinder() {
-  return (
-    <div className="page-container">
-      <div className="grid overflow-hidden rounded-[3px] border border-[#dfd3c6] bg-[#f8f3ec] shadow-[0_22px_55px_rgba(46,24,19,.14)] md:grid-cols-2 lg:grid-cols-[1.1fr_1fr_1fr_1fr_0.95fr]">
-        {fields.map((field) => (
-          <FinderField
-            key={field.label}
-            label={field.label}
-            value={field.value}
-          />
-        ))}
-
-        <button className="group flex min-h-[104px] items-center justify-between bg-[#7a2028] px-8 text-white transition duration-200 hover:bg-[#641920] md:col-span-2 lg:col-span-1">
-          <span className="text-[11px] font-bold uppercase tracking-[0.14em]">
-            Find Matches
-          </span>
-
-          <ArrowUpRight
-            size={18}
-            className="transition duration-200 group-hover:translate-x-1 group-hover:-translate-y-1"
-          />
-        </button>
-      </div>
-    </div>
-  );
+export default function MatchFinder(){
+  const {user}=useAuth(),navigate=useNavigate();
+  const [form,setForm]=useState({profileFor:'Self',lookingFor:'Female',ageMin:'24',ageMax:'30',state:'Gujarat'});
+  const change=e=>setForm({...form,[e.target.name]:e.target.value});
+  const submit=e=>{e.preventDefault();const criteria={...form,preferredGender:form.lookingFor};if(!user){sessionStorage.setItem('ksm_matchfinder',JSON.stringify(criteria));navigate('/register');return}const q=new URLSearchParams({lookingFor:form.lookingFor,ageMin:form.ageMin,ageMax:form.ageMax,state:form.state});navigate(`/discover?${q}`)};
+  return <form onSubmit={submit} className="page-container finder-grid">
+    <Finder label="Profile created for"><select name="profileFor" value={form.profileFor} onChange={change}>{['Self','Son','Daughter','Brother','Sister','Relative'].map(x=><option key={x}>{x}</option>)}</select></Finder>
+    <Finder label="Looking for"><select name="lookingFor" value={form.lookingFor} onChange={change}><option>Female</option><option>Male</option></select></Finder>
+    <Finder label="Age range"><div className="finder-range"><select aria-label="Minimum age" name="ageMin" value={form.ageMin} onChange={change}>{Array.from({length:43},(_,i)=>18+i).map(x=><option key={x}>{x}</option>)}</select><span>–</span><select aria-label="Maximum age" name="ageMax" value={form.ageMax} onChange={change}>{Array.from({length:43},(_,i)=>18+i).map(x=><option key={x}>{x}</option>)}</select></div></Finder>
+    <Finder label="Location"><select name="state" value={form.state} onChange={change}>{['Gujarat','Rajasthan','Maharashtra','Delhi','Madhya Pradesh','Uttar Pradesh','Other'].map(x=><option key={x}>{x}</option>)}</select></Finder>
+    <button className="finder-submit"><span>Find Matches</span><ArrowUpRight size={18}/></button>
+  </form>;
 }
-
-function FinderField({ label, value }) {
-  return (
-    <button className="group flex min-h-[104px] items-center justify-between border-b border-[#dfd3c6] px-7 text-left transition duration-200 hover:bg-white md:border-r lg:border-b-0">
-      <div>
-        <span className="block text-[9px] font-extrabold uppercase tracking-[0.17em] text-[#9a816c]">
-          {label}
-        </span>
-
-        <span className="mt-3 block font-display text-[23px] font-medium leading-none text-[#33221e]">
-          {value}
-        </span>
-      </div>
-
-      <ChevronDown
-        size={14}
-        className="ml-4 shrink-0 text-[#a18b78] transition duration-200 group-hover:translate-y-0.5"
-      />
-    </button>
-  );
-}
+function Finder({label,children}){return <label className="finder-field"><span>{label}</span>{children}</label>}

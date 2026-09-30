@@ -1,4 +1,5 @@
 import { ArrowLeft, ArrowRight, BadgeCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const profiles = [
   {
@@ -41,13 +42,13 @@ export default function MatchShowcase() {
           </div>
 
           <div className="flex gap-2">
-            <button className="round-control">
+            <Link to="/discover" aria-label="Browse previous profiles" className="round-control">
               <ArrowLeft size={17} />
-            </button>
+            </Link>
 
-            <button className="round-control">
+            <Link to="/discover" aria-label="Browse more profiles" className="round-control">
               <ArrowRight size={17} />
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -60,7 +61,8 @@ export default function MatchShowcase() {
               <div className="relative overflow-hidden">
                 <img
                   src={profile.image}
-                  alt=""
+                  alt={`${profile.name}, an editorial sample profile`}
+                  loading="lazy"
                   className="h-[500px] w-full object-cover transition duration-700 hover:scale-[1.025]"
                 />
 
@@ -88,9 +90,9 @@ export default function MatchShowcase() {
         </div>
 
         <div className="mt-14 text-center">
-          <button className="border-b border-[#c99f72] pb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9b17f]">
+          <Link to="/discover" className="border-b border-[#c99f72] pb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9b17f]">
             View all matches
-          </button>
+          </Link>
         </div>
       </div>
     </section>

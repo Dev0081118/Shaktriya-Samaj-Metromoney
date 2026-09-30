@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
   const [loading,setLoading]=useState(hasToken);
   
   useEffect(()=>{ const expired=()=>setUser(null);window.addEventListener('ksm:unauthorized',expired);if(hasToken)api("/auth/me").then(r=>setUser(r.data.user)).catch(()=>localStorage.removeItem("ksm_token")).finally(()=>setLoading(false));return()=>window.removeEventListener('ksm:unauthorized',expired); },[hasToken]);
-  const authenticate=async(path,values)=>{const result=await api(path,{method:"POST",body:JSON.stringify(values)});localStorage.setItem("ksm_token",result.data.token);setUser(result.data.user);return result;};
+  const authenticate=async(path,values)=>{const result=await api(path,{method:"POST",body:JSON.stringify(values)});localStorage.setItem("ksm_token",result.data.token);if(path==='/auth/register'){const saved=sessionStorage.getItem('ksm_matchfinder');if(saved){const criteria=JSON.parse(saved);localStorage.setItem('ksm_onboarding',JSON.stringify({profileFor:criteria.profileFor,preferredGender:criteria.preferredGender,ageMin:criteria.ageMin,ageMax:criteria.ageMax,states:criteria.state}));sessionStorage.removeItem('ksm_matchfinder')}}setUser(result.data.user);return result;};
   const value=useMemo(()=>({user,loading,isAuthenticated:!!user,login:v=>authenticate("/auth/login",v),register:v=>authenticate("/auth/register",v),logout:async()=>{try{await api("/auth/logout",{method:"POST"});}finally{localStorage.removeItem("ksm_token");setUser(null);}}}),[user,loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

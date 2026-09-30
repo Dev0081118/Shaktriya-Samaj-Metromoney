@@ -11,7 +11,10 @@ import SettingsPage from "./pages/SettingsPage";
 import MembershipPage from "./pages/MembershipPage";
 import BiodataPage from "./pages/BiodataPage";
 import AdminPage from "./pages/admin/AdminPage";
+import AdminOperationsPage from "./pages/admin/AdminOperationsPage";
 import MemberLayout from "./layouts/MemberLayout";
+import PublicInfoPage from "./pages/PublicInfoPage";
+import ContactPage from "./pages/ContactPage";
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -26,6 +29,16 @@ export default function App() {
     <Route path="/" element={<HomePage />} />
     <Route path="/login" element={<AuthPage mode="login" />} />
     <Route path="/register" element={<AuthPage mode="register" />} />
+    <Route path="/forgot-password" element={<AuthPage mode="forgot" />} />
+    <Route path="/membership" element={<MembershipPage publicView />} />
+    <Route path="/about" element={<PublicInfoPage type="about" />} />
+    <Route path="/how-it-works" element={<PublicInfoPage type="how-it-works" />} />
+    <Route path="/success-stories" element={<PublicInfoPage type="success-stories" />} />
+    <Route path="/safety" element={<PublicInfoPage type="safety" />} />
+    <Route path="/privacy" element={<PublicInfoPage type="privacy" />} />
+    <Route path="/terms" element={<PublicInfoPage type="terms" />} />
+    <Route path="/refunds" element={<PublicInfoPage type="refunds" />} />
+    <Route path="/contact" element={<ContactPage />} />
     <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
     <Route element={<ProtectedRoute><MemberLayout /></ProtectedRoute>}>
       <Route path="/dashboard" element={<DashboardPage />} />
@@ -38,9 +51,13 @@ export default function App() {
       <Route path="/matches" element={<CollectionPage type="matches" />} />
       <Route path="/shortlisted" element={<CollectionPage type="shortlisted" />} />
       <Route path="/notifications" element={<CollectionPage type="notifications" />} />
-      <Route path="/membership" element={<MembershipPage />} />
     </Route>
     <Route path="/my-profile/biodata" element={<ProtectedRoute><BiodataPage /></ProtectedRoute>} />
+    <Route path="/admin/support" element={<ProtectedRoute roles={["admin", "super_admin"]}><AdminOperationsPage type="support" /></ProtectedRoute>} />
+    <Route path="/admin/plans" element={<ProtectedRoute roles={["super_admin"]}><AdminOperationsPage type="plans" /></ProtectedRoute>} />
+    <Route path="/admin/payments" element={<ProtectedRoute roles={["super_admin"]}><AdminOperationsPage type="payments" /></ProtectedRoute>} />
+    <Route path="/admin/settings" element={<ProtectedRoute roles={["super_admin"]}><AdminOperationsPage type="settings" /></ProtectedRoute>} />
+    <Route path="/admin/audit-logs" element={<ProtectedRoute roles={["super_admin"]}><AdminOperationsPage type="audit" /></ProtectedRoute>} />
     <Route path="/admin/*" element={<ProtectedRoute roles={["admin", "moderator", "super_admin"]}><AdminPage /></ProtectedRoute>} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>;

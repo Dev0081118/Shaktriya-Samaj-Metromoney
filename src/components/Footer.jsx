@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+const destinations={Matches:'/discover',Membership:'/membership','Success Stories':'/success-stories',About:'/about','How It Works':'/how-it-works',Contact:'/contact',Safety:'/safety',Privacy:'/privacy',Terms:'/terms',Refunds:'/refunds','Delete Account':'/settings'};
 export default function Footer() {
   return (
     <footer className="bg-[#15100f] text-white">
@@ -53,13 +55,13 @@ function FooterBlock({ title, links }) {
 
       <div className="mt-5 flex flex-col gap-3">
         {links.map((link) => (
-          <a
-            href="#"
+          <Link
+            to={destinations[link]}
             key={link}
             className="text-xs text-white/40 transition hover:text-white"
           >
             {link}
-          </a>
+          </Link>
         ))}
       </div>
     </div>
