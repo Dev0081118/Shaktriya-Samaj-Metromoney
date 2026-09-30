@@ -6,7 +6,7 @@ A web-first, privacy-conscious matrimonial platform for Kshatriya and Rajput fam
 
 - Luxury public homepage, responsive member shell, authentication and route guards
 - Ten-step persisted matrimonial onboarding with account/profile separation
-- Dashboard, preference-based discovery, profiles, shortlist, interests and mutual-match flows
+- MongoDB-driven dashboard, filtered discovery, profiles, shortlist, interests and mutual-match flows
 - Partner preferences, backend privacy filtering, block/report foundations and notifications
 - Profile completion, protected local image upload abstraction and printable digital biodata
 - Membership plans and a safe payment-order abstraction (mock orders never auto-succeed)
@@ -78,7 +78,11 @@ Backend variables are documented in `server/.env.example`: `PORT`, `NODE_ENV`, `
 | Member | `rajveer@ksm.dev` | `Member@123` |
 | Member | `devika@ksm.dev` | `Member@123` |
 
-The idempotent seed upserts only the named development accounts, their profiles, and the four plan slugs; it does not clear unrelated data. Do not use development credentials in production.
+The idempotent seed upserts only the named development accounts, their profiles, testing interactions, and the four plan slugs; it does not clear unrelated data. Do not use development credentials in production.
+
+The authenticated product does not use frontend demo profile or plan data. Member screens load through the REST API, including dashboard metrics, recommendations, profiles, interests, matches, shortlist, notifications, settings, membership plans and biodata. The admin overview, moderation queue, users, reports and subscriptions are API-driven.
+
+Additional endpoints include `GET /api/dashboard`, `GET /api/matches`, `GET/PUT /api/preferences`, `PATCH /api/profiles/privacy`, `PATCH /api/profiles/pause`, `GET/DELETE /api/blocks`, `PATCH /api/auth/change-password`, and protected admin resources for users, reports, subscriptions and individual profile reviews.
 
 ## Development fallbacks and external providers
 
