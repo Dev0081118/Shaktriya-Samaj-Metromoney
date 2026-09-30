@@ -1,4 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function FinalCTA() {
   return (
@@ -18,10 +19,10 @@ export default function FinalCTA() {
           suitable matrimonial connections in a private environment.
         </p>
 
-        <button className="mx-auto mt-10 flex items-center gap-4 rounded-full bg-[#eee5da] px-8 py-4 text-[12px] font-bold text-[#301819]">
+        <Link to="/register" className="mx-auto mt-10 flex w-fit items-center gap-4 rounded-full bg-[#eee5da] px-8 py-4 text-[12px] font-bold text-[#301819]">
           Create Free Profile
           <ArrowUpRight size={17} />
-        </button>
+        </Link>
       </div>
     </section>
   );

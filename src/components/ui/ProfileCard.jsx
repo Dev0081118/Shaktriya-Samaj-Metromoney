@@ -1,0 +1,5 @@
+import { BadgeCheck, Bookmark, Heart } from "lucide-react";
+import { Link } from "react-router-dom";
+export default function ProfileCard({ profile, onShortlist, onInterest }) {
+  return <article className="profile-card"><div className="profile-card-image"><img src={profile.photo} alt={`${profile.firstName}'s profile`} />{profile.verified&&<span className="verified"><BadgeCheck size={14}/> Verified</span>}<button className="save-button" onClick={()=>onShortlist?.(profile)} aria-label="Shortlist"><Bookmark size={18}/></button></div><div className="profile-card-body"><div className="card-heading"><div><h3>{profile.firstName}</h3><p>{profile.age} years • {profile.height} • {profile.city}</p></div><span className="match-score">{profile.score}%<small>match</small></span></div><p className="profile-meta">{profile.education} • {profile.occupation}</p><div className="card-actions"><Link to={`/profile/${profile.profileId}`} className="text-link">View profile</Link><button className="interest-button" onClick={()=>onInterest?.(profile)}><Heart size={15}/> Express interest</button></div></div></article>;
+}

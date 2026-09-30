@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 
 import MatchFinder from "./MatchFinder";
+import { Link } from "react-router-dom";
 
 export default function Hero() {
   return (
@@ -65,19 +66,19 @@ export default function Hero() {
 
             {/* Buttons */}
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-              <button className="group flex w-fit items-center gap-5 rounded-full bg-[#f5f0e9] px-7 py-3.5 text-[13px] font-bold text-[#32171a] transition duration-200 hover:bg-white">
+              <Link to="/register" className="group flex w-fit items-center gap-5 rounded-full bg-[#f5f0e9] px-7 py-3.5 text-[13px] font-bold text-[#32171a] transition duration-200 hover:bg-white">
                 Begin Your Journey
 
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#741f27] text-white transition group-hover:translate-x-1">
                   <ArrowRight size={15} />
                 </span>
-              </button>
+              </Link>
 
-              <button className="flex w-fit items-center gap-4 rounded-full border border-white/30 px-7 py-[15px] text-[13px] font-semibold text-white transition hover:border-white/60 hover:bg-white/[0.05]">
+              <Link to="/discover" className="flex w-fit items-center gap-4 rounded-full border border-white/30 px-7 py-[15px] text-[13px] font-semibold text-white transition hover:border-white/60 hover:bg-white/[0.05]">
                 Explore Matches
 
                 <ArrowDownRight size={16} />
-              </button>
+              </Link>
             </div>
 
             {/* Privacy note */}

@@ -1,0 +1,1 @@
+import mongoose from 'mongoose';const schema=new mongoose.Schema({destination:{type:String,index:true},purpose:{type:String,default:'phone_verification'},codeHash:String,expiresAt:{type:Date,expires:0},attempts:{type:Number,default:0},verifiedAt:Date},{timestamps:true});export default mongoose.model('OtpVerification',schema);
