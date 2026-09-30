@@ -1,1 +1,95 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700;800&display=swap");
+
 @import "tailwindcss";
+
+:root {
+  font-family: "Manrope", sans-serif;
+  background: #f5f0e8;
+  color: #211715;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  text-decoration: none;
+}
+
+.font-display {
+  font-family: "Cormorant Garamond", Georgia, serif;
+}
+
+.page-container {
+  width: min(1220px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+.eyebrow {
+  color: #91683f;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+}
+
+.arch-image {
+  border-radius: 230px 230px 2px 2px;
+}
+.site-shell {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+.round-control {
+  display: flex;
+  width: 46px;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 999px;
+  color: white;
+  transition: 180ms ease;
+}
+
+.round-control:hover {
+  border-color: rgb(255 255 255 / 45%);
+  background: rgb(255 255 255 / 8%);
+}
+
+.profile-editorial {
+  min-width: 0;
+}
+
+::selection {
+  background: #681d25;
+  color: white;
+}
+
+@media (max-width: 767px) {
+  .page-container {
+    width: min(100% - 28px, 1220px);
+  }
+}

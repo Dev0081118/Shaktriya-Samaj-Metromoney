@@ -1,11 +1,29 @@
-import React from 'react'
+import Header from "./components/Header";
+import Hero from "./components/Hero";
+import HeritageIntro from "./components/HeritageIntro";
+import MatchShowcase from "./components/MatchShowcase";
+import Experience from "./components/Experience";
+import Privacy from "./components/Privacy";
+import BiodataShowcase from "./components/BiodataShowcase";
+import FinalCTA from "./components/FinalCTA";
+import Footer from "./components/Footer";
 
-const App = () => {
+export default function App() {
   return (
-    <div>
-      
-    </div>
-  )
-}
+    <div className="site-shell">
+      <Header />
 
-export default App
+      <main>
+        <Hero />
+        <HeritageIntro />
+        <MatchShowcase />
+        <Experience />
+        <Privacy />
+        <BiodataShowcase />
+        <FinalCTA />
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
