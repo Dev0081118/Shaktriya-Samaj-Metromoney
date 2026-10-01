@@ -2,10 +2,13 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from './locales/en/common.json';
 import enHomeExtra from './locales/en/homeExtra.json';
+import enPublicPages from './locales/en/publicPages.json';
 import gu from './locales/gu/common.json';
 import guHomeExtra from './locales/gu/homeExtra.json';
+import guPublicPages from './locales/gu/publicPages.json';
 import hi from './locales/hi/common.json';
 import hiHomeExtra from './locales/hi/homeExtra.json';
+import hiPublicPages from './locales/hi/publicPages.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'gu', 'hi'];
 export const normalizeLanguage = (value) => {
@@ -17,9 +20,9 @@ const initialLanguage = normalizeLanguage(saved || navigator.language);
 
 i18n.use(initReactI18next).init({
   resources: {
-    en: { translation: en, homeExtra: enHomeExtra },
-    gu: { translation: gu, homeExtra: guHomeExtra },
-    hi: { translation: hi, homeExtra: hiHomeExtra }
+    en: { translation: en, homeExtra: enHomeExtra, publicPages: enPublicPages },
+    gu: { translation: gu, homeExtra: guHomeExtra, publicPages: guPublicPages },
+    hi: { translation: hi, homeExtra: hiHomeExtra, publicPages: hiPublicPages }
   },
   lng: initialLanguage,
   fallbackLng: 'en',

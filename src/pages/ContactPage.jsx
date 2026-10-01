@@ -2,8 +2,10 @@ import { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { api } from "../services/api";
+import { useTranslation } from "react-i18next";
 
 export default function ContactPage() {
+  const { t } = useTranslation();
   const [state, setState] = useState({
     name: "",
     email: "",
@@ -14,10 +16,10 @@ export default function ContactPage() {
   const [status, setStatus] = useState("");
   const submit = async (e) => {
     e.preventDefault();
-    setStatus("Sending…");
+    setStatus(t('publicPages:contact.sending'));
     try {
       await api("/support", { method: "POST", body: JSON.stringify(state) });
-      setStatus("Thank you. Your support request has been received.");
+      setStatus(t('publicPages:contact.success'));
       setState({
         name: "",
         email: "",
@@ -35,26 +37,20 @@ export default function ContactPage() {
       <main>
         <section className="public-hero">
           <div className="page-container">
-            <p className="eyebrow">Contact</p>
-            <h1>We’re here to help, discreetly.</h1>
-            <p>
-              For account, profile, payment, safety or technical questions, send
-              our support team a note.
-            </p>
+            <p className="eyebrow">{t('publicPages:contact.eyebrow')}</p>
+            <h1>{t('publicPages:contact.title')}</h1>
+            <p>{t('publicPages:contact.intro')}</p>
           </div>
         </section>
         <section className="contact-section page-container">
           <div>
-            <p className="eyebrow">Support desk</p>
-            <h2>Tell us what you need.</h2>
-            <p>
-              For immediate danger, contact local emergency services. Never
-              include passwords, OTPs or payment credentials.
-            </p>
+            <p className="eyebrow">{t('publicPages:contact.desk')}</p>
+            <h2>{t('publicPages:contact.formTitle')}</h2>
+            <p>{t('publicPages:contact.warning')}</p>
           </div>
           <form onSubmit={submit} className="contact-form">
             <label>
-              Name
+              {t('publicPages:contact.name')}
               <input
                 required
                 value={state.name}
@@ -62,7 +58,7 @@ export default function ContactPage() {
               />
             </label>
             <label>
-              Email
+              {t('publicPages:contact.email')}
               <input
                 required
                 type="email"
@@ -71,34 +67,27 @@ export default function ContactPage() {
               />
             </label>
             <label>
-              Phone (optional)
+              {t('publicPages:contact.phone')}
               <input
                 value={state.phone}
                 onChange={(e) => setState({ ...state, phone: e.target.value })}
               />
             </label>
             <label>
-              Category
+              {t('publicPages:contact.category')}
               <select
                 value={state.category}
                 onChange={(e) =>
                   setState({ ...state, category: e.target.value })
                 }
               >
-                {[
-                  "Account",
-                  "Profile",
-                  "Payment",
-                  "Safety",
-                  "Technical",
-                  "Other"
-                ].map((x) => (
-                  <option key={x}>{x}</option>
+                {t('publicPages:contact.categories', { returnObjects: true }).map((label, index) => (
+                  <option value={["Account", "Profile", "Payment", "Safety", "Technical", "Other"][index]} key={label}>{label}</option>
                 ))}
               </select>
             </label>
             <label className="full">
-              Message
+              {t('publicPages:contact.message')}
               <textarea
                 required
                 minLength="10"
@@ -109,7 +98,7 @@ export default function ContactPage() {
                 }
               />
             </label>
-            <button className="primary-button">Send request</button>
+            <button className="primary-button">{t('publicPages:contact.send')}</button>
             {status && <p role="status">{status}</p>}
           </form>
         </section>

@@ -8,6 +8,7 @@ import {
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { useTranslation } from "react-i18next";
 
 const pages = {
   about: {
@@ -164,8 +165,12 @@ const pages = {
   }
 };
 
+// Retained as an English content reference while localized resources power the UI.
+void pages;
+
 export default function PublicInfoPage({ type }) {
-  const page = pages[type] || pages.about;
+  const { t } = useTranslation();
+  const page = t(`publicPages:${type}`, { returnObjects: true });
   return (
     <div className="public-shell">
       <Header solid />
@@ -180,11 +185,8 @@ export default function PublicInfoPage({ type }) {
         <section className="public-content page-container">
           {["privacy", "terms", "refunds"].includes(type) && (
             <div className="legal-draft-notice">
-              <strong>Pre-launch legal draft</strong>
-              <p>
-                This policy requires approval by qualified counsel before
-                commercial launch. It is not presented as final legal advice.
-              </p>
+              <strong>{t('publicPages:legal.title')}</strong>
+              <p>{t('publicPages:legal.body')}</p>
             </div>
           )}
           {page.steps && (
@@ -229,11 +231,11 @@ export default function PublicInfoPage({ type }) {
           {!["privacy", "terms", "refunds"].includes(type) && (
             <div className="public-cta">
               <div>
-                <p className="eyebrow">Begin privately</p>
-                <h2>Create a profile when you feel ready.</h2>
+                <p className="eyebrow">{t('publicPages:cta.eyebrow')}</p>
+                <h2>{t('publicPages:cta.title')}</h2>
               </div>
               <Link className="primary-button" to="/register">
-                Create free profile <ArrowRight size={16} />
+                {t('publicPages:cta.action')} <ArrowRight size={16} />
               </Link>
             </div>
           )}
