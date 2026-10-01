@@ -29,6 +29,7 @@ export function AuthProvider({ children }) {
         status = await api("/public/system-status").catch(() => ({
           data: { defaultCountry: "India" }
         }));
+      localStorage.removeItem("ksm_onboarding_step");
       localStorage.setItem(
         "ksm_onboarding",
         JSON.stringify({

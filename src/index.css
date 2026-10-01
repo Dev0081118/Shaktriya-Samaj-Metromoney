@@ -285,6 +285,7 @@ a {
 .settings-form select,
 .settings-form textarea,
 .onboarding-form input,
+.onboarding-form select,
 .onboarding-form textarea,
 .filters select {
   width: 100%;
@@ -299,7 +300,8 @@ a {
 }
 .auth-form input:focus,
 .settings-form input:focus,
-.onboarding-form input:focus {
+.onboarding-form input:focus,
+.onboarding-form select:focus {
   border-color: var(--wine);
   box-shadow: 0 0 0 3px #681d2510;
 }

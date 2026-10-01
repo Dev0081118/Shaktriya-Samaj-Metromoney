@@ -14,11 +14,12 @@ import { serializeProfileForViewer } from '../services/profilePrivacy.js';
 import { mediaService } from '../services/mediaService.js';
 import { getSystemSettings } from '../services/systemService.js';
 
-const owned = async (user) => {
+const owned = async (user, optional = false) => {
   const profile = await MatrimonialProfile.findOne({ userId: user }).populate(
     'userId',
     'email phone role'
   );
+  if (!profile && optional) return null;
   if (!profile) throw new ApiError(404, 'Create your profile first.');
   return profile;
 };
@@ -131,11 +132,14 @@ export const upsert = asyncHandler(async (req, res) => {
     201
   );
 });
-export const mine = asyncHandler(async (req, res) =>
+export const mine = asyncHandler(async (req, res) => {
+  const profile = await owned(req.user.id, req.query.optional === 'true');
   ok(res, {
-    profile: await serializeProfileForViewer(await owned(req.user.id), req.user)
-  })
-);
+    profile: profile
+      ? await serializeProfileForViewer(profile, req.user)
+      : null
+  });
+});
 
 export const discover = asyncHandler(async (req, res) => {
   const mine = await MatrimonialProfile.findOne({ userId: req.user.id });
@@ -325,7 +329,8 @@ export const getOne = asyncHandler(async (req, res) => {
   ok(res, { profile: serialized, compatibility, actionState });
 });
 export const getPreferences = asyncHandler(async (req, res) => {
-  const profile = await owned(req.user.id);
+  const profile = await owned(req.user.id, req.query.optional === 'true');
+  if (!profile) return ok(res, { preferences: null });
   ok(res, {
     preferences: (await PartnerPreference.findOne({
       profileId: profile._id

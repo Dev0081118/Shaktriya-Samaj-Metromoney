@@ -178,6 +178,17 @@ const preferencePayload = (d) => ({
   marriageTimeline: list(d.preferredMarriageTimeline),
   additionalPreferences: d.additionalPreferences
 });
+const profileBasicsError = (data) => {
+  if (!data.firstName?.trim()) return 'Enter the first name before continuing.';
+  if (!['Male', 'Female'].includes(data.gender))
+    return 'Select a gender before continuing.';
+  if (!data.dateOfBirth) return 'Enter the date of birth before continuing.';
+  const birth = new Date(data.dateOfBirth),
+    age = (Date.now() - birth.getTime()) / (365.25 * 864e5);
+  return !Number.isFinite(age) || age < 18 || age > 80
+    ? 'Age must be between 18 and 80 years.'
+    : '';
+};
 export default function OnboardingPage() {
   const nav = useNavigate(),
     notify = useToast(),
@@ -196,9 +207,12 @@ export default function OnboardingPage() {
     [busy, setBusy] = useState(false),
     [cooldown, setCooldown] = useState(0);
   useEffect(() => {
-    Promise.allSettled([api('/profiles/me'), api('/preferences')])
+    Promise.allSettled([
+      api('/profiles/me?optional=true'),
+      api('/preferences?optional=true')
+    ])
       .then(([p, pref]) => {
-        if (p.status === 'fulfilled') {
+        if (p.status === 'fulfilled' && p.value.data.profile) {
           const loaded = flatten(p.value.data.profile);
           const existing = localStorage.getItem('ksm_onboarding');
           setData(
@@ -207,7 +221,7 @@ export default function OnboardingPage() {
               : { ...loaded, phone: user?.phone || '' }
           );
         }
-        if (pref.status === 'fulfilled')
+        if (pref.status === 'fulfilled' && pref.value.data.preferences)
           setData((d) => ({
             ...d,
             ...Object.fromEntries(
@@ -263,6 +277,12 @@ export default function OnboardingPage() {
     }
   };
   const upload = async (file) => {
+    const basicsError = profileBasicsError(data);
+    if (basicsError) {
+      setStep(2);
+      setError(basicsError);
+      return;
+    }
     setBusy(true);
     try {
       await api('/profiles', {
@@ -285,6 +305,13 @@ export default function OnboardingPage() {
       return setError('Please choose who this profile is for.');
     if (step === 1 && !verified)
       return setError('Verify the mobile number before continuing.');
+    if (step === 2 || step >= 7) {
+      const basicsError = profileBasicsError(data);
+      if (basicsError) {
+        if (step > 2) setStep(2);
+        return setError(basicsError);
+      }
+    }
     setError('');
     if (step === 7) {
       try {
@@ -425,6 +452,17 @@ export default function OnboardingPage() {
                         setData({ ...data, [key]: e.target.value })
                       }
                     />
+                  ) : key === 'gender' ? (
+                    <select
+                      value={data[key] || ''}
+                      onChange={(e) =>
+                        setData({ ...data, [key]: e.target.value })
+                      }
+                    >
+                      <option value="">Select gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
                   ) : (
                     <input
                       type={type || 'text'}
