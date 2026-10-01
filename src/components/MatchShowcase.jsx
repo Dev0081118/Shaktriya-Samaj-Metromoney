@@ -6,23 +6,20 @@ const profiles = [
     name: "Rajveer",
     details: "28 • Rajkot",
     work: "Entrepreneur",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900"
   },
   {
     name: "Devika",
     details: "26 • Ahmedabad",
     work: "Architect",
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900",
+    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900"
   },
   {
     name: "Yuvraj",
     details: "29 • Vadodara",
     work: "Business Owner",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=900",
-  },
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=900"
+  }
 ];
 
 export default function MatchShowcase() {
@@ -31,9 +28,7 @@ export default function MatchShowcase() {
       <div className="page-container">
         <div className="flex flex-col justify-between gap-8 border-b border-white/15 pb-10 lg:flex-row lg:items-end">
           <div>
-            <p className="eyebrow text-[#c99f72]">
-              Discover
-            </p>
+            <p className="eyebrow text-[#c99f72]">Discover</p>
 
             <h2 className="mt-5 font-display text-[50px] leading-none sm:text-[64px]">
               Profiles with
@@ -42,11 +37,19 @@ export default function MatchShowcase() {
           </div>
 
           <div className="flex gap-2">
-            <Link to="/discover" aria-label="Browse previous profiles" className="round-control">
+            <Link
+              to="/discover"
+              aria-label="Browse previous profiles"
+              className="round-control"
+            >
               <ArrowLeft size={17} />
             </Link>
 
-            <Link to="/discover" aria-label="Browse more profiles" className="round-control">
+            <Link
+              to="/discover"
+              aria-label="Browse more profiles"
+              className="round-control"
+            >
               <ArrowRight size={17} />
             </Link>
           </div>
@@ -74,9 +77,7 @@ export default function MatchShowcase() {
                 </span>
 
                 <div className="absolute inset-x-0 bottom-0 p-7">
-                  <h3 className="font-display text-[36px]">
-                    {profile.name}
-                  </h3>
+                  <h3 className="font-display text-[36px]">{profile.name}</h3>
 
                   <div className="mt-2 flex items-center gap-3 text-[12px] text-white/70">
                     <span>{profile.details}</span>
@@ -90,7 +91,10 @@ export default function MatchShowcase() {
         </div>
 
         <div className="mt-14 text-center">
-          <Link to="/discover" className="border-b border-[#c99f72] pb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9b17f]">
+          <Link
+            to="/discover"
+            className="border-b border-[#c99f72] pb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9b17f]"
+          >
             View all matches
           </Link>
         </div>

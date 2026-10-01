@@ -1,6 +1,102 @@
-import {useEffect,useState} from 'react';
-import {api} from '../../services/api';
-import {useToast} from '../../context/ToastContext';
+import { useEffect, useState } from 'react';
+import { api } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import AdminNav from '../../components/AdminNav';
 /* eslint-disable react-hooks/exhaustive-deps */
-export default function ManagerOperationsPage(){const[data,setData]=useState(null),[assignment,setAssignment]=useState({user:'',manager:''}),notify=useToast();const load=()=>api('/admin/relationship-managers').then(result=>setData(result.data));useEffect(()=>{load().catch(error=>notify(error.message,'error'))},[]);const submit=async event=>{event.preventDefault();try{await api('/admin/relationship-managers/assignment',{method:'PUT',body:JSON.stringify(assignment)});await load();notify('Relationship manager assigned.')}catch(error){notify(error.message,'error')}};return <div className="admin-shell"><AdminNav/><main><header className="page-heading compact"><p className="eyebrow">Assisted membership</p><h1>Relationship managers</h1></header>{!data?<div className="page-skeleton">Loading assignments…</div>:<><form className="settings-form" onSubmit={submit}><label>Member<select required value={assignment.user} onChange={event=>setAssignment(current=>({...current,user:event.target.value}))}><option value="">Choose member</option>{data.members.map(member=><option value={member._id} key={member._id}>{member.email}</option>)}</select></label><label>Manager<select required value={assignment.manager} onChange={event=>setAssignment(current=>({...current,manager:event.target.value}))}><option value="">Choose manager</option>{data.managers.map(manager=><option value={manager._id} key={manager._id}>{manager.email}</option>)}</select></label><button className="primary-button">Assign manager</button></form><section className="admin-table">{data.assignments.map(item=><div className="admin-row" key={item._id}><div><strong>{item.user?.email}</strong><small>{item.manager?.email} · {item.manager?.phone||'No phone'}</small></div><time>{item.status}</time></div>)}</section></>}</main></div>}
+export default function ManagerOperationsPage() {
+  const [data, setData] = useState(null),
+    [assignment, setAssignment] = useState({ user: '', manager: '' }),
+    notify = useToast();
+  const load = () =>
+    api('/admin/relationship-managers').then((result) => setData(result.data));
+  useEffect(() => {
+    load().catch((error) => notify(error.message, 'error'));
+  }, []);
+  const submit = async (event) => {
+    event.preventDefault();
+    try {
+      await api('/admin/relationship-managers/assignment', {
+        method: 'PUT',
+        body: JSON.stringify(assignment)
+      });
+      await load();
+      notify('Relationship manager assigned.');
+    } catch (error) {
+      notify(error.message, 'error');
+    }
+  };
+  return (
+    <div className="admin-shell">
+      <AdminNav />
+      <main>
+        <header className="page-heading compact">
+          <p className="eyebrow">Assisted membership</p>
+          <h1>Relationship managers</h1>
+        </header>
+        {!data ? (
+          <div className="page-skeleton">Loading assignments…</div>
+        ) : (
+          <>
+            <form className="settings-form" onSubmit={submit}>
+              <label>
+                Member
+                <select
+                  required
+                  value={assignment.user}
+                  onChange={(event) =>
+                    setAssignment((current) => ({
+                      ...current,
+                      user: event.target.value
+                    }))
+                  }
+                >
+                  <option value="">Choose member</option>
+                  {data.members.map((member) => (
+                    <option value={member._id} key={member._id}>
+                      {member.email}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Manager
+                <select
+                  required
+                  value={assignment.manager}
+                  onChange={(event) =>
+                    setAssignment((current) => ({
+                      ...current,
+                      manager: event.target.value
+                    }))
+                  }
+                >
+                  <option value="">Choose manager</option>
+                  {data.managers.map((manager) => (
+                    <option value={manager._id} key={manager._id}>
+                      {manager.email}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="primary-button">Assign manager</button>
+            </form>
+            <section className="admin-table">
+              {data.assignments.map((item) => (
+                <div className="admin-row" key={item._id}>
+                  <div>
+                    <strong>{item.user?.email}</strong>
+                    <small>
+                      {item.manager?.email} ·{' '}
+                      {item.manager?.phone || 'No phone'}
+                    </small>
+                  </div>
+                  <time>{item.status}</time>
+                </div>
+              ))}
+            </section>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}

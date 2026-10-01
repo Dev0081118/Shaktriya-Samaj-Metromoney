@@ -1,2 +1,67 @@
-import {ArrowLeft,Printer} from 'lucide-react';import {Link} from 'react-router-dom';import {useEffect,useState} from 'react';import {api,assetUrl} from '../services/api';
-export default function BiodataPage(){const[p,setP]=useState(null),[error,setError]=useState('');useEffect(()=>{api('/profiles/me').then(r=>setP(r.data.profile)).catch(e=>setError(e.message))},[]);if(error)return <div className="empty-state"><p>{error}</p></div>;if(!p)return <div className="page-skeleton">Preparing biodata…</div>;return <div className="biodata-shell"><div className="biodata-toolbar"><Link to="/my-profile"><ArrowLeft/> Profile</Link><button onClick={()=>window.print()}><Printer/> Print / Save as PDF</button></div><article className="biodata"><p className="eyebrow">Matrimonial profile • {p.profileId}</p><header><div><h1>{p.firstName} {p.lastName}</h1><p>{p.location?.city}, {p.location?.state}</p></div>{p.profilePhoto&&<img src={assetUrl(p.profilePhoto)} alt=""/>}</header><div className="biodata-rule"/><dl>{[['Age',`${p.age} years`],['Height',`${p.height} cm`],['Education',p.education?.highestEducation],['Profession',p.career?.occupation],['Location',`${p.location?.city}, ${p.location?.state}`],['Family',p.family?.familyDescription]].map(([a,b])=><div key={a}><dt>{a}</dt><dd>{b||'Not shared'}</dd></div>)}</dl><section><h2>About</h2><p>{p.aboutMe||'Not shared'}</p></section><footer>Kshatriya Matrimonial Society • Private family biodata</footer></article></div>}
+import { ArrowLeft, Printer } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { api, assetUrl } from '../services/api';
+export default function BiodataPage() {
+  const [p, setP] = useState(null),
+    [error, setError] = useState('');
+  useEffect(() => {
+    api('/profiles/me')
+      .then((r) => setP(r.data.profile))
+      .catch((e) => setError(e.message));
+  }, []);
+  if (error)
+    return (
+      <div className="empty-state">
+        <p>{error}</p>
+      </div>
+    );
+  if (!p) return <div className="page-skeleton">Preparing biodata…</div>;
+  return (
+    <div className="biodata-shell">
+      <div className="biodata-toolbar">
+        <Link to="/my-profile">
+          <ArrowLeft /> Profile
+        </Link>
+        <button onClick={() => window.print()}>
+          <Printer /> Print / Save as PDF
+        </button>
+      </div>
+      <article className="biodata">
+        <p className="eyebrow">Matrimonial profile • {p.profileId}</p>
+        <header>
+          <div>
+            <h1>
+              {p.firstName} {p.lastName}
+            </h1>
+            <p>
+              {p.location?.city}, {p.location?.state}
+            </p>
+          </div>
+          {p.profilePhoto && <img src={assetUrl(p.profilePhoto)} alt="" />}
+        </header>
+        <div className="biodata-rule" />
+        <dl>
+          {[
+            ['Age', `${p.age} years`],
+            ['Height', `${p.height} cm`],
+            ['Education', p.education?.highestEducation],
+            ['Profession', p.career?.occupation],
+            ['Location', `${p.location?.city}, ${p.location?.state}`],
+            ['Family', p.family?.familyDescription]
+          ].map(([a, b]) => (
+            <div key={a}>
+              <dt>{a}</dt>
+              <dd>{b || 'Not shared'}</dd>
+            </div>
+          ))}
+        </dl>
+        <section>
+          <h2>About</h2>
+          <p>{p.aboutMe || 'Not shared'}</p>
+        </section>
+        <footer>Kshatriya Matrimonial Society • Private family biodata</footer>
+      </article>
+    </div>
+  );
+}

@@ -1,14 +1,24 @@
 import { Link } from "react-router-dom";
-const destinations={Matches:'/discover',Membership:'/membership','Success Stories':'/success-stories',About:'/about','How It Works':'/how-it-works',Contact:'/contact',Safety:'/safety',Privacy:'/privacy',Terms:'/terms',Refunds:'/refunds','Delete Account':'/settings'};
+const destinations = {
+  Matches: "/discover",
+  Membership: "/membership",
+  "Success Stories": "/success-stories",
+  About: "/about",
+  "How It Works": "/how-it-works",
+  Contact: "/contact",
+  Safety: "/safety",
+  Privacy: "/privacy",
+  Terms: "/terms",
+  Refunds: "/refunds",
+  "Delete Account": "/settings"
+};
 export default function Footer() {
   return (
     <footer className="bg-[#15100f] text-white">
       <div className="page-container py-16">
         <div className="grid gap-12 border-b border-white/10 pb-14 md:grid-cols-4">
           <div>
-            <h3 className="font-display text-[22px]">
-              KSHATRIYA
-            </h3>
+            <h3 className="font-display text-[22px]">KSHATRIYA</h3>
 
             <p className="mt-5 max-w-xs text-xs leading-6 text-white/40">
               A private matrimonial community built around family, dignity,
@@ -37,9 +47,7 @@ export default function Footer() {
             © {new Date().getFullYear()} Kshatriya Matrimonial Society
           </span>
 
-          <span>
-            Heritage • Trust • Connection
-          </span>
+          <span>Heritage • Trust • Connection</span>
         </div>
       </div>
     </footer>

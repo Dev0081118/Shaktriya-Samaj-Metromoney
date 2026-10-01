@@ -7,9 +7,7 @@ export default function BiodataShowcase() {
       <div className="page-container">
         <div className="grid items-center gap-20 lg:grid-cols-2">
           <div>
-            <p className="eyebrow">
-              Digital Biodata
-            </p>
+            <p className="eyebrow">Digital Biodata</p>
 
             <h2 className="mt-6 font-display text-[55px] leading-[1.02] text-[#271816]">
               A matrimonial biodata worth sharing.
@@ -21,7 +19,10 @@ export default function BiodataShowcase() {
               families.
             </p>
 
-            <Link to="/register" className="mt-9 flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#681d25]">
+            <Link
+              to="/register"
+              className="mt-9 flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#681d25]"
+            >
               Explore digital biodata
               <Download size={16} />
             </Link>
@@ -83,9 +84,7 @@ function Info({ label, value }) {
         {label}
       </span>
 
-      <span className="mt-1 block font-medium text-[#392825]">
-        {value}
-      </span>
+      <span className="mt-1 block font-medium text-[#392825]">{value}</span>
     </div>
   );
 }

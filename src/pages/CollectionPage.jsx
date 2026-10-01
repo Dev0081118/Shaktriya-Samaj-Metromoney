@@ -1,3 +1,234 @@
-import {Bell,Bookmark,HeartHandshake,UsersRound} from 'lucide-react';import {Link} from 'react-router-dom';import {useEffect,useState} from 'react';import {api,assetUrl} from '../services/api';import {useToast} from '../context/ToastContext';
+import { Bell, Bookmark, HeartHandshake, UsersRound } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { api, assetUrl } from '../services/api';
+import { useToast } from '../context/ToastContext';
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
-const config={interests:{icon:HeartHandshake,title:'Interests',body:'When another family expresses interest, it will appear here.'},matches:{icon:UsersRound,title:'Mutual matches',body:"We're still looking for profiles that align with your preferences."},shortlisted:{icon:Bookmark,title:'Your shortlist',body:'Profiles you save will appear here.'},notifications:{icon:Bell,title:'Notifications',body:'Important updates will appear here.'}};export default function CollectionPage({type}){const[data,setData]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[tab,setTab]=useState('incoming');const notify=useToast();const load=async()=>{setLoading(true);try{const path=type==='interests'?`/interests/${tab}`:type==='matches'?'/matches':type==='shortlisted'?'/shortlist':'/notifications';const result=(await api(path)).data;setData(result.interests||result.matches||result.shortlist||result.notifications||[])}catch(e){setError(e.message)}finally{setLoading(false)}};useEffect(()=>{load()},[type,tab]);const interestAction=async(id,action)=>{try{await api(`/interests/${id}/${action}`,{method:'PATCH'});notify(action==='accept'?'Interest accepted. A mutual match was created.':`Interest ${action}d.`);load()}catch(e){notify(e.message,'error')}};const remove=async id=>{try{await api(`/shortlist/${id}`,{method:'DELETE'});notify('Removed from shortlist.');load()}catch(e){notify(e.message,'error')}};const read=async id=>{await api(`/notifications/${id}/read`,{method:'PATCH'});setData(x=>x.map(n=>n._id===id?{...n,read:true}:n))};const c=config[type],Icon=c.icon;if(loading)return <div className="page-skeleton">Loading {c.title.toLowerCase()}…</div>;return <><header className="page-heading compact"><p className="eyebrow">Private activity</p><h1>{c.title}</h1></header>{type==='interests'&&<div className="tabs"><button className={tab==='incoming'?'active':''} onClick={()=>setTab('incoming')}>Incoming</button><button className={tab==='outgoing'?'active':''} onClick={()=>setTab('outgoing')}>Sent</button></div>}{type==='notifications'&&data.some(n=>!n.read)&&<button className="text-link" onClick={async()=>{await api('/notifications/all/read',{method:'PATCH'});setData(x=>x.map(n=>({...n,read:true})))}}>Mark all read</button>}{error?<div className="empty-state"><p>{error}</p></div>:data.length?<div className="collection-list">{data.map(item=>{const p=item.profile;return <article key={item._id||item.matchId} className={item.read===false?'unread':''}>{p?(p.profilePhoto?<img src={assetUrl(p.profilePhoto)} alt=""/>:<span className="avatar">{p.firstName?.[0]}</span>):<Icon/>}<div>{p?<><strong>{p.firstName} {p.lastName}</strong><small>{p.location?.city||'India'} • {p.career?.occupation||'Profession not shared'}</small></>:<><strong>{item.title}</strong><small>{item.message}</small></>}<time>{new Date(item.createdAt||item.matchedAt).toLocaleDateString('en-IN')}</time></div><div className="collection-actions">{type==='interests'&&item.status==='Pending'&&(tab==='incoming'?<><button onClick={()=>interestAction(item._id,'accept')} className="primary-button">Accept</button><button onClick={()=>interestAction(item._id,'decline')} className="outline-button">Decline</button></>:<button onClick={()=>interestAction(item._id,'withdraw')} className="outline-button">Withdraw</button>)}{p&&<Link className="text-link" to={`/profile/${p.profileId}`}>View profile</Link>}{type==='shortlisted'&&<button onClick={()=>remove(p._id)} className="outline-button">Remove</button>}{type==='notifications'&&!item.read&&<button onClick={()=>read(item._id)} className="text-link">Mark read</button>}</div></article>})}</div>:<div className="empty-state large"><Icon size={34}/><h2>Nothing here yet</h2><p>{c.body}</p></div>}</>}
+const config = {
+  interests: {
+    icon: HeartHandshake,
+    title: 'Interests',
+    body: 'When another family expresses interest, it will appear here.'
+  },
+  matches: {
+    icon: UsersRound,
+    title: 'Mutual matches',
+    body: "We're still looking for profiles that align with your preferences."
+  },
+  shortlisted: {
+    icon: Bookmark,
+    title: 'Your shortlist',
+    body: 'Profiles you save will appear here.'
+  },
+  notifications: {
+    icon: Bell,
+    title: 'Notifications',
+    body: 'Important updates will appear here.'
+  }
+};
+export default function CollectionPage({ type }) {
+  const [data, setData] = useState([]),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState(''),
+    [tab, setTab] = useState('incoming');
+  const notify = useToast();
+  const load = async () => {
+    setLoading(true);
+    try {
+      const path =
+        type === 'interests'
+          ? `/interests/${tab}`
+          : type === 'matches'
+            ? '/matches'
+            : type === 'shortlisted'
+              ? '/shortlist'
+              : '/notifications';
+      const result = (await api(path)).data;
+      setData(
+        result.interests ||
+          result.matches ||
+          result.shortlist ||
+          result.notifications ||
+          []
+      );
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    load();
+  }, [type, tab]);
+  const interestAction = async (id, action) => {
+    try {
+      await api(`/interests/${id}/${action}`, { method: 'PATCH' });
+      notify(
+        action === 'accept'
+          ? 'Interest accepted. A mutual match was created.'
+          : `Interest ${action}d.`
+      );
+      load();
+    } catch (e) {
+      notify(e.message, 'error');
+    }
+  };
+  const remove = async (id) => {
+    try {
+      await api(`/shortlist/${id}`, { method: 'DELETE' });
+      notify('Removed from shortlist.');
+      load();
+    } catch (e) {
+      notify(e.message, 'error');
+    }
+  };
+  const read = async (id) => {
+    await api(`/notifications/${id}/read`, { method: 'PATCH' });
+    setData((x) => x.map((n) => (n._id === id ? { ...n, read: true } : n)));
+  };
+  const c = config[type],
+    Icon = c.icon;
+  if (loading)
+    return (
+      <div className="page-skeleton">Loading {c.title.toLowerCase()}…</div>
+    );
+  return (
+    <>
+      <header className="page-heading compact">
+        <p className="eyebrow">Private activity</p>
+        <h1>{c.title}</h1>
+      </header>
+      {type === 'interests' && (
+        <div className="tabs">
+          <button
+            className={tab === 'incoming' ? 'active' : ''}
+            onClick={() => setTab('incoming')}
+          >
+            Incoming
+          </button>
+          <button
+            className={tab === 'outgoing' ? 'active' : ''}
+            onClick={() => setTab('outgoing')}
+          >
+            Sent
+          </button>
+        </div>
+      )}
+      {type === 'notifications' && data.some((n) => !n.read) && (
+        <button
+          className="text-link"
+          onClick={async () => {
+            await api('/notifications/all/read', { method: 'PATCH' });
+            setData((x) => x.map((n) => ({ ...n, read: true })));
+          }}
+        >
+          Mark all read
+        </button>
+      )}
+      {error ? (
+        <div className="empty-state">
+          <p>{error}</p>
+        </div>
+      ) : data.length ? (
+        <div className="collection-list">
+          {data.map((item) => {
+            const p = item.profile;
+            return (
+              <article
+                key={item._id || item.matchId}
+                className={item.read === false ? 'unread' : ''}
+              >
+                {p ? (
+                  p.profilePhoto ? (
+                    <img src={assetUrl(p.profilePhoto)} alt="" />
+                  ) : (
+                    <span className="avatar">{p.firstName?.[0]}</span>
+                  )
+                ) : (
+                  <Icon />
+                )}
+                <div>
+                  {p ? (
+                    <>
+                      <strong>
+                        {p.firstName} {p.lastName}
+                      </strong>
+                      <small>
+                        {p.location?.city || 'India'} •{' '}
+                        {p.career?.occupation || 'Profession not shared'}
+                      </small>
+                    </>
+                  ) : (
+                    <>
+                      <strong>{item.title}</strong>
+                      <small>{item.message}</small>
+                    </>
+                  )}
+                  <time>
+                    {new Date(
+                      item.createdAt || item.matchedAt
+                    ).toLocaleDateString('en-IN')}
+                  </time>
+                </div>
+                <div className="collection-actions">
+                  {type === 'interests' &&
+                    item.status === 'Pending' &&
+                    (tab === 'incoming' ? (
+                      <>
+                        <button
+                          onClick={() => interestAction(item._id, 'accept')}
+                          className="primary-button"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => interestAction(item._id, 'decline')}
+                          className="outline-button"
+                        >
+                          Decline
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => interestAction(item._id, 'withdraw')}
+                        className="outline-button"
+                      >
+                        Withdraw
+                      </button>
+                    ))}
+                  {p && (
+                    <Link className="text-link" to={`/profile/${p.profileId}`}>
+                      View profile
+                    </Link>
+                  )}
+                  {type === 'shortlisted' && (
+                    <button
+                      onClick={() => remove(p._id)}
+                      className="outline-button"
+                    >
+                      Remove
+                    </button>
+                  )}
+                  {type === 'notifications' && !item.read && (
+                    <button
+                      onClick={() => read(item._id)}
+                      className="text-link"
+                    >
+                      Mark read
+                    </button>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="empty-state large">
+          <Icon size={34} />
+          <h2>Nothing here yet</h2>
+          <p>{c.body}</p>
+        </div>
+      )}
+    </>
+  );
+}

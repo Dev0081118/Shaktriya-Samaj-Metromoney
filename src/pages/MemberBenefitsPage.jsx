@@ -1,6 +1,108 @@
-import {useEffect,useState} from 'react';
-import {Link} from 'react-router-dom';
-import {api} from '../services/api';
-import {useToast} from '../context/ToastContext';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
 /* eslint-disable react-hooks/exhaustive-deps */
-export default function MemberBenefitsPage(){const[boost,setBoost]=useState(null),[manager,setManager]=useState(null),[entitlements,setEntitlements]=useState(null);const notify=useToast();const load=()=>Promise.all([api('/profile-boost'),api('/relationship-manager'),api('/entitlements')]).then(([boostResult,managerResult,entitlementResult])=>{setBoost(boostResult.data);setManager(managerResult.data);setEntitlements(entitlementResult.data.entitlements)});useEffect(()=>{load().catch(error=>notify(error.message,'error'))},[]);const activate=async()=>{try{await api('/profile-boost',{method:'POST'});await load();notify('Your profile boost is active for 24 hours.')}catch(error){notify(error.message,'error')}};if(!boost||!manager||!entitlements)return <div className="page-skeleton">Loading membership benefits…</div>;return <><header className="page-heading compact"><p className="eyebrow">Membership benefits</p><h1>Put your plan to <em>work.</em></h1></header><div className="plans-grid"><article><h2>Profile boost</h2><p>{entitlements.profileBoost?boost.active?`Active until ${new Date(boost.activeUntil).toLocaleString('en-IN')}`:boost.nextEligibleAt&&new Date(boost.nextEligibleAt)>new Date()?`Available again ${new Date(boost.nextEligibleAt).toLocaleDateString('en-IN')}`:'Move higher in discovery for 24 hours.':'Included with Premium and Assisted membership.'}</p>{entitlements.profileBoost?<button disabled={boost.active||boost.nextEligibleAt&&new Date(boost.nextEligibleAt)>new Date()} onClick={activate} className="primary-button">{boost.active?'Boost active':'Activate boost'}</button>:<Link to="/membership" className="outline-button">View plans</Link>}</article><article><h2>Relationship manager</h2>{manager.included?manager.assignment?<><p>Your assigned relationship manager:</p><strong>{manager.assignment.manager?.email}</strong>{manager.assignment.manager?.phone&&<a href={`tel:${manager.assignment.manager.phone}`}>{manager.assignment.manager.phone}</a>}</>:<p>Your Assisted benefit is active. The team will assign your relationship manager shortly.</p>:<><p>Personal relationship-manager guidance is included with Assisted membership.</p><Link to="/membership" className="outline-button">View Assisted</Link></>}</article></div></>}
+export default function MemberBenefitsPage() {
+  const [boost, setBoost] = useState(null),
+    [manager, setManager] = useState(null),
+    [entitlements, setEntitlements] = useState(null);
+  const notify = useToast();
+  const load = () =>
+    Promise.all([
+      api('/profile-boost'),
+      api('/relationship-manager'),
+      api('/entitlements')
+    ]).then(([boostResult, managerResult, entitlementResult]) => {
+      setBoost(boostResult.data);
+      setManager(managerResult.data);
+      setEntitlements(entitlementResult.data.entitlements);
+    });
+  useEffect(() => {
+    load().catch((error) => notify(error.message, 'error'));
+  }, []);
+  const activate = async () => {
+    try {
+      await api('/profile-boost', { method: 'POST' });
+      await load();
+      notify('Your profile boost is active for 24 hours.');
+    } catch (error) {
+      notify(error.message, 'error');
+    }
+  };
+  if (!boost || !manager || !entitlements)
+    return <div className="page-skeleton">Loading membership benefits…</div>;
+  return (
+    <>
+      <header className="page-heading compact">
+        <p className="eyebrow">Membership benefits</p>
+        <h1>
+          Put your plan to <em>work.</em>
+        </h1>
+      </header>
+      <div className="plans-grid">
+        <article>
+          <h2>Profile boost</h2>
+          <p>
+            {entitlements.profileBoost
+              ? boost.active
+                ? `Active until ${new Date(boost.activeUntil).toLocaleString('en-IN')}`
+                : boost.nextEligibleAt &&
+                    new Date(boost.nextEligibleAt) > new Date()
+                  ? `Available again ${new Date(boost.nextEligibleAt).toLocaleDateString('en-IN')}`
+                  : 'Move higher in discovery for 24 hours.'
+              : 'Included with Premium and Assisted membership.'}
+          </p>
+          {entitlements.profileBoost ? (
+            <button
+              disabled={
+                boost.active ||
+                (boost.nextEligibleAt &&
+                  new Date(boost.nextEligibleAt) > new Date())
+              }
+              onClick={activate}
+              className="primary-button"
+            >
+              {boost.active ? 'Boost active' : 'Activate boost'}
+            </button>
+          ) : (
+            <Link to="/membership" className="outline-button">
+              View plans
+            </Link>
+          )}
+        </article>
+        <article>
+          <h2>Relationship manager</h2>
+          {manager.included ? (
+            manager.assignment ? (
+              <>
+                <p>Your assigned relationship manager:</p>
+                <strong>{manager.assignment.manager?.email}</strong>
+                {manager.assignment.manager?.phone && (
+                  <a href={`tel:${manager.assignment.manager.phone}`}>
+                    {manager.assignment.manager.phone}
+                  </a>
+                )}
+              </>
+            ) : (
+              <p>
+                Your Assisted benefit is active. The team will assign your
+                relationship manager shortly.
+              </p>
+            )
+          ) : (
+            <>
+              <p>
+                Personal relationship-manager guidance is included with Assisted
+                membership.
+              </p>
+              <Link to="/membership" className="outline-button">
+                View Assisted
+              </Link>
+            </>
+          )}
+        </article>
+      </div>
+    </>
+  );
+}

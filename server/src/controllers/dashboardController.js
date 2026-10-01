@@ -1,2 +1,92 @@
-import MatrimonialProfile from '../models/MatrimonialProfile.js';import PartnerPreference from '../models/PartnerPreference.js';import {Interest,Match,Shortlist} from '../models/Interaction.js';import {Notification,Block} from '../models/Platform.js';import {ProfileView} from '../models/Business.js';import {asyncHandler,ok} from '../utils/http.js';import {calculateCompatibility,profileCard} from '../utils/profile.js';import {serializeProfileForViewer} from '../services/profilePrivacy.js';
-export const dashboard=asyncHandler(async(req,res)=>{const profile=await MatrimonialProfile.findOne({userId:req.user.id});if(!profile)return ok(res,{profile:null,profileCompletion:0,newInterestsCount:0,mutualMatchesCount:0,shortlistCount:0,unreadNotificationsCount:0,profileViewsLast30Days:0,recommendedProfiles:[],profileStatus:'not_created'});const since=new Date(Date.now()-30*864e5);const [newInterestsCount,mutualMatchesCount,shortlistCount,unreadNotificationsCount,profileViewsLast30Days,blocked,myPref]=await Promise.all([Interest.countDocuments({receiverProfile:profile._id,status:'Pending'}),Match.countDocuments({status:'Active',$or:[{profileA:profile._id},{profileB:profile._id}]}),Shortlist.countDocuments({userProfile:profile._id}),Notification.countDocuments({user:req.user.id,read:false}),ProfileView.countDocuments({viewedProfile:profile._id,viewDate:{$gte:since}}),Block.find({user:req.user.id}).distinct('blockedProfile'),PartnerPreference.findOne({profileId:profile._id})]);const preferred=myPref?.preferredGender||(profile.gender==='Male'?'Female':profile.gender==='Female'?'Male':null);const candidates=await MatrimonialProfile.find({visibility:'active',lifecycleStatus:'Active',_id:{$nin:[profile._id,...blocked]},...(preferred?{gender:preferred}:{})}).limit(12);const recommended=(await Promise.all(candidates.map(async p=>profileCard(await serializeProfileForViewer(p,req.user),calculateCompatibility(profile,myPref,p,await PartnerPreference.findOne({profileId:p._id})))))).filter(Boolean).sort((a,b)=>b.compatibility.score-a.compatibility.score).slice(0,3);ok(res,{profile:profileCard(profile),profileCompletion:profile.completionPercentage,newInterestsCount,mutualMatchesCount,shortlistCount,unreadNotificationsCount,profileViewsLast30Days,recommendedProfiles:recommended,profileStatus:profile.visibility})});
+import MatrimonialProfile from '../models/MatrimonialProfile.js';
+import PartnerPreference from '../models/PartnerPreference.js';
+import { Interest, Match, Shortlist } from '../models/Interaction.js';
+import { Notification, Block } from '../models/Platform.js';
+import { ProfileView } from '../models/Business.js';
+import { asyncHandler, ok } from '../utils/http.js';
+import { calculateCompatibility, profileCard } from '../utils/profile.js';
+import { serializeProfileForViewer } from '../services/profilePrivacy.js';
+export const dashboard = asyncHandler(async (req, res) => {
+  const profile = await MatrimonialProfile.findOne({ userId: req.user.id });
+  if (!profile)
+    return ok(res, {
+      profile: null,
+      profileCompletion: 0,
+      newInterestsCount: 0,
+      mutualMatchesCount: 0,
+      shortlistCount: 0,
+      unreadNotificationsCount: 0,
+      profileViewsLast30Days: 0,
+      recommendedProfiles: [],
+      profileStatus: 'not_created'
+    });
+  const since = new Date(Date.now() - 30 * 864e5);
+  const [
+    newInterestsCount,
+    mutualMatchesCount,
+    shortlistCount,
+    unreadNotificationsCount,
+    profileViewsLast30Days,
+    blocked,
+    myPref
+  ] = await Promise.all([
+    Interest.countDocuments({
+      receiverProfile: profile._id,
+      status: 'Pending'
+    }),
+    Match.countDocuments({
+      status: 'Active',
+      $or: [{ profileA: profile._id }, { profileB: profile._id }]
+    }),
+    Shortlist.countDocuments({ userProfile: profile._id }),
+    Notification.countDocuments({ user: req.user.id, read: false }),
+    ProfileView.countDocuments({
+      viewedProfile: profile._id,
+      viewDate: { $gte: since }
+    }),
+    Block.find({ user: req.user.id }).distinct('blockedProfile'),
+    PartnerPreference.findOne({ profileId: profile._id })
+  ]);
+  const preferred =
+    myPref?.preferredGender ||
+    (profile.gender === 'Male'
+      ? 'Female'
+      : profile.gender === 'Female'
+        ? 'Male'
+        : null);
+  const candidates = await MatrimonialProfile.find({
+    visibility: 'active',
+    lifecycleStatus: 'Active',
+    _id: { $nin: [profile._id, ...blocked] },
+    ...(preferred ? { gender: preferred } : {})
+  }).limit(12);
+  const recommended = (
+    await Promise.all(
+      candidates.map(async (p) =>
+        profileCard(
+          await serializeProfileForViewer(p, req.user),
+          calculateCompatibility(
+            profile,
+            myPref,
+            p,
+            await PartnerPreference.findOne({ profileId: p._id })
+          )
+        )
+      )
+    )
+  )
+    .filter(Boolean)
+    .sort((a, b) => b.compatibility.score - a.compatibility.score)
+    .slice(0, 3);
+  ok(res, {
+    profile: profileCard(profile),
+    profileCompletion: profile.completionPercentage,
+    newInterestsCount,
+    mutualMatchesCount,
+    shortlistCount,
+    unreadNotificationsCount,
+    profileViewsLast30Days,
+    recommendedProfiles: recommended,
+    profileStatus: profile.visibility
+  });
+});

@@ -1,4 +1,39 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {calculateAge,evaluatePreferences,calculateCompatibility} from '../src/utils/profile.js';
-test('calculateAge handles a valid adult date',()=>{const year=new Date().getFullYear()-30;const age=calculateAge(new Date(year,0,1));assert.ok(age===29||age===30)});
-test('preferences reject incompatible gender-neutral profile attributes',()=>{const result=evaluatePreferences({ageMin:25,ageMax:30,states:['Gujarat']},{dateOfBirth:new Date(new Date().getFullYear()-40,0,1),location:{state:'Rajasthan'}});assert.ok(result.unmatchedFactors.includes('Preferred age range'));assert.ok(result.unmatchedFactors.includes('Location preference'))});
-test('compatibility is symmetric average',()=>{const a={dateOfBirth:new Date(1995,0,1),height:175,location:{state:'Gujarat'}},b={dateOfBirth:new Date(1997,0,1),height:165,location:{state:'Gujarat'}};const result=calculateCompatibility(a,{states:['Gujarat']},b,{states:['Gujarat']});assert.equal(result.score,100)});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  calculateAge,
+  evaluatePreferences,
+  calculateCompatibility
+} from '../src/utils/profile.js';
+test('calculateAge handles a valid adult date', () => {
+  const year = new Date().getFullYear() - 30;
+  const age = calculateAge(new Date(year, 0, 1));
+  assert.ok(age === 29 || age === 30);
+});
+test('preferences reject incompatible gender-neutral profile attributes', () => {
+  const result = evaluatePreferences(
+    { ageMin: 25, ageMax: 30, states: ['Gujarat'] },
+    {
+      dateOfBirth: new Date(new Date().getFullYear() - 40, 0, 1),
+      location: { state: 'Rajasthan' }
+    }
+  );
+  assert.ok(result.unmatchedFactors.includes('Preferred age range'));
+  assert.ok(result.unmatchedFactors.includes('Location preference'));
+});
+test('compatibility is symmetric average', () => {
+  const a = {
+      dateOfBirth: new Date(1995, 0, 1),
+      height: 175,
+      location: { state: 'Gujarat' }
+    },
+    b = {
+      dateOfBirth: new Date(1997, 0, 1),
+      height: 165,
+      location: { state: 'Gujarat' }
+    };
+  const result = calculateCompatibility(a, { states: ['Gujarat'] }, b, {
+    states: ['Gujarat']
+  });
+  assert.equal(result.score, 100);
+});

@@ -1,24 +1,24 @@
 const steps = [
   {
-    number: "01",
-    title: "Create",
-    body: "Build a meaningful profile for yourself, your son, daughter or family member.",
+    number: '01',
+    title: 'Create',
+    body: 'Build a meaningful profile for yourself, your son, daughter or family member.'
   },
   {
-    number: "02",
-    title: "Discover",
-    body: "Explore people whose preferences and background meaningfully align.",
+    number: '02',
+    title: 'Discover',
+    body: 'Explore people whose preferences and background meaningfully align.'
   },
   {
-    number: "03",
-    title: "Express",
-    body: "Show matrimonial interest privately instead of exposing your contact information.",
+    number: '03',
+    title: 'Express',
+    body: 'Show matrimonial interest privately instead of exposing your contact information.'
   },
   {
-    number: "04",
-    title: "Connect",
-    body: "When interest is mutual, families can comfortably take the conversation forward.",
-  },
+    number: '04',
+    title: 'Connect',
+    body: 'When interest is mutual, families can comfortably take the conversation forward.'
+  }
 ];
 
 export default function Experience() {
@@ -27,9 +27,7 @@ export default function Experience() {
       <div className="page-container">
         <div className="grid gap-14 lg:grid-cols-[0.7fr_1.3fr]">
           <div>
-            <p className="eyebrow">
-              How it works
-            </p>
+            <p className="eyebrow">How it works</p>
 
             <h2 className="mt-6 font-display text-[50px] leading-[1.02] text-[#271917]">
               Simple enough for everyone in the family.

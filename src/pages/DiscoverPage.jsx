@@ -1,19 +1,301 @@
-import {Search,SlidersHorizontal,LockKeyhole} from 'lucide-react';
-import {useEffect,useState} from 'react';
-import {Link,useSearchParams} from 'react-router-dom';
+import { Search, SlidersHorizontal, LockKeyhole } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import ProfileCard from '../components/ui/ProfileCard';
-import {api} from '../services/api';
-import {useToast} from '../context/ToastContext';
+import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
 /* eslint-disable react-hooks/exhaustive-deps */
-const initial={search:'',city:'',state:'',lookingFor:'',ageMin:'',ageMax:'',heightMin:'',heightMax:'',education:'',occupation:'',maritalStatus:'',community:'',diet:'',verified:false,withPhoto:false};
-const advancedKeys=['heightMin','heightMax','education','occupation','community','diet','verified','withPhoto'];
-export default function DiscoverPage(){
-  const [params]=useSearchParams(),fromUrl={...initial,...Object.fromEntries(params.entries())};
-  const [filters,setFilters]=useState(fromUrl),[show,setShow]=useState(false),[items,setItems]=useState([]),[pagination,setPagination]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[advanced,setAdvanced]=useState(false);const notify=useToast();
-  const load=async(current=filters,page=1)=>{setLoading(true);setError('');try{const allowed=advanced?current:Object.fromEntries(Object.entries(current).filter(([key])=>!advancedKeys.includes(key)));const query=new URLSearchParams({...Object.fromEntries(Object.entries(allowed).filter(([,value])=>value!==''&&value!==false)),page:String(page),limit:'12'}).toString(),result=(await api(`/profiles/discover?${query}`)).data;setItems(page===1?result.profiles:existing=>[...existing,...result.profiles]);setPagination(result.pagination)}catch(caught){setError(caught.message)}finally{setLoading(false)}};
-  useEffect(()=>{api('/entitlements').then(result=>setAdvanced(Boolean(result.data.entitlements.advancedSearch))).finally(()=>load(fromUrl))},[]);
-  const update=(key,value)=>setFilters(current=>({...current,[key]:value}));
-  const shortlist=async profile=>{try{if(profile.shortlisted)await api(`/shortlist/${profile._id}`,{method:'DELETE'});else await api('/shortlist',{method:'POST',body:JSON.stringify({profileId:profile._id})});setItems(existing=>existing.map(item=>item._id===profile._id?{...item,shortlisted:!item.shortlisted}:item));notify(profile.shortlisted?'Removed from shortlist.':'Profile shortlisted.')}catch(caught){notify(caught.message,'error')}};
-  const interest=async profile=>{try{await api('/interests',{method:'POST',body:JSON.stringify({receiverProfile:profile._id})});setItems(existing=>existing.map(item=>item._id===profile._id?{...item,interestSent:true}:item));notify('Interest sent.')}catch(caught){notify(caught.message,'error')}};
-  return <><header className="page-heading compact"><p className="eyebrow">Preference-based discovery</p><h1>Discover with <em>intention.</em></h1><p>Compatibility reflects shared preferences—not a prediction of relationship success.</p></header><form onSubmit={event=>{event.preventDefault();load()}} className="discover-toolbar"><label><Search size={18}/><input value={filters.search} onChange={event=>update('search',event.target.value)} placeholder="Search by name, city or profession"/></label><button type="button" onClick={()=>setShow(!show)}><SlidersHorizontal size={17}/> Filters</button></form><div className="discover-layout"><aside className={`filters ${show?'show':''}`}><h3>Refine results</h3><label>Looking for<select value={filters.lookingFor} onChange={event=>update('lookingFor',event.target.value)}><option value="">My preference</option><option>Female</option><option>Male</option></select></label>{[['city','City'],['state','State'],['maritalStatus','Marital status']].map(([key,label])=><label key={key}>{label}<input value={filters[key]} onChange={event=>update(key,event.target.value)}/></label>)}<div className="form-row"><label>Min age<input type="number" value={filters.ageMin} onChange={event=>update('ageMin',event.target.value)}/></label><label>Max age<input type="number" value={filters.ageMax} onChange={event=>update('ageMax',event.target.value)}/></label></div><fieldset disabled={!advanced} className="advanced-filters"><legend>{!advanced&&<LockKeyhole size={14}/>} Advanced filters</legend>{[['education','Education'],['occupation','Occupation'],['community','Community'],['diet','Diet']].map(([key,label])=><label key={key}>{label}<input value={filters[key]} onChange={event=>update(key,event.target.value)}/></label>)}<label className="check"><input type="checkbox" checked={filters.verified} onChange={event=>update('verified',event.target.checked)}/> Verified only</label><label className="check"><input type="checkbox" checked={filters.withPhoto} onChange={event=>update('withPhoto',event.target.checked)}/> With photograph</label></fieldset>{!advanced&&<p className="filter-upgrade"><Link to="/membership">Upgrade membership</Link> to use advanced filters.</p>}<button className="primary-button">Apply filters</button><button type="button" className="text-link" onClick={()=>{setFilters(initial);load(initial)}}>Reset filters</button></aside><section><p className="results-count">{pagination?.total??items.length} thoughtful introductions</p>{loading&&!items.length?<div className="page-skeleton">Finding suitable profiles…</div>:error?<div className="empty-state"><h2>Discovery unavailable</h2><p>{error}</p></div>:items.length?<><div className="profile-grid two">{items.map(profile=><ProfileCard key={profile.profileId} profile={profile} onShortlist={shortlist} onInterest={interest}/>)}</div>{pagination?.page<pagination?.totalPages&&<button className="outline-button load-more" disabled={loading} onClick={()=>load(filters,pagination.page+1)}>{loading?'Loading…':'Load more profiles'}</button>}</>:<div className="empty-state"><h2>No profiles found</h2><p>Try widening the filters to see more suitable introductions.</p></div>}</section></div></>;
+const initial = {
+  search: '',
+  city: '',
+  state: '',
+  lookingFor: '',
+  ageMin: '',
+  ageMax: '',
+  heightMin: '',
+  heightMax: '',
+  education: '',
+  occupation: '',
+  maritalStatus: '',
+  community: '',
+  diet: '',
+  verified: false,
+  withPhoto: false
+};
+const advancedKeys = [
+  'heightMin',
+  'heightMax',
+  'education',
+  'occupation',
+  'community',
+  'diet',
+  'verified',
+  'withPhoto'
+];
+export default function DiscoverPage() {
+  const [params] = useSearchParams(),
+    fromUrl = { ...initial, ...Object.fromEntries(params.entries()) };
+  const [filters, setFilters] = useState(fromUrl),
+    [show, setShow] = useState(false),
+    [items, setItems] = useState([]),
+    [pagination, setPagination] = useState(null),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState(''),
+    [advanced, setAdvanced] = useState(false);
+  const notify = useToast();
+  const load = async (current = filters, page = 1) => {
+    setLoading(true);
+    setError('');
+    try {
+      const allowed = advanced
+        ? current
+        : Object.fromEntries(
+            Object.entries(current).filter(
+              ([key]) => !advancedKeys.includes(key)
+            )
+          );
+      const query = new URLSearchParams({
+          ...Object.fromEntries(
+            Object.entries(allowed).filter(
+              ([, value]) => value !== '' && value !== false
+            )
+          ),
+          page: String(page),
+          limit: '12'
+        }).toString(),
+        result = (await api(`/profiles/discover?${query}`)).data;
+      setItems(
+        page === 1
+          ? result.profiles
+          : (existing) => [...existing, ...result.profiles]
+      );
+      setPagination(result.pagination);
+    } catch (caught) {
+      setError(caught.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    api('/entitlements')
+      .then((result) =>
+        setAdvanced(Boolean(result.data.entitlements.advancedSearch))
+      )
+      .finally(() => load(fromUrl));
+  }, []);
+  const update = (key, value) =>
+    setFilters((current) => ({ ...current, [key]: value }));
+  const shortlist = async (profile) => {
+    try {
+      if (profile.shortlisted)
+        await api(`/shortlist/${profile._id}`, { method: 'DELETE' });
+      else
+        await api('/shortlist', {
+          method: 'POST',
+          body: JSON.stringify({ profileId: profile._id })
+        });
+      setItems((existing) =>
+        existing.map((item) =>
+          item._id === profile._id
+            ? { ...item, shortlisted: !item.shortlisted }
+            : item
+        )
+      );
+      notify(
+        profile.shortlisted ? 'Removed from shortlist.' : 'Profile shortlisted.'
+      );
+    } catch (caught) {
+      notify(caught.message, 'error');
+    }
+  };
+  const interest = async (profile) => {
+    try {
+      await api('/interests', {
+        method: 'POST',
+        body: JSON.stringify({ receiverProfile: profile._id })
+      });
+      setItems((existing) =>
+        existing.map((item) =>
+          item._id === profile._id ? { ...item, interestSent: true } : item
+        )
+      );
+      notify('Interest sent.');
+    } catch (caught) {
+      notify(caught.message, 'error');
+    }
+  };
+  return (
+    <>
+      <header className="page-heading compact">
+        <p className="eyebrow">Preference-based discovery</p>
+        <h1>
+          Discover with <em>intention.</em>
+        </h1>
+        <p>
+          Compatibility reflects shared preferences—not a prediction of
+          relationship success.
+        </p>
+      </header>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          load();
+        }}
+        className="discover-toolbar"
+      >
+        <label>
+          <Search size={18} />
+          <input
+            value={filters.search}
+            onChange={(event) => update('search', event.target.value)}
+            placeholder="Search by name, city or profession"
+          />
+        </label>
+        <button type="button" onClick={() => setShow(!show)}>
+          <SlidersHorizontal size={17} /> Filters
+        </button>
+      </form>
+      <div className="discover-layout">
+        <aside className={`filters ${show ? 'show' : ''}`}>
+          <h3>Refine results</h3>
+          <label>
+            Looking for
+            <select
+              value={filters.lookingFor}
+              onChange={(event) => update('lookingFor', event.target.value)}
+            >
+              <option value="">My preference</option>
+              <option>Female</option>
+              <option>Male</option>
+            </select>
+          </label>
+          {[
+            ['city', 'City'],
+            ['state', 'State'],
+            ['maritalStatus', 'Marital status']
+          ].map(([key, label]) => (
+            <label key={key}>
+              {label}
+              <input
+                value={filters[key]}
+                onChange={(event) => update(key, event.target.value)}
+              />
+            </label>
+          ))}
+          <div className="form-row">
+            <label>
+              Min age
+              <input
+                type="number"
+                value={filters.ageMin}
+                onChange={(event) => update('ageMin', event.target.value)}
+              />
+            </label>
+            <label>
+              Max age
+              <input
+                type="number"
+                value={filters.ageMax}
+                onChange={(event) => update('ageMax', event.target.value)}
+              />
+            </label>
+          </div>
+          <fieldset disabled={!advanced} className="advanced-filters">
+            <legend>
+              {!advanced && <LockKeyhole size={14} />} Advanced filters
+            </legend>
+            {[
+              ['education', 'Education'],
+              ['occupation', 'Occupation'],
+              ['community', 'Community'],
+              ['diet', 'Diet']
+            ].map(([key, label]) => (
+              <label key={key}>
+                {label}
+                <input
+                  value={filters[key]}
+                  onChange={(event) => update(key, event.target.value)}
+                />
+              </label>
+            ))}
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={filters.verified}
+                onChange={(event) => update('verified', event.target.checked)}
+              />{' '}
+              Verified only
+            </label>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={filters.withPhoto}
+                onChange={(event) => update('withPhoto', event.target.checked)}
+              />{' '}
+              With photograph
+            </label>
+          </fieldset>
+          {!advanced && (
+            <p className="filter-upgrade">
+              <Link to="/membership">Upgrade membership</Link> to use advanced
+              filters.
+            </p>
+          )}
+          <button className="primary-button">Apply filters</button>
+          <button
+            type="button"
+            className="text-link"
+            onClick={() => {
+              setFilters(initial);
+              load(initial);
+            }}
+          >
+            Reset filters
+          </button>
+        </aside>
+        <section>
+          <p className="results-count">
+            {pagination?.total ?? items.length} thoughtful introductions
+          </p>
+          {loading && !items.length ? (
+            <div className="page-skeleton">Finding suitable profiles…</div>
+          ) : error ? (
+            <div className="empty-state">
+              <h2>Discovery unavailable</h2>
+              <p>{error}</p>
+            </div>
+          ) : items.length ? (
+            <>
+              <div className="profile-grid two">
+                {items.map((profile) => (
+                  <ProfileCard
+                    key={profile.profileId}
+                    profile={profile}
+                    onShortlist={shortlist}
+                    onInterest={interest}
+                  />
+                ))}
+              </div>
+              {pagination?.page < pagination?.totalPages && (
+                <button
+                  className="outline-button load-more"
+                  disabled={loading}
+                  onClick={() => load(filters, pagination.page + 1)}
+                >
+                  {loading ? 'Loading…' : 'Load more profiles'}
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="empty-state">
+              <h2>No profiles found</h2>
+              <p>
+                Try widening the filters to see more suitable introductions.
+              </p>
+            </div>
+          )}
+        </section>
+      </div>
+    </>
+  );
 }

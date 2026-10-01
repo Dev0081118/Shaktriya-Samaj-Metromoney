@@ -1,8 +1,103 @@
-import {Plan,Subscription} from '../models/Platform.js';import {PlanUsage} from '../models/Business.js';import {ApiError} from '../utils/http.js';
-export const defaultFeatures={interestLimit:5,contactViewLimit:0,messageLimit:0,advancedSearch:false,profileBoost:false,prioritySupport:false,relationshipManager:false};
-const fallback={name:'Free',slug:'free',durationDays:30,features:defaultFeatures};
-const plain=value=>value?.toObject?.()||value||{};
-export async function getUserEntitlements(userId){const now=new Date();const subscription=await Subscription.findOne({user:userId,status:'Active',startsAt:{$lte:now},endsAt:{$gt:now}}).populate('plan').sort('-startsAt');const plan=subscription?.plan||await Plan.findOne({slug:'free',active:true})||fallback;const features=subscription?.entitlementSnapshot&&Object.keys(plain(subscription.entitlementSnapshot)).length?plain(subscription.entitlementSnapshot):plain(plan.features);return{subscription,plan:{id:plan._id||null,name:subscription?.planNameSnapshot||plan.name,slug:plan.slug},...defaultFeatures,...features}}
-export function entitlementPeriod(entitlements){const now=new Date();return{periodStart:entitlements.subscription?.startsAt||new Date(now.getFullYear(),now.getMonth(),1),periodEnd:entitlements.subscription?.endsAt||new Date(now.getFullYear(),now.getMonth()+1,1)}}
-export async function getUsage(userId,entitlements){const{periodStart,periodEnd}=entitlementPeriod(entitlements);return await PlanUsage.findOne({user:userId,periodStart,periodEnd})||{interestsUsed:0,contactViewsUsed:0,periodStart,periodEnd}}
-export async function consumeEntitlement(userId,key){const entitlements=await getUserEntitlements(userId);const limits={interest:'interestLimit',contactView:'contactViewLimit'},counters={interest:'interestsUsed',contactView:'contactViewsUsed'},limit=entitlements[limits[key]]??0;if(limit<0||limit>=999)return entitlements;if(limit===0)throw new ApiError(403,`${key==='interest'?'Interest':'Contact view'} access is not included in your plan.`);const{periodStart,periodEnd}=entitlementPeriod(entitlements);const usage=await PlanUsage.findOneAndUpdate({user:userId,periodStart,periodEnd},{$setOnInsert:{subscription:entitlements.subscription?._id},$inc:{[counters[key]]:1}},{upsert:true,returnDocument:'after'});if(usage[counters[key]]>limit){await PlanUsage.updateOne({_id:usage._id},{$inc:{[counters[key]]:-1}});throw new ApiError(403,`Your plan's ${key==='interest'?'interest':'contact view'} limit has been reached.`)}return entitlements}
+import { Plan, Subscription } from '../models/Platform.js';
+import { PlanUsage } from '../models/Business.js';
+import { ApiError } from '../utils/http.js';
+export const defaultFeatures = {
+  interestLimit: 5,
+  contactViewLimit: 0,
+  messageLimit: 0,
+  advancedSearch: false,
+  profileBoost: false,
+  prioritySupport: false,
+  relationshipManager: false
+};
+const fallback = {
+  name: 'Free',
+  slug: 'free',
+  durationDays: 30,
+  features: defaultFeatures
+};
+const plain = (value) => value?.toObject?.() || value || {};
+export async function getUserEntitlements(userId) {
+  const now = new Date();
+  const subscription = await Subscription.findOne({
+    user: userId,
+    status: 'Active',
+    startsAt: { $lte: now },
+    endsAt: { $gt: now }
+  })
+    .populate('plan')
+    .sort('-startsAt');
+  const plan =
+    subscription?.plan ||
+    (await Plan.findOne({ slug: 'free', active: true })) ||
+    fallback;
+  const features =
+    subscription?.entitlementSnapshot &&
+    Object.keys(plain(subscription.entitlementSnapshot)).length
+      ? plain(subscription.entitlementSnapshot)
+      : plain(plan.features);
+  return {
+    subscription,
+    plan: {
+      id: plan._id || null,
+      name: subscription?.planNameSnapshot || plan.name,
+      slug: plan.slug
+    },
+    ...defaultFeatures,
+    ...features
+  };
+}
+export function entitlementPeriod(entitlements) {
+  const now = new Date();
+  return {
+    periodStart:
+      entitlements.subscription?.startsAt ||
+      new Date(now.getFullYear(), now.getMonth(), 1),
+    periodEnd:
+      entitlements.subscription?.endsAt ||
+      new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  };
+}
+export async function getUsage(userId, entitlements) {
+  const { periodStart, periodEnd } = entitlementPeriod(entitlements);
+  return (
+    (await PlanUsage.findOne({ user: userId, periodStart, periodEnd })) || {
+      interestsUsed: 0,
+      contactViewsUsed: 0,
+      periodStart,
+      periodEnd
+    }
+  );
+}
+export async function consumeEntitlement(userId, key) {
+  const entitlements = await getUserEntitlements(userId);
+  const limits = { interest: 'interestLimit', contactView: 'contactViewLimit' },
+    counters = { interest: 'interestsUsed', contactView: 'contactViewsUsed' },
+    limit = entitlements[limits[key]] ?? 0;
+  if (limit < 0 || limit >= 999) return entitlements;
+  if (limit === 0)
+    throw new ApiError(
+      403,
+      `${key === 'interest' ? 'Interest' : 'Contact view'} access is not included in your plan.`
+    );
+  const { periodStart, periodEnd } = entitlementPeriod(entitlements);
+  const usage = await PlanUsage.findOneAndUpdate(
+    { user: userId, periodStart, periodEnd },
+    {
+      $setOnInsert: { subscription: entitlements.subscription?._id },
+      $inc: { [counters[key]]: 1 }
+    },
+    { upsert: true, returnDocument: 'after' }
+  );
+  if (usage[counters[key]] > limit) {
+    await PlanUsage.updateOne(
+      { _id: usage._id },
+      { $inc: { [counters[key]]: -1 } }
+    );
+    throw new ApiError(
+      403,
+      `Your plan's ${key === 'interest' ? 'interest' : 'contact view'} limit has been reached.`
+    );
+  }
+  return entitlements;
+}

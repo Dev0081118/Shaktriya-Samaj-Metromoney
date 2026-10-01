@@ -1,8 +1,4 @@
-import {
-  ArrowDownRight,
-  ArrowRight,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowDownRight, ArrowRight, ShieldCheck } from "lucide-react";
 
 import MatchFinder from "./MatchFinder";
 import { Link } from "react-router-dom";
@@ -49,45 +45,43 @@ export default function Hero() {
             <h1 className="font-display text-[53px] font-medium leading-[0.95] tracking-[-0.04em] text-white sm:text-[68px] md:text-[76px] lg:text-[88px] xl:text-[94px]">
               Where heritage
               <br />
-
               <span className="whitespace-nowrap">
                 meets a{" "}
-                <span className="italic text-[#e7c292]">
-                  new beginning.
-                </span>
+                <span className="italic text-[#e7c292]">new beginning.</span>
               </span>
             </h1>
 
             {/* Description */}
             <p className="mt-8 max-w-[610px] text-[14px] leading-7 text-white/65 sm:text-[15px] sm:leading-8">
-              A private matrimonial community thoughtfully created for
-              Kshatriya and Rajput families seeking meaningful,
-              family-oriented relationships.
+              A private matrimonial community thoughtfully created for Kshatriya
+              and Rajput families seeking meaningful, family-oriented
+              relationships.
             </p>
 
             {/* Buttons */}
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-              <Link to="/register" className="group flex w-fit items-center gap-5 rounded-full bg-[#f5f0e9] px-7 py-3.5 text-[13px] font-bold text-[#32171a] transition duration-200 hover:bg-white">
+              <Link
+                to="/register"
+                className="group flex w-fit items-center gap-5 rounded-full bg-[#f5f0e9] px-7 py-3.5 text-[13px] font-bold text-[#32171a] transition duration-200 hover:bg-white"
+              >
                 Begin Your Journey
-
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#741f27] text-white transition group-hover:translate-x-1">
                   <ArrowRight size={15} />
                 </span>
               </Link>
 
-              <Link to="/discover" className="flex w-fit items-center gap-4 rounded-full border border-white/30 px-7 py-[15px] text-[13px] font-semibold text-white transition hover:border-white/60 hover:bg-white/[0.05]">
+              <Link
+                to="/discover"
+                className="flex w-fit items-center gap-4 rounded-full border border-white/30 px-7 py-[15px] text-[13px] font-semibold text-white transition hover:border-white/60 hover:bg-white/[0.05]"
+              >
                 Explore Matches
-
                 <ArrowDownRight size={16} />
               </Link>
             </div>
 
             {/* Privacy note */}
             <div className="mt-10 flex items-center gap-3 text-[11px] text-white/55 sm:text-[12px]">
-              <ShieldCheck
-                size={15}
-                className="shrink-0 text-[#d9ad72]"
-              />
+              <ShieldCheck size={15} className="shrink-0 text-[#d9ad72]" />
 
               <span>
                 Privacy-first profiles • family friendly • moderated community

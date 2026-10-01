@@ -1,5 +1,70 @@
 import mongoose from 'mongoose';
-const interest=new mongoose.Schema({senderProfile:{type:mongoose.Schema.Types.ObjectId,ref:'MatrimonialProfile',required:true},receiverProfile:{type:mongoose.Schema.Types.ObjectId,ref:'MatrimonialProfile',required:true},status:{type:String,enum:['Pending','Accepted','Declined','Withdrawn'],default:'Pending'},message:{type:String,maxLength:500}},{timestamps:true});interest.index({senderProfile:1,receiverProfile:1,status:1},{unique:true,partialFilterExpression:{status:'Pending'}});
-const match=new mongoose.Schema({profileA:{type:mongoose.Schema.Types.ObjectId,ref:'MatrimonialProfile',required:true},profileB:{type:mongoose.Schema.Types.ObjectId,ref:'MatrimonialProfile',required:true},pairKey:{type:String,unique:true},interestId:{type:mongoose.Schema.Types.ObjectId,ref:'Interest'},compatibilityScore:Number,status:{type:String,enum:['Active','Closed'],default:'Active'},matchedAt:{type:Date,default:Date.now}},{timestamps:true});match.pre('validate',function(){this.pairKey=[this.profileA.toString(),this.profileB.toString()].sort().join(':')});
-const shortlist=new mongoose.Schema({userProfile:{type:mongoose.Schema.Types.ObjectId,ref:'MatrimonialProfile',required:true},shortlistedProfile:{type:mongoose.Schema.Types.ObjectId,ref:'MatrimonialProfile',required:true}},{timestamps:true});shortlist.index({userProfile:1,shortlistedProfile:1},{unique:true});
-export const Interest=mongoose.model('Interest',interest);export const Match=mongoose.model('Match',match);export const Shortlist=mongoose.model('Shortlist',shortlist);
+const interest = new mongoose.Schema(
+  {
+    senderProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MatrimonialProfile',
+      required: true
+    },
+    receiverProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MatrimonialProfile',
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ['Pending', 'Accepted', 'Declined', 'Withdrawn'],
+      default: 'Pending'
+    },
+    message: { type: String, maxLength: 500 }
+  },
+  { timestamps: true }
+);
+interest.index(
+  { senderProfile: 1, receiverProfile: 1, status: 1 },
+  { unique: true, partialFilterExpression: { status: 'Pending' } }
+);
+const match = new mongoose.Schema(
+  {
+    profileA: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MatrimonialProfile',
+      required: true
+    },
+    profileB: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MatrimonialProfile',
+      required: true
+    },
+    pairKey: { type: String, unique: true },
+    interestId: { type: mongoose.Schema.Types.ObjectId, ref: 'Interest' },
+    compatibilityScore: Number,
+    status: { type: String, enum: ['Active', 'Closed'], default: 'Active' },
+    matchedAt: { type: Date, default: Date.now }
+  },
+  { timestamps: true }
+);
+match.pre('validate', function () {
+  this.pairKey = [this.profileA.toString(), this.profileB.toString()]
+    .sort()
+    .join(':');
+});
+const shortlist = new mongoose.Schema(
+  {
+    userProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MatrimonialProfile',
+      required: true
+    },
+    shortlistedProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MatrimonialProfile',
+      required: true
+    }
+  },
+  { timestamps: true }
+);
+shortlist.index({ userProfile: 1, shortlistedProfile: 1 }, { unique: true });
+export const Interest = mongoose.model('Interest', interest);
+export const Match = mongoose.model('Match', match);
+export const Shortlist = mongoose.model('Shortlist', shortlist);

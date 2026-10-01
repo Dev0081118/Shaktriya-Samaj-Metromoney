@@ -4,18 +4,18 @@ const privacyItems = [
   {
     icon: Eye,
     title: "Control your photographs",
-    body: "Decide who can view personal photos instead of showing everything publicly.",
+    body: "Decide who can view personal photos instead of showing everything publicly."
   },
   {
     icon: LockKeyhole,
     title: "Keep contact details private",
-    body: "Mobile and WhatsApp details stay protected until the appropriate stage.",
+    body: "Mobile and WhatsApp details stay protected until the appropriate stage."
   },
   {
     icon: Fingerprint,
     title: "Verified membership",
-    body: "Verification and moderation help maintain a more trustworthy community.",
-  },
+    body: "Verification and moderation help maintain a more trustworthy community."
+  }
 ];
 
 export default function Privacy() {
@@ -24,16 +24,12 @@ export default function Privacy() {
       <div className="page-container">
         <div className="grid gap-16 lg:grid-cols-2">
           <div className="max-w-xl">
-            <p className="eyebrow text-[#d4a875]">
-              Privacy is not premium.
-            </p>
+            <p className="eyebrow text-[#d4a875]">Privacy is not premium.</p>
 
             <h2 className="mt-6 font-display text-[56px] leading-[0.98] sm:text-[70px]">
               Your story.
               <br />
-              <span className="italic text-[#dab182]">
-                Your control.
-              </span>
+              <span className="italic text-[#dab182]">Your control.</span>
             </h2>
 
             <p className="mt-8 max-w-md text-[15px] leading-8 text-white/60">
@@ -56,9 +52,7 @@ export default function Privacy() {
                 />
 
                 <div>
-                  <h3 className="font-display text-[26px]">
-                    {title}
-                  </h3>
+                  <h3 className="font-display text-[26px]">{title}</h3>
 
                   <p className="mt-2 max-w-md text-sm leading-7 text-white/55">
                     {body}

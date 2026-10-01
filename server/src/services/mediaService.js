@@ -1,6 +1,90 @@
-import fs from 'node:fs/promises';import crypto from 'node:crypto';
-const credentials=()=>{const{CLOUDINARY_CLOUD_NAME:cloudName,CLOUDINARY_API_KEY:apiKey,CLOUDINARY_API_SECRET:apiSecret}=process.env;if(!cloudName||!apiKey||!apiSecret)throw new Error('Cloudinary credentials are incomplete.');return{cloudName,apiKey,apiSecret}};
-const cloudinaryId=url=>{const match=String(url||'').match(/\/upload\/(?:v\d+\/)?(.+)\.[a-z0-9]+$/i);return match?.[1]};
-async function cloudinaryUpload(file){const{cloudName,apiKey,apiSecret}=credentials(),timestamp=Math.floor(Date.now()/1000),folder='kshatriya/profiles',signature=crypto.createHash('sha1').update(`folder=${folder}&timestamp=${timestamp}${apiSecret}`).digest('hex'),bytes=await fs.readFile(file.path),form=new FormData();form.append('file',new Blob([bytes],{type:file.mimetype}),file.originalname);form.append('api_key',apiKey);form.append('timestamp',String(timestamp));form.append('folder',folder);form.append('signature',signature);const response=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:form});const data=await response.json();await fs.unlink(file.path).catch(()=>{});if(!response.ok)throw new Error(data.error?.message||'Cloud image upload failed.');return{url:data.secure_url,publicId:data.public_id}}
-async function cloudinaryDelete(asset){const publicId=typeof asset==='string'?cloudinaryId(asset):asset?.publicId;if(!publicId)return;const{cloudName,apiKey,apiSecret}=credentials(),timestamp=Math.floor(Date.now()/1000),signature=crypto.createHash('sha1').update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`).digest('hex'),body=new URLSearchParams({public_id:publicId,timestamp:String(timestamp),api_key:apiKey,signature});await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,{method:'POST',body})}
-export const mediaService={async fromUpload(file){if(!file)return null;if((process.env.MEDIA_PROVIDER||'local')==='local')return{url:`/uploads/${file.filename}`,publicId:file.filename};if(process.env.MEDIA_PROVIDER==='cloudinary')return cloudinaryUpload(file);throw new Error(`Unsupported media provider: ${process.env.MEDIA_PROVIDER}`)},async delete(asset){if((process.env.MEDIA_PROVIDER||'local')==='local'&&typeof asset==='string'&&asset.startsWith('/uploads/'))return fs.unlink(`.${asset}`).catch(()=>{});if(process.env.MEDIA_PROVIDER==='cloudinary')return cloudinaryDelete(asset)}};
+import fs from 'node:fs/promises';
+import crypto from 'node:crypto';
+const credentials = () => {
+  const {
+    CLOUDINARY_CLOUD_NAME: cloudName,
+    CLOUDINARY_API_KEY: apiKey,
+    CLOUDINARY_API_SECRET: apiSecret
+  } = process.env;
+  if (!cloudName || !apiKey || !apiSecret)
+    throw new Error('Cloudinary credentials are incomplete.');
+  return { cloudName, apiKey, apiSecret };
+};
+const cloudinaryId = (url) => {
+  const match = String(url || '').match(
+    /\/upload\/(?:v\d+\/)?(.+)\.[a-z0-9]+$/i
+  );
+  return match?.[1];
+};
+async function cloudinaryUpload(file) {
+  const { cloudName, apiKey, apiSecret } = credentials(),
+    timestamp = Math.floor(Date.now() / 1000),
+    folder = 'kshatriya/profiles',
+    signature = crypto
+      .createHash('sha1')
+      .update(`folder=${folder}&timestamp=${timestamp}${apiSecret}`)
+      .digest('hex'),
+    bytes = await fs.readFile(file.path),
+    form = new FormData();
+  form.append(
+    'file',
+    new Blob([bytes], { type: file.mimetype }),
+    file.originalname
+  );
+  form.append('api_key', apiKey);
+  form.append('timestamp', String(timestamp));
+  form.append('folder', folder);
+  form.append('signature', signature);
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    { method: 'POST', body: form }
+  );
+  const data = await response.json();
+  await fs.unlink(file.path).catch(() => {});
+  if (!response.ok)
+    throw new Error(data.error?.message || 'Cloud image upload failed.');
+  return { url: data.secure_url, publicId: data.public_id };
+}
+async function cloudinaryDelete(asset) {
+  const publicId =
+    typeof asset === 'string' ? cloudinaryId(asset) : asset?.publicId;
+  if (!publicId) return;
+  const { cloudName, apiKey, apiSecret } = credentials(),
+    timestamp = Math.floor(Date.now() / 1000),
+    signature = crypto
+      .createHash('sha1')
+      .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
+      .digest('hex'),
+    body = new URLSearchParams({
+      public_id: publicId,
+      timestamp: String(timestamp),
+      api_key: apiKey,
+      signature
+    });
+  await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
+    method: 'POST',
+    body
+  });
+}
+export const mediaService = {
+  async fromUpload(file) {
+    if (!file) return null;
+    if ((process.env.MEDIA_PROVIDER || 'local') === 'local')
+      return { url: `/uploads/${file.filename}`, publicId: file.filename };
+    if (process.env.MEDIA_PROVIDER === 'cloudinary')
+      return cloudinaryUpload(file);
+    throw new Error(
+      `Unsupported media provider: ${process.env.MEDIA_PROVIDER}`
+    );
+  },
+  async delete(asset) {
+    if (
+      (process.env.MEDIA_PROVIDER || 'local') === 'local' &&
+      typeof asset === 'string' &&
+      asset.startsWith('/uploads/')
+    )
+      return fs.unlink(`.${asset}`).catch(() => {});
+    if (process.env.MEDIA_PROVIDER === 'cloudinary')
+      return cloudinaryDelete(asset);
+  }
+};

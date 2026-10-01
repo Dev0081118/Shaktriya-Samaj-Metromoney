@@ -1,3 +1,29 @@
 import mongoose from 'mongoose';
-const schema=new mongoose.Schema({profileId:{type:mongoose.Schema.Types.ObjectId,ref:'MatrimonialProfile',required:true,unique:true},preferredGender:{type:String,enum:['Male','Female']},ageMin:Number,ageMax:Number,heightMin:Number,heightMax:Number,maritalStatus:[String],locations:[String],states:[String],countries:[String],educationPreferences:[String],occupationPreferences:[String],incomePreferences:{min:Number,max:Number},dietPreferences:[String],communityPreferences:[String],marriageTimeline:[String],additionalPreferences:String},{timestamps:true});
-export default mongoose.model('PartnerPreference',schema);
+const schema = new mongoose.Schema(
+  {
+    profileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MatrimonialProfile',
+      required: true,
+      unique: true
+    },
+    preferredGender: { type: String, enum: ['Male', 'Female'] },
+    ageMin: Number,
+    ageMax: Number,
+    heightMin: Number,
+    heightMax: Number,
+    maritalStatus: [String],
+    locations: [String],
+    states: [String],
+    countries: [String],
+    educationPreferences: [String],
+    occupationPreferences: [String],
+    incomePreferences: { min: Number, max: Number },
+    dietPreferences: [String],
+    communityPreferences: [String],
+    marriageTimeline: [String],
+    additionalPreferences: String
+  },
+  { timestamps: true }
+);
+export default mongoose.model('PartnerPreference', schema);
