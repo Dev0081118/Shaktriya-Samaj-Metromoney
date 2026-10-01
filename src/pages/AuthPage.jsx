@@ -44,7 +44,7 @@ export default function AuthPage({ mode }) {
             body: JSON.stringify({ email: form.email })
           });
           setResetSent(true);
-          setMessage('If an account exists, a reset code has been sent.');
+          setMessage(t('redesign:auth.resetSent'));
         } else {
           await api('/auth/reset-password', {
             method: 'POST',
@@ -54,7 +54,7 @@ export default function AuthPage({ mode }) {
               newPassword: form.newPassword
             })
           });
-          setMessage('Password reset. You can now sign in.');
+          setMessage(t('redesign:auth.resetDone'));
         }
       } else {
         const result = await (register ? auth.register(form) : auth.login(form));
@@ -73,7 +73,7 @@ export default function AuthPage({ mode }) {
     <div className="auth-shell">
       <section className="auth-visual">
         <Link to="/" className="back-home">
-          <ArrowLeft size={16} /> Home
+          <ArrowLeft size={16} /> {t('redesign:auth.home')}
         </Link>
         <div>
           <p className="eyebrow">{t('auth.privateBeginning')}</p>
@@ -81,6 +81,7 @@ export default function AuthPage({ mode }) {
             {t('auth.visualTitle')}
           </h1>
           <p>{t('auth.visualBody')}</p>
+          <div className="auth-trust"><ShieldCheck size={18} /><div><strong>{t('redesign:auth.trust')}</strong><span>{t('redesign:auth.trustBody')}</span></div></div>
         </div>
       </section>
       <section className="auth-form-wrap">
@@ -101,10 +102,10 @@ export default function AuthPage({ mode }) {
           </h2>
           <p className="form-intro">
             {forgot
-              ? 'We’ll send a short-lived code without confirming whether an account exists.'
+              ? t('redesign:auth.forgotIntro')
               : register
-                ? 'Create an account first. Your matrimonial profile is built separately in guided steps.'
-                : 'Continue to your family’s private space.'}
+                ? t('redesign:auth.registerIntro')
+                : t('redesign:auth.loginIntro')}
           </p>
           <form onSubmit={submit}>
             {register && (
@@ -162,7 +163,7 @@ export default function AuthPage({ mode }) {
                     minLength="8"
                     value={form.password}
                     onChange={(event) => update('password', event.target.value)}
-                    placeholder="At least 8 characters"
+                    placeholder={t('redesign:auth.passwordHint')}
                     required
                   />
                 </label>
@@ -179,9 +180,9 @@ export default function AuthPage({ mode }) {
                     }
                     required
                   />{' '}
-                  I agree to the{' '}
+                  {t('redesign:auth.termsPrefix')}{' '}
                   <Link to="/terms" target="_blank">
-                    Terms of Use
+                    {t('redesign:auth.terms')}
                   </Link>
                   .
                 </label>
@@ -194,9 +195,9 @@ export default function AuthPage({ mode }) {
                     }
                     required
                   />{' '}
-                  I acknowledge the{' '}
+                  {t('redesign:auth.privacyPrefix')}{' '}
                   <Link to="/privacy" target="_blank">
-                    Privacy Policy
+                    {t('redesign:auth.privacy')}
                   </Link>
                   .
                 </label>
@@ -206,14 +207,14 @@ export default function AuthPage({ mode }) {
             {message && <p className="success-message">{message}</p>}
             <button className="primary-button" disabled={busy}>
               {busy
-                ? 'Please wait…'
+                ? t('redesign:auth.wait')
                 : forgot
                   ? resetSent
-                    ? 'Set new password'
-                    : 'Send reset code'
+                    ? t('redesign:auth.setPassword')
+                    : t('redesign:auth.sendCode')
                   : register
-                    ? 'Create account'
-                    : 'Sign in'}
+                    ? t('redesign:auth.createAccount')
+                    : t('redesign:auth.signIn')}
               <ArrowRight size={17} />
             </button>
           </form>
@@ -224,12 +225,12 @@ export default function AuthPage({ mode }) {
           )}
           <p className="auth-switch">
             {register
-              ? 'Already registered?'
+              ? t('redesign:auth.registered')
               : forgot
-                ? 'Remembered your password?'
-                : 'New to Kshatriya?'}{' '}
+                ? t('redesign:auth.remembered')
+                : t('redesign:auth.newHere')}{' '}
             <Link to={register || forgot ? '/login' : '/register'}>
-              {register || forgot ? 'Sign in' : 'Create a profile'}
+              {register || forgot ? t('redesign:auth.signIn') : t('redesign:auth.createProfile')}
             </Link>
           </p>
           <div className="security-note">

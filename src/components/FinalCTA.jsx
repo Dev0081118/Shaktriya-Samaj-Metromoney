@@ -1,30 +1,11 @@
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 export default function FinalCTA() {
   const { t } = useTranslation();
-  return (
-    <section className="bg-[#201615] text-white">
-      <div className="page-container border-x border-white/10 px-7 py-28 text-center sm:px-12 lg:py-36">
-        <p className="eyebrow text-[#c89c6d]">{t('home.registrationFree')}</p>
-
-        <h2 className="mx-auto mt-7 max-w-[850px] font-display text-[58px] leading-[0.98] sm:text-[74px]">
-          {t('home.ctaTitle')}
-        </h2>
-
-        <p className="mx-auto mt-7 max-w-xl text-sm leading-7 text-white/55">
-          {t('home.ctaBody')}
-        </p>
-
-        <Link
-          to="/register"
-          className="mx-auto mt-10 flex w-fit items-center gap-4 rounded-full bg-[#eee5da] px-8 py-4 text-[12px] font-bold text-[#301819]"
-        >
-          {t('home.ctaAction')}
-          <ArrowUpRight size={17} />
-        </Link>
-      </div>
-    </section>
-  );
+  return <section className="final-cta"><div className="page-container final-cta-inner">
+    <div className="final-cta-copy"><p className="eyebrow">{t('home.registrationFree')}</p><h2>{t('home.ctaTitle')}</h2><p>{t('home.ctaBody')}</p></div>
+    <div className="final-cta-action"><Link to="/register" className="final-cta-button">{t('home.ctaAction')} <ArrowUpRight size={18} /></Link><p><ShieldCheck size={16} /> {t('redesign:cta.note')}</p><span>{t('redesign:cta.trust')}</span></div>
+  </div></section>;
 }

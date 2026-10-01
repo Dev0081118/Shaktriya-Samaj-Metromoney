@@ -1,78 +1,28 @@
+import { ArrowUpRight, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-const destinations = {
-  Matches: "/discover",
-  Membership: "/membership",
-  "Success Stories": "/success-stories",
-  About: "/about",
-  "How It Works": "/how-it-works",
-  Contact: "/contact",
-  Safety: "/safety",
-  Privacy: "/privacy",
-  Terms: "/terms",
-  Refunds: "/refunds",
-  "Delete Account": "/settings"
-};
+import LanguageSwitcher from "./LanguageSwitcher";
+
+const destinations = { Matches:"/discover", Membership:"/membership", "Success Stories":"/success-stories", About:"/about", "How It Works":"/how-it-works", Contact:"/contact", Safety:"/safety", Privacy:"/privacy", Terms:"/terms", Refunds:"/refunds" };
+
 export default function Footer() {
   const { t } = useTranslation();
-  return (
-    <footer className="bg-[#15100f] text-white">
-      <div className="page-container py-16">
-        <div className="grid gap-12 border-b border-white/10 pb-14 md:grid-cols-4">
-          <div>
-            <h3 className="font-display text-[22px]">KSHATRIYA</h3>
-
-            <p className="mt-5 max-w-xs text-xs leading-6 text-white/40">
-              {t('public.footerBody')}
-            </p>
-          </div>
-
-          <FooterBlock
-            title={t('nav.discover')}
-            links={[['Matches', t('nav.matches')], ['Membership', t('nav.membership')], ['Success Stories', t('nav.stories')]]}
-          />
-
-          <FooterBlock
-            title={t('public.company')}
-            links={[['About', t('nav.about')], ['How It Works', t('nav.howItWorks')], ['Contact', t('public.contact')], ['Safety', t('public.safety')]]}
-          />
-
-          <FooterBlock
-            title={t('public.legal')}
-            links={[['Privacy', t('public.privacy')], ['Terms', t('public.terms')], ['Refunds', t('public.refunds')], ['Delete Account', t('public.deleteAccount')]]}
-          />
-        </div>
-
-        <div className="flex flex-col gap-3 pt-7 text-[10px] uppercase tracking-[0.14em] text-white/30 sm:flex-row sm:justify-between">
-          <span>
-            © {new Date().getFullYear()} Kshatriya Matrimonial Society
-          </span>
-
-          <span>{t('public.footerValues')}</span>
-        </div>
-      </div>
-    </footer>
-  );
+  return <footer className="site-footer">
+    <div className="page-container footer-upper">
+      <div className="footer-brand"><Link to="/" className="footer-wordmark">KSHATRIYA <small>MATRIMONIAL SOCIETY</small></Link><p>{t('redesign:footer.mission')}</p></div>
+      <div className="footer-concierge"><span>{t('redesign:footer.support')}</span><a href="mailto:support@kshatriya.example"><Mail size={15} /> {t('redesign:footer.email')}</a><Link to="/contact">{t('redesign:footer.help')} <ArrowUpRight size={14} /></Link></div>
+      <div className="footer-language"><span>{t('redesign:footer.language')}</span><LanguageSwitcher /></div>
+    </div>
+    <div className="page-container footer-nav">
+      <FooterBlock title={t('redesign:footer.discover')} links={[["Matches",t('nav.matches')],["Membership",t('nav.membership')],["Success Stories",t('nav.stories')]]} />
+      <FooterBlock title={t('redesign:footer.company')} links={[["About",t('nav.about')],["How It Works",t('nav.howItWorks')],["Contact",t('public.contact')]]} />
+      <FooterBlock title={t('redesign:footer.safety')} links={[["Safety",t('public.safety')],["Privacy",t('public.privacy')]]} />
+      <FooterBlock title={t('redesign:footer.legal')} links={[["Terms",t('public.terms')],["Refunds",t('public.refunds')]]} />
+    </div>
+    <div className="footer-bottom"><div className="page-container"><span>© {new Date().getFullYear()} Kshatriya Matrimonial Society</span><span>{t('redesign:footer.heritage')}</span></div></div>
+  </footer>;
 }
 
 function FooterBlock({ title, links }) {
-  return (
-    <div>
-      <h4 className="text-xs font-bold uppercase tracking-[0.14em] text-white/75">
-        {title}
-      </h4>
-
-      <div className="mt-5 flex flex-col gap-3">
-        {links.map(([link, label]) => (
-          <Link
-            to={destinations[link]}
-            key={link}
-            className="text-xs text-white/40 transition hover:text-white"
-          >
-            {label}
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
+  return <div className="footer-block"><h4>{title}</h4><div>{links.map(([link,label]) => <Link to={destinations[link]} key={link}>{label}</Link>)}</div></div>;
 }

@@ -172,17 +172,19 @@ export default function PublicInfoPage({ type }) {
   const { t } = useTranslation();
   const page = t(`publicPages:${type}`, { returnObjects: true });
   return (
-    <div className="public-shell">
+    <div className={`public-shell public-shell-${type}`}>
       <Header solid />
       <main>
-        <section className="public-hero">
+        <section className={`public-hero public-hero-${type}`}>
           <div className="page-container">
             <p className="eyebrow">{page.eyebrow}</p>
             <h1>{page.title}</h1>
             <p>{page.intro}</p>
+            {type === 'about' && <span className="public-manifesto">{t('redesign:public.manifesto')}</span>}
+            {["privacy", "terms", "refunds"].includes(type) && <div className="document-meta"><span>{t('redesign:public.document')}</span><span>{t('redesign:public.effective')}</span></div>}
           </div>
         </section>
-        <section className="public-content page-container">
+        <section className={`public-content public-content-${type} page-container`}>
           {["privacy", "terms", "refunds"].includes(type) && (
             <div className="legal-draft-notice">
               <strong>{t('publicPages:legal.title')}</strong>
