@@ -36,19 +36,30 @@ export default function AdminOperationsPage({ type }) {
     api(paths[type])
       .then((result) => setData(result.data))
       .catch((caught) => setError(caught.message));
-  useEffect(load, [type]);
+  /* `load` returns a promise, so it cannot be passed to useEffect directly:
+     React would treat that promise as the effect cleanup and fail with
+     "destroy is not a function" whenever the page unmounts or type changes. */
+  useEffect(() => {
+    load();
+  }, [type]);
   const updateTicket = async (ticket, status) => {
-    const result = await api(`/admin/support/${ticket._id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status })
-    });
-    setData((current) => ({
-      ...current,
-      tickets: current.tickets.map((item) =>
-        item._id === ticket._id ? result.data.ticket : item
-      )
-    }));
-    notify('Support ticket updated.');
+    try {
+      const result = await api(`/admin/support/${ticket._id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      });
+      setData((current) => ({
+        ...current,
+        tickets: current.tickets.map((item) =>
+          item._id === ticket._id ? result.data.ticket : item
+        )
+      }));
+      notify('Support ticket updated.');
+    } catch (caught) {
+      /* Re-render so the select shows the status the server still holds. */
+      setData((current) => ({ ...current }));
+      notify(caught.message, 'error');
+    }
   };
   const saveSettings = async (event) => {
     event.preventDefault();
@@ -60,12 +71,16 @@ export default function AdminOperationsPage({ type }) {
     ])
       form[key] = event.currentTarget.elements[key].checked;
     form.maxPhotos = Number(form.maxPhotos);
-    const result = await api('/admin/settings', {
-      method: 'PATCH',
-      body: JSON.stringify(form)
-    });
-    setData((current) => ({ ...current, settings: result.data.settings }));
-    notify('System settings saved.');
+    try {
+      const result = await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(form)
+      });
+      setData((current) => ({ ...current, settings: result.data.settings }));
+      notify('System settings saved.');
+    } catch (caught) {
+      notify(caught.message, 'error');
+    }
   };
   const savePlan = async (event) => {
     event.preventDefault();

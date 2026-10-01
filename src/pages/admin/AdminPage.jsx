@@ -270,21 +270,29 @@ function Reports() {
                 <select
                   value={r.status}
                   onChange={async (e) => {
-                    const out = await api(`/admin/reports/${r._id}`, {
-                      method: 'PATCH',
-                      body: JSON.stringify({ status: e.target.value })
-                    });
-                    setData((x) => ({
-                      ...x,
-                      reports: x.reports.map((i) =>
-                        i._id === r._id ? out.data.report : i
-                      )
-                    }));
-                    notify('Report updated.');
+                    try {
+                      const out = await api(`/admin/reports/${r._id}`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ status: e.target.value })
+                      });
+                      setData((x) => ({
+                        ...x,
+                        reports: x.reports.map((i) =>
+                          i._id === r._id ? out.data.report : i
+                        )
+                      }));
+                      notify('Report updated.');
+                    } catch (error) {
+                      /* Re-render so the select shows the server's status. */
+                      setData((x) => ({ ...x }));
+                      notify(error.message, 'error');
+                    }
                   }}
                 >
                   {['Open', 'Reviewed', 'Resolved', 'Dismissed'].map((x) => (
-                    <option key={x}>{x}</option>
+                    <option key={x} disabled={x === 'Open'}>
+                      {x}
+                    </option>
                   ))}
                 </select>
               </div>

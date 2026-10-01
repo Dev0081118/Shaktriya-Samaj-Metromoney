@@ -11,6 +11,7 @@ import MatrimonialProfile from '../src/models/MatrimonialProfile.js';
 import {
   ContactRequest,
   PlanUsage,
+  RelationshipManagerAssignment,
   SystemSetting
 } from '../src/models/Business.js';
 import { Match } from '../src/models/Interaction.js';
@@ -262,4 +263,135 @@ test('the last active super admin cannot disable themselves', async () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ status: 'Suspended' });
   assert.equal(response.status, 409);
+});
+const assistedMember = async (email) => {
+  const member = await User.create({ email, password: 'Password123!' });
+  await Subscription.create({
+    user: member._id,
+    planNameSnapshot: 'Assisted',
+    entitlementSnapshot: { relationshipManager: true },
+    status: 'Active',
+    startsAt: new Date(Date.now() - 864e5),
+    endsAt: new Date(Date.now() + 30 * 864e5)
+  });
+  return member;
+};
+test('an admin assigns an eligible Assisted member to an active relationship manager', async () => {
+  const admin = await User.create({
+      email: 'admin@example.com',
+      password: 'Password123!',
+      role: 'admin'
+    }),
+    manager = await User.create({
+      email: 'manager@example.com',
+      password: 'Password123!',
+      role: 'relationship_manager'
+    }),
+    replacement = await User.create({
+      email: 'manager-two@example.com',
+      password: 'Password123!',
+      role: 'relationship_manager'
+    }),
+    member = await assistedMember('assisted@example.com'),
+    token = jwt.sign({ sub: admin.id }, process.env.JWT_SECRET),
+    assign = (managerId) =>
+      request(app)
+        .put('/api/admin/relationship-managers/assignment')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ user: member.id, manager: managerId });
+  const first = await assign(manager.id);
+  assert.equal(first.status, 200);
+  assert.equal(String(first.body.data.assignment.manager), manager.id);
+  const second = await assign(replacement.id);
+  assert.equal(second.status, 200);
+  assert.equal(
+    await RelationshipManagerAssignment.countDocuments({ user: member._id }),
+    1
+  );
+  const own = await request(app)
+    .get('/api/relationship-manager')
+    .set(
+      'Authorization',
+      `Bearer ${jwt.sign({ sub: member.id }, process.env.JWT_SECRET)}`
+    );
+  assert.equal(own.body.data.included, true);
+  assert.equal(own.body.data.assignment.manager.email, 'manager-two@example.com');
+  const free = await User.create({
+      email: 'free@example.com',
+      password: 'Password123!'
+    }),
+    freeView = await request(app)
+      .get('/api/relationship-manager')
+      .set(
+        'Authorization',
+        `Bearer ${jwt.sign({ sub: free.id }, process.env.JWT_SECRET)}`
+      );
+  assert.equal(freeView.body.data.included, false);
+  assert.equal(freeView.body.data.assignment, null);
+});
+test('relationship manager assignment rejects ineligible members and inactive managers', async () => {
+  const admin = await User.create({
+      email: 'admin@example.com',
+      password: 'Password123!',
+      role: 'admin'
+    }),
+    manager = await User.create({
+      email: 'manager@example.com',
+      password: 'Password123!',
+      role: 'relationship_manager'
+    }),
+    suspendedManager = await User.create({
+      email: 'paused@example.com',
+      password: 'Password123!',
+      role: 'relationship_manager',
+      status: 'Suspended'
+    }),
+    member = await assistedMember('assisted@example.com'),
+    plainUser = await User.create({
+      email: 'plain@example.com',
+      password: 'Password123!'
+    }),
+    freeMember = await User.create({
+      email: 'free@example.com',
+      password: 'Password123!'
+    }),
+    token = jwt.sign({ sub: admin.id }, process.env.JWT_SECRET),
+    assign = (userId, managerId) =>
+      request(app)
+        .put('/api/admin/relationship-managers/assignment')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ user: userId, manager: managerId });
+  assert.equal((await assign(member.id, plainUser.id)).status, 400);
+  assert.equal((await assign(member.id, suspendedManager.id)).status, 400);
+  assert.equal((await assign(freeMember.id, manager.id)).status, 403);
+  assert.equal((await assign('not-an-id', manager.id)).status, 400);
+  assert.equal(
+    await RelationshipManagerAssignment.countDocuments({}),
+    0
+  );
+});
+test('relationship manager administration is limited to admins', async () => {
+  const moderator = await User.create({
+      email: 'moderator@example.com',
+      password: 'Password123!',
+      role: 'moderator'
+    }),
+    token = jwt.sign({ sub: moderator.id }, process.env.JWT_SECRET);
+  assert.equal(
+    (
+      await request(app)
+        .get('/api/admin/relationship-managers')
+        .set('Authorization', `Bearer ${token}`)
+    ).status,
+    403
+  );
+  assert.equal(
+    (
+      await request(app)
+        .put('/api/admin/relationship-managers/assignment')
+        .set('Authorization', `Bearer ${token}`)
+        .send({})
+    ).status,
+    403
+  );
 });
