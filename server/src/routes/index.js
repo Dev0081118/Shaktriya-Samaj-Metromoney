@@ -26,6 +26,7 @@ const member = [protect, maintenanceGuard];
 const staff = permit('admin', 'moderator', 'super_admin');
 const adminOnly = permit('admin', 'super_admin');
 const superAdmin = permit('super_admin');
+const managerOnly = permit('relationship_manager');
 
 router.get('/public/plans', publicPlans);
 router.get('/public/system-status', business.publicSystemStatus);
@@ -119,6 +120,14 @@ router.post('/profile-boost', ...member, business.activateBoost);
 router.get('/relationship-manager', ...member, business.myManager);
 
 router.get('/admin/overview', protect, staff, admin.overview);
+router.get('/admin/dashboard', protect, staff, admin.dashboard);
+router.get('/admin/analytics/revenue', protect, superAdmin, admin.revenue);
+router.get('/admin/customers', protect, adminOnly, admin.customers);
+router.get('/admin/customers/:id', protect, adminOnly, admin.customer);
+router.patch('/admin/customers/:id/status', protect, adminOnly, admin.updateUser);
+router.post('/admin/customers/:id/notes', protect, adminOnly, admin.addCustomerNote);
+router.get('/admin/search', protect, adminOnly, admin.search);
+router.get('/admin/system-health', protect, superAdmin, admin.systemHealth);
 router.get('/admin/profiles', protect, staff, admin.profiles);
 router.get('/admin/profiles/:id', protect, staff, admin.profile);
 router.patch('/admin/profiles/:id/:action', protect, staff, admin.moderate);
@@ -129,7 +138,7 @@ router.patch('/admin/reports/:id', protect, staff, admin.updateReport);
 router.get('/admin/subscriptions', protect, adminOnly, admin.subscriptions);
 router.get('/admin/support', protect, adminOnly, business.support);
 router.patch('/admin/support/:id', protect, adminOnly, business.updateSupport);
-router.get('/admin/payments', protect, superAdmin, business.payments);
+router.get('/admin/payments', protect, adminOnly, business.payments);
 router.get('/admin/plans', protect, superAdmin, business.allPlans);
 router.post('/admin/plans', protect, superAdmin, business.managePlans);
 router.patch('/admin/plans/:id', protect, superAdmin, business.managePlans);
@@ -148,5 +157,6 @@ router.put(
   adminOnly,
   business.assignManager
 );
+router.get('/manager', protect, managerOnly, admin.managerWorkspace);
 
 export default router;

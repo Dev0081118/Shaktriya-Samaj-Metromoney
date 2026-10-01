@@ -1,5 +1,7 @@
 # Kshatriya Matrimonial Society
 
+The repository includes a role-aware operations console. See [Admin Operations](docs/ADMIN_OPERATIONS.md) for permissions, customer-support workflows, payment/revenue rules, moderation, settings, and audit behavior.
+
 A web-first, privacy-conscious matrimonial platform for Kshatriya and Rajput families. The existing editorial homepage is preserved and extended with a complete React application foundation and a separate Express/MongoDB REST API.
 
 ## What is included

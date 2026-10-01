@@ -24,27 +24,33 @@ function Async({ path, children }) {
 }
 function Overview() {
   return (
-    <Async path="/admin/overview">
+    <Async path="/admin/dashboard">
       {(d) => (
         <>
           <header className="page-heading compact">
-            <p className="eyebrow">System overview</p>
-            <h1>Moderation dashboard</h1>
+            <p className="eyebrow">Operations control center</p>
+            <h1>Business overview</h1>
           </header>
           <div className="admin-metrics">
             {[
-              [d.users, 'Total users'],
-              [d.active, 'Active profiles'],
-              [d.pending, 'Pending review'],
-              [d.approvedThisWeek, 'Approved this week'],
-              [d.matches, 'Matches'],
-              [d.reports, 'Open reports']
+              [d.customers.total, 'Total customers'],
+              [d.profiles.active || 0, 'Active profiles'],
+              [d.subscriptions.active, 'Paid members'],
+              ...(d.finance ? [[`₹${d.finance.capturedRevenue.toLocaleString('en-IN')}`, 'Captured revenue']] : []),
+              [d.supportSafety.pendingModeration, 'Pending moderation'],
+              [d.supportSafety.openReports, 'Open reports'],
+              [d.supportSafety.openSupport, 'Support tickets'],
+              [d.subscriptions.expiringIn7Days, 'Expiring in 7 days']
             ].map(([n, l]) => (
               <article key={l}>
                 <strong>{n}</strong>
                 <span>{l}</span>
               </article>
             ))}
+          </div>
+          <div className="admin-dashboard-grid">
+            <section className="operations-card"><h2>Customer acquisition</h2><div className="metric-list"><span>Today <strong>{d.customers.today}</strong></span><span>This week <strong>{d.customers.week}</strong></span><span>This month <strong>{d.customers.month}</strong></span><span>Verified <strong>{d.customers.verified}</strong></span></div></section>
+            <section className="operations-card"><h2>Matrimonial activity</h2><div className="metric-list"><span>Interests <strong>{d.matrimonial.interests}</strong></span><span>Pending <strong>{d.matrimonial.pendingInterests}</strong></span><span>Matches <strong>{d.matrimonial.matches}</strong></span><span>Contact unlocks <strong>{d.matrimonial.contactUnlocks}</strong></span></div></section>
           </div>
           <Queue />
         </>

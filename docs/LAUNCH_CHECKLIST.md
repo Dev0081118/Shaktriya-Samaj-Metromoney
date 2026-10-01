@@ -19,3 +19,11 @@
 - [ ] Maintenance mode and rollback have been rehearsed.
 
 No unchecked item above should be treated as implicitly complete.
+# Operations readiness
+
+- [ ] Create and verify at least two active super-admin accounts.
+- [ ] Verify production environment secrets directly on the deployment platform; never enter them in admin settings.
+- [ ] Exercise member, moderator, admin, super-admin, and relationship-manager login routing.
+- [ ] Validate customer support, payment lookup, moderation, report resolution, and subscription expiry workflows against staging data.
+- [ ] Confirm indexes have been built after deployment and review slow-query telemetry.
+- [ ] Confirm Razorpay webhook signature validation and idempotency in production mode.

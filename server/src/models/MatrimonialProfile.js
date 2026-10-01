@@ -134,6 +134,8 @@ const schema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+schema.index({ visibility: 1, createdAt: -1 });
+schema.index({ lastActiveAt: -1 });
 schema.pre('validate', async function () {
   if (!this.profileId) {
     let counter = await Counter.findById('profileId');

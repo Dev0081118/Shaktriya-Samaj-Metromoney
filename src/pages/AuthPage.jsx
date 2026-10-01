@@ -1,8 +1,9 @@
 import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { getHomeRouteForRole } from '../utils/roleRoutes';
 
 export default function AuthPage({ mode }) {
   const register = mode === 'register',
@@ -22,6 +23,10 @@ export default function AuthPage({ mode }) {
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
     [resetSent, setResetSent] = useState(false);
+  useEffect(() => {
+    if (auth.user && !register && !forgot)
+      navigate(getHomeRouteForRole(auth.user.role), { replace: true });
+  }, [auth.user, forgot, navigate, register]);
   const update = (key, value) =>
     setForm((current) => ({ ...current, [key]: value }));
   const submit = async (event) => {
@@ -50,8 +55,11 @@ export default function AuthPage({ mode }) {
           setMessage('Password reset. You can now sign in.');
         }
       } else {
-        await (register ? auth.register(form) : auth.login(form));
-        navigate(register ? '/onboarding' : '/dashboard');
+        const result = await (register ? auth.register(form) : auth.login(form));
+        navigate(
+          register ? '/onboarding' : getHomeRouteForRole(result.data.user.role),
+          { replace: true }
+        );
       }
     } catch (caught) {
       setError(caught.message);

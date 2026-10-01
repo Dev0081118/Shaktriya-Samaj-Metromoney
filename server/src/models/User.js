@@ -36,6 +36,7 @@ const schema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+schema.index({ role: 1, status: 1, createdAt: -1 });
 schema.pre('save', async function () {
   if (this.isModified('password'))
     this.password = await bcrypt.hash(this.password, 12);

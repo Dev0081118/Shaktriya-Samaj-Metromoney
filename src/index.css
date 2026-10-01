@@ -1155,6 +1155,8 @@ a {
   display: grid;
   margin-top: 55px;
 }
+.admin-shell aside nav section { display: grid; margin-bottom: 18px; }
+.admin-shell aside nav section > small { color: #b89a65; font-size: 8px; letter-spacing: .12em; text-transform: uppercase; padding: 0 12px 5px; }
 .admin-shell aside nav a {
   color: #ffffff85;
   padding: 12px;
@@ -1164,11 +1166,33 @@ a {
   color: white;
   background: #ffffff0d;
 }
-.admin-shell aside > a:last-child {
+.admin-account {
   margin-top: auto;
+  border-top: 1px solid #ffffff18;
+  padding-top: 18px;
+}
+.admin-identity {
+  display: block;
   color: #ffffff80;
   font-size: 9px;
+  overflow-wrap: anywhere;
 }
+.admin-identity small { display: block; margin-top: 4px; text-transform: uppercase; color: #b89a65; }
+.admin-logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  border: 1px solid #ffffff25;
+  background: #ffffff0a;
+  color: #fff;
+  padding: 10px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+.admin-logout:hover { background: #ffffff14; border-color: #b89a65; }
 .admin-shell > main {
   padding: 55px;
 }
@@ -1215,6 +1239,41 @@ a {
   font-size: 9px;
   color: var(--muted);
 }
+.admin-row { color: inherit; text-decoration: none; }
+.admin-filters { display: flex; gap: 12px; margin: 24px 0; }
+.admin-filters input { flex: 1; }
+.admin-filters input, .admin-filters select, .note-form textarea, .note-form select { border: 1px solid var(--line); background: var(--paper); padding: 13px; font: inherit; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 20px; }
+.pagination button { border: 1px solid var(--line); background: transparent; padding: 8px 12px; }
+.customer-grid, .admin-dashboard-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 24px; }
+.operations-card { background: var(--paper); border: 1px solid var(--line); padding: 24px; }
+.operations-card h2, .admin-table h2 { font: 500 24px 'Cormorant Garamond'; }
+.operations-card dl { display: grid; gap: 10px; }
+.operations-card dl div, .metric-list span { display: flex; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.operations-card dt { color: var(--muted); text-transform: capitalize; }
+.operations-card dd { text-align: right; }
+.metric-list { display: grid; gap: 12px; }
+.note-form { display: grid; gap: 10px; margin: 15px 0 25px; }
+.note-form textarea { min-height: 90px; resize: vertical; }
+.customer-note { border-top: 1px solid var(--line); padding: 15px 0; }
+.customer-note p { margin: 6px 0; }
+.customer-note small { color: var(--muted); }
+.status-chip { border: 1px solid #8d6e45; color: #694c26; border-radius: 99px; padding: 5px 9px; font-size: 9px; text-transform: uppercase; }
+.manager-shell { min-height: 100vh; background: var(--ivory); }
+.admin-topbar { display: flex; justify-content: space-between; align-items: center; background: #211817; color: white; padding: 18px 5vw; }
+.admin-topbar > div { display: flex; align-items: center; gap: 16px; }
+.admin-topbar small { display: block; color: #c5aa77; }
+.admin-workspace { padding: 45px 5vw; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: #1d1110aa; }
+.confirmation-dialog { width: min(480px, 100%); background: var(--paper); border: 1px solid #b89a65; padding: 28px; box-shadow: 0 25px 80px #0005; }
+.confirmation-dialog h2 { font: 500 30px 'Cormorant Garamond'; margin-top: 0; }
+.confirmation-dialog label, .confirmation-dialog textarea { display: block; width: 100%; }
+.confirmation-dialog textarea { min-height: 90px; margin-top: 8px; border: 1px solid var(--line); padding: 12px; }
+.revenue-chart { margin-top: 24px; }
+.bar-chart { height: 240px; display: flex; align-items: end; gap: 5px; padding-top: 20px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+.bar-column { min-width: 18px; height: 100%; display: flex; flex: 1; flex-direction: column; justify-content: end; align-items: center; gap: 5px; }
+.bar-column span { width: 100%; max-width: 30px; min-height: 4px; background: linear-gradient(#8d2638, #4b1520); }
+.bar-column small { font-size: 7px; color: var(--muted); transform: rotate(-45deg); margin-bottom: -16px; }
 @media (max-width: 1024px) {
   .profile-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1369,15 +1428,18 @@ a {
     overflow: auto;
     margin: 20px 0;
   }
-  .admin-shell aside > a:last-child {
-    display: none;
-  }
+  .admin-shell aside nav section { display: contents; }
+  .admin-account { margin-top: 12px; display: flex; align-items: center; gap: 15px; }
+  .admin-identity { flex: 1; }
+  .admin-logout { width: auto; margin-top: 0; }
   .admin-shell > main {
     padding: 30px 15px;
   }
   .admin-metrics {
     grid-template-columns: 1fr 1fr;
   }
+  .customer-grid, .admin-dashboard-grid { grid-template-columns: 1fr; }
+  .admin-filters { flex-direction: column; }
   .admin-row {
     grid-template-columns: auto 1fr auto;
   }

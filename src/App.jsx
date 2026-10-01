@@ -17,6 +17,10 @@ import PublicInfoPage from "./pages/PublicInfoPage";
 import ContactPage from "./pages/ContactPage";
 import MemberBenefitsPage from "./pages/MemberBenefitsPage";
 import ManagerOperationsPage from "./pages/admin/ManagerOperationsPage";
+import ManagerWorkspacePage from "./pages/admin/ManagerWorkspacePage";
+import CustomerOperationsPage from "./pages/admin/CustomerOperationsPage";
+import RevenuePage from "./pages/admin/RevenuePage";
+import { getHomeRouteForRole } from "./utils/roleRoutes";
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -24,7 +28,7 @@ function ProtectedRoute({ children, roles }) {
     return <div className="app-loading">Preparing your private space…</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (roles && !roles.includes(user.role))
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getHomeRouteForRole(user.role)} replace />;
   return children;
 }
 
@@ -53,14 +57,14 @@ export default function App() {
       <Route
         path="/onboarding"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute roles={["member"]}>
             <OnboardingPage />
           </ProtectedRoute>
         }
       />
       <Route
         element={
-          <ProtectedRoute>
+          <ProtectedRoute roles={["member"]}>
             <MemberLayout />
           </ProtectedRoute>
         }
@@ -92,8 +96,40 @@ export default function App() {
       <Route
         path="/my-profile/biodata"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute roles={["member"]}>
             <BiodataPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/manager/*"
+        element={
+          <ProtectedRoute roles={["relationship_manager"]}>
+            <ManagerWorkspacePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/customers/*"
+        element={
+          <ProtectedRoute roles={["admin", "super_admin"]}>
+            <CustomerOperationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/revenue"
+        element={
+          <ProtectedRoute roles={["super_admin"]}>
+            <RevenuePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/system-health"
+        element={
+          <ProtectedRoute roles={["super_admin"]}>
+            <AdminOperationsPage type="health" />
           </ProtectedRoute>
         }
       />
@@ -124,7 +160,7 @@ export default function App() {
       <Route
         path="/admin/payments"
         element={
-          <ProtectedRoute roles={["super_admin"]}>
+          <ProtectedRoute roles={["admin", "super_admin"]}>
             <AdminOperationsPage type="payments" />
           </ProtectedRoute>
         }

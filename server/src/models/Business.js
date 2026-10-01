@@ -176,6 +176,38 @@ const managerAssignmentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+const customerNoteSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true
+    },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    text: { type: String, required: true, trim: true, maxLength: 2000 },
+    category: {
+      type: String,
+      enum: [
+        'General',
+        'Support',
+        'Safety',
+        'Payment',
+        'Verification',
+        'Relationship Manager'
+      ],
+      default: 'General'
+    }
+  },
+  { timestamps: true }
+);
+customerNoteSchema.index({ user: 1, createdAt: -1 });
+supportTicketSchema.index({ status: 1, priority: 1, assignedTo: 1, createdAt: -1 });
+auditSchema.index({ actor: 1, action: 1, entityType: 1, createdAt: -1 });
 export const ContactRequest = mongoose.model(
   'ContactRequest',
   contactRequestSchema
@@ -198,3 +230,4 @@ export const RelationshipManagerAssignment = mongoose.model(
   'RelationshipManagerAssignment',
   managerAssignmentSchema
 );
+export const CustomerNote = mongoose.model('CustomerNote', customerNoteSchema);

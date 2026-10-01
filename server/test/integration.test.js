@@ -264,6 +264,34 @@ test('the last active super admin cannot disable themselves', async () => {
       .send({ status: 'Suspended' });
   assert.equal(response.status, 409);
 });
+test('admin APIs enforce operational roles', async () => {
+  const [member, moderator, admin] = await User.create([
+      { email: 'member-role@example.com', password: 'Password123!' },
+      { email: 'moderator-role@example.com', password: 'Password123!', role: 'moderator' },
+      { email: 'admin-role@example.com', password: 'Password123!', role: 'admin' }
+    ]),
+    token = (user) => jwt.sign({ sub: user.id }, process.env.JWT_SECRET);
+  assert.equal((await request(app).get('/api/admin/dashboard').set('Authorization', `Bearer ${token(member)}`)).status, 403);
+  assert.equal((await request(app).get('/api/admin/customers').set('Authorization', `Bearer ${token(moderator)}`)).status, 403);
+  assert.equal((await request(app).get('/api/admin/customers').set('Authorization', `Bearer ${token(admin)}`)).status, 200);
+});
+test('captured revenue excludes created and failed payments', async () => {
+  const root = await User.create({ email: 'revenue@example.com', password: 'Password123!', role: 'super_admin' }),
+    member = await User.create({ email: 'revenue-member@example.com', password: 'Password123!' }),
+    plan = await Plan.create({ name: 'Premium', slug: 'revenue-premium', price: 1000, durationDays: 30 }),
+    token = jwt.sign({ sub: root.id }, process.env.JWT_SECRET);
+  await Payment.create([
+    { user: member._id, plan: plan._id, amount: 1000, status: 'Paid', verifiedAt: new Date() },
+    { user: member._id, plan: plan._id, amount: 5000, status: 'Created' },
+    { user: member._id, plan: plan._id, amount: 3000, status: 'Failed' },
+    { user: member._id, plan: plan._id, amount: 200, status: 'Refunded' }
+  ]);
+  const response = await request(app).get('/api/admin/analytics/revenue?range=30d').set('Authorization', `Bearer ${token}`);
+  assert.equal(response.status, 200);
+  assert.equal(response.body.data.totalCaptured, 1000);
+  assert.equal(response.body.data.totalRefunded, 200);
+  assert.equal(response.body.data.netCaptured, 800);
+});
 const assistedMember = async (email) => {
   const member = await User.create({ email, password: 'Password123!' });
   await Subscription.create({

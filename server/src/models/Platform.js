@@ -116,6 +116,7 @@ const subscription = new mongoose.Schema(
   },
   { timestamps: true }
 );
+subscription.index({ user: 1, status: 1, endsAt: -1 });
 const payment = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -136,6 +137,7 @@ const payment = new mongoose.Schema(
   },
   { timestamps: true }
 );
+payment.index({ user: 1, status: 1, createdAt: -1 });
 export const Notification = mongoose.model('Notification', notification);
 export const Report = mongoose.model('Report', report);
 export const Block = mongoose.model('Block', block);

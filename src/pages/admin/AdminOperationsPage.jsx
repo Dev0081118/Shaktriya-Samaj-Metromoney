@@ -31,6 +31,7 @@ export default function AdminOperationsPage({ type }) {
       payments: '/admin/payments',
       settings: '/admin/settings',
       audit: '/admin/audit-logs'
+      ,health: '/admin/system-health'
     };
   const load = () =>
     api(paths[type])
@@ -121,6 +122,8 @@ export default function AdminOperationsPage({ type }) {
               <h1>
                 {type === 'audit'
                   ? 'Audit logs'
+                  : type === 'health'
+                    ? 'System health'
                   : type[0].toUpperCase() + type.slice(1)}
               </h1>
             </header>
@@ -357,6 +360,17 @@ export default function AdminOperationsPage({ type }) {
                     ))}
                   </section>
                 )}
+              </>
+            )}
+            {type === 'health' && (
+              <>
+                <div className="admin-metrics">
+                  <article><strong>{data.api.status}</strong><span>API · {data.api.environment}</span></article>
+                  <article><strong>{data.database.status}</strong><span>MongoDB</span></article>
+                  <article><strong>{Math.floor(data.api.uptimeSeconds / 60)}m</strong><span>API uptime</span></article>
+                </div>
+                <section className="admin-table"><h2>Provider readiness</h2>{Object.entries(data.providers).map(([key, provider]) => <div className="admin-row" key={key}><div><strong>{provider.name}</strong><small>{key}</small></div><span className="status-chip">{provider.status}</span></div>)}</section>
+                <section className="operations-card"><h2>Operational switches</h2><div className="metric-list">{Object.entries(data.platform).map(([key, value]) => <span key={key}>{key}<strong>{value ? 'Enabled' : 'Disabled'}</strong></span>)}</div></section>
               </>
             )}
           </>
