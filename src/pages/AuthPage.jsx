@@ -70,7 +70,7 @@ export default function AuthPage({ mode }) {
     }
   };
   return (
-    <div className="auth-shell">
+    <div className={`auth-shell auth-${mode}`}>
       <section className="auth-visual">
         <Link to="/" className="back-home">
           <ArrowLeft size={16} /> {t('redesign:auth.home')}

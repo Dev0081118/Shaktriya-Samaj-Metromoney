@@ -12,9 +12,9 @@ export default function HeritageIntro() {
           <div className="relative mx-auto w-full max-w-[500px] lg:mx-0">
             <div className="arch-image overflow-hidden">
               <img
-                src="https://i.pinimg.com/originals/d0/23/0b/d0230ba0d769eeb3319158428c3c3fda.jpg"
+                src="/assets/public/heritage-arches.webp"
                 loading="lazy"
-                alt="Rajput heritage architecture"
+                alt="Carved sandstone arches overlooking a heritage courtyard"
                 className="h-[520px] w-full object-cover sm:h-[600px] lg:h-[650px]"
               />
             </div>

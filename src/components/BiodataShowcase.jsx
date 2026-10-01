@@ -28,8 +28,8 @@ export default function BiodataShowcase() {
             </Link>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[430px]">
-            <div className="absolute -left-14 top-12 h-[520px] w-[360px] rotate-[-6deg] bg-[#c4a078]" />
+          <div className="biodata-showcase-visual relative mx-auto w-full max-w-[430px]">
+            <img className="biodata-editorial-backdrop" src="/assets/public/biodata-editorial.webp" alt="Ivory matrimonial stationery with a fountain pen" loading="lazy" />
 
             <article className="relative min-h-[560px] border border-[#d5c5b3] bg-[#fffdf9] px-9 py-10 shadow-[0_25px_60px_rgba(54,34,25,.16)]">
               <div className="text-center">
@@ -48,7 +48,7 @@ export default function BiodataShowcase() {
 
               <div className="mx-auto mt-7 h-40 w-32 overflow-hidden rounded-t-[80px]">
                 <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600"
+                  src="/assets/member/profile-devika.webp"
                   loading="lazy"
                   alt=""
                   className="h-full w-full object-cover"

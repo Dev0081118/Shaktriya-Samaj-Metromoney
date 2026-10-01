@@ -126,7 +126,7 @@ export default function DiscoverPage() {
   };
   return (
     <>
-      <header className="page-heading compact">
+      <header className="page-heading compact discover-heading">
         <p className="eyebrow">Preference-based discovery</p>
         <h1>
           Discover with <em>intention.</em>

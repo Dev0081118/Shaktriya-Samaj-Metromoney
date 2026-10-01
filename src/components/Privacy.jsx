@@ -8,7 +8,7 @@ export default function Privacy() {
     { icon: Fingerprint, title: t('home.privacyItems.verifiedTitle'), body: t('home.privacyItems.verifiedBody') }
   ];
   return (
-    <section className="bg-[#641e25] py-28 text-white lg:py-36">
+    <section className="home-privacy bg-[#641e25] py-28 text-white lg:py-36">
       <div className="page-container">
         <div className="grid gap-16 lg:grid-cols-2">
           <div className="max-w-xl">

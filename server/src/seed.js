@@ -40,7 +40,7 @@ const profileDefs = [
     'Rajkot',
     'Entrepreneur',
     'MBA',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900'
+    '/assets/member/profile-rajveer.webp'
   ],
   [
     'Devika',
@@ -48,7 +48,7 @@ const profileDefs = [
     'Ahmedabad',
     'Architect',
     'M.Arch',
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900'
+    '/assets/member/profile-devika.webp'
   ],
   [
     'Nandini',
@@ -56,7 +56,7 @@ const profileDefs = [
     'Udaipur',
     'Doctor',
     'MD',
-    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900'
+    '/assets/member/profile-nandini.webp'
   ]
 ];
 const profiles = [];
