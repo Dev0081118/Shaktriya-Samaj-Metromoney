@@ -17,18 +17,14 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api, assetUrl } from '../services/api';
+import { useTranslation } from 'react-i18next';
 
 const links = [
-  ['/dashboard', 'Dashboard', Home],
-  ['/discover', 'Discover', Compass],
-  ['/interests', 'Interests', HeartHandshake],
-  ['/matches', 'Matches', UserRound],
-  ['/shortlisted', 'Shortlisted', Bookmark],
-  ['/notifications', 'Notifications', Bell],
-  ['/my-profile', 'My Profile', UserRound],
-  ['/membership', 'Membership', Crown],
-  ['/benefits', 'Plan benefits', Crown],
-  ['/settings', 'Settings', Settings]
+  ['/dashboard', 'nav.dashboard', Home], ['/discover', 'nav.discover', Compass],
+  ['/interests', 'nav.interests', HeartHandshake], ['/matches', 'nav.matches', UserRound],
+  ['/shortlisted', 'nav.shortlisted', Bookmark], ['/notifications', 'nav.notifications', Bell],
+  ['/my-profile', 'nav.myProfile', UserRound], ['/membership', 'nav.membership', Crown],
+  ['/benefits', 'nav.benefits', Crown], ['/settings', 'nav.settings', Settings]
 ];
 export default function MemberLayout() {
   const [open, setOpen] = useState(false),
@@ -37,7 +33,8 @@ export default function MemberLayout() {
     [plan, setPlan] = useState('Free'),
     [system, setSystem] = useState(null);
   const { user, logout } = useAuth(),
-    navigate = useNavigate();
+    navigate = useNavigate(),
+    { t } = useTranslation();
   const loadMembership = useCallback(
     () =>
       api('/entitlements')
@@ -73,20 +70,19 @@ export default function MemberLayout() {
     return (
       <div className="maintenance-screen">
         <Wrench size={38} />
-        <p className="eyebrow">Scheduled care</p>
+        <p className="eyebrow">{t('member.scheduledCare')}</p>
         <h1>
           {system.platformName || 'Kshatriya Matrimonial Society'} is briefly
-          unavailable.
+          {t('member.maintenanceTitle')}
         </h1>
         <p>
-          We are completing maintenance to keep your private member experience
-          dependable. Please return shortly.
+          {t('member.maintenanceBody')}
         </p>
         {system.supportEmail && (
           <a href={`mailto:${system.supportEmail}`}>{system.supportEmail}</a>
         )}
         <button className="outline-button" onClick={signOut}>
-          <LogOut size={16} /> Sign out
+          <LogOut size={16} /> {t('actions.signOut')}
         </button>
       </div>
     );
@@ -95,7 +91,7 @@ export default function MemberLayout() {
       <aside className={`member-sidebar ${open ? 'open' : ''}`}>
         <div className="member-brand">
           <NavLink to="/">
-            KSHATRIYA<small>Matrimonial Society</small>
+            KSHATRIYA<small>{t('brand.society')}</small>
           </NavLink>
           <button
             aria-label="Close menu"
@@ -114,17 +110,17 @@ export default function MemberLayout() {
             </span>
           )}
           <div>
-            <strong>{profile?.firstName || 'Complete your profile'}</strong>
+            <strong>{profile?.firstName || t('member.completeProfile')}</strong>
             <small>
-              {profile?.profileId || 'Member account'} · {plan}
+              {profile?.profileId || t('member.memberAccount')} · {plan}
             </small>
           </div>
         </div>
         <nav>
-          {links.map(([to, label, Icon]) => (
+          {links.map(([to, key, Icon]) => (
             <NavLink onClick={() => setOpen(false)} key={to} to={to}>
               <Icon size={17} />
-              {label}
+              {t(key)}
               {to === '/notifications' && unread > 0 && (
                 <b className="nav-count">{unread}</b>
               )}
@@ -132,7 +128,7 @@ export default function MemberLayout() {
           ))}
         </nav>
         <button className="sidebar-logout" onClick={signOut}>
-          <LogOut size={17} /> Sign out
+          <LogOut size={17} /> {t('actions.signOut')}
         </button>
       </aside>
       <div className="member-main">
@@ -149,15 +145,15 @@ export default function MemberLayout() {
             onClick={() => navigate('/discover')}
           >
             <Search size={16} />
-            <span>Search the community</span>
+            <span>{t('member.searchCommunity')}</span>
           </button>
           <div className="topbar-actions">
-            <NavLink aria-label="Notifications" to="/notifications">
+            <NavLink aria-label={t('nav.notifications')} to="/notifications">
               <Bell size={18} />
               {unread > 0 && <i />}
             </NavLink>
             <NavLink to="/membership" className="upgrade-link">
-              {plan === 'Free' ? 'Explore membership' : plan}
+              {plan === 'Free' ? t('member.exploreMembership') : plan}
             </NavLink>
           </div>
         </header>

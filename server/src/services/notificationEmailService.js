@@ -10,7 +10,7 @@ export async function emailUser(
   userId,
   { category, subject, template, data = {}, security = false }
 ) {
-  const user = await User.findById(userId).select('email');
+  const user = await User.findById(userId).select('email preferredLanguage');
   if (!user?.email) return false;
   if (!security && preferenceFor[category]) {
     const preferences = await NotificationPreference.findOne({
@@ -18,6 +18,12 @@ export async function emailUser(
     }).lean();
     if (preferences?.[preferenceFor[category]] === false) return false;
   }
-  sendEmailSafely({ to: user.email, subject, template, data });
+  sendEmailSafely({
+    to: user.email,
+    subject,
+    template,
+    data,
+    language: user.preferredLanguage || 'en'
+  });
   return true;
 }

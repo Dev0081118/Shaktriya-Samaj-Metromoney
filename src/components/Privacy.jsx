@@ -1,41 +1,25 @@
 import { Eye, Fingerprint, LockKeyhole } from "lucide-react";
-
-const privacyItems = [
-  {
-    icon: Eye,
-    title: "Control your photographs",
-    body: "Decide who can view personal photos instead of showing everything publicly."
-  },
-  {
-    icon: LockKeyhole,
-    title: "Keep contact details private",
-    body: "Mobile and WhatsApp details stay protected until the appropriate stage."
-  },
-  {
-    icon: Fingerprint,
-    title: "Verified membership",
-    body: "Verification and moderation help maintain a more trustworthy community."
-  }
-];
+import { useTranslation } from "react-i18next";
 
 export default function Privacy() {
+  const { t } = useTranslation(), privacyItems = [
+    { icon: Eye, title: t('home.privacyItems.photosTitle'), body: t('home.privacyItems.photosBody') },
+    { icon: LockKeyhole, title: t('home.privacyItems.contactTitle'), body: t('home.privacyItems.contactBody') },
+    { icon: Fingerprint, title: t('home.privacyItems.verifiedTitle'), body: t('home.privacyItems.verifiedBody') }
+  ];
   return (
     <section className="bg-[#641e25] py-28 text-white lg:py-36">
       <div className="page-container">
         <div className="grid gap-16 lg:grid-cols-2">
           <div className="max-w-xl">
-            <p className="eyebrow text-[#d4a875]">Privacy is not premium.</p>
+            <p className="eyebrow text-[#d4a875]">{t('home.privacyEyebrow')}</p>
 
             <h2 className="mt-6 font-display text-[56px] leading-[0.98] sm:text-[70px]">
-              Your story.
-              <br />
-              <span className="italic text-[#dab182]">Your control.</span>
+              {t('home.privacyTitle')}
             </h2>
 
             <p className="mt-8 max-w-md text-[15px] leading-8 text-white/60">
-              Matrimonial information is deeply personal. Our platform is
-              designed so that privacy is part of the foundation—not an
-              afterthought.
+              {t('home.privacyBody')}
             </p>
           </div>
 

@@ -45,7 +45,7 @@ test('keeps the previous status and reports the error when a report update fails
   api.mockResolvedValueOnce({ data: { reports: [report] } });
   api.mockRejectedValueOnce(new Error('Invalid report status.'));
   renderReports();
-  const select = await screen.findByRole('combobox');
+  const select = await screen.findByDisplayValue('Open');
   fireEvent.change(select, { target: { value: 'Reviewed' } });
   await waitFor(() =>
     expect(notify).toHaveBeenCalledWith('Invalid report status.', 'error')

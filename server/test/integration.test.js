@@ -45,6 +45,15 @@ test('registration records explicit legal consent versions', async () => {
   assert.equal(user.acceptedTermsVersion, 'test-v1');
   assert.ok(user.acceptedAt);
 });
+test('preferred language accepts supported values and persists', async () => {
+  const user = await User.create({ email: 'language@example.com', password: 'Password123!' }),
+    token = jwt.sign({ sub: user.id }, process.env.JWT_SECRET);
+  const saved = await request(app).patch('/api/account/preferences/language').set('Authorization', `Bearer ${token}`).send({ preferredLanguage: 'gu' });
+  assert.equal(saved.status, 200);
+  assert.equal((await User.findById(user._id)).preferredLanguage, 'gu');
+  const rejected = await request(app).patch('/api/account/preferences/language').set('Authorization', `Bearer ${token}`).send({ preferredLanguage: 'fr' });
+  assert.equal(rejected.status, 400);
+});
 test('registration is rejected without consent', async () => {
   const response = await request(app).post('/api/auth/register').send({
     email: 'member@example.com',

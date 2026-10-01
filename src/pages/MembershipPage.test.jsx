@@ -39,6 +39,6 @@ test('renders server-provided plan benefits and public signup actions', async ()
   ).toBeInTheDocument();
   expect(screen.getByText('Advanced search')).toBeInTheDocument();
   expect(
-    screen.getAllByRole('button', { name: 'Create profile' })
+    screen.getAllByRole('button', { name: /Create profile/i })
   ).toHaveLength(2);
 });

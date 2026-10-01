@@ -4,6 +4,7 @@ import { api, assetUrl } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import AdminNav from '../../components/AdminNav';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 function Async({ path, children }) {
   const [data, setData] = useState(null),
     [error, setError] = useState('');
@@ -36,7 +37,7 @@ function Overview() {
               [d.customers.total, 'Total customers'],
               [d.profiles.active || 0, 'Active profiles'],
               [d.subscriptions.active, 'Paid members'],
-              ...(d.finance ? [[`₹${d.finance.capturedRevenue.toLocaleString('en-IN')}`, 'Captured revenue']] : []),
+              ...(d.finance ? [[formatCurrency(d.finance.capturedRevenue), 'Captured revenue']] : []),
               [d.supportSafety.pendingModeration, 'Pending moderation'],
               [d.supportSafety.openReports, 'Open reports'],
               [d.supportSafety.openSupport, 'Support tickets'],
@@ -82,7 +83,7 @@ function Queue() {
                     {p.profileId} • {p.location?.city}
                   </small>
                 </div>
-                <time>{new Date(p.createdAt).toLocaleDateString('en-IN')}</time>
+                <time>{formatDate(p.createdAt)}</time>
                 <button
                   onClick={() => nav(`/admin/profiles/${p._id}`)}
                   className="outline-button"

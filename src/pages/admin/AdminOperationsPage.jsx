@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import AdminNav from '../../components/AdminNav';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 
 const emptyPlan = {
   name: '',
@@ -141,7 +142,7 @@ export default function AdminOperationsPage({ type }) {
                       </small>
                     </div>
                     <time>
-                      {new Date(ticket.createdAt).toLocaleDateString('en-IN')}
+                      {formatDate(ticket.createdAt)}
                     </time>
                     <select
                       value={ticket.status}
@@ -254,7 +255,7 @@ export default function AdminOperationsPage({ type }) {
                           {plan.active ? 'Active' : 'Inactive'}
                         </small>
                       </div>
-                      <time>₹{plan.price.toLocaleString('en-IN')}</time>
+                      <time>{formatCurrency(plan.price)}</time>
                       <button
                         className="outline-button"
                         onClick={() =>
@@ -285,7 +286,7 @@ export default function AdminOperationsPage({ type }) {
                       </small>
                     </div>
                     <time>{payment.status}</time>
-                    <span>₹{payment.amount.toLocaleString('en-IN')}</span>
+                    <span>{formatCurrency(payment.amount)}</span>
                   </div>
                 ))}
               </section>
@@ -302,7 +303,7 @@ export default function AdminOperationsPage({ type }) {
                       </small>
                     </div>
                     <time>
-                      {new Date(log.createdAt).toLocaleString('en-IN')}
+                      {formatDate(log.createdAt, undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                     </time>
                   </div>
                 ))}

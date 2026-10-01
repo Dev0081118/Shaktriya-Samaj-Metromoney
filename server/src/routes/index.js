@@ -38,6 +38,7 @@ router.post('/auth/forgot-password', business.forgotPassword);
 router.post('/auth/reset-password', business.resetPassword);
 router.post('/auth/verify-otp', ...member, auth.confirmOtp);
 router.get('/auth/me', protect, auth.me);
+router.patch('/account/preferences/language', protect, auth.saveLanguage);
 router.patch('/auth/change-password', ...member, auth.changePassword);
 router.post('/auth/logout', protect, (_q, res) =>
   res.json({ success: true, message: 'Signed out.', data: {} })

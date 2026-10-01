@@ -4,6 +4,7 @@ import { Link, Route, Routes, useParams, useSearchParams } from 'react-router-do
 import AdminNav from '../../components/AdminNav';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 
 function CustomerList() {
   const [params, setParams] = useSearchParams(), [data, setData] = useState(null), [error, setError] = useState('');
@@ -20,7 +21,7 @@ function CustomerList() {
       {data.items.map((item) => <Link className="admin-row" to={`/admin/customers/${item._id}`} key={item._id}>
         <span className="avatar">{item.profile?.firstName?.[0] || item.email?.[0]?.toUpperCase()}</span>
         <div><strong>{item.profile ? `${item.profile.firstName} ${item.profile.lastName || ''}` : item.email}</strong><small>{item.profile?.profileId || 'No profile'} · {item.email} · {item.phone || 'No phone'}</small></div>
-        <time>{new Date(item.createdAt).toLocaleDateString('en-IN')}</time>
+        <time>{formatDate(item.createdAt)}</time>
         <span className="status-chip">{item.status}</span>
       </Link>)}
       {!data.items.length && <p className="empty-inline">No customers match these filters.</p>}
@@ -29,7 +30,7 @@ function CustomerList() {
   </>;
 }
 
-const date = (value) => value ? new Date(value).toLocaleString('en-IN') : '—';
+const date = (value) => formatDate(value, undefined, { dateStyle: 'medium', timeStyle: 'short' });
 function CustomerDetail() {
   const { userId } = useParams(), notify = useToast(), [data, setData] = useState(null), [text, setText] = useState(''), [category, setCategory] = useState('General'), [pendingStatus, setPendingStatus] = useState(''), [reason, setReason] = useState('');
   const load = () => api(`/admin/customers/${userId}`).then((r) => setData(r.data)).catch((e) => notify(e.message, 'error'));
@@ -48,7 +49,7 @@ function CustomerDetail() {
       <section className="operations-card"><h2>Matrimonial activity</h2><dl>{Object.entries(data.activity).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></section>
       <section className="operations-card"><h2>Membership</h2>{data.subscriptions.length ? data.subscriptions.map((s) => <p key={s._id}><strong>{s.planNameSnapshot || s.plan?.name}</strong><br />{s.status} · {date(s.endsAt)}</p>) : <p>No subscription history.</p>}</section>
     </div>
-    <section className="admin-table"><h2>Payments</h2>{data.payments.map((p) => <div className="admin-row" key={p._id}><div><strong>{p.plan?.name || 'Plan'}</strong><small>{p.providerOrderId || 'No provider order'} · {p.providerPaymentId || 'No payment ID'}</small></div><time>{date(p.createdAt)}</time><span>₹{p.amount?.toLocaleString('en-IN')} · {p.status}</span></div>)}{!data.payments.length && <p className="empty-inline">No payments.</p>}</section>
+    <section className="admin-table"><h2>Payments</h2>{data.payments.map((p) => <div className="admin-row" key={p._id}><div><strong>{p.plan?.name || 'Plan'}</strong><small>{p.providerOrderId || 'No provider order'} · {p.providerPaymentId || 'No payment ID'}</small></div><time>{date(p.createdAt)}</time><span>{formatCurrency(p.amount)} · {p.status}</span></div>)}{!data.payments.length && <p className="empty-inline">No payments.</p>}</section>
     <section className="admin-table"><h2>Support tickets</h2>{data.tickets.map((t) => <div className="admin-row" key={t._id}><div><strong>{t.category} · {t.priority}</strong><small>{t.message}</small></div><time>{date(t.createdAt)}</time><span>{t.status}</span></div>)}{!data.tickets.length && <p className="empty-inline">No support tickets.</p>}</section>
     <section className="operations-card"><h2>Internal customer notes</h2><form className="note-form" onSubmit={addNote}><select value={category} onChange={(e) => setCategory(e.target.value)}>{['General', 'Support', 'Safety', 'Payment', 'Verification', 'Relationship Manager'].map((x) => <option key={x}>{x}</option>)}</select><textarea required maxLength="2000" value={text} onChange={(e) => setText(e.target.value)} placeholder="Add an internal operational note…" /><button className="primary-button">Add note</button></form>{data.notes.map((n) => <div className="customer-note" key={n._id}><strong>{n.category}</strong><p>{n.text}</p><small>{n.author?.email} · {date(n.createdAt)}</small></div>)}</section>
   </>;

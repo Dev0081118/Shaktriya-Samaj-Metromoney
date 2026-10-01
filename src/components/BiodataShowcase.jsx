@@ -1,29 +1,29 @@
 import { Download } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function BiodataShowcase() {
+  const { t } = useTranslation();
   return (
     <section className="bg-[#f5f0e9] py-28 lg:py-40">
       <div className="page-container">
         <div className="grid items-center gap-20 lg:grid-cols-2">
           <div>
-            <p className="eyebrow">Digital Biodata</p>
+            <p className="eyebrow">{t('home.biodataEyebrow')}</p>
 
             <h2 className="mt-6 font-display text-[55px] leading-[1.02] text-[#271816]">
-              A matrimonial biodata worth sharing.
+              {t('home.biodataTitle')}
             </h2>
 
             <p className="mt-7 max-w-lg text-[15px] leading-8 text-[#78685f]">
-              Create a beautifully designed matrimonial biodata automatically
-              from the information in your profile and share it securely with
-              families.
+              {t('home.biodataBody')}
             </p>
 
             <Link
               to="/register"
               className="mt-9 flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#681d25]"
             >
-              Explore digital biodata
+              {t('home.biodataAction')}
               <Download size={16} />
             </Link>
           </div>
@@ -34,7 +34,7 @@ export default function BiodataShowcase() {
             <article className="relative min-h-[560px] border border-[#d5c5b3] bg-[#fffdf9] px-9 py-10 shadow-[0_25px_60px_rgba(54,34,25,.16)]">
               <div className="text-center">
                 <p className="text-[8px] font-bold uppercase tracking-[0.35em] text-[#9b7a5b]">
-                  Matrimonial Profile
+                  {t('homeExtra:matrimonialProfile')}
                 </p>
 
                 <h3 className="mt-3 font-display text-[35px] text-[#521a20]">
@@ -58,12 +58,12 @@ export default function BiodataShowcase() {
               <div className="my-8 h-px bg-[#decfbe]" />
 
               <div className="grid grid-cols-2 gap-x-8 gap-y-6 text-[11px]">
-                <Info label="Age" value="26 Years" />
-                <Info label="Height" value={"5'6\""} />
-                <Info label="Education" value="M.Arch" />
-                <Info label="Profession" value="Architect" />
-                <Info label="Native" value="Rajkot" />
-                <Info label="Language" value="Gujarati" />
+                <Info label={t('public.finderAge')} value={`26 ${t('profile.years')}`} />
+                <Info label={t('profile.height')} value={"5'6\""} />
+                <Info label={t('profile.education')} value="M.Arch" />
+                <Info label={t('profile.profession')} value="Architect" />
+                <Info label={t('profile.location')} value="Rajkot" />
+                <Info label={t('language.label')} value="Gujarati" />
               </div>
 
               <div className="mt-10 border-t border-[#decfbe] pt-5 text-center text-[9px] uppercase tracking-[0.2em] text-[#9b8776]">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api, assetUrl } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { formatDate } from '../utils/formatters';
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 const config = {
   interests: {
@@ -165,9 +166,7 @@ export default function CollectionPage({ type }) {
                     </>
                   )}
                   <time>
-                    {new Date(
-                      item.createdAt || item.matchedAt
-                    ).toLocaleDateString('en-IN')}
+                    {formatDate(item.createdAt || item.matchedAt)}
                   </time>
                 </div>
                 <div className="collection-actions">

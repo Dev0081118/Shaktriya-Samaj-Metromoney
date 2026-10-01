@@ -2,17 +2,15 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 const links = [
-  ["Discover", "/discover"],
-  ["How It Works", "/how-it-works"],
-  ["Stories", "/success-stories"],
-  ["Membership", "/membership"],
-  ["About", "/about"]
+  ["nav.discover", "/discover"], ["nav.howItWorks", "/how-it-works"],
+  ["nav.stories", "/success-stories"], ["nav.membership", "/membership"], ["nav.about", "/about"]
 ];
 export default function Header({ solid = false }) {
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
+  const { user } = useAuth(), { t } = useTranslation();
   return (
     <header
       className={`${solid ? "public-header solid" : "absolute"} inset-x-0 top-0 z-50`}
@@ -23,17 +21,17 @@ export default function Header({ solid = false }) {
             KSHATRIYA
           </div>
           <div className="mt-[-3px] text-[9px] font-semibold uppercase tracking-[0.38em] text-white/55">
-            Matrimonial Society
+            {t('brand.society')}
           </div>
         </Link>
         <nav className="hidden items-center gap-8 lg:flex">
-          {links.map(([label, to]) => (
+          {links.map(([key, to]) => (
             <Link
               to={to}
               key={to}
               className="text-[13px] font-medium text-white/75 transition hover:text-white"
             >
-              {label}
+              {t(key)}
             </Link>
           ))}
         </nav>
@@ -44,11 +42,11 @@ export default function Header({ solid = false }) {
                 to="/dashboard"
                 className="text-[13px] font-semibold text-white"
               >
-                Dashboard
+                {t('nav.dashboard')}
               </Link>
               <Link
                 to="/my-profile"
-                aria-label="My profile"
+                aria-label={t('nav.myProfile')}
                 className="header-avatar"
               >
                 {user.email?.[0]?.toUpperCase()}
@@ -60,13 +58,13 @@ export default function Header({ solid = false }) {
                 to="/login"
                 className="whitespace-nowrap text-[13px] font-semibold text-white"
               >
-                Sign in
+                {t('actions.signIn')}
               </Link>
               <Link
                 to="/register"
                 className="shrink-0 whitespace-nowrap rounded-full border border-white/40 bg-white px-6 py-3 text-[12px] font-bold text-[#32171a] transition hover:bg-[#f4eee6]"
               >
-                Create Profile
+                {t('actions.createProfile')}
               </Link>
             </>
           )}
@@ -82,20 +80,20 @@ export default function Header({ solid = false }) {
       </div>
       {open && (
         <nav className="mobile-public-nav">
-          {links.map(([label, to]) => (
+          {links.map(([key, to]) => (
             <Link onClick={() => setOpen(false)} to={to} key={to}>
-              {label}
+              {t(key)}
             </Link>
           ))}
           <Link
             onClick={() => setOpen(false)}
             to={user ? "/dashboard" : "/login"}
           >
-            {user ? "Dashboard" : "Sign in"}
+            {user ? t('nav.dashboard') : t('actions.signIn')}
           </Link>
           {!user && (
             <Link onClick={() => setOpen(false)} to="/register">
-              Create profile
+              {t('actions.createProfile')}
             </Link>
           )}
         </nav>

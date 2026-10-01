@@ -2,8 +2,10 @@ import { ArrowDownRight, ArrowRight, ShieldCheck } from "lucide-react";
 
 import MatchFinder from "./MatchFinder";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function Hero() {
+  const { t } = useTranslation();
   return (
     <section className="relative bg-[#f4efe8]">
       {/* =========================
@@ -37,25 +39,18 @@ export default function Hero() {
               <span className="h-px w-10 bg-[#d5a76e]" />
 
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#e1bc8a] sm:text-[11px]">
-                A modern home for meaningful unions
+                {t('public.heroEyebrow')}
               </span>
             </div>
 
             {/* Heading */}
             <h1 className="font-display text-[53px] font-medium leading-[0.95] tracking-[-0.04em] text-white sm:text-[68px] md:text-[76px] lg:text-[88px] xl:text-[94px]">
-              Where heritage
-              <br />
-              <span className="whitespace-nowrap">
-                meets a{" "}
-                <span className="italic text-[#e7c292]">new beginning.</span>
-              </span>
+              {t('public.heroTitle')}
             </h1>
 
             {/* Description */}
             <p className="mt-8 max-w-[610px] text-[14px] leading-7 text-white/65 sm:text-[15px] sm:leading-8">
-              A private matrimonial community thoughtfully created for Kshatriya
-              and Rajput families seeking meaningful, family-oriented
-              relationships.
+              {t('public.heroBody')}
             </p>
 
             {/* Buttons */}
@@ -64,7 +59,7 @@ export default function Hero() {
                 to="/register"
                 className="group flex w-fit items-center gap-5 rounded-full bg-[#f5f0e9] px-7 py-3.5 text-[13px] font-bold text-[#32171a] transition duration-200 hover:bg-white"
               >
-                Begin Your Journey
+                {t('public.beginJourney')}
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#741f27] text-white transition group-hover:translate-x-1">
                   <ArrowRight size={15} />
                 </span>
@@ -74,7 +69,7 @@ export default function Hero() {
                 to="/discover"
                 className="flex w-fit items-center gap-4 rounded-full border border-white/30 px-7 py-[15px] text-[13px] font-semibold text-white transition hover:border-white/60 hover:bg-white/[0.05]"
               >
-                Explore Matches
+                {t('public.exploreMatches')}
                 <ArrowDownRight size={16} />
               </Link>
             </div>
@@ -84,7 +79,7 @@ export default function Hero() {
               <ShieldCheck size={15} className="shrink-0 text-[#d9ad72]" />
 
               <span>
-                Privacy-first profiles • family friendly • moderated community
+                {t('public.privacyNote')}
               </span>
             </div>
           </div>
@@ -95,17 +90,17 @@ export default function Hero() {
         ========================== */}
         <div className="absolute bottom-[125px] right-[4%] z-20 hidden w-[245px] border border-white/15 bg-[#eee2d2]/95 px-8 py-8 shadow-[0_20px_50px_rgba(20,10,10,.15)] 2xl:block">
           <div className="font-display text-[42px] leading-none text-[#291918]">
-            એક
+            {t('homeExtra:one')}
           </div>
 
           <div className="my-6 h-px w-full bg-[#cdbda9]" />
 
           <p className="text-[9px] font-extrabold uppercase tracking-[0.24em] text-[#8e7561]">
-            One meaningful beginning
+            {t('homeExtra:meaningfulBeginning')}
           </p>
 
           <p className="mt-4 text-[13px] leading-6 text-[#66544a]">
-            For families who believe compatibility is more than a photograph.
+            {t('homeExtra:compatibilityNote')}
           </p>
         </div>
       </div>

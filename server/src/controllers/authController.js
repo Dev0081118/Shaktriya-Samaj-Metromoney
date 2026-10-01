@@ -17,7 +17,9 @@ export const register = asyncHandler(async (req, res) => {
   if (!settings.registrationEnabled)
     throw new ApiError(
       503,
-      'New registrations are temporarily paused. Please return later.'
+      'New registrations are temporarily paused. Please return later.',
+      [],
+      'REGISTRATION_DISABLED'
     );
   const email =
       typeof req.body.email === 'string'
@@ -45,6 +47,9 @@ export const register = asyncHandler(async (req, res) => {
       acceptedTermsVersion: legalVersion(),
       acceptedPrivacyVersion: legalVersion(),
       acceptedAt
+      ,preferredLanguage: ['en', 'gu', 'hi'].includes(req.body.preferredLanguage)
+        ? req.body.preferredLanguage
+        : 'en'
     });
   await emailUser(user._id, {
     subject: 'Welcome to Kshatriya Matrimonial Society',
@@ -65,9 +70,9 @@ export const login = asyncHandler(async (req, res) => {
     '+password'
   );
   if (!user || !(await user.comparePassword(req.body.password)))
-    throw new ApiError(401, 'Email/phone or password is incorrect.');
+    throw new ApiError(401, 'Email/phone or password is incorrect.', [], 'AUTH_INVALID_CREDENTIALS');
   if (user.status !== 'Active')
-    throw new ApiError(403, 'This account is not active.');
+    throw new ApiError(403, 'This account is not active.', [], 'ACCOUNT_SUSPENDED');
   user.lastLoginAt = new Date();
   await user.save();
   await MatrimonialProfile.updateOne(
@@ -77,6 +82,13 @@ export const login = asyncHandler(async (req, res) => {
   ok(res, { user, token: tokenFor(user) }, 'Signed in.');
 });
 export const me = asyncHandler(async (req, res) => ok(res, { user: req.user }));
+export const saveLanguage = asyncHandler(async (req, res) => {
+  if (!['en', 'gu', 'hi'].includes(req.body.preferredLanguage))
+    throw new ApiError(400, 'Unsupported language.');
+  req.user.preferredLanguage = req.body.preferredLanguage;
+  await req.user.save();
+  ok(res, { preferredLanguage: req.user.preferredLanguage }, 'Language preference saved.');
+});
 export const requestOtp = asyncHandler(async (req, res) => {
   if (typeof req.body.phone !== 'string' || !req.body.phone.trim())
     throw new ApiError(400, 'A mobile number is required.');

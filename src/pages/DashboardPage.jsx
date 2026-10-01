@@ -4,10 +4,13 @@ import { useEffect, useState } from 'react';
 import ProfileCard from '../components/ui/ProfileCard';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '../utils/formatters';
+import { translateStatus } from '../utils/translatedLabels';
 export default function DashboardPage() {
   const [data, setData] = useState(null),
     [error, setError] = useState('');
-  const notify = useToast();
+  const notify = useToast(), { t, i18n } = useTranslation();
   useEffect(() => {
     api('/dashboard')
       .then((r) => setData(r.data))
@@ -25,7 +28,7 @@ export default function DashboardPage() {
           x._id === p._id ? { ...x, interestSent: true } : x
         )
       }));
-      notify('Interest sent.');
+      notify(t('member.interestSent'));
     } catch (e) {
       notify(e.message, 'error');
     }
@@ -43,7 +46,7 @@ export default function DashboardPage() {
           x._id === p._id ? { ...x, shortlisted: true } : x
         )
       }));
-      notify('Profile shortlisted.');
+      notify(t('member.shortlistedToast'));
     } catch (e) {
       notify(e.message, 'error');
     }
@@ -51,19 +54,19 @@ export default function DashboardPage() {
   if (error)
     return (
       <div className="empty-state">
-        <h2>Dashboard unavailable</h2>
+        <h2>{t('member.dashboardUnavailable')}</h2>
         <p>{error}</p>
       </div>
     );
   if (!data)
-    return <div className="page-skeleton">Preparing your dashboard…</div>;
+    return <div className="page-skeleton">{t('member.dashboardLoading')}</div>;
   if (!data.profile)
     return (
       <div className="empty-state large">
-        <h2>Begin your matrimonial profile</h2>
-        <p>Your account is ready. Create the profile your family will share.</p>
+        <h2>{t('member.beginProfile')}</h2>
+        <p>{t('member.beginProfileBody')}</p>
         <Link className="primary-button" to="/onboarding">
-          Start onboarding
+          {t('member.startOnboarding')}
         </Link>
       </div>
     );
@@ -71,19 +74,18 @@ export default function DashboardPage() {
     <>
       <header className="page-heading dashboard-welcome">
         <p className="eyebrow">
-          {new Date().toLocaleDateString('en-IN', {
+          {formatDate(new Date(), i18n.language, {
             weekday: 'long',
             day: 'numeric',
             month: 'long'
           })}
         </p>
         <h1>
-          Good to see you, {data.profile.firstName}.{' '}
-          <em>Meaningful introductions await.</em>
+          {t('member.greeting', { name: data.profile.firstName })}{' '}
+          <em>{t('member.greetingEmphasis')}</em>
         </h1>
         <p>
-          Here are a few thoughtful recommendations selected around your
-          preferences.
+          {t('member.recommendationBody')}
         </p>
       </header>
       <section className="completion-panel">
@@ -98,26 +100,26 @@ export default function DashboardPage() {
         </div>
         <div>
           <p className="eyebrow">
-            Profile strength · {data.profileStatus.replace('_', ' ')}
+            {t('member.profileStrength')} · {translateStatus(t, data.profileStatus)}
           </p>
           <h2>
             {data.profileCompletion < 100
-              ? 'A few details will make your profile stand out.'
-              : 'Your introduction is ready.'}
+              ? t('member.profileIncomplete')
+              : t('member.profileReady')}
           </h2>
-          <p>Keep your information and partner preferences current.</p>
+          <p>{t('member.keepCurrent')}</p>
         </div>
         <Link className="outline-button" to="/onboarding">
-          Complete profile <ArrowRight size={16} />
+          {t('member.completeProfileAction')} <ArrowRight size={16} />
         </Link>
       </section>
       <section className="stats-row">
         {[
-          [data.newInterestsCount, 'New interests'],
-          [data.mutualMatchesCount, 'Mutual matches'],
-          [data.shortlistCount, 'Shortlisted'],
-          [data.unreadNotificationsCount, 'Unread'],
-          [data.profileViewsLast30Days, 'Profile views']
+          [data.newInterestsCount, t('member.newInterests')],
+          [data.mutualMatchesCount, t('member.mutualMatches')],
+          [data.shortlistCount, t('nav.shortlisted')],
+          [data.unreadNotificationsCount, t('member.unread')],
+          [data.profileViewsLast30Days, t('member.profileViews')]
         ].map(([n, l]) => (
           <div key={l}>
             <strong>{n}</strong>
@@ -127,11 +129,11 @@ export default function DashboardPage() {
       </section>
       <div className="section-title">
         <div>
-          <p className="eyebrow">Selected for you</p>
-          <h2>Recommended profiles</h2>
+          <p className="eyebrow">{t('member.selectedForYou')}</p>
+          <h2>{t('member.recommended')}</h2>
         </div>
         <Link to="/discover">
-          View all <ArrowRight size={16} />
+          {t('actions.viewAll')} <ArrowRight size={16} />
         </Link>
       </div>
       {data.recommendedProfiles.length ? (
@@ -147,27 +149,27 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="empty-state">
-          <p>We’re still looking for profiles aligned with your preferences.</p>
+          <p>{t('member.noRecommendations')}</p>
         </div>
       )}
       <section className="activity-panel">
-        <h2>Suggested next steps</h2>
+        <h2>{t('member.nextSteps')}</h2>
         <div>
           <span>
             <Camera />
-            <b>Add a recent photograph</b>
+            <b>{t('member.addPhoto')}</b>
             <small>
               Profiles with photos receive more considered responses.
             </small>
           </span>
           <span>
             <CheckCircle2 />
-            <b>Review partner preferences</b>
+            <b>{t('member.reviewPreferences')}</b>
             <small>Keep recommendations precise and relevant.</small>
           </span>
           <span>
             <Eye />
-            <b>Review privacy</b>
+            <b>{t('member.reviewPrivacy')}</b>
             <small>Choose what other members can see.</small>
           </span>
         </div>

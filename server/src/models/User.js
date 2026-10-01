@@ -33,6 +33,11 @@ const schema = new mongoose.Schema(
     acceptedPrivacyVersion: String,
     acceptedAt: Date,
     lastLoginAt: Date
+    ,preferredLanguage: {
+      type: String,
+      enum: ['en', 'gu', 'hi'],
+      default: 'en'
+    }
   },
   { timestamps: true }
 );

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import AdminNav from '../../components/AdminNav';
 import { api } from '../../services/api';
+import { formatCurrency } from '../../utils/formatters';
 
-const money = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
+const money = (value) => formatCurrency(value);
 export default function RevenuePage() {
   const [range, setRange] = useState('30d'), [data, setData] = useState(null), [error, setError] = useState('');
   useEffect(() => { api(`/admin/analytics/revenue?range=${range}`).then((r) => setData(r.data)).catch((e) => setError(e.message)); }, [range]);

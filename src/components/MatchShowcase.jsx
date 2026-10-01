@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight, BadgeCheck } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const profiles = [
   {
@@ -23,23 +24,23 @@ const profiles = [
 ];
 
 export default function MatchShowcase() {
+  const { t } = useTranslation();
   return (
     <section className="overflow-hidden bg-[#1e1715] py-28 text-white">
       <div className="page-container">
         <div className="flex flex-col justify-between gap-8 border-b border-white/15 pb-10 lg:flex-row lg:items-end">
           <div>
-            <p className="eyebrow text-[#c99f72]">Discover</p>
+            <p className="eyebrow text-[#c99f72]">{t('nav.discover')}</p>
 
             <h2 className="mt-5 font-display text-[50px] leading-none sm:text-[64px]">
-              Profiles with
-              <span className="italic text-[#d5ad7c]"> intention.</span>
+              {t('home.showcaseTitle')}
             </h2>
           </div>
 
           <div className="flex gap-2">
             <Link
               to="/discover"
-              aria-label="Browse previous profiles"
+              aria-label={t('home.previousProfiles')}
               className="round-control"
             >
               <ArrowLeft size={17} />
@@ -47,7 +48,7 @@ export default function MatchShowcase() {
 
             <Link
               to="/discover"
-              aria-label="Browse more profiles"
+              aria-label={t('home.moreProfiles')}
               className="round-control"
             >
               <ArrowRight size={17} />
@@ -73,7 +74,7 @@ export default function MatchShowcase() {
 
                 <span className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-white/20 bg-black/20 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] backdrop-blur">
                   <BadgeCheck size={13} />
-                  Verified
+                  {t('home.verified')}
                 </span>
 
                 <div className="absolute inset-x-0 bottom-0 p-7">
@@ -95,7 +96,7 @@ export default function MatchShowcase() {
             to="/discover"
             className="border-b border-[#c99f72] pb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9b17f]"
           >
-            View all matches
+            {t('home.viewMatches')}
           </Link>
         </div>
       </div>

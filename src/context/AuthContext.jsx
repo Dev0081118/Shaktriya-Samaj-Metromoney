@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../services/api";
+import i18n, { normalizeLanguage } from "../i18n";
 /* eslint-disable react-refresh/only-export-components */
 const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
@@ -12,7 +13,11 @@ export function AuthProvider({ children }) {
     window.addEventListener("ksm:unauthorized", expired);
     if (hasToken)
       api("/auth/me")
-        .then((r) => setUser(r.data.user))
+        .then((r) => {
+          setUser(r.data.user);
+          if (r.data.user.preferredLanguage)
+            i18n.changeLanguage(r.data.user.preferredLanguage);
+        })
         .catch(() => localStorage.removeItem("ksm_token"))
         .finally(() => setLoading(false));
     return () => window.removeEventListener("ksm:unauthorized", expired);
@@ -20,7 +25,12 @@ export function AuthProvider({ children }) {
   const authenticate = async (path, values) => {
     const result = await api(path, {
       method: "POST",
-      body: JSON.stringify(values)
+      body: JSON.stringify({
+        ...values,
+        ...(path === "/auth/register"
+          ? { preferredLanguage: normalizeLanguage(i18n.language) }
+          : {})
+      })
     });
     localStorage.setItem("ksm_token", result.data.token);
     if (path === "/auth/register") {
@@ -44,6 +54,8 @@ export function AuthProvider({ children }) {
       if (saved) sessionStorage.removeItem("ksm_matchfinder");
     }
     setUser(result.data.user);
+    if (result.data.user.preferredLanguage)
+      i18n.changeLanguage(result.data.user.preferredLanguage);
     return result;
   };
   const value = useMemo(
@@ -53,6 +65,19 @@ export function AuthProvider({ children }) {
       isAuthenticated: !!user,
       login: (v) => authenticate("/auth/login", v),
       register: (v) => authenticate("/auth/register", v),
+      saveLanguage: async (preferredLanguage) => {
+        localStorage.setItem("ksm_language", preferredLanguage);
+        if (!user) return;
+        try {
+          await api("/account/preferences/language", {
+            method: "PATCH",
+            body: JSON.stringify({ preferredLanguage })
+          });
+          setUser((current) => ({ ...current, preferredLanguage }));
+        } catch {
+          // Local language selection remains usable if preference sync fails.
+        }
+      },
       logout: async () => {
         try {
           await api("/auth/logout", { method: "POST" });

@@ -39,7 +39,9 @@ export const maintenanceGuard = asyncHandler(async (req, _res, next) => {
   if ((await getSystemSettings()).maintenanceMode)
     throw new ApiError(
       503,
-      'The member portal is temporarily unavailable for maintenance.'
+      'The member portal is temporarily unavailable for maintenance.',
+      [],
+      'MAINTENANCE_MODE'
     );
   next();
 });

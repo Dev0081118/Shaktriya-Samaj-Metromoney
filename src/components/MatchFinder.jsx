@@ -2,10 +2,12 @@ import { ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
+import { translateGender, translateProfileFor } from "../utils/translatedLabels";
 
 export default function MatchFinder() {
   const { user } = useAuth(),
-    navigate = useNavigate();
+    navigate = useNavigate(), { t } = useTranslation();
   const [form, setForm] = useState({
     profileFor: "Self",
     lookingFor: "Female",
@@ -32,25 +34,25 @@ export default function MatchFinder() {
   };
   return (
     <form onSubmit={submit} className="page-container finder-grid">
-      <Finder label="Profile created for">
+      <Finder label={t('public.finderProfileFor')}>
         <select name="profileFor" value={form.profileFor} onChange={change}>
           {["Self", "Son", "Daughter", "Brother", "Sister", "Relative"].map(
             (x) => (
-              <option key={x}>{x}</option>
+              <option value={x} key={x}>{translateProfileFor(t, x)}</option>
             )
           )}
         </select>
       </Finder>
-      <Finder label="Looking for">
+      <Finder label={t('public.finderLookingFor')}>
         <select name="lookingFor" value={form.lookingFor} onChange={change}>
-          <option>Female</option>
-          <option>Male</option>
+          <option value="Female">{translateGender(t, 'Female')}</option>
+          <option value="Male">{translateGender(t, 'Male')}</option>
         </select>
       </Finder>
-      <Finder label="Age range">
+      <Finder label={t('public.finderAge')}>
         <div className="finder-range">
           <select
-            aria-label="Minimum age"
+            aria-label={t('public.minimumAge')}
             name="ageMin"
             value={form.ageMin}
             onChange={change}
@@ -61,7 +63,7 @@ export default function MatchFinder() {
           </select>
           <span>–</span>
           <select
-            aria-label="Maximum age"
+            aria-label={t('public.maximumAge')}
             name="ageMax"
             value={form.ageMax}
             onChange={change}
@@ -72,7 +74,7 @@ export default function MatchFinder() {
           </select>
         </div>
       </Finder>
-      <Finder label="Location">
+      <Finder label={t('public.finderLocation')}>
         <select name="state" value={form.state} onChange={change}>
           {[
             "Gujarat",
@@ -88,7 +90,7 @@ export default function MatchFinder() {
         </select>
       </Finder>
       <button className="finder-submit">
-        <span>Find Matches</span>
+        <span>{t('public.finderSubmit')}</span>
         <ArrowUpRight size={18} />
       </button>
     </form>

@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { getHomeRouteForRole } from '../utils/roleRoutes';
+import { useTranslation } from 'react-i18next';
 
 export default function AuthPage({ mode }) {
   const register = mode === 'register',
     forgot = mode === 'forgot',
     navigate = useNavigate(),
-    auth = useAuth();
+    auth = useAuth(),
+    { t } = useTranslation();
   const [form, setForm] = useState({
     email: '',
     phone: '',
@@ -62,7 +64,7 @@ export default function AuthPage({ mode }) {
         );
       }
     } catch (caught) {
-      setError(caught.message);
+      setError(caught.code ? t(`errors.${caught.code}`, { defaultValue: caught.message }) : caught.message);
     } finally {
       setBusy(false);
     }
@@ -74,30 +76,28 @@ export default function AuthPage({ mode }) {
           <ArrowLeft size={16} /> Home
         </Link>
         <div>
-          <p className="eyebrow">A private beginning</p>
+          <p className="eyebrow">{t('auth.privateBeginning')}</p>
           <h1>
-            Meaningful introductions,
-            <br />
-            <em>thoughtfully made.</em>
+            {t('auth.visualTitle')}
           </h1>
-          <p>Your information stays protected throughout the journey.</p>
+          <p>{t('auth.visualBody')}</p>
         </div>
       </section>
       <section className="auth-form-wrap">
         <div className="auth-form">
           <p className="eyebrow">
             {forgot
-              ? 'Account recovery'
+              ? t('auth.accountRecovery')
               : register
-                ? 'Create your account'
-                : 'Welcome back'}
+                ? t('auth.createAccount')
+                : t('auth.welcomeBack')}
           </p>
           <h2>
             {forgot
-              ? 'Reset your password'
+              ? t('auth.resetTitle')
               : register
-                ? 'Begin your journey'
-                : 'Sign in privately'}
+                ? t('auth.registerTitle')
+                : t('auth.signInTitle')}
           </h2>
           <p className="form-intro">
             {forgot
@@ -109,7 +109,7 @@ export default function AuthPage({ mode }) {
           <form onSubmit={submit}>
             {register && (
               <label>
-                Mobile number
+                {t('auth.phone')}
                 <input
                   value={form.phone}
                   onChange={(event) => update('phone', event.target.value)}
@@ -119,7 +119,7 @@ export default function AuthPage({ mode }) {
               </label>
             )}
             <label>
-              Email address
+              {t('auth.email')}
               <input
                 type="email"
                 value={form.email}
@@ -132,7 +132,7 @@ export default function AuthPage({ mode }) {
             {forgot && resetSent ? (
               <>
                 <label>
-                  Reset code
+                  {t('auth.resetCode')}
                   <input
                     inputMode="numeric"
                     value={form.code}
@@ -141,7 +141,7 @@ export default function AuthPage({ mode }) {
                   />
                 </label>
                 <label>
-                  New password
+                  {t('auth.newPassword')}
                   <input
                     type="password"
                     minLength="8"
@@ -156,7 +156,7 @@ export default function AuthPage({ mode }) {
             ) : (
               !forgot && (
                 <label>
-                  Password
+                  {t('auth.password')}
                   <input
                     type="password"
                     minLength="8"
@@ -219,7 +219,7 @@ export default function AuthPage({ mode }) {
           </form>
           {!register && !forgot && (
             <p className="auth-switch">
-              <Link to="/forgot-password">Forgot password?</Link>
+              <Link to="/forgot-password">{t('auth.forgot')}</Link>
             </p>
           )}
           <p className="auth-switch">
@@ -233,8 +233,7 @@ export default function AuthPage({ mode }) {
             </Link>
           </p>
           <div className="security-note">
-            <ShieldCheck size={17} /> Secure access. We never show your contact
-            details publicly.
+            <ShieldCheck size={17} /> {t('auth.security')}
           </div>
         </div>
       </section>

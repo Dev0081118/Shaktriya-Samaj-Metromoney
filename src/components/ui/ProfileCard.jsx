@@ -1,8 +1,9 @@
 import { BadgeCheck, Bookmark, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { assetUrl } from "../../services/api";
+import { useTranslation } from "react-i18next";
 export default function ProfileCard({ profile, onShortlist, onInterest }) {
-  const score = profile.compatibility?.score;
+  const score = profile.compatibility?.score, { t } = useTranslation();
   return (
     <article className="profile-card">
       <div className="profile-card-image">
@@ -16,13 +17,13 @@ export default function ProfileCard({ profile, onShortlist, onInterest }) {
         )}
         {profile.verification?.adminVerified && (
           <span className="verified">
-            <BadgeCheck size={14} /> Verified
+            <BadgeCheck size={14} /> {t('profile.verified')}
           </span>
         )}
         <button
           className={`save-button ${profile.shortlisted ? "saved" : ""}`}
           onClick={() => onShortlist?.(profile)}
-          aria-label="Shortlist"
+          aria-label={t('actions.shortlist')}
         >
           <Bookmark size={18} />
         </button>
@@ -32,23 +33,23 @@ export default function ProfileCard({ profile, onShortlist, onInterest }) {
           <div>
             <h3>{profile.firstName}</h3>
             <p>
-              {profile.age ?? "—"} years • {profile.height || "—"} cm •{" "}
+              {profile.age ?? "—"} {t('profile.years')} • {profile.height || "—"} cm •{" "}
               {profile.location?.city || "India"}
             </p>
           </div>
           {score !== undefined && (
             <span className="match-score">
-              {score}%<small>match</small>
+              {score}%<small>{t('profile.match')}</small>
             </span>
           )}
         </div>
         <p className="profile-meta">
-          {profile.education?.highestEducation || "Education not shared"} •{" "}
-          {profile.career?.occupation || "Profession not shared"}
+          {profile.education?.highestEducation || t('profile.educationMissing')} •{" "}
+          {profile.career?.occupation || t('profile.professionMissing')}
         </p>
         <div className="card-actions">
           <Link to={`/profile/${profile.profileId}`} className="text-link">
-            View profile
+            {t('actions.viewProfile')}
           </Link>
           <button
             className="interest-button"
@@ -56,7 +57,7 @@ export default function ProfileCard({ profile, onShortlist, onInterest }) {
             onClick={() => onInterest?.(profile)}
           >
             <Heart size={15} />{" "}
-            {profile.interestSent ? "Interest sent" : "Express interest"}
+            {profile.interestSent ? t('member.interestSent') : t('actions.expressInterest')}
           </button>
         </div>
       </div>

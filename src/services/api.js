@@ -24,6 +24,11 @@ export async function api(path, options = {}) {
     localStorage.removeItem('ksm_token');
     window.dispatchEvent(new Event('ksm:unauthorized'));
   }
-  if (!response.ok) throw new Error(data.message || 'Something went wrong.');
+  if (!response.ok) {
+    const error = new Error(data.message || 'Something went wrong.');
+    error.code = data.code;
+    error.requestId = data.requestId;
+    throw error;
+  }
   return data;
 }

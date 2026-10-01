@@ -128,6 +128,7 @@ app.use((error, req, res, _next) => {
     });
   res.status(status).json({
     success: false,
+    ...(error.apiCode ? { code: error.apiCode } : {}),
     message:
       status === 500 ? 'An unexpected server error occurred.' : error.message,
     errors: error.errors || [],

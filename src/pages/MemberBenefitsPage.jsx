@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { formatDate } from '../utils/formatters';
 /* eslint-disable react-hooks/exhaustive-deps */
 export default function MemberBenefitsPage() {
   const [boost, setBoost] = useState(null),
@@ -46,10 +47,10 @@ export default function MemberBenefitsPage() {
           <p>
             {entitlements.profileBoost
               ? boost.active
-                ? `Active until ${new Date(boost.activeUntil).toLocaleString('en-IN')}`
+                ? `Active until ${formatDate(boost.activeUntil, undefined, { dateStyle: 'medium', timeStyle: 'short' })}`
                 : boost.nextEligibleAt &&
                     new Date(boost.nextEligibleAt) > new Date()
-                  ? `Available again ${new Date(boost.nextEligibleAt).toLocaleDateString('en-IN')}`
+                  ? `Available again ${formatDate(boost.nextEligibleAt)}`
                   : 'Move higher in discovery for 24 hours.'
               : 'Included with Premium and Assisted membership.'}
           </p>

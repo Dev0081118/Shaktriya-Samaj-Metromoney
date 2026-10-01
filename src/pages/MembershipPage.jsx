@@ -6,17 +6,10 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../utils/formatters';
 /* eslint-disable react-hooks/set-state-in-effect */
 
-const labels = {
-  interestLimit: 'Interest introductions',
-  contactViewLimit: 'Contact unlocks',
-  messageLimit: 'Messages',
-  advancedSearch: 'Advanced search',
-  profileBoost: 'Profile boost',
-  prioritySupport: 'Priority support',
-  relationshipManager: 'Relationship manager'
-};
 const loadRazorpay = () =>
   new Promise((resolve, reject) => {
     if (window.Razorpay) return resolve();
@@ -43,7 +36,8 @@ export default function MembershipPage({ publicView = false }) {
     [paying, setPaying] = useState('');
   const notify = useToast(),
     navigate = useNavigate(),
-    { user } = useAuth();
+    { user } = useAuth(),
+    { t, i18n } = useTranslation();
   const refresh = useCallback(async () => {
     const requests = [api('/public/plans')];
     if (user) requests.push(api('/subscription/me'));
@@ -118,23 +112,22 @@ export default function MembershipPage({ publicView = false }) {
     }
   };
   const content = loading ? (
-    <div className="page-skeleton">Loading membership plans…</div>
+    <div className="page-skeleton">{t('membership.loading')}</div>
   ) : (
     <>
       <header className="page-heading centered">
-        <p className="eyebrow">Membership</p>
+        <p className="eyebrow">{t('membership.title')}</p>
         <h1>
-          Choose the support your <em>journey needs.</em>
+          {t('membership.heading')}
         </h1>
         <p>
-          Every account includes Free access. Paid membership begins only after
-          verified payment.
+          {t('membership.body')}
         </p>
         {subscription && (
           <p className="membership-status">
             <strong>{subscription.plan.name}</strong> · {subscription.status}
             {subscription.endsAt &&
-              ` · ${subscription.daysRemaining} days remaining`}
+              ` · ${t('membership.daysRemaining', { count: subscription.daysRemaining })}`}
           </p>
         )}
       </header>
@@ -147,12 +140,12 @@ export default function MembershipPage({ publicView = false }) {
               key={plan.slug}
             >
               {plan.slug === 'premium' && (
-                <span className="plan-label">Most considered</span>
+                <span className="plan-label">{t('membership.mostConsidered')}</span>
               )}
               <h2>{plan.name}</h2>
               <div className="plan-price">
-                {plan.price ? `₹${plan.price.toLocaleString('en-IN')}` : 'Free'}
-                <small> / {plan.durationDays} days</small>
+                {plan.price ? formatCurrency(plan.price, i18n.language) : t('membership.free')}
+                <small> / {plan.durationDays} {t('membership.days')}</small>
               </div>
               <ul>
                 {Object.entries(plan.features || {})
@@ -160,7 +153,7 @@ export default function MembershipPage({ publicView = false }) {
                   .map(([key, value]) => (
                     <li key={key}>
                       <Check size={15} />
-                      {labels[key] || key}
+                      {t(`membership.features.${key}`, { defaultValue: key })}
                       {typeof value === 'number' ? `: ${value}` : ''}
                     </li>
                   ))}
@@ -173,14 +166,14 @@ export default function MembershipPage({ publicView = false }) {
                 }
               >
                 {current
-                  ? 'Current plan'
+                  ? t('membership.currentPlan')
                   : paying === plan.slug
-                    ? 'Opening checkout…'
+                    ? t('membership.opening')
                     : !user
-                      ? 'Create profile'
+                      ? t('actions.createProfile')
                       : plan.price
-                        ? 'Choose plan'
-                        : 'Included'}
+                        ? t('membership.choosePlan')
+                        : t('membership.included')}
               </button>
             </article>
           );

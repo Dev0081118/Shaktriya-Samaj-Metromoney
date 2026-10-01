@@ -26,3 +26,14 @@ Record browser/device, build SHA, tester, timestamp, evidence, and defect link f
 - [ ] Captured revenue excludes Created/Failed payments and subtracts refunded amounts from net captured revenue.
 - [ ] Registration, payments, and maintenance settings are enforced by backend routes.
 - [ ] Provider health exposes configuration state without keys or secrets.
+
+# Language QA
+
+- [ ] Test English, Gujarati, and Hindi on public navigation, homepage, MatchFinder, information, membership, contact, and legal pages.
+- [ ] Test login, registration, password reset, onboarding, dashboard, discovery, profiles, collections, settings, membership, and biodata in every language.
+- [ ] Test admin dashboard, customers, support, payments, plans, settings, health, and manager workspace in every language.
+- [ ] Switching language preserves the current route, authentication, active form values, onboarding step, and admin form state.
+- [ ] Verify Gujarati/Hindi typography and overflow at 375, 430, 768, 1024, and 1440 px.
+- [ ] Confirm API/database enums and user-entered content remain unchanged after switching language.
+- [ ] Confirm dates, numbers, and INR currency follow `en-IN`, `gu-IN`, and `hi-IN`.
+- [ ] Obtain professional approval for Gujarati and Hindi legal copy before launch.
