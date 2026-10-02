@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Save } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, LockKeyhole, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, assetUrl } from '../services/api';
@@ -98,6 +98,16 @@ const flatten = (p) => ({
   ...p.lifestyle,
   interests: (p.lifestyle?.interests || []).join(', '),
   ...p.family,
+  siblingDetails: p.family?.siblingDetails || [],
+  ...p.maritalHistory,
+  ...p.maternalFamily,
+  ...p.paternalFamily,
+  hasLand: p.familyAssets?.agricultureLand?.hasLand || false,
+  approximateArea: p.familyAssets?.agricultureLand?.approximateArea || '',
+  landUnit: p.familyAssets?.agricultureLand?.unit || 'Vigha',
+  propertySummary: p.familyAssets?.propertySummary || '',
+  primaryResidenceType: p.familyAssets?.primaryResidenceType || '',
+  businessAssetsSummary: p.familyAssets?.businessAssetsSummary || '',
   dateOfBirth: p.dateOfBirth?.slice?.(0, 10) || ''
 });
 const list = (v) =>
@@ -114,6 +124,16 @@ const profilePayload = (d, visibility = 'draft') => ({
   dateOfBirth: d.dateOfBirth,
   height: Number(d.height) || undefined,
   maritalStatus: d.maritalStatus,
+  maritalHistory: {
+    status: d.maritalStatus,
+    isRemarriage: d.maritalStatus && d.maritalStatus !== 'Never Married',
+    previousMarriageEndedAt: d.previousMarriageEndedAt || undefined,
+    divorceFinalized: d.maritalStatus === 'Divorced' ? !!d.divorceFinalized : undefined,
+    childrenFromPreviousMarriage: !!d.childrenFromPreviousMarriage,
+    childrenCount: d.childrenFromPreviousMarriage ? Number(d.childrenCount) || 0 : 0,
+    childrenLivingWith: d.childrenFromPreviousMarriage ? d.childrenLivingWith : undefined,
+    notes: d.maritalHistoryNotes
+  },
   location: {
     city: d.city,
     district: d.district,
@@ -154,9 +174,45 @@ const profilePayload = (d, visibility = 'draft') => ({
     motherName: d.motherName,
     motherOccupation: d.motherOccupation,
     siblings: d.siblings,
+    siblingDetails: d.siblingDetails || [],
     familyType: d.familyType,
     familyLocation: d.familyLocation,
     familyDescription: d.familyDescription
+  },
+  paternalFamily: {
+    ancestralVillage: d.ancestralVillage,
+    nativePlace: d.paternalNativePlace,
+    district: d.paternalDistrict,
+    state: d.paternalState,
+    familySurname: d.paternalFamilySurname,
+    clan: d.paternalClan,
+    notes: d.paternalNotes
+  },
+  maternalFamily: {
+    maternalGrandfatherName: d.maternalGrandfatherName,
+    maternalFamilySurname: d.maternalFamilySurname,
+    maternalNativePlace: d.maternalNativePlace,
+    maternalVillage: d.maternalVillage,
+    maternalDistrict: d.maternalDistrict,
+    maternalState: d.maternalState,
+    maternalClan: d.maternalClan,
+    notes: d.maternalNotes
+  },
+  familyAssets: {
+    agricultureLand: {
+      hasLand: !!d.hasLand,
+      approximateArea: d.hasLand ? Number(d.approximateArea) || undefined : undefined,
+      unit: d.hasLand ? d.landUnit || 'Vigha' : undefined
+    },
+    propertySummary: d.propertySummary,
+    primaryResidenceType: d.primaryResidenceType,
+    businessAssetsSummary: d.businessAssetsSummary
+  },
+  privacy: {
+    familyOverviewVisibility: d.familyOverviewVisibility || 'AcceptedInterests',
+    maternalFamilyVisibility: d.maternalFamilyVisibility || 'AcceptedInterests',
+    siblingDetailsVisibility: d.siblingDetailsVisibility || 'AcceptedInterests',
+    assetVisibility: d.assetVisibility || 'Private'
   },
   marriageTimeline: d.marriageTimeline,
   aboutMe: d.aboutMe,
@@ -176,6 +232,8 @@ const preferencePayload = (d) => ({
   dietPreferences: list(d.dietPreferences),
   communityPreferences: list(d.communityPreferences),
   marriageTimeline: list(d.preferredMarriageTimeline),
+  acceptedMaritalStatuses: list(d.acceptedMaritalStatuses),
+  willingForRemarriage: d.willingForRemarriage || 'Open to Discuss',
   additionalPreferences: d.additionalPreferences
 });
 const profileBasicsError = (data) => {
@@ -206,6 +264,10 @@ export default function OnboardingPage() {
     [verified, setVerified] = useState(!!user?.phoneVerified),
     [busy, setBusy] = useState(false),
     [cooldown, setCooldown] = useState(0);
+  const updateSibling = (index, key, value) => setData((current) => ({
+    ...current,
+    siblingDetails: (current.siblingDetails || []).map((sibling, i) => i === index ? { ...sibling, [key]: value } : sibling)
+  }));
   useEffect(() => {
     Promise.allSettled([
       api('/profiles/me?optional=true'),
@@ -463,6 +525,11 @@ export default function OnboardingPage() {
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                     </select>
+                  ) : key === 'maritalStatus' ? (
+                    <select value={data[key] || ''} onChange={(e) => setData({ ...data, [key]: e.target.value })}>
+                      <option value="">Select marital status</option>
+                      {['Never Married', 'Divorced', 'Widowed', 'Annulled', 'Separated'].map((status) => <option key={status}>{status}</option>)}
+                    </select>
                   ) : (
                     <input
                       type={type || 'text'}
@@ -474,6 +541,29 @@ export default function OnboardingPage() {
                   )}
                 </label>
               ))}
+            </div>
+          )}
+          {step === 2 && data.maritalStatus && data.maritalStatus !== 'Never Married' && (
+            <div className="sensitive-panel">
+              <p className="privacy-cue"><LockKeyhole size={15} /> Private context — shown only after an accepted introduction.</p>
+              <div className="onboarding-fields">
+                <label>Previous marriage ended on (optional)<input type="date" value={data.previousMarriageEndedAt || ''} onChange={(e) => setData({ ...data, previousMarriageEndedAt: e.target.value })} /></label>
+                {data.maritalStatus === 'Divorced' && <label className="checkbox-label"><input type="checkbox" checked={!!data.divorceFinalized} onChange={(e) => setData({ ...data, divorceFinalized: e.target.checked })} /> Divorce legally finalized</label>}
+                <label className="checkbox-label"><input type="checkbox" checked={!!data.childrenFromPreviousMarriage} onChange={(e) => setData({ ...data, childrenFromPreviousMarriage: e.target.checked })} /> Children from previous marriage</label>
+                {data.childrenFromPreviousMarriage && <><label>Number of children<input type="number" min="0" max="20" value={data.childrenCount || ''} onChange={(e) => setData({ ...data, childrenCount: e.target.value })} /></label><label>Children living with<input value={data.childrenLivingWith || ''} onChange={(e) => setData({ ...data, childrenLivingWith: e.target.value })} /></label></>}
+              </div>
+              {data.maritalStatus === 'Separated' && <p className="form-note">Separated is distinct from legally divorced. This profile will retain that status clearly.</p>}
+            </div>
+          )}
+          {step === 5 && (
+            <div className="family-context-stack">
+              <div className="sensitive-panel"><p className="privacy-cue"><LockKeyhole size={15} /> Maternal family — private by default</p><div className="onboarding-fields">
+                {['maternalGrandfatherName','maternalFamilySurname','maternalNativePlace','maternalVillage','maternalDistrict','maternalState','maternalClan'].map((key) => <label key={key}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, (x) => x.toUpperCase())}<input value={data[key] || ''} onChange={(e) => setData({ ...data, [key]: e.target.value })} /></label>)}
+              </div></div>
+              <div className="sensitive-panel"><div className="panel-heading"><div><h3>Sibling context</h3><p>Optional. Spouse-family details appear only for married siblings.</p></div><button type="button" className="outline-button" onClick={() => setData({ ...data, siblingDetails: [...(data.siblingDetails || []), { relation: 'Brother', maritalStatus: 'Unmarried' }] })}><Plus size={15}/> Add sibling</button></div>
+                {(data.siblingDetails || []).map((sibling, index) => <div className="sibling-editor" key={index}><div className="onboarding-fields"><label>Relation<select value={sibling.relation || ''} onChange={(e) => updateSibling(index, 'relation', e.target.value)}><option>Brother</option><option>Sister</option></select></label><label>Name<input value={sibling.name || ''} onChange={(e) => updateSibling(index, 'name', e.target.value)} /></label><label>Marital status<select value={sibling.maritalStatus || ''} onChange={(e) => updateSibling(index, 'maritalStatus', e.target.value)}><option>Unmarried</option><option>Married</option></select></label><label>Occupation<input value={sibling.occupation || ''} onChange={(e) => updateSibling(index, 'occupation', e.target.value)} /></label>{sibling.maritalStatus === 'Married' && <><label>Spouse name<input value={sibling.spouseName || ''} onChange={(e) => updateSibling(index, 'spouseName', e.target.value)} /></label><label>Spouse family surname<input value={sibling.spouseFamilySurname || ''} onChange={(e) => updateSibling(index, 'spouseFamilySurname', e.target.value)} /></label><label>Spouse native place<input value={sibling.spouseNativePlace || ''} onChange={(e) => updateSibling(index, 'spouseNativePlace', e.target.value)} /></label></>}</div><button type="button" className="icon-action" aria-label="Remove sibling" onClick={() => setData({ ...data, siblingDetails: data.siblingDetails.filter((_, i) => i !== index) })}><Trash2 size={16}/></button></div>)}
+              </div>
+              <div className="sensitive-panel"><p className="privacy-cue"><LockKeyhole size={15} /> Family assets — optional and never public</p><label className="checkbox-label"><input type="checkbox" checked={!!data.hasLand} onChange={(e) => setData({ ...data, hasLand: e.target.checked })}/> Family has agricultural land</label>{data.hasLand && <div className="onboarding-fields"><label>Approximate area<input type="number" min="0" value={data.approximateArea || ''} onChange={(e) => setData({ ...data, approximateArea: e.target.value })}/></label><label>Unit<select value={data.landUnit || 'Vigha'} onChange={(e) => setData({ ...data, landUnit: e.target.value })}><option>Vigha</option><option>Acre</option><option>Hectare</option></select></label></div>}<div className="onboarding-fields"><label>Property summary (no exact address)<textarea rows="2" value={data.propertySummary || ''} onChange={(e) => setData({ ...data, propertySummary: e.target.value })}/></label><label>Primary residence type<input value={data.primaryResidenceType || ''} onChange={(e) => setData({ ...data, primaryResidenceType: e.target.value })}/></label></div></div>
             </div>
           )}
           {step === 8 && (

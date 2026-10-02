@@ -68,6 +68,7 @@ const profilePayload = (body) => {
       'motherName',
       'motherOccupation',
       'siblings',
+      'siblingDetails',
       'familyType',
       'familyLocation',
       'familyDescription'
@@ -77,8 +78,17 @@ const profilePayload = (body) => {
       'contactVisibility',
       'incomeVisibility',
       'familyVisibility',
-      'fullNameVisibility'
-    ]
+      'fullNameVisibility',
+      'familyOverviewVisibility',
+      'maternalFamilyVisibility',
+      'siblingDetailsVisibility',
+      'assetVisibility'
+    ],
+    maritalHistory: ['status', 'isRemarriage', 'previousMarriageEndedAt', 'divorceFinalized', 'childrenFromPreviousMarriage', 'childrenCount', 'childrenLivingWith', 'notes'],
+    paternalFamily: ['ancestralVillage', 'nativePlace', 'district', 'state', 'familySurname', 'clan', 'notes'],
+    maternalFamily: ['maternalGrandfatherName', 'maternalFamilySurname', 'maternalNativePlace', 'maternalVillage', 'maternalDistrict', 'maternalState', 'maternalClan', 'notes'],
+    familyAssets: ['agricultureLand', 'propertySummary', 'primaryResidenceType', 'businessAssetsSummary'],
+    biodataPrivacy: ['includeSensitiveFamilyDetailsInBiodata']
   }))
     if (body[key]) safe[key] = pick(body[key], fields);
   if (
@@ -346,6 +356,8 @@ export const savePreferences = asyncHandler(async (req, res) => {
       'heightMin',
       'heightMax',
       'maritalStatus',
+      'acceptedMaritalStatuses',
+      'willingForRemarriage',
       'locations',
       'states',
       'countries',
@@ -380,6 +392,10 @@ export const updatePrivacy = asyncHandler(async (req, res) => {
       'incomeVisibility',
       'familyVisibility',
       'fullNameVisibility'
+      ,'familyOverviewVisibility',
+      'maternalFamilyVisibility',
+      'siblingDetailsVisibility',
+      'assetVisibility'
     ])
   };
   await profile.save();

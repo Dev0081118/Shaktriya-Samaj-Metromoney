@@ -1,6 +1,7 @@
 {
   "language": { "label": "भाषा", "english": "English", "gujarati": "ગુજરાતી", "hindi": "हिन्दी", "select": "भाषा चुनें" },
-  "brand": { "society": "मैट्रिमोनियल सोसाइटी", "administration": "प्रशासन" },
+  "brand": { "society": "मैट्रिमोनियल सोसाइटी", "administration": "प्रशासन", "relationshipDesk": "रिलेशनशिप डेस्क" },
+  "sidebar": { "navigation": "एप्लिकेशन नेविगेशन", "open": "नेविगेशन मेनू खोलें", "close": "नेविगेशन मेनू बंद करें", "pin": "खुला साइडबार पिन करें", "unpin": "खुला साइडबार अनपिन करें", "unread": "{{count}} अपठित सूचनाएँ" },
   "actions": { "signIn": "साइन इन करें", "signOut": "साइन आउट करें", "createProfile": "प्रोफ़ाइल बनाएँ", "continue": "आगे बढ़ें", "back": "वापस", "save": "सहेजें", "cancel": "रद्द करें", "submit": "भेजें", "viewAll": "सभी देखें", "viewProfile": "प्रोफ़ाइल देखें", "expressInterest": "रुचि भेजें", "shortlist": "चुनें", "search": "खोजें", "apply": "फ़िल्टर लागू करें", "reset": "रीसेट करें", "previous": "पिछला", "next": "अगला", "activate": "सक्रिय करें", "confirm": "पुष्टि करें" },
   "nav": { "discover": "प्रोफ़ाइल खोजें", "howItWorks": "यह कैसे काम करता है", "stories": "सफलता की कहानियाँ", "membership": "सदस्यता", "about": "हमारे बारे में", "dashboard": "डैशबोर्ड", "interests": "रुचियाँ", "matches": "मैच", "shortlisted": "चुनी हुई प्रोफ़ाइल", "notifications": "सूचनाएँ", "myProfile": "मेरी प्रोफ़ाइल", "benefits": "प्लान के लाभ", "settings": "सेटिंग्स" },
   "states": { "loading": "लोड हो रहा है…", "noResults": "कोई परिणाम नहीं", "unavailable": "उपलब्ध नहीं", "yes": "हाँ", "no": "नहीं" },

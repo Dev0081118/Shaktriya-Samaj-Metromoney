@@ -93,8 +93,20 @@ export async function serializeProfileForViewer(profile, viewer) {
     }
     if (!allowed(privacy.incomeVisibility || 'Private', context) && p.career)
       delete p.career.annualIncome;
-    if (!allowed(privacy.familyVisibility || 'RegisteredMembers', context))
+    const familyRule = privacy.familyOverviewVisibility || privacy.familyVisibility || 'AcceptedInterests';
+    if (!allowed(familyRule, context)) {
       delete p.family;
+      delete p.paternalFamily;
+    } else if (p.family && !allowed(privacy.siblingDetailsVisibility || 'AcceptedInterests', context))
+      delete p.family.siblingDetails;
+    if (!allowed(privacy.maternalFamilyVisibility || 'AcceptedInterests', context))
+      delete p.maternalFamily;
+    if (!allowed(privacy.assetVisibility || 'Private', context))
+      delete p.familyAssets;
+    // Marital history can contain legal and child details. Status remains on the profile;
+    // the deeper context is shared only after an accepted introduction.
+    if (!context.accepted && !context.matched) delete p.maritalHistory;
+    delete p.biodataPrivacy;
     if (context.contactUnlocked && p.userId && typeof p.userId === 'object')
       p.contact = {
         email: p.userId.email,

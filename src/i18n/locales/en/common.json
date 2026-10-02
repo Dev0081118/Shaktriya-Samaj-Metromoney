@@ -1,6 +1,7 @@
 {
   "language": { "label": "Language", "english": "English", "gujarati": "Gujarati", "hindi": "Hindi", "select": "Select language" },
-  "brand": { "society": "Matrimonial Society", "administration": "Administration" },
+  "brand": { "society": "Matrimonial Society", "administration": "Administration", "relationshipDesk": "Relationship Desk" },
+  "sidebar": { "navigation": "Application navigation", "open": "Open navigation menu", "close": "Close navigation menu", "pin": "Pin expanded sidebar", "unpin": "Unpin expanded sidebar", "unread": "{{count}} unread notifications" },
   "actions": { "signIn": "Sign in", "signOut": "Sign out", "createProfile": "Create Profile", "continue": "Continue", "back": "Back", "save": "Save", "cancel": "Cancel", "submit": "Submit", "viewAll": "View all", "viewProfile": "View profile", "expressInterest": "Express interest", "shortlist": "Shortlist", "search": "Search", "apply": "Apply filters", "reset": "Reset", "previous": "Previous", "next": "Next", "activate": "Activate", "confirm": "Confirm" },
   "nav": { "discover": "Discover", "howItWorks": "How It Works", "stories": "Stories", "membership": "Membership", "about": "About", "dashboard": "Dashboard", "interests": "Interests", "matches": "Matches", "shortlisted": "Shortlisted", "notifications": "Notifications", "myProfile": "My Profile", "benefits": "Plan benefits", "settings": "Settings" },
   "states": { "loading": "Loading…", "noResults": "No results", "unavailable": "Unavailable", "yes": "Yes", "no": "No" },

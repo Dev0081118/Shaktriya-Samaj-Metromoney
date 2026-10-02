@@ -1,6 +1,9 @@
 import { useTranslation } from 'react-i18next';
+import { useRef } from 'react';
+import { useGsapReveal } from '../motion/useGsapReveal';
 
 export default function Experience() {
+  const root = useRef(null); useGsapReveal(root);
   const { t } = useTranslation(), steps = [
     ['01', t('home.steps.createTitle'), t('home.steps.createBody')],
     ['02', t('home.steps.discoverTitle'), t('home.steps.discoverBody')],
@@ -8,10 +11,10 @@ export default function Experience() {
     ['04', t('home.steps.connectTitle'), t('home.steps.connectBody')]
   ];
   return (
-    <section className="bg-[#eee5da] py-28 lg:py-36">
+    <section ref={root} className="bg-[#eee5da] py-28 lg:py-36">
       <div className="page-container">
         <div className="grid gap-14 lg:grid-cols-[0.7fr_1.3fr]">
-          <div>
+          <div data-reveal>
             <p className="eyebrow">{t('nav.howItWorks')}</p>
 
             <h2 className="mt-6 font-display text-[50px] leading-[1.02] text-[#271917]">
@@ -23,6 +26,7 @@ export default function Experience() {
             {steps.map(([number, title, body]) => (
               <div
                 key={number}
+                data-reveal
                 className="grid gap-4 border-t border-[#cab9a8] py-8 sm:grid-cols-[90px_180px_1fr]"
               >
                 <span className="font-display text-[20px] italic text-[#a57c51]">

@@ -24,6 +24,10 @@ const privacyOptions = {
     'Private'
   ],
   familyVisibility: ['RegisteredMembers', 'AcceptedInterests', 'Private'],
+  familyOverviewVisibility: ['RegisteredMembers', 'AcceptedInterests', 'MutualMatches', 'Private'],
+  maternalFamilyVisibility: ['AcceptedInterests', 'MutualMatches', 'Private'],
+  siblingDetailsVisibility: ['AcceptedInterests', 'MutualMatches', 'Private'],
+  assetVisibility: ['AcceptedInterests', 'MutualMatches', 'Private'],
   fullNameVisibility: ['Everyone', 'RegisteredMembers']
 };
 export default function SettingsPage({ section }) {
@@ -73,7 +77,8 @@ export default function SettingsPage({ section }) {
           'dietPreferences',
           'communityPreferences',
           'marriageTimeline',
-          'maritalStatus'
+          'maritalStatus',
+          'acceptedMaritalStatuses'
         ].forEach((k) => {
           if (typeof payload[k] === 'string') payload[k] = arrays(payload[k]);
         });
@@ -209,6 +214,8 @@ export default function SettingsPage({ section }) {
               />
             </label>
           ))}
+          <label>Accepted marital statuses<input value={csv(form.acceptedMaritalStatuses)} onChange={(e) => update('acceptedMaritalStatuses', e.target.value)} placeholder="Never Married, Divorced, Widowed" /></label>
+          <label>Willing to consider remarriage<select value={form.willingForRemarriage || 'Open to Discuss'} onChange={(e) => update('willingForRemarriage', e.target.value)}><option>Yes</option><option>No</option><option>Open to Discuss</option></select></label>
           <button className="primary-button">Save preferences</button>
         </form>
       ) : (

@@ -21,6 +21,26 @@ const privacy = {
     enum: ['RegisteredMembers', 'AcceptedInterests', 'Private'],
     default: 'RegisteredMembers'
   },
+  familyOverviewVisibility: {
+    type: String,
+    enum: ['RegisteredMembers', 'AcceptedInterests', 'MutualMatches', 'Private'],
+    default: 'AcceptedInterests'
+  },
+  maternalFamilyVisibility: {
+    type: String,
+    enum: ['AcceptedInterests', 'MutualMatches', 'Private'],
+    default: 'AcceptedInterests'
+  },
+  siblingDetailsVisibility: {
+    type: String,
+    enum: ['AcceptedInterests', 'MutualMatches', 'Private'],
+    default: 'AcceptedInterests'
+  },
+  assetVisibility: {
+    type: String,
+    enum: ['AcceptedInterests', 'MutualMatches', 'Private'],
+    default: 'Private'
+  },
   fullNameVisibility: {
     type: String,
     enum: ['Everyone', 'RegisteredMembers'],
@@ -47,7 +67,23 @@ const schema = new mongoose.Schema(
     gender: { type: String, enum: ['Male', 'Female'] },
     dateOfBirth: Date,
     height: Number,
-    maritalStatus: String,
+    maritalStatus: {
+      type: String,
+      enum: ['Never Married', 'Divorced', 'Widowed', 'Annulled', 'Separated']
+    },
+    maritalHistory: {
+      status: {
+        type: String,
+        enum: ['Never Married', 'Divorced', 'Widowed', 'Annulled', 'Separated']
+      },
+      isRemarriage: Boolean,
+      previousMarriageEndedAt: Date,
+      divorceFinalized: Boolean,
+      childrenFromPreviousMarriage: Boolean,
+      childrenCount: { type: Number, min: 0, max: 20 },
+      childrenLivingWith: { type: String, maxlength: 120 },
+      notes: { type: String, maxlength: 600 }
+    },
     location: {
       city: String,
       district: String,
@@ -89,9 +125,61 @@ const schema = new mongoose.Schema(
       motherName: String,
       motherOccupation: String,
       siblings: String,
+      siblingDetails: {
+        type: [{
+          name: { type: String, maxlength: 100 },
+          gender: { type: String, enum: ['Male', 'Female', 'Other'] },
+          relation: { type: String, enum: ['Brother', 'Sister'] },
+          age: { type: Number, min: 0, max: 120 },
+          maritalStatus: { type: String, maxlength: 60 },
+          occupation: { type: String, maxlength: 120 },
+          education: { type: String, maxlength: 120 },
+          spouseName: { type: String, maxlength: 100 },
+          spouseFamilySurname: { type: String, maxlength: 100 },
+          spouseNativePlace: { type: String, maxlength: 120 },
+          spouseVillage: { type: String, maxlength: 120 },
+          spouseDistrict: { type: String, maxlength: 120 },
+          spouseState: { type: String, maxlength: 120 },
+          spouseFamilyDetails: { type: String, maxlength: 400 },
+          notes: { type: String, maxlength: 400 }
+        }],
+        validate: [value => value.length <= 12, 'A maximum of 12 siblings is supported.']
+      },
       familyType: String,
       familyLocation: String,
       familyDescription: String
+    },
+    paternalFamily: {
+      ancestralVillage: { type: String, maxlength: 120 },
+      nativePlace: { type: String, maxlength: 120 },
+      district: { type: String, maxlength: 120 },
+      state: { type: String, maxlength: 120 },
+      familySurname: { type: String, maxlength: 100 },
+      clan: { type: String, maxlength: 100 },
+      notes: { type: String, maxlength: 600 }
+    },
+    maternalFamily: {
+      maternalGrandfatherName: { type: String, maxlength: 120 },
+      maternalFamilySurname: { type: String, maxlength: 100 },
+      maternalNativePlace: { type: String, maxlength: 120 },
+      maternalVillage: { type: String, maxlength: 120 },
+      maternalDistrict: { type: String, maxlength: 120 },
+      maternalState: { type: String, maxlength: 120 },
+      maternalClan: { type: String, maxlength: 100 },
+      notes: { type: String, maxlength: 600 }
+    },
+    familyAssets: {
+      agricultureLand: {
+        hasLand: Boolean,
+        approximateArea: { type: Number, min: 0, max: 1000000 },
+        unit: { type: String, enum: ['Vigha', 'Acre', 'Hectare'] }
+      },
+      propertySummary: { type: String, maxlength: 500 },
+      primaryResidenceType: { type: String, maxlength: 100 },
+      businessAssetsSummary: { type: String, maxlength: 500 }
+    },
+    biodataPrivacy: {
+      includeSensitiveFamilyDetailsInBiodata: { type: Boolean, default: false }
     },
     marriageTimeline: String,
     aboutMe: String,

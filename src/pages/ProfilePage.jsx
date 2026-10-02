@@ -297,8 +297,18 @@ export default function ProfilePage({ own = false }) {
             <div>
               <h2>{value(profile.family.familyType)} family</h2>
               <p>{value(profile.family.familyDescription)}</p>
+              {profile.family.siblingDetails?.length > 0 && <div className="profile-subsection"><h3>Sibling context</h3>{profile.family.siblingDetails.map((sibling, index) => <p key={index}>{sibling.relation}: {sibling.name || 'Name private'}{sibling.occupation ? ` • ${sibling.occupation}` : ''}{sibling.maritalStatus === 'Married' && sibling.spouseNativePlace ? ` • Family connection in ${sibling.spouseNativePlace}` : ''}</p>)}</div>}
             </div>
           </section>
+        )}
+        {profile.maternalFamily && (
+          <section><p className="eyebrow">Maternal family</p><dl><div><dt>Family surname</dt><dd>{value(profile.maternalFamily.maternalFamilySurname)}</dd></div><div><dt>Native place / Mosal</dt><dd>{value(profile.maternalFamily.maternalNativePlace || profile.maternalFamily.maternalVillage)}</dd></div><div><dt>Clan / Gotra</dt><dd>{value(profile.maternalFamily.maternalClan)}</dd></div></dl></section>
+        )}
+        {profile.maritalHistory && profile.maritalStatus !== 'Never Married' && (
+          <section><p className="eyebrow">Marital context</p><div><h2>{profile.maritalStatus}</h2><p>{profile.maritalHistory.childrenFromPreviousMarriage ? `${profile.maritalHistory.childrenCount || 0} child/children from the previous marriage` : 'No children from the previous marriage shared.'}</p></div></section>
+        )}
+        {profile.familyAssets && (
+          <section><p className="eyebrow">Family assets</p><div><h2>Shared with permission</h2><p>{value(profile.familyAssets.propertySummary)}</p>{profile.familyAssets.agricultureLand?.hasLand && <p>Approximate agricultural land: {profile.familyAssets.agricultureLand.approximateArea || 'Area not shared'} {profile.familyAssets.agricultureLand.unit || ''}</p>}</div></section>
         )}
         <section>
           <p className="eyebrow">Lifestyle</p>

@@ -2480,3 +2480,18 @@ a {
   .discover-heading { min-height:170px; margin-inline:0; padding:25px; }
   .dashboard-welcome { min-height:0; padding:28px 24px; background-image:linear-gradient(90deg,#eee4d8ee,#eee4d8c9),url('/assets/member/member-lounge.webp'); background-size:cover; }
 }
+/* Sensitive onboarding groups stay visually quiet and clearly contextual. */
+.family-context-stack { display: grid; gap: 1.25rem; margin-top: 1.5rem; }
+.sensitive-panel { margin-top: 1.25rem; padding: 1.25rem; border: 1px solid rgba(116,31,39,.18); background: rgba(116,31,39,.035); }
+.privacy-cue { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; color: #741f27; font-size: .78rem; font-weight: 700; }
+.panel-heading { display: flex; justify-content: space-between; align-items: start; gap: 1rem; margin-bottom: 1rem; }
+.panel-heading h3 { font-family: var(--font-display, serif); font-size: 1.5rem; color: #291a17; }
+.panel-heading p, .form-note { color: #77675e; font-size: .8rem; line-height: 1.6; }
+.checkbox-label { display: flex !important; flex-direction: row !important; align-items: center; gap: .65rem; }
+.checkbox-label input { width: auto !important; }
+.sibling-editor { position: relative; padding: 1rem 2.75rem 1rem 1rem; border-top: 1px solid rgba(116,31,39,.13); }
+.sibling-editor > .icon-action { position: absolute; right: 0; top: 1rem; }
+@media (max-width: 640px) { .panel-heading { flex-direction: column; } .sensitive-panel { padding: 1rem; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

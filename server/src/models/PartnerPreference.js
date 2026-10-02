@@ -12,7 +12,19 @@ const schema = new mongoose.Schema(
     ageMax: Number,
     heightMin: Number,
     heightMax: Number,
-    maritalStatus: [String],
+    maritalStatus: [{
+      type: String,
+      enum: ['Never Married', 'Divorced', 'Widowed', 'Annulled', 'Separated']
+    }],
+    acceptedMaritalStatuses: [{
+      type: String,
+      enum: ['Never Married', 'Divorced', 'Widowed', 'Annulled', 'Separated']
+    }],
+    willingForRemarriage: {
+      type: String,
+      enum: ['Yes', 'No', 'Open to Discuss'],
+      default: 'Open to Discuss'
+    },
     locations: [String],
     states: [String],
     countries: [String],

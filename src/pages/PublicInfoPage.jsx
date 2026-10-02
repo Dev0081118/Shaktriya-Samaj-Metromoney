@@ -9,6 +9,8 @@ import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useTranslation } from "react-i18next";
+import { useRef } from "react";
+import { useGsapReveal } from "../motion/useGsapReveal";
 
 const pages = {
   about: {
@@ -170,13 +172,14 @@ void pages;
 
 export default function PublicInfoPage({ type }) {
   const { t } = useTranslation();
+  const root = useRef(null); useGsapReveal(root, '[data-reveal]', [type]);
   const page = t(`publicPages:${type}`, { returnObjects: true });
   return (
-    <div className={`public-shell public-shell-${type}`}>
+    <div ref={root} className={`public-shell public-shell-${type}`}>
       <Header solid />
       <main>
         <section className={`public-hero public-hero-${type}`}>
-          <div className="page-container">
+          <div data-reveal className="page-container">
             <p className="eyebrow">{page.eyebrow}</p>
             <h1>{page.title}</h1>
             <p>{page.intro}</p>
@@ -194,7 +197,7 @@ export default function PublicInfoPage({ type }) {
           {page.steps && (
             <ol className="journey-steps">
               {page.steps.map((step, index) => (
-                <li key={step}>
+                <li data-reveal key={step}>
                   <span>{String(index + 1).padStart(2, "0")}</span>
                   <h2>{step}</h2>
                   <CheckCircle2 />
@@ -205,7 +208,7 @@ export default function PublicInfoPage({ type }) {
           {page.stories && (
             <div className="story-grid">
               {page.stories.map(([title, label, body]) => (
-                <article key={title}>
+                <article data-reveal key={title}>
                   <span>{label}</span>
                   <h2>{title}</h2>
                   <p>{body}</p>
@@ -216,7 +219,7 @@ export default function PublicInfoPage({ type }) {
           {page.sections && (
             <div className="editorial-grid">
               {page.sections.map(([title, body], index) => (
-                <article key={title}>
+                <article data-reveal key={title}>
                   {index % 3 === 0 ? (
                     <ShieldCheck />
                   ) : index % 3 === 1 ? (

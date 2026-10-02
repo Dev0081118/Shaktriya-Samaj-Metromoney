@@ -4,6 +4,8 @@ import { api } from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../../utils/formatters';
 import { translateStatus } from '../../utils/translatedLabels';
+import AppSidebar from '../../components/ui/AppSidebar';
+import { getNavigationForRole } from '../../config/navigation';
 
 export default function ManagerWorkspacePage() {
   const { user, logout } = useAuth();
@@ -12,10 +14,12 @@ export default function ManagerWorkspacePage() {
     api('/manager').then((r) => setData(r.data)).catch((e) => setError(e.message));
   }, []);
   return <div className="manager-shell">
-    <header className="admin-topbar">
-      <div><strong>KSHATRIYA</strong><small>{t('manager.workspace')}</small></div>
-      <div><span>{user.email}</span><button className="outline-button" onClick={logout}>{t('admin.logout')}</button></div>
-    </header>
+    <AppSidebar
+      variant="manager"
+      sections={getNavigationForRole(user?.role)}
+      identity={{ initial: user?.email?.[0]?.toUpperCase(), primary: user?.email, secondary: t('roles.relationship_manager') }}
+      onLogout={logout}
+    />
     <main className="admin-workspace">
       <header className="page-heading compact"><p className="eyebrow">{t('manager.operations')}</p><h1>{t('manager.assignedTitle')}</h1></header>
       {error ? <div className="empty-state"><p>{error}</p></div> : !data ? <div className="page-skeleton">{t('manager.loading')}</div> : <>

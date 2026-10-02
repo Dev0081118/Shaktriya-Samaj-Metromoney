@@ -3,17 +3,33 @@ import { ArrowDownRight, ArrowRight, ShieldCheck } from "lucide-react";
 import MatchFinder from "./MatchFinder";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useLayoutEffect, useRef } from "react";
+import { gsap } from "../motion/gsap";
+import { useReducedMotion } from "../motion/useReducedMotion";
 
 export default function Hero() {
   const { t } = useTranslation();
+  const root = useRef(null), reduced = useReducedMotion();
+  useLayoutEffect(() => {
+    if (reduced) return;
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+      tl.fromTo('[data-hero-image]', { scale: 1.06 }, { scale: 1, duration: 1.9 })
+        .fromTo('[data-hero-copy] > *', { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: .75, stagger: .12 }, .15)
+        .fromTo('[data-matchfinder]', { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: .8 }, .7);
+      gsap.to('[data-hero-image]', { yPercent: 4, ease: 'none', scrollTrigger: { trigger: root.current, start: 'top top', end: 'bottom top', scrub: .6 } });
+    }, root);
+    return () => ctx.revert();
+  }, [reduced]);
   return (
-    <section className="relative bg-[#f4efe8]">
+    <section ref={root} className="relative bg-[#f4efe8]">
       {/* =========================
           HERO VISUAL
       ========================== */}
       <div className="relative min-h-[790px] overflow-hidden lg:min-h-[830px]">
         {/* Background image */}
         <img
+          data-hero-image
           src="/assets/rajput-hero.webp"
           alt="Rajput heritage architecture"
           fetchPriority="high"
@@ -33,7 +49,7 @@ export default function Hero() {
             HERO CONTENT
         ========================== */}
         <div className="page-container relative z-10 flex min-h-[790px] items-center pb-36 pt-32 lg:min-h-[830px] lg:pb-40 lg:pt-36">
-          <div className="max-w-[790px]">
+          <div data-hero-copy className="max-w-[790px]">
             {/* Eyebrow */}
             <div className="mb-8 flex items-center gap-4">
               <span className="h-px w-10 bg-[#d5a76e]" />
@@ -108,7 +124,7 @@ export default function Hero() {
       {/* =========================
           MATCH FINDER
       ========================== */}
-      <div className="relative z-30 -mt-[54px]">
+      <div data-matchfinder className="relative z-30 -mt-[54px]">
         <MatchFinder />
       </div>
     </section>

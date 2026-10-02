@@ -1,15 +1,18 @@
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useRef } from "react";
+import { useGsapReveal } from "../motion/useGsapReveal";
 
 export default function HeritageIntro() {
   const { t } = useTranslation();
+  const root = useRef(null); useGsapReveal(root);
   return (
-    <section className="relative bg-[#f4efe8] pb-28 pt-20 lg:pb-36 lg:pt-28">
+    <section ref={root} className="relative bg-[#f4efe8] pb-28 pt-20 lg:pb-36 lg:pt-28">
       <div className="page-container">
         <div className="grid items-center gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:gap-28">
           {/* ================= IMAGE SIDE ================= */}
-          <div className="relative mx-auto w-full max-w-[500px] lg:mx-0">
+          <div data-reveal className="relative mx-auto w-full max-w-[500px] lg:mx-0">
             <div className="arch-image overflow-hidden">
               <img
                 src="/assets/public/heritage-arches.webp"
@@ -33,7 +36,7 @@ export default function HeritageIntro() {
           </div>
 
           {/* ================= TEXT SIDE ================= */}
-          <div className="max-w-[680px]">
+          <div data-reveal className="max-w-[680px]">
             <p className="eyebrow">{t('home.heritageEyebrow')}</p>
 
             <h2 className="mt-7 font-display text-[47px] leading-[1.02] tracking-[-0.035em] text-[#291a17] sm:text-[57px] lg:text-[65px]">

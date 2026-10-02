@@ -1,6 +1,8 @@
 import { ArrowLeft, ArrowRight, BadgeCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useRef } from "react";
+import { useGsapReveal } from "../motion/useGsapReveal";
 
 const profiles = [
   {
@@ -25,10 +27,11 @@ const profiles = [
 
 export default function MatchShowcase() {
   const { t } = useTranslation();
+  const root = useRef(null); useGsapReveal(root);
   return (
-    <section className="overflow-hidden bg-[#1e1715] py-28 text-white">
+    <section ref={root} className="overflow-hidden bg-[#1e1715] py-28 text-white">
       <div className="page-container">
-        <div className="flex flex-col justify-between gap-8 border-b border-white/15 pb-10 lg:flex-row lg:items-end">
+        <div data-reveal className="flex flex-col justify-between gap-8 border-b border-white/15 pb-10 lg:flex-row lg:items-end">
           <div>
             <p className="eyebrow text-[#c99f72]">{t('nav.discover')}</p>
 
@@ -60,6 +63,7 @@ export default function MatchShowcase() {
           {profiles.map((profile, index) => (
             <article
               key={profile.name}
+              data-reveal
               className={`profile-editorial ${index === 1 ? "md:mt-16" : ""}`}
             >
               <div className="relative overflow-hidden">

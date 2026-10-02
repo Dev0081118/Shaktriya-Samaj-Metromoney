@@ -1,14 +1,17 @@
 import { Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useRef } from "react";
+import { useGsapReveal } from "../motion/useGsapReveal";
 
 export default function BiodataShowcase() {
   const { t } = useTranslation();
+  const root = useRef(null); useGsapReveal(root);
   return (
-    <section className="bg-[#f5f0e9] py-28 lg:py-40">
+    <section ref={root} className="bg-[#f5f0e9] py-28 lg:py-40">
       <div className="page-container">
         <div className="grid items-center gap-20 lg:grid-cols-2">
-          <div>
+          <div data-reveal>
             <p className="eyebrow">{t('home.biodataEyebrow')}</p>
 
             <h2 className="mt-6 font-display text-[55px] leading-[1.02] text-[#271816]">
@@ -28,7 +31,7 @@ export default function BiodataShowcase() {
             </Link>
           </div>
 
-          <div className="biodata-showcase-visual relative mx-auto w-full max-w-[430px]">
+          <div data-reveal className="biodata-showcase-visual relative mx-auto w-full max-w-[430px]">
             <img className="biodata-editorial-backdrop" src="/assets/public/biodata-editorial.webp" alt="Ivory matrimonial stationery with a fountain pen" loading="lazy" />
 
             <article className="relative min-h-[560px] border border-[#d5c5b3] bg-[#fffdf9] px-9 py-10 shadow-[0_25px_60px_rgba(54,34,25,.16)]">

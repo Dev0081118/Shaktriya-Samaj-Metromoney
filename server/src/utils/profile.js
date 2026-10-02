@@ -74,7 +74,12 @@ export function evaluatePreferences(preferences, candidate) {
     ],
     [
       'Marital status',
-      includes(preferences?.maritalStatus, candidate.maritalStatus)
+      includes(
+        preferences?.acceptedMaritalStatuses?.length
+          ? preferences.acceptedMaritalStatuses
+          : preferences?.maritalStatus,
+        candidate.maritalStatus || candidate.maritalHistory?.status
+      )
     ],
     [
       'Diet preference',

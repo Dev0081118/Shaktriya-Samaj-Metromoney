@@ -1,6 +1,7 @@
 {
   "language": { "label": "ભાષા", "english": "English", "gujarati": "ગુજરાતી", "hindi": "हिन्दी", "select": "ભાષા પસંદ કરો" },
-  "brand": { "society": "મેટ્રિમોનિયલ સોસાયટી", "administration": "વહીવટ" },
+  "brand": { "society": "મેટ્રિમોનિયલ સોસાયટી", "administration": "વહીવટ", "relationshipDesk": "રિલેશનશિપ ડેસ્ક" },
+  "sidebar": { "navigation": "એપ્લિકેશન નેવિગેશન", "open": "નેવિગેશન મેનૂ ખોલો", "close": "નેવિગેશન મેનૂ બંધ કરો", "pin": "વિસ્તૃત સાઇડબાર પિન કરો", "unpin": "વિસ્તૃત સાઇડબાર અનપિન કરો", "unread": "{{count}} ન વાંચેલી સૂચનાઓ" },
   "actions": { "signIn": "સાઇન ઇન કરો", "signOut": "સાઇન આઉટ કરો", "createProfile": "પ્રોફાઇલ બનાવો", "continue": "આગળ વધો", "back": "પાછા", "save": "સાચવો", "cancel": "રદ કરો", "submit": "મોકલો", "viewAll": "બધું જુઓ", "viewProfile": "પ્રોફાઇલ જુઓ", "expressInterest": "રસ દર્શાવો", "shortlist": "પસંદ કરો", "search": "શોધો", "apply": "ફિલ્ટર લાગુ કરો", "reset": "ફરી સેટ કરો", "previous": "પાછલું", "next": "આગળ", "activate": "સક્રિય કરો", "confirm": "ખાતરી કરો" },
   "nav": { "discover": "પ્રોફાઇલ શોધો", "howItWorks": "કેવી રીતે કામ કરે છે", "stories": "સફળતાની વાતો", "membership": "સભ્યપદ", "about": "અમારા વિશે", "dashboard": "ડેશબોર્ડ", "interests": "રસ", "matches": "મેચ", "shortlisted": "પસંદ કરેલી પ્રોફાઇલ", "notifications": "સૂચનાઓ", "myProfile": "મારી પ્રોફાઇલ", "benefits": "પ્લાનના લાભ", "settings": "સેટિંગ્સ" },
   "states": { "loading": "લોડ થઈ રહ્યું છે…", "noResults": "કોઈ પરિણામ નથી", "unavailable": "હાલ ઉપલબ્ધ નથી", "yes": "હા", "no": "ના" },
