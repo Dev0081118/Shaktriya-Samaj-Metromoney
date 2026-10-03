@@ -61,7 +61,7 @@ export default function MatchFinder() {
               <option key={x}>{x}</option>
             ))}
           </select>
-          <span>–</span>
+          <span className="pt-4">&nbsp;&nbsp;  – &nbsp;&nbsp;</span>
           <select
             aria-label={t('public.maximumAge')}
             name="ageMax"
