@@ -157,7 +157,7 @@ export default function Privacy() {
             {/* privacy principles */}
             <div className="mt-12 border-t border-[#D6C8B8]">
               {privacyItems.map(
-                ({ icon: Icon, title, body, number }, index) => (
+                ({ icon: Icon, title, body, number }) => (
                   <article
                     key={title}
                     data-reveal
