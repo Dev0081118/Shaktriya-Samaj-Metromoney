@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useGsapReveal } from "../motion/useGsapReveal";
 import { useAuth } from "../context/AuthContext";
@@ -68,6 +68,20 @@ export default function MatchShowcase() {
     );
   };
 
+  /* =========================================
+     AUTO CHANGE PROFILE EVERY 5 SECONDS
+  ========================================== */
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((current) =>
+        current === profiles.length - 1 ? 0 : current + 1
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const matchesPath = !user
     ? "/register"
     : user.role === "member"
@@ -80,6 +94,7 @@ export default function MatchShowcase() {
       className="relative overflow-hidden bg-[#211716] py-20 text-white sm:py-24 lg:py-28"
     >
       {/* Subtle atmospheric lighting */}
+
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-[-180px] top-[-220px] h-[520px] w-[520px] rounded-full bg-[#681d25]/25 blur-[120px]"
@@ -93,7 +108,11 @@ export default function MatchShowcase() {
       <div className="page-container relative z-10">
         <div className="grid gap-14 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:gap-20">
           {/* LEFT CONTENT */}
-          <div data-reveal className="max-w-[500px]">
+
+          <div
+            data-reveal
+            className="max-w-[500px]"
+          >
             <div className="flex items-center gap-4">
               <span className="h-px w-10 bg-[#C49B70]" />
 
@@ -111,6 +130,7 @@ export default function MatchShowcase() {
             </p>
 
             {/* ACTIVE PROFILE DETAILS */}
+
             <div
               aria-live="polite"
               className="mt-10 border-y border-white/10 py-7"
@@ -119,6 +139,7 @@ export default function MatchShowcase() {
                 <div>
                   <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.16em] text-[#D6AC78]">
                     <BadgeCheck size={14} />
+
                     {t("home.verified")}
                   </div>
 
@@ -128,7 +149,11 @@ export default function MatchShowcase() {
 
                   <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-white/55">
                     <span className="flex items-center gap-2">
-                      <MapPin size={13} className="text-[#C99F72]" />
+                      <MapPin
+                        size={13}
+                        className="text-[#C99F72]"
+                      />
+
                       {activeProfile.age} • {activeProfile.city}
                     </span>
 
@@ -137,6 +162,7 @@ export default function MatchShowcase() {
                         size={13}
                         className="text-[#C99F72]"
                       />
+
                       {activeProfile.work}
                     </span>
                   </div>
@@ -144,13 +170,16 @@ export default function MatchShowcase() {
 
                 <div className="pt-1 text-[10px] font-bold tracking-[0.16em] text-white/35">
                   {String(activeIndex + 1).padStart(2, "0")}
+
                   <span className="mx-2">/</span>
+
                   {String(profiles.length).padStart(2, "0")}
                 </div>
               </div>
             </div>
 
             {/* LOCAL CONTROLS */}
+
             <div className="mt-7 flex items-center gap-3">
               <button
                 type="button"
@@ -180,6 +209,7 @@ export default function MatchShowcase() {
             </div>
 
             {/* CTA */}
+
             <Link
               to={matchesPath}
               className="group mt-10 inline-flex items-center gap-4 border-b border-[#C99F72] pb-2 text-[10px] font-bold uppercase tracking-[0.19em] text-[#D9B17F] transition hover:text-white"
@@ -194,11 +224,13 @@ export default function MatchShowcase() {
           </div>
 
           {/* RIGHT PROFILE CAROUSEL */}
+
           <div
             data-reveal
             className="relative mx-auto w-full max-w-[700px]"
           >
             {/* Background visual layer */}
+
             <div className="absolute -left-5 top-10 hidden h-[78%] w-[58%] overflow-hidden opacity-35 md:block">
               <img
                 src={
@@ -215,7 +247,11 @@ export default function MatchShowcase() {
 
             <div className="absolute -right-4 bottom-8 hidden h-[66%] w-[48%] overflow-hidden opacity-25 md:block">
               <img
-                src={profiles[(activeIndex + 1) % profiles.length].image}
+                src={
+                  profiles[
+                    (activeIndex + 1) % profiles.length
+                  ].image
+                }
                 alt=""
                 className="h-full w-full object-cover object-top grayscale"
               />
@@ -224,6 +260,7 @@ export default function MatchShowcase() {
             </div>
 
             {/* MAIN ACTIVE IMAGE */}
+
             <div className="relative z-10 ml-auto w-full overflow-hidden border border-white/10 bg-[#2A1B19] shadow-[0_35px_90px_rgba(0,0,0,0.28)] md:w-[72%]">
               <div className="relative aspect-[3/4] overflow-hidden">
                 <img
@@ -238,6 +275,7 @@ export default function MatchShowcase() {
 
                 <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[9px] font-bold uppercase tracking-[0.14em] text-white/85 backdrop-blur-md">
                   <BadgeCheck size={13} />
+
                   {t("home.verified")}
                 </div>
 
@@ -252,7 +290,9 @@ export default function MatchShowcase() {
 
                   <p className="mt-3 text-[12px] text-white/55">
                     {activeProfile.age} • {activeProfile.city}
+
                     <span className="mx-2 text-white/25">•</span>
+
                     {activeProfile.work}
                   </p>
                 </div>
@@ -260,6 +300,7 @@ export default function MatchShowcase() {
             </div>
 
             {/* Side index */}
+
             <div className="absolute bottom-5 left-0 z-20 hidden md:block">
               <span className="font-display text-[76px] leading-none text-white/10">
                 {String(activeIndex + 1).padStart(2, "0")}
