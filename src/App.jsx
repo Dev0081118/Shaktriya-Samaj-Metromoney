@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "./context/AuthContext";
+import HowItWorksPage from "./pages/HowItWorksPage";
 import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -62,9 +63,9 @@ export default function App() {
       <Route path="/forgot-password" element={<AuthPage mode="forgot" />} />
       <Route path="/membership" element={<MembershipPage publicView />} />
       <Route path="/about" element={<PublicInfoPage type="about" />} />
-      <Route
+            <Route
         path="/how-it-works"
-        element={<PublicInfoPage type="how-it-works" />}
+        element={<HowItWorksPage />}
       />
       <Route
         path="/success-stories"
