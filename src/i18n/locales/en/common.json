@@ -147,5 +147,64 @@
     "body": "Create your profile, share what matters to you and move through the process at a pace that feels comfortable.",
     "action": "Create free profile"
   }
+},
+"storiesPage": {
+  "hero": {
+    "eyebrow": "Shared beginnings",
+    "title": "Some beginnings are quiet. Some become a lifetime.",
+    "body": "No two matrimonial journeys unfold in exactly the same way. These editorial stories show how thoughtful introductions can grow through patience, mutual interest and family conversation.",
+    "quote": "The best stories do not always begin dramatically. Sometimes they begin with one respectful introduction.",
+    "note": "Illustrative editorial stories"
+  },
+  "featured": {
+    "eyebrow": "Featured journey",
+    "title": "A story, one thoughtful step at a time.",
+    "previous": "Previous story",
+    "next": "Next story",
+    "goTo": "Go to story"
+  },
+  "chapters": {
+    "eyebrow": "What changes the journey",
+    "title": "Three moments often matter more than the first impression.",
+    "first": {
+      "title": "The first introduction feels comfortable.",
+      "body": "A thoughtful profile gives enough context to understand the person without forcing immediate direct contact. Curiosity begins before pressure does."
+    },
+    "family": {
+      "title": "Families begin to speak.",
+      "body": "Once interest is mutual, the journey can move from profile discovery to family conversation. Context, expectations and values become clearer."
+    },
+    "decision": {
+      "title": "A decision starts taking shape.",
+      "body": "There is rarely one single moment of certainty. Trust usually develops through time, repeated conversation and the freedom to move at a comfortable pace."
+    }
+  },
+  "scrapbook": {
+    "eyebrow": "Small moments, remembered",
+    "title": "A matrimonial journey is more than one match.",
+    "body": "The real story sits between the milestones: the first profile someone pauses on, a family conversation that lasts longer than expected, or a decision that slowly begins to feel natural."
+  },
+  "values": {
+    "eyebrow": "What we believe",
+    "title": "A meaningful story should never need pressure.",
+    "mutual": {
+      "title": "Mutual interest comes first.",
+      "body": "An introduction only becomes meaningful when both sides choose to continue."
+    },
+    "family": {
+      "title": "Family involvement has its own pace.",
+      "body": "Families can support the journey without replacing the voice of the person at the centre of the profile."
+    },
+    "pace": {
+      "title": "Slow is not the same as uncertain.",
+      "body": "Taking time to understand someone can be part of a healthy matrimonial process."
+    }
+  },
+  "cta": {
+    "eyebrow": "Your story will be different",
+    "title": "Your story does not need to look like theirs. It only needs to begin honestly.",
+    "body": "Create a thoughtful profile, discover people at your own pace and let the next conversation happen when it feels right.",
+    "action": "Create free profile"
+  }
 }
 }
