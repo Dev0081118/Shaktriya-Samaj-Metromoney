@@ -2,8 +2,13 @@ import {
   Plan,
   Payment,
   Subscription,
-  Notification
+  Notification,
+  RefundRequest
 } from '../models/Platform.js';
+
+import {
+  AuditLog
+} from '../models/Business.js';
 
 import {
   paymentService
@@ -49,7 +54,8 @@ const amountInPaise = (
     Number(
       amount ||
         0
-    ) * 100
+    ) *
+      100
   );
 
 const validateCapturedPayment =
@@ -116,8 +122,8 @@ const validateCapturedPayment =
   };
 
 /*
- * Public pricing:
- * Free stays internal fallback.
+ * Public pricing.
+ * Free remains an internal fallback plan.
  */
 export const publicPlans =
   asyncHandler(
@@ -177,7 +183,7 @@ export const subscriptionMe =
             req.user.id
         })
           .select(
-            'status provider amount currency createdAt verifiedAt'
+            'status provider amount currency refundedAmountPaise refundPendingPaise createdAt verifiedAt'
           )
           .sort(
             '-createdAt'
@@ -209,6 +215,7 @@ export const subscriptionMe =
             subscription
               ? Math.max(
                   0,
+
                   Math.ceil(
                     (
                       subscription.endsAt -
@@ -308,7 +315,8 @@ export const createOrder =
             plan.price
           )
         ) ||
-        plan.price <= 0
+        plan.price <=
+          0
       ) {
         throw new ApiError(
           400,
@@ -396,7 +404,8 @@ export const createOrder =
                 recentPayment.currency,
 
               keyId:
-                process.env.RAZORPAY_KEY_ID,
+                process.env
+                  .RAZORPAY_KEY_ID,
 
               name:
                 plan.name
@@ -405,6 +414,7 @@ export const createOrder =
             payment:
               recentPayment
           },
+
           'Existing payment order reused.'
         );
       }
@@ -459,7 +469,9 @@ export const createOrder =
 
           payment
         },
+
         'Payment order created.',
+
         201
       );
     }
@@ -557,11 +569,8 @@ export async function activatePayment(
     new Date();
 
   /*
-   * Clean up an expired subscription which may not
-   * yet have been processed by the expiry job.
-   *
-   * This is necessary because the database now
-   * enforces one Active subscription per user.
+   * Clean expired subscriptions before enforcing
+   * the unique Active-subscription constraint.
    */
   await Subscription.updateMany(
     {
@@ -649,11 +658,6 @@ export async function activatePayment(
           )
       });
   } catch (error) {
-    /*
-     * The unique partial index is the final
-     * concurrency guard if two different payment
-     * activations reach this point simultaneously.
-     */
     if (
       error?.code ===
       11000
@@ -697,8 +701,8 @@ export async function activatePayment(
     await locked.save();
   } catch (error) {
     /*
-     * Membership must not remain active if the
-     * associated payment cannot be persisted.
+     * Roll back the membership if payment persistence
+     * fails after subscription creation.
      */
     await Subscription.updateOne(
       {
@@ -772,9 +776,6 @@ export async function activatePayment(
 
 /*
  * Razorpay Checkout verification.
- *
- * Signature is ALWAYS checked, even if a previous
- * webhook has already marked the order Paid.
  */
 export const verify =
   asyncHandler(
@@ -822,11 +823,13 @@ export const verify =
       }
 
       /*
-       * Always verify Razorpay's checkout signature.
+       * Always verify checkout signature.
        */
       paymentService.verifyCheckout({
         orderId,
+
         paymentId,
+
         signature:
           provided
       });
@@ -843,10 +846,7 @@ export const verify =
       }
 
       /*
-       * Do not activate membership based only on a
-       * browser checkout response.
-       *
-       * Confirm payment directly with Razorpay.
+       * Confirm provider state directly with Razorpay.
        */
       const providerPayment =
         await paymentService.fetchPayment(
@@ -883,7 +883,7 @@ export const verify =
         paymentId
       );
 
-      const entitlements =
+      const memberEntitlements =
         await getUserEntitlements(
           req.user.id
         );
@@ -896,8 +896,10 @@ export const verify =
               payment._id
             ),
 
-          entitlements
+          entitlements:
+            memberEntitlements
         },
+
         'Payment verified and membership activated.'
       );
     }
@@ -987,8 +989,7 @@ export const razorpayWebhook =
 
       /*
        * Unknown provider transaction.
-       * Acknowledge it so Razorpay does not retry
-       * indefinitely against our endpoint.
+       * Acknowledge safely to stop unnecessary retries.
        */
       if (!payment) {
         return ok(
@@ -1082,33 +1083,101 @@ export const razorpayWebhook =
           );
         }
 
+        if (
+          String(
+            refundEntity
+              ?.payment_id ||
+              ''
+          ) !==
+          String(
+            payment
+              .providerPaymentId ||
+              ''
+          )
+        ) {
+          throw new ApiError(
+            409,
+            'Refund does not belong to this payment.'
+          );
+        }
+
+        const refundRequest =
+          refundEntity?.id
+            ? await RefundRequest.findOne({
+                providerRefundId:
+                  refundEntity.id
+              })
+            : null;
+
+        /*
+         * RefundRequest provides provider-refund-level
+         * idempotency even if Razorpay retries with a
+         * different webhook event ID.
+         */
+        if (
+          refundRequest?.status ===
+          'Processed'
+        ) {
+          payment.processedEvents.addToSet(
+            eventId
+          );
+
+          await payment.save();
+
+          return ok(
+            res,
+            {},
+            'Refund already processed.'
+          );
+        }
+
         const originalAmount =
           amountInPaise(
             payment.amount
           );
 
-        payment.refundedAmountPaise =
+        const previousRefunded =
           Number(
-            payment.refundedAmountPaise ||
+            payment
+              .refundedAmountPaise ||
               0
-          ) +
-          refundAmount;
+          );
 
-        /*
-         * Multiple partial refunds are accumulated.
-         * Subscription is cancelled only when the
-         * total refunded amount reaches the original
-         * captured amount.
-         */
+        const nextRefunded =
+          Math.min(
+            originalAmount,
+
+            previousRefunded +
+              refundAmount
+          );
+
+        payment.refundedAmountPaise =
+          nextRefunded;
+
+        payment.refundPendingPaise =
+          Math.max(
+            0,
+
+            Number(
+              payment
+                .refundPendingPaise ||
+                0
+            ) -
+              refundAmount
+          );
+
+        const isFullRefund =
+          nextRefunded >=
+          originalAmount;
+
         if (
-          payment.refundedAmountPaise >=
-          originalAmount
+          isFullRefund
         ) {
-          payment.refundedAmountPaise =
-            originalAmount;
-
           payment.status =
             'Refunded';
+
+          payment.refundPendingPaise =
+            0;
 
           if (
             payment.subscription
@@ -1133,7 +1202,165 @@ export const razorpayWebhook =
               }
             );
           }
+        } else {
+          /*
+           * Partial refund:
+           * payment stays Paid and membership stays active.
+           */
+          payment.status =
+            'Paid';
         }
+
+        if (
+          refundRequest
+        ) {
+          refundRequest.status =
+            'Processed';
+
+          refundRequest.processedAt =
+            new Date();
+
+          await refundRequest.save();
+        }
+
+        await AuditLog.create({
+          action:
+            'payment.refund.processed',
+
+          entityType:
+            'Payment',
+
+          entityId:
+            String(
+              payment._id
+            ),
+
+          metadata: {
+            providerRefundId:
+              refundEntity?.id,
+
+            refundRequest:
+              refundRequest
+                ? String(
+                    refundRequest._id
+                  )
+                : null,
+
+            refundAmountPaise:
+              refundAmount,
+
+            cumulativeRefundedPaise:
+              nextRefunded,
+
+            fullRefund:
+              isFullRefund
+          }
+        });
+
+        await Notification.create({
+          user:
+            payment.user,
+
+          type:
+            'SYSTEM',
+
+          title:
+            isFullRefund
+              ? 'Payment refunded'
+              : 'Partial refund processed',
+
+          message:
+            isFullRefund
+              ? 'Your payment has been fully refunded. The related membership has been cancelled.'
+              : `A partial refund of INR ${(
+                  refundAmount /
+                  100
+                ).toFixed(
+                  2
+                )} has been processed.`
+        });
+      } else if (
+        event.event ===
+        'refund.failed'
+      ) {
+        const refundRequest =
+          refundEntity?.id
+            ? await RefundRequest.findOne({
+                providerRefundId:
+                  refundEntity.id
+              })
+            : null;
+
+        const failedAmount =
+          Number(
+            refundEntity
+              ?.amount ||
+              refundRequest
+                ?.amountPaise ||
+              0
+          );
+
+        if (
+          failedAmount >
+          0
+        ) {
+          payment.refundPendingPaise =
+            Math.max(
+              0,
+
+              Number(
+                payment
+                  .refundPendingPaise ||
+                  0
+              ) -
+                failedAmount
+            );
+        } else {
+          payment.refundPendingPaise =
+            0;
+        }
+
+        if (
+          refundRequest
+        ) {
+          refundRequest.status =
+            'Failed';
+
+          refundRequest.failureMessage =
+            refundEntity
+              ?.error_description ||
+            'Refund failed at payment provider.';
+
+          await refundRequest.save();
+        }
+
+        await AuditLog.create({
+          action:
+            'payment.refund.failed',
+
+          entityType:
+            'Payment',
+
+          entityId:
+            String(
+              payment._id
+            ),
+
+          metadata: {
+            providerRefundId:
+              refundEntity?.id,
+
+            refundRequest:
+              refundRequest
+                ? String(
+                    refundRequest._id
+                  )
+                : null,
+
+            amountPaise:
+              failedAmount
+          }
+        });
       } else {
         return ok(
           res,
@@ -1142,10 +1369,9 @@ export const razorpayWebhook =
         );
       }
 
-      payment.processedEvents
-        .addToSet(
-          eventId
-        );
+      payment.processedEvents.addToSet(
+        eventId
+      );
 
       await payment.save();
 

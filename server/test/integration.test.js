@@ -33,7 +33,8 @@ import {
 import {
   Payment,
   Plan,
-  Subscription
+  Subscription,
+  RefundRequest
 } from '../src/models/Platform.js';
 
 let database;
@@ -2685,6 +2686,453 @@ test(
           'Active'
       }),
       1
+    );
+  }
+);
+
+test(
+  'admin can submit a partial Razorpay refund and webhook confirms it',
+  async () => {
+    process.env.RAZORPAY_KEY_ID =
+      'rzp_test_refund';
+
+    process.env.RAZORPAY_KEY_SECRET =
+      'refund-test-secret';
+
+    process.env.RAZORPAY_WEBHOOK_SECRET =
+      'refund-webhook-secret';
+
+    const admin =
+      await User.create({
+        email:
+          'refund-admin@example.com',
+
+        password:
+          'Password123!',
+
+        role:
+          'admin'
+      });
+
+    const member =
+      await User.create({
+        email:
+          'refund-customer@example.com',
+
+        password:
+          'Password123!'
+      });
+
+    const plan =
+      await Plan.create({
+        name:
+          'Refund Admin Test',
+
+        slug:
+          'refund-admin-test',
+
+        price:
+          1000,
+
+        durationDays:
+          30
+      });
+
+    const subscription =
+      await Subscription.create({
+        user:
+          member._id,
+
+        plan:
+          plan._id,
+
+        planNameSnapshot:
+          plan.name,
+
+        priceSnapshot:
+          plan.price,
+
+        entitlementSnapshot:
+          {},
+
+        status:
+          'Active',
+
+        startsAt:
+          new Date(),
+
+        endsAt:
+          new Date(
+            Date.now() +
+              30 *
+                864e5
+          )
+      });
+
+    const payment =
+      await Payment.create({
+        user:
+          member._id,
+
+        plan:
+          plan._id,
+
+        subscription:
+          subscription._id,
+
+        provider:
+          'razorpay',
+
+        providerOrderId:
+          'order_admin_refund',
+
+        providerPaymentId:
+          'pay_admin_refund',
+
+        amount:
+          1000,
+
+        currency:
+          'INR',
+
+        status:
+          'Paid',
+
+        verifiedAt:
+          new Date()
+      });
+
+    const token =
+      jwt.sign(
+        {
+          sub:
+            admin.id,
+
+          ver:
+            0
+        },
+
+        process.env
+          .JWT_SECRET
+      );
+
+    const previousFetch =
+      global.fetch;
+
+    global.fetch =
+      async () => ({
+        ok:
+          true,
+
+        status:
+          200,
+
+        json:
+          async () => ({
+            id:
+              'rfnd_admin_partial',
+
+            payment_id:
+              'pay_admin_refund',
+
+            amount:
+              25000,
+
+            status:
+              'processed'
+          })
+      });
+
+    let response;
+
+    try {
+      response =
+        await request(app)
+          .post(
+            `/api/admin/payments/${payment.id}/refund`
+          )
+          .set(
+            'Authorization',
+            `Bearer ${token}`
+          )
+          .send({
+            type:
+              'partial',
+
+            amount:
+              250,
+
+            reasonCode:
+              'technical_failure',
+
+            reason:
+              'Customer experienced a verified technical service failure.'
+          });
+    } finally {
+      global.fetch =
+        previousFetch;
+    }
+
+    assert.equal(
+      response.status,
+      202
+    );
+
+    let saved =
+      await Payment.findById(
+        payment._id
+      );
+
+    assert.equal(
+      saved.refundPendingPaise,
+      25000
+    );
+
+    const refund =
+      await RefundRequest.findOne({
+        payment:
+          payment._id
+      });
+
+    assert.ok(
+      refund
+    );
+
+    assert.equal(
+      refund.status,
+      'Submitted'
+    );
+
+    assert.equal(
+      refund.providerRefundId,
+      'rfnd_admin_partial'
+    );
+
+    const event = {
+      event:
+        'refund.processed',
+
+      payload: {
+        refund: {
+          entity: {
+            id:
+              'rfnd_admin_partial',
+
+            payment_id:
+              'pay_admin_refund',
+
+            amount:
+              25000
+          }
+        }
+      }
+    };
+
+    const body =
+      JSON.stringify(
+        event
+      );
+
+    const signature =
+      crypto
+        .createHmac(
+          'sha256',
+          process.env
+            .RAZORPAY_WEBHOOK_SECRET
+        )
+        .update(
+          body
+        )
+        .digest(
+          'hex'
+        );
+
+    const webhook =
+      await request(app)
+        .post(
+          '/api/webhooks/razorpay'
+        )
+        .set(
+          'Content-Type',
+          'application/json'
+        )
+        .set(
+          'x-razorpay-signature',
+          signature
+        )
+        .set(
+          'x-razorpay-event-id',
+          'evt_admin_partial_refund'
+        )
+        .send(
+          body
+        );
+
+    assert.equal(
+      webhook.status,
+      200
+    );
+
+    saved =
+      await Payment.findById(
+        payment._id
+      );
+
+    assert.equal(
+      saved.refundedAmountPaise,
+      25000
+    );
+
+    assert.equal(
+      saved.refundPendingPaise,
+      0
+    );
+
+    assert.equal(
+      saved.status,
+      'Paid'
+    );
+
+    const updatedRefund =
+      await RefundRequest.findById(
+        refund._id
+      );
+
+    assert.equal(
+      updatedRefund.status,
+      'Processed'
+    );
+
+    assert.ok(
+      updatedRefund.processedAt
+    );
+
+    const membership =
+      await Subscription.findById(
+        subscription._id
+      );
+
+    assert.equal(
+      membership.status,
+      'Active'
+    );
+  }
+);
+
+test(
+  'admin refund endpoint rejects refund amounts above the remaining payment balance',
+  async () => {
+    const admin =
+      await User.create({
+        email:
+          'refund-limit-admin@example.com',
+
+        password:
+          'Password123!',
+
+        role:
+          'admin'
+      });
+
+    const member =
+      await User.create({
+        email:
+          'refund-limit-member@example.com',
+
+        password:
+          'Password123!'
+      });
+
+    const plan =
+      await Plan.create({
+        name:
+          'Refund Limit Test',
+
+        slug:
+          'refund-limit-test',
+
+        price:
+          500,
+
+        durationDays:
+          30
+      });
+
+    const payment =
+      await Payment.create({
+        user:
+          member._id,
+
+        plan:
+          plan._id,
+
+        provider:
+          'razorpay',
+
+        providerOrderId:
+          'order_refund_limit',
+
+        providerPaymentId:
+          'pay_refund_limit',
+
+        amount:
+          500,
+
+        refundedAmountPaise:
+          20000,
+
+        status:
+          'Paid'
+      });
+
+    const token =
+      jwt.sign(
+        {
+          sub:
+            admin.id,
+
+          ver:
+            0
+        },
+
+        process.env
+          .JWT_SECRET
+      );
+
+    const response =
+      await request(app)
+        .post(
+          `/api/admin/payments/${payment.id}/refund`
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        )
+        .send({
+          type:
+            'partial',
+
+          amount:
+            400,
+
+          reasonCode:
+            'other',
+
+          reason:
+            'Testing refund protection against excessive amounts.'
+        });
+
+    assert.equal(
+      response.status,
+      400
+    );
+
+    assert.equal(
+      await RefundRequest.countDocuments({
+        payment:
+          payment._id
+      }),
+      0
     );
   }
 );

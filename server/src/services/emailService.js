@@ -518,21 +518,29 @@ export const emailService = {
             }
           );
       } catch (error) {
-        if (
-          error?.name ===
-            'TimeoutError' ||
-          error?.name ===
-            'AbortError'
-        ) {
-          throw new Error(
-            'Email provider request timed out.'
-          );
-        }
-
-        throw new Error(
-          'Email provider is currently unavailable.'
-        );
+  if (
+    error?.name ===
+      'TimeoutError' ||
+    error?.name ===
+      'AbortError'
+  ) {
+    throw new Error(
+      'Email provider request timed out.',
+      {
+        cause:
+          error
       }
+    );
+  }
+
+  throw new Error(
+    'Email provider is currently unavailable.',
+    {
+      cause:
+        error
+    }
+  );
+}
 
       const result =
         await response

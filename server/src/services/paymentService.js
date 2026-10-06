@@ -315,7 +315,146 @@ export const paymentService = {
 
     return data;
   },
+  async createRefund({
+  paymentId,
+  amountPaise,
+  refundRequestId,
+  reason,
+  requestedBy
+}) {
+  if (
+    !paymentId ||
+    !Number.isInteger(
+      amountPaise
+    ) ||
+    amountPaise <= 0
+  ) {
+    throw new ApiError(
+      400,
+      'A valid refund amount is required.'
+    );
+  }
 
+  const auth =
+    razorpayAuth();
+
+  let response;
+
+  try {
+    response =
+      await fetch(
+        `https://api.razorpay.com/v1/payments/${encodeURIComponent(
+          paymentId
+        )}/refund`,
+        {
+          method:
+            'POST',
+
+          headers: {
+            Authorization:
+              `Basic ${auth}`,
+
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+              amount:
+                amountPaise,
+
+              receipt:
+                `rf_${refundRequestId}`.slice(
+                  0,
+                  40
+                ),
+
+              notes: {
+                refundRequestId:
+                  String(
+                    refundRequestId
+                  ),
+
+                requestedBy:
+                  String(
+                    requestedBy
+                  ),
+
+                reason:
+                  String(
+                    reason
+                  ).slice(
+                    0,
+                    200
+                  )
+              }
+            }),
+
+          signal:
+            AbortSignal.timeout(
+              10000
+            )
+        }
+      );
+  } catch {
+    throw new ApiError(
+      502,
+      'Unable to submit refund to the payment provider.'
+    );
+  }
+
+  const data =
+    await response
+      .json()
+      .catch(
+        () => ({})
+      );
+
+  if (
+    !response.ok ||
+    !data?.id
+  ) {
+    console.error(
+      'Razorpay refund rejected:',
+      {
+        status:
+          response.status,
+
+        code:
+          data?.error?.code ||
+          'unknown'
+      }
+    );
+
+    throw new ApiError(
+      502,
+      data?.error?.description ||
+        'Payment provider rejected the refund request.'
+    );
+  }
+
+  return {
+    provider:
+      'razorpay',
+
+    providerRefundId:
+      data.id,
+
+    paymentId:
+      data.payment_id ||
+      paymentId,
+
+    amountPaise:
+      Number(
+        data.amount ||
+          amountPaise
+      ),
+
+    status:
+      data.status ||
+      'submitted'
+  };
+},
   verifyWebhook(
     rawBody,
     provided

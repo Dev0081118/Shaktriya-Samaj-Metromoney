@@ -393,7 +393,11 @@ const payment = new mongoose.Schema(
       default: 0,
       min: 0
     },
-
+    refundPendingPaise: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
     processedEvents: {
       type: [
         String
@@ -411,7 +415,174 @@ payment.index({
   status: 1,
   createdAt: -1
 });
+const refundRequest = new mongoose.Schema(
+    {
+      payment: {
+        type:
+          mongoose.Schema.Types
+            .ObjectId,
 
+        ref:
+          'Payment',
+
+        required:
+          true,
+
+        index:
+          true
+      },
+
+      user: {
+        type:
+          mongoose.Schema.Types
+            .ObjectId,
+
+        ref:
+          'User',
+
+        required:
+          true,
+
+        index:
+          true
+      },
+
+      requestedBy: {
+        type:
+          mongoose.Schema.Types
+            .ObjectId,
+
+        ref:
+          'User',
+
+        required:
+          true
+      },
+
+      type: {
+        type:
+          String,
+
+        enum: [
+          'Full',
+          'Partial'
+        ],
+
+        required:
+          true
+      },
+
+      reasonCode: {
+        type:
+          String,
+
+        enum: [
+          'duplicate_payment',
+          'technical_failure',
+          'membership_activation_failure',
+          'incorrect_plan',
+          'admin_exception',
+          'other'
+        ],
+
+        required:
+          true
+      },
+
+      reason: {
+        type:
+          String,
+
+        required:
+          true,
+
+        trim:
+          true,
+
+        minLength:
+          10,
+
+        maxLength:
+          1000
+      },
+
+      amountPaise: {
+        type:
+          Number,
+
+        required:
+          true,
+
+        min:
+          1
+      },
+
+      providerRefundId: {
+        type:
+          String,
+
+        trim:
+          true
+      },
+
+      status: {
+        type:
+          String,
+
+        enum: [
+          'Requested',
+          'Submitted',
+          'Processed',
+          'Failed'
+        ],
+
+        default:
+          'Requested',
+
+        index:
+          true
+      },
+
+      failureMessage: {
+        type:
+          String,
+
+        maxLength:
+          1000
+      },
+
+      processedAt:
+        Date
+    },
+
+    {
+      timestamps:
+        true
+    }
+  );
+
+refundRequest.index({
+  payment:
+    1,
+
+  createdAt:
+    -1
+});
+
+refundRequest.index(
+  {
+    providerRefundId:
+      1
+  },
+
+  {
+    unique:
+      true,
+
+    sparse:
+      true
+  }
+);
 export const Notification =
   mongoose.model(
     'Notification',
@@ -446,4 +617,9 @@ export const Payment =
   mongoose.model(
     'Payment',
     payment
+  );
+export const RefundRequest =
+  mongoose.model(
+    'RefundRequest',
+    refundRequest
   );

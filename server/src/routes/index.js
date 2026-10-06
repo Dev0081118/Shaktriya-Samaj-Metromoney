@@ -140,6 +140,19 @@ router.get('/admin/subscriptions', protect, adminOnly, admin.subscriptions);
 router.get('/admin/support', protect, adminOnly, business.support);
 router.patch('/admin/support/:id', protect, adminOnly, business.updateSupport);
 router.get('/admin/payments', protect, adminOnly, business.payments);
+router.get(
+  '/admin/payments/:id/refunds',
+  protect,
+  adminOnly,
+  business.paymentRefunds
+);
+
+router.post(
+  '/admin/payments/:id/refund',
+  protect,
+  adminOnly,
+  business.refundPayment
+);
 router.get('/admin/plans', protect, superAdmin, business.allPlans);
 router.post('/admin/plans', protect, superAdmin, business.managePlans);
 router.patch('/admin/plans/:id', protect, superAdmin, business.managePlans);

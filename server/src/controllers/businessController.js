@@ -18,8 +18,12 @@ import {
   Notification,
   Plan,
   Payment,
-  Subscription
+  Subscription,
+  RefundRequest
 } from '../models/Platform.js';
+import {
+  paymentService
+} from '../services/paymentService.js';
 import { asyncHandler, ApiError, ok } from '../utils/http.js';
 import { sendEmailSafely } from '../services/emailService.js';
 import { emailUser } from '../services/notificationEmailService.js';
@@ -31,6 +35,16 @@ import {
   getSystemSettings,
   providerDiagnostics
 } from '../services/systemService.js';
+const moneyToPaise = (
+  amount
+) =>
+  Math.round(
+    Number(
+      amount ||
+        0
+    ) *
+      100
+  );
 const own = async (userId) => {
   const profile = await MatrimonialProfile.findOne({ userId });
   if (!profile) throw new ApiError(404, 'Create your profile first.');
@@ -40,6 +54,548 @@ const validId = (value) => {
   if (!mongoose.isValidObjectId(value))
     throw new ApiError(400, 'Invalid record ID.');
 };
+export const refundPayment =
+  asyncHandler(
+    async (
+      req,
+      res
+    ) => {
+      validId(
+        req.params.id
+      );
+
+      const refundType =
+        String(
+          req.body.type ||
+            ''
+        )
+          .trim()
+          .toLowerCase();
+
+      const reasonCode =
+        String(
+          req.body.reasonCode ||
+            ''
+        ).trim();
+
+      const reason =
+        String(
+          req.body.reason ||
+            ''
+        ).trim();
+
+      const allowedReasons = [
+        'duplicate_payment',
+        'technical_failure',
+        'membership_activation_failure',
+        'incorrect_plan',
+        'admin_exception',
+        'other'
+      ];
+
+      if (
+        ![
+          'full',
+          'partial'
+        ].includes(
+          refundType
+        )
+      ) {
+        throw new ApiError(
+          400,
+          'Refund type must be full or partial.'
+        );
+      }
+
+      if (
+        !allowedReasons.includes(
+          reasonCode
+        )
+      ) {
+        throw new ApiError(
+          400,
+          'Choose a valid refund reason.'
+        );
+      }
+
+      if (
+        reason.length <
+        10
+      ) {
+        throw new ApiError(
+          400,
+          'Refund reason must contain at least 10 characters.'
+        );
+      }
+
+      const payment =
+        await Payment.findById(
+          req.params.id
+        );
+
+      if (!payment) {
+        throw new ApiError(
+          404,
+          'Payment not found.'
+        );
+      }
+
+      if (
+        payment.provider !==
+        'razorpay'
+      ) {
+        throw new ApiError(
+          409,
+          'Only Razorpay payments can be refunded here.'
+        );
+      }
+
+      if (
+        !payment.providerPaymentId
+      ) {
+        throw new ApiError(
+          409,
+          'This payment does not have a verified Razorpay payment ID.'
+        );
+      }
+
+      if (
+        payment.status !==
+        'Paid'
+      ) {
+        throw new ApiError(
+          409,
+          'Only a paid transaction can be refunded.'
+        );
+      }
+
+      if (
+        Number(
+          payment
+            .refundPendingPaise ||
+            0
+        ) >
+        0
+      ) {
+        throw new ApiError(
+          409,
+          'A refund for this payment is already being processed.'
+        );
+      }
+
+      const originalPaise =
+        moneyToPaise(
+          payment.amount
+        );
+
+      const alreadyRefunded =
+        Number(
+          payment
+            .refundedAmountPaise ||
+            0
+        );
+
+      const remainingPaise =
+        Math.max(
+          0,
+
+          originalPaise -
+            alreadyRefunded
+        );
+
+      if (
+        remainingPaise <=
+        0
+      ) {
+        throw new ApiError(
+          409,
+          'This payment has already been fully refunded.'
+        );
+      }
+
+      let amountPaise;
+
+      if (
+        refundType ===
+        'full'
+      ) {
+        /*
+         * "Full" means refund all money that is
+         * still refundable.
+         */
+        amountPaise =
+          remainingPaise;
+      } else {
+        const amount =
+          Number(
+            req.body.amount
+          );
+
+        if (
+          !Number.isFinite(
+            amount
+          ) ||
+          amount <= 0
+        ) {
+          throw new ApiError(
+            400,
+            'Enter a valid partial refund amount.'
+          );
+        }
+
+        amountPaise =
+          moneyToPaise(
+            amount
+          );
+
+        if (
+          amountPaise >=
+          remainingPaise
+        ) {
+          throw new ApiError(
+            400,
+            'Use full refund when refunding the complete remaining amount.'
+          );
+        }
+      }
+
+      /*
+       * Atomic refund lock.
+       *
+       * Only one admin refund can be pending
+       * for the payment at a time.
+       *
+       * $expr also prevents refunding more than
+       * the remaining captured amount.
+       */
+      const locked =
+        await Payment.findOneAndUpdate(
+          {
+            _id:
+              payment._id,
+
+            status:
+              'Paid',
+
+            $or: [
+              {
+                refundPendingPaise:
+                  0
+              },
+
+              {
+                refundPendingPaise: {
+                  $exists:
+                    false
+                }
+              }
+            ],
+
+            $expr: {
+              $lte: [
+                amountPaise,
+
+                {
+                  $subtract: [
+                    {
+                      $multiply: [
+                        '$amount',
+                        100
+                      ]
+                    },
+
+                    {
+                      $ifNull: [
+                        '$refundedAmountPaise',
+                        0
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+
+          {
+            $set: {
+              refundPendingPaise:
+                amountPaise
+            }
+          },
+
+          {
+            returnDocument:
+              'after'
+          }
+        );
+
+      if (!locked) {
+        throw new ApiError(
+          409,
+          'Refund state changed. Refresh the payment and try again.'
+        );
+      }
+
+      let refundRequest;
+
+      try {
+        refundRequest =
+          await RefundRequest.create({
+            payment:
+              locked._id,
+
+            user:
+              locked.user,
+
+            requestedBy:
+              req.user._id,
+
+            type:
+              refundType ===
+              'full'
+                ? 'Full'
+                : 'Partial',
+
+            reasonCode,
+
+            reason,
+
+            amountPaise,
+
+            status:
+              'Requested'
+          });
+      } catch (error) {
+        await Payment.updateOne(
+          {
+            _id:
+              locked._id,
+
+            refundPendingPaise:
+              amountPaise
+          },
+
+          {
+            $set: {
+              refundPendingPaise:
+                0
+            }
+          }
+        );
+
+        throw error;
+      }
+
+      try {
+        const providerRefund =
+          await paymentService.createRefund({
+            paymentId:
+              locked.providerPaymentId,
+
+            amountPaise,
+
+            refundRequestId:
+              refundRequest._id,
+
+            reason,
+
+            requestedBy:
+              req.user._id
+          });
+
+        refundRequest.providerRefundId =
+          providerRefund.providerRefundId;
+
+        refundRequest.status =
+          'Submitted';
+
+        await refundRequest.save();
+      } catch (error) {
+        refundRequest.status =
+          'Failed';
+
+        refundRequest.failureMessage =
+          error.message;
+
+        await refundRequest.save();
+
+        await Payment.updateOne(
+          {
+            _id:
+              locked._id,
+
+            refundPendingPaise:
+              amountPaise
+          },
+
+          {
+            $set: {
+              refundPendingPaise:
+                0
+            }
+          }
+        );
+
+        await AuditLog.create({
+          actor:
+            req.user._id,
+
+          action:
+            'payment.refund.failed',
+
+          entityType:
+            'Payment',
+
+          entityId:
+            String(
+              locked._id
+            ),
+
+          metadata: {
+            refundRequest:
+              String(
+                refundRequest._id
+              ),
+
+            amountPaise,
+
+            reasonCode,
+
+            reason,
+
+            error:
+              error.message
+          },
+
+          requestId:
+            req.id
+        });
+
+        throw error;
+      }
+
+      await AuditLog.create({
+        actor:
+          req.user._id,
+
+        action:
+          'payment.refund.requested',
+
+        entityType:
+          'Payment',
+
+        entityId:
+          String(
+            locked._id
+          ),
+
+        metadata: {
+          refundRequest:
+            String(
+              refundRequest._id
+            ),
+
+          providerRefundId:
+            refundRequest
+              .providerRefundId,
+
+          type:
+            refundRequest.type,
+
+          amountPaise,
+
+          reasonCode,
+
+          reason
+        },
+
+        requestId:
+          req.id
+      });
+
+      ok(
+        res,
+
+        {
+          refund:
+            refundRequest,
+
+          payment: {
+            _id:
+              locked._id,
+
+            amount:
+              locked.amount,
+
+            refundedAmountPaise:
+              locked
+                .refundedAmountPaise ||
+              0,
+
+            refundPendingPaise:
+              amountPaise
+          }
+        },
+
+        'Refund submitted to Razorpay. Final status will be confirmed by webhook.',
+
+        202
+      );
+    }
+  );
+
+  export const paymentRefunds =
+  asyncHandler(
+    async (
+      req,
+      res
+    ) => {
+      validId(
+        req.params.id
+      );
+
+      const payment =
+        await Payment.findById(
+          req.params.id
+        )
+          .populate(
+            'user',
+            'email phone'
+          )
+          .populate(
+            'plan',
+            'name slug'
+          );
+
+      if (!payment) {
+        throw new ApiError(
+          404,
+          'Payment not found.'
+        );
+      }
+
+      const refunds =
+        await RefundRequest.find({
+          payment:
+            payment._id
+        })
+          .populate(
+            'requestedBy',
+            'email role'
+          )
+          .sort(
+            '-createdAt'
+          );
+
+      ok(
+        res,
+        {
+          payment,
+          refunds
+        }
+      );
+    }
+  );
 export const publicSystemStatus = asyncHandler(async (_req, res) => {
   const settings = await getSystemSettings();
   ok(res, {
