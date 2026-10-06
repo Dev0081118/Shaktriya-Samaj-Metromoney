@@ -22,18 +22,36 @@ import {
   emailUser
 } from '../services/notificationEmailService.js';
 
-const normalizePhone = (
+ const normalizePhone = (
   value
-) =>
-  value
-    ? `+${String(
-        value
-      ).replace(
-        /\D/g,
-        ''
-      )}`
-    : undefined;
+) => {
+  if (
+    typeof value !==
+    'string'
+  ) {
+    return undefined;
+  }
 
+  const digits =
+    value.replace(
+      /\D/g,
+      ''
+    );
+
+  /*
+   * E.164 allows at most 15 digits.
+   * Minimum 8 avoids obviously invalid values
+   * while still supporting international numbers.
+   */
+  if (
+    digits.length < 8 ||
+    digits.length > 15
+  ) {
+    return undefined;
+  }
+
+  return `+${digits}`;
+};
 const tokenFor = (
   user
 ) =>
@@ -108,16 +126,26 @@ export const register =
           );
 
       if (
-        !email ||
-        !password ||
-        password.length <
-          8
-      ) {
-        throw new ApiError(
-          400,
-          'Email and a password of at least 8 characters are required.'
-        );
-      }
+            !email ||
+            !password ||
+            password.length <
+              8
+          ) {
+            throw new ApiError(
+              400,
+              'Email and a password of at least 8 characters are required.'
+            );
+          }
+
+          if (
+            req.body.phone &&
+            !phone
+          ) {
+            throw new ApiError(
+              400,
+              'Enter a valid mobile number.'
+            );
+        }
 
       if (
         req.body
@@ -394,31 +422,34 @@ export const requestOtp =
       req,
       res
     ) => {
-      if (
-        typeof req.body
-          .phone !==
-          'string' ||
-        !req.body.phone.trim()
-      ) {
-        throw new ApiError(
-          400,
-          'A mobile number is required.'
-        );
-      }
-
       const phone =
         normalizePhone(
           req.body.phone
         );
 
-      if (
-        !phone ||
-        phone.length <
-          8
-      ) {
+      if (!phone) {
         throw new ApiError(
           400,
           'Enter a valid mobile number.'
+        );
+      }
+
+      const existing =
+        await User.findOne({
+          phone,
+
+          _id: {
+            $ne:
+              req.user._id
+          }
+        }).select(
+          '_id'
+        );
+
+      if (existing) {
+        throw new ApiError(
+          409,
+          'This mobile number is already associated with another account.'
         );
       }
 
@@ -448,7 +479,7 @@ export const confirmOtp =
       ) {
         throw new ApiError(
           400,
-          'A mobile number is required.'
+          'Enter a valid mobile number.'
         );
       }
 

@@ -657,3 +657,121 @@ test(
     );
   }
 );
+test(
+  'OTP sending requires an authenticated member',
+  async () => {
+    const response =
+      await request(app)
+        .post(
+          '/api/auth/send-otp'
+        )
+        .send({
+          phone:
+            '+919999999991'
+        });
+
+    assert.equal(
+      response.status,
+      401
+    );
+  }
+);
+
+test(
+  'registration rejects an invalid mobile number',
+  async () => {
+    const response =
+      await request(app)
+        .post(
+          '/api/auth/register'
+        )
+        .send({
+          email:
+            'invalid-phone@example.com',
+
+          phone:
+            '123',
+
+          password:
+            'Password123!',
+
+          acceptTerms:
+            true,
+
+          acceptPrivacy:
+            true
+        });
+
+    assert.equal(
+      response.status,
+      400
+    );
+  }
+);
+
+test(
+  'OTP requests enforce a destination resend cooldown',
+  async () => {
+    const member =
+      await User.create({
+        email:
+          'otp-cooldown@example.com',
+
+        password:
+          'Password123!'
+      });
+
+    const token =
+      jwt.sign(
+        {
+          sub:
+            member.id,
+
+          ver:
+            0
+        },
+
+        process.env
+          .JWT_SECRET
+      );
+
+    const phone =
+      '+919876543210';
+
+    const first =
+      await request(app)
+        .post(
+          '/api/auth/send-otp'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        )
+        .send({
+          phone
+        });
+
+    assert.equal(
+      first.status,
+      200
+    );
+
+    const second =
+      await request(app)
+        .post(
+          '/api/auth/send-otp'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        )
+        .send({
+          phone
+        });
+
+    assert.equal(
+      second.status,
+      429
+    );
+  }
+);

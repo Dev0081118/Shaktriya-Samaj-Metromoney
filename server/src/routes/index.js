@@ -33,7 +33,7 @@ router.get('/public/system-status', business.publicSystemStatus);
 router.post('/support', optionalProtect, business.createSupport);
 router.post('/auth/register', auth.register);
 router.post('/auth/login', auth.login);
-router.post('/auth/send-otp', auth.requestOtp);
+router.post('/auth/send-otp', ...member, auth.requestOtp);
 router.post('/auth/forgot-password', business.forgotPassword);
 router.post('/auth/reset-password', business.resetPassword);
 router.post('/auth/verify-otp', ...member, auth.confirmOtp);
