@@ -24,6 +24,13 @@ const SECTION_ICONS = [
   LockKeyhole
 ];
 
+const HERO_IMAGES = {
+  safety:
+    '/assets/public/safety.webp',
+  privacy:
+    '/assets/public/privacy.webp'
+};
+
 const primaryButtonClass =
   'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318]';
 
@@ -50,6 +57,9 @@ export default function PublicInfoPage({
   const isLegal =
     LEGAL_PAGES.includes(type);
 
+  const heroImage =
+    HERO_IMAGES[type];
+
   return (
     <div
       ref={root}
@@ -58,10 +68,21 @@ export default function PublicInfoPage({
       <Header solid />
 
       <main>
-        <section className="border-b border-[#ddd0c1] bg-[linear-gradient(135deg,#f1e5d6,#fffdf8)] py-[90px] pt-[110px] max-[767px]:py-[60px] max-[767px]:pt-[75px]">
+        <section className="relative overflow-hidden border-b border-[#ddd0c1] bg-[#eee3d5] pb-[90px] pt-[110px] max-[767px]:pb-[60px] max-[767px]:pt-[75px]">
+          {heroImage && (
+            <div
+              aria-hidden="true"
+              className="absolute inset-y-0 right-0 w-[42%] bg-cover bg-center opacity-[0.42] max-[767px]:w-[60%] max-[767px]:opacity-[0.12]"
+              style={{
+                backgroundImage:
+                  `linear-gradient(90deg,#eee3d5 0%,transparent 38%),url('${heroImage}')`
+              }}
+            />
+          )}
+
           <div
             data-reveal
-            className="page-container"
+            className="page-container relative z-10"
           >
             <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
               {page.eyebrow}
@@ -71,7 +92,7 @@ export default function PublicInfoPage({
               {page.title}
             </h1>
 
-            <p className="mt-[27px] max-w-[700px] text-[15px] leading-[1.9] text-[#756a60]">
+            <p className="mt-[27px] max-w-[650px] text-[15px] leading-[1.9] text-[#756a60]">
               {page.intro}
             </p>
 
@@ -93,7 +114,13 @@ export default function PublicInfoPage({
           </div>
         </section>
 
-        <section className="page-container py-[85px]">
+        <section
+          className={`page-container py-[85px] ${
+            isLegal
+              ? 'max-w-[860px]'
+              : ''
+          }`}
+        >
           {isLegal && (
             <div className="mb-8 border border-[#d5a948] bg-[#fff9e9] px-[1.2rem] py-4">
               <strong>
@@ -111,7 +138,13 @@ export default function PublicInfoPage({
           )}
 
           {page.sections && (
-            <div className="grid grid-cols-2 gap-px border border-[#ddd0c1] bg-[#ddd0c1] max-[767px]:grid-cols-1">
+            <div
+              className={
+                isLegal
+                  ? 'block'
+                  : 'grid grid-cols-3 gap-px max-[1024px]:grid-cols-2 max-[767px]:grid-cols-1'
+              }
+            >
               {page.sections.map(
                 (
                   [
@@ -130,7 +163,11 @@ export default function PublicInfoPage({
                     <article
                       data-reveal
                       key={title}
-                      className="min-h-[260px] bg-[#fffdf8] p-[42px] max-[767px]:min-h-0 max-[767px]:p-[30px]"
+                      className={
+                        isLegal
+                          ? 'border-b border-[#d9cdbf] bg-transparent py-[42px]'
+                          : '-mb-px -mr-px min-h-[260px] border border-[#d9cdbf] bg-[#fffdf8] p-[42px] max-[767px]:min-h-0 max-[767px]:p-[30px]'
+                      }
                     >
                       <SectionIcon className="text-[#aa7a42]" />
 

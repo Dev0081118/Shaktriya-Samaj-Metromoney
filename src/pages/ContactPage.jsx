@@ -83,7 +83,7 @@ export default function ContactPage() {
       <Header solid />
 
       <main>
-        <section className="border-b border-[#ddd0c1] bg-[linear-gradient(135deg,#f1e5d6,#fffdf8)] py-[90px] max-[767px]:py-[60px]">
+        <section className="border-b border-[#ddd0c1] bg-[linear-gradient(135deg,#f1e5d6,#fffdf8)] pb-[90px] pt-[110px] max-[767px]:pb-[60px] max-[767px]:pt-[75px]">
           <div className="page-container">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
               {t(
@@ -106,8 +106,8 @@ export default function ContactPage() {
         </section>
 
         <section className="page-container grid grid-cols-[0.8fr_1.2fr] gap-20 py-[85px] max-[767px]:grid-cols-1 max-[767px]:gap-[35px] max-[767px]:py-[55px]">
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+          <div className="min-h-[520px] bg-[linear-gradient(0deg,rgba(39,14,17,.86),rgba(54,26,22,.18)),url('/assets/public/contact-support.webp')] bg-cover bg-center p-[42px] text-white max-[767px]:min-h-[400px] max-[767px]:p-[30px]">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#e2bd88]">
               {t(
                 'publicPages:contact.desk'
               )}
@@ -119,7 +119,7 @@ export default function ContactPage() {
               )}
             </h2>
 
-            <p className="mt-4 text-[13px] leading-[1.9] text-[#756a60]">
+            <p className="mt-4 text-[13px] leading-[1.9] text-[#ffffffbd]">
               {t(
                 'publicPages:contact.warning'
               )}

@@ -262,7 +262,7 @@ export default function DiscoverPage() {
 
   return (
     <>
-      <header className="relative -mx-3 mb-[34px] flex min-h-[190px] flex-col justify-end overflow-hidden bg-[linear-gradient(90deg,#f5f0e8_0%,#f5f0e8d9_52%,transparent),url('/assets/member/discover-header.webp')] bg-[position:right_center] bg-cover px-[42px] py-[34px] max-[767px]:mx-0 max-[767px]:min-h-[170px] max-[767px]:p-[25px]">
+      <header className="relative -mx-3 -mt-3 mb-[34px] flex min-h-[190px] flex-col justify-end overflow-hidden bg-[linear-gradient(90deg,#f5f0e8_0%,#f5f0e8d9_52%,transparent),url('/assets/member/discover-header.webp')] bg-[position:right_center] bg-cover px-[42px] py-[34px] max-[767px]:mx-0 max-[767px]:min-h-[170px] max-[767px]:p-[25px]">
         <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
           Preference-based discovery
         </p>
@@ -307,7 +307,7 @@ export default function DiscoverPage() {
 
         <button
           type="button"
-          className="flex items-center gap-[9px] border border-[#ddd0c1] bg-[#fffdf8] px-5 text-[12px] font-extrabold max-[767px]:px-[13px] max-[767px]:text-0"
+          className="flex items-center gap-[9px] border border-[#ddd0c1] bg-[#fffdf8] px-5 text-[12px] font-extrabold max-[767px]:px-[13px] max-[767px]:text-[0px]"
           onClick={() =>
             setShow(!show)
           }

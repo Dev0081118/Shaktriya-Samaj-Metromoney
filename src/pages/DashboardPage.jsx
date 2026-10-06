@@ -179,7 +179,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <header className="relative -mx-3 mb-[44px] flex min-h-[180px] flex-col justify-end overflow-hidden bg-[linear-gradient(90deg,#eee4d8_0%,#eee4d8e8_58%,transparent),url('/assets/member/member-lounge.webp')] bg-[position:right_center] bg-[length:45%_100%] bg-no-repeat pb-[30px] pl-[34px] pr-[38%] pt-[34px] max-[767px]:mx-0 max-[767px]:min-h-0 max-[767px]:bg-[linear-gradient(90deg,#eee4d8ee,#eee4d8c9),url('/assets/member/member-lounge.webp')] max-[767px]:bg-cover max-[767px]:p-6">
+      <header className="relative mb-[44px] flex min-h-[180px] flex-col justify-end overflow-hidden bg-[linear-gradient(90deg,#eee4d8_0%,#eee4d8e8_58%,transparent),url('/assets/member/member-lounge.webp')] bg-[position:right_center] bg-[length:45%_100%] bg-no-repeat pb-[30px] pl-[34px] pr-[38%] pt-[34px] max-[767px]:min-h-0 max-[767px]:bg-[linear-gradient(90deg,#eee4d8ee,#eee4d8c9),url('/assets/member/member-lounge.webp')] max-[767px]:bg-cover max-[767px]:px-6 max-[767px]:py-7">
         <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
           {formatDate(
             new Date(),

@@ -41,7 +41,6 @@ export default function Privacy() {
       ref={root}
       className="relative overflow-hidden bg-[#EDE2D4] py-20 text-[#211715] sm:py-24 lg:py-32"
     >
-      {/* subtle atmospheric shapes */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -left-52 top-[-140px] h-[520px] w-[520px] rounded-full bg-[#C49B70]/10 blur-[130px]"
@@ -54,21 +53,15 @@ export default function Privacy() {
 
       <div className="page-container relative z-10">
         <div className="grid gap-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-20 xl:gap-28">
-          {/* =========================================
-              LEFT — PRIVACY VISUAL
-          ========================================== */}
-
           <div
             data-reveal
             className="relative mx-auto w-full max-w-[560px] lg:mx-0"
           >
-            {/* architectural offset frame */}
             <div
               aria-hidden="true"
               className="absolute -left-5 top-8 hidden h-[88%] w-full border border-[#AA7A42]/25 sm:block"
             />
 
-            {/* main image */}
             <div className="relative overflow-hidden border border-[#D9CCBD] bg-[#E9DFD3] shadow-[0_32px_90px_rgba(57,30,24,0.12)]">
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img
@@ -78,10 +71,8 @@ export default function Privacy() {
                   className="h-full w-full object-cover object-center transition-transform duration-[1400ms] ease-out hover:scale-[1.025]"
                 />
 
-                {/* soft neutral overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#211715]/55 via-transparent to-transparent" />
 
-                {/* top label */}
                 <div className="absolute left-5 top-5 flex items-center gap-2 border border-white/20 bg-[#211715]/35 px-3 py-2 backdrop-blur-md">
                   <ShieldCheck
                     size={14}
@@ -94,8 +85,7 @@ export default function Privacy() {
                   </span>
                 </div>
 
-                {/* bottom editorial message */}
-                <div className="absolute mb-8 inset-x-0 bottom-0 p-6 sm:p-8 lg:p-9">
+                <div className="absolute inset-x-0 bottom-0 mb-8 p-6 sm:p-8 lg:p-9">
                   <div className="flex items-center gap-3">
                     <span className="h-px w-9 bg-[#D8AE76]" />
 
@@ -111,8 +101,7 @@ export default function Privacy() {
               </div>
             </div>
 
-            {/* floating trust card */}
-            <div className="relative z-20 -mt-8 ml-auto mr-4 w-[calc(100%-2rem)] max-w-[360px] border border-[#D8C8B5] bg-[#FFFDF8] p-5 shadow-[0_20px_50px_rgba(50,28,22,0.1)] sm:-mt-12 sm:mr-[-26px]">
+            <div className="relative z-20 -mt-8 ml-auto mr-4 w-[calc(100%_-_2rem)] max-w-[360px] border border-[#D8C8B5] bg-[#FFFDF8] p-5 shadow-[0_20px_50px_rgba(50,28,22,0.1)] sm:-mt-12 sm:mr-[-26px]">
               <div className="flex items-start gap-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#681D25] text-white">
                   <LockKeyhole size={16} strokeWidth={1.6} />
@@ -130,10 +119,6 @@ export default function Privacy() {
               </div>
             </div>
           </div>
-
-          {/* =========================================
-              RIGHT — PRIVACY CONTENT
-          ========================================== */}
 
           <div className="lg:pl-2">
             <div data-reveal className="max-w-[620px]">
@@ -154,7 +139,6 @@ export default function Privacy() {
               </p>
             </div>
 
-            {/* privacy principles */}
             <div className="mt-12 border-t border-[#D6C8B8]">
               {privacyItems.map(
                 ({ icon: Icon, title, body, number }) => (
@@ -163,7 +147,6 @@ export default function Privacy() {
                     data-reveal
                     className="group grid grid-cols-[48px_1fr_auto] gap-4 border-b border-[#D6C8B8] py-7 sm:grid-cols-[56px_1fr_auto] sm:gap-5 sm:py-8"
                   >
-                    {/* icon */}
                     <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#CDB9A3] text-[#681D25] transition duration-300 group-hover:border-[#681D25] group-hover:bg-[#681D25] group-hover:text-white">
                       <Icon
                         size={18}
@@ -171,7 +154,6 @@ export default function Privacy() {
                       />
                     </div>
 
-                    {/* copy */}
                     <div>
                       <h3 className="font-display text-[27px] font-medium leading-tight text-[#2F1D1B] sm:text-[31px]">
                         {title}
@@ -182,7 +164,6 @@ export default function Privacy() {
                       </p>
                     </div>
 
-                    {/* number */}
                     <span className="pt-1 font-display text-[18px] italic text-[#B28A5E]">
                       {number}
                     </span>
@@ -191,7 +172,6 @@ export default function Privacy() {
               )}
             </div>
 
-            {/* final reassurance strip */}
             <div
               data-reveal
               className="mt-10 flex items-start gap-4 border-l-2 border-[#AA7A42] bg-[#EEE4D8]/70 px-5 py-5 sm:px-6"

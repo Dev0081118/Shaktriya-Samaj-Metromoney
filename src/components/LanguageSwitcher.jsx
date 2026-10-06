@@ -47,7 +47,7 @@ export default function LanguageSwitcher({
               aria-current={
                 active ? 'true' : undefined
               }
-              className={`whitespace-nowrap rounded-full px-[8px] py-[5px] text-[5px] font-bold outline-none transition max-[520px]:px-[3px] max-[520px]:text-[8px] ${
+              className={`whitespace-nowrap rounded-full px-[8px] py-[5px] text-[8px] font-bold outline-none transition max-[520px]:px-[7px] max-[520px]:text-[7px] ${
                 active
                   ? 'bg-[#f4eee5] text-[#4d1920] shadow-[0_2px_6px_#0002]'
                   : 'bg-transparent text-white/70 hover:bg-white/[0.09] hover:text-white focus-visible:bg-white/[0.09] focus-visible:text-white'
@@ -83,7 +83,7 @@ export default function LanguageSwitcher({
           'en'
         }
         onChange={change}
-        className={`rounded-full border border-current bg-transparent py-[5px] pl-[8px] pr-[22px] text-[5px] text-inherit ${
+        className={`rounded-full border border-current bg-transparent py-[5px] pl-[8px] pr-[22px] text-[8px] text-inherit ${
           compact
             ? 'max-w-[62px] py-[4px]'
             : 'max-w-[105px]'

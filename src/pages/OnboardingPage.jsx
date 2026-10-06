@@ -1252,13 +1252,11 @@ export default function OnboardingPage() {
           </div>
 
           <button
-            className="flex items-center gap-2 justify-self-end text-[10px] max-[767px]:text-0"
-            onClick={() =>
-              navigate(
-                '/dashboard'
-              )
-            }
-          >
+  className="flex items-center gap-2 justify-self-end text-[10px] max-[767px]:text-[0px]"
+  onClick={() =>
+    navigate('/dashboard')
+  }
+>
             <Save />
 
             <span className="max-[767px]:hidden">
@@ -1267,7 +1265,7 @@ export default function OnboardingPage() {
           </button>
         </header>
 
-        <section className="mx-auto my-[clamp(40px,8vh,90px)] w-[min(650px,calc(100%-40px))]">
+        <section className="mx-auto my-[clamp(40px,8vh,90px)] w-[min(650px,calc(100%_-_40px))]">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
             {steps[step][0]}
           </p>

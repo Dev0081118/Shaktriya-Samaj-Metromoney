@@ -4,7 +4,8 @@ import AdminNav from '../../components/AdminNav';
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
 
-const money = (value) => formatCurrency(value);
+const money = (value) =>
+  formatCurrency(value);
 
 const ranges = [
   ['7d', '7 days'],
@@ -14,25 +15,45 @@ const ranges = [
 ];
 
 export default function RevenuePage() {
-  const [range, setRange] = useState('30d');
-  const [data, setData] = useState(null);
-  const [error, setError] = useState('');
+  const [range, setRange] =
+    useState('30d');
+
+  const [data, setData] =
+    useState(null);
+
+  const [error, setError] =
+    useState('');
 
   useEffect(() => {
-    api(`/admin/analytics/revenue?range=${range}`)
-      .then((response) => setData(response.data))
-      .catch((requestError) => setError(requestError.message));
+    api(
+      `/admin/analytics/revenue?range=${range}`
+    )
+      .then((response) =>
+        setData(response.data)
+      )
+      .catch(
+        (requestError) =>
+          setError(
+            requestError.message
+          )
+      );
   }, [range]);
 
   const maximum = Math.max(
     1,
-    ...(data?.daily || []).map((item) => item.amount)
+    ...(data?.daily || []).map(
+      (item) => item.amount
+    )
   );
 
-  const handleRangeChange = (event) => {
+  const handleRangeChange = (
+    event
+  ) => {
     setError('');
     setData(null);
-    setRange(event.target.value);
+    setRange(
+      event.target.value
+    );
   };
 
   return (
@@ -50,21 +71,29 @@ export default function RevenuePage() {
           </h1>
 
           <p className="mt-[18px] max-w-[680px] text-[14px] leading-[1.8] text-[#756a60]">
-            Verified captured collections—not profit.
+            Verified captured
+            collections—not profit.
           </p>
         </header>
 
         <div className="my-6 flex gap-3 max-[767px]:flex-col">
           <select
             value={range}
-            onChange={handleRangeChange}
-            className="border border-[#ddd0c1] bg-[#fffdf8] p-[13px] font-inherit"
+            onChange={
+              handleRangeChange
+            }
+            className="border border-[#ddd0c1] bg-[#fffdf8] p-[13px] font-[inherit]"
           >
-            {ranges.map(([value, label]) => (
-              <option value={value} key={value}>
-                {label}
-              </option>
-            ))}
+            {ranges.map(
+              ([value, label]) => (
+                <option
+                  value={value}
+                  key={value}
+                >
+                  {label}
+                </option>
+              )
+            )}
           </select>
         </div>
 
@@ -76,14 +105,17 @@ export default function RevenuePage() {
           </div>
         ) : !data ? (
           <div className="grid min-h-[260px] place-items-center bg-[linear-gradient(100deg,#eee4d8_30%,#f8f3ec_50%,#eee4d8_70%)] bg-[length:300%_100%] font-['Cormorant_Garamond'] text-[24px] font-medium text-[#756a60]">
-            Calculating captured revenue…
+            Calculating captured
+            revenue…
           </div>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-[15px] max-[767px]:grid-cols-2">
               <article className="border border-[#ddd0c1] bg-[#fffdf8] p-[25px]">
                 <strong className="block font-['Cormorant_Garamond'] text-[34px] font-medium">
-                  {money(data.totalCaptured)}
+                  {money(
+                    data.totalCaptured
+                  )}
                 </strong>
 
                 <span className="text-[9px] uppercase text-[#756a60]">
@@ -93,7 +125,9 @@ export default function RevenuePage() {
 
               <article className="border border-[#ddd0c1] bg-[#fffdf8] p-[25px]">
                 <strong className="block font-['Cormorant_Garamond'] text-[34px] font-medium">
-                  {money(data.totalRefunded)}
+                  {money(
+                    data.totalRefunded
+                  )}
                 </strong>
 
                 <span className="text-[9px] uppercase text-[#756a60]">
@@ -103,7 +137,9 @@ export default function RevenuePage() {
 
               <article className="border border-[#ddd0c1] bg-[#fffdf8] p-[25px]">
                 <strong className="block font-['Cormorant_Garamond'] text-[34px] font-medium">
-                  {money(data.netCaptured)}
+                  {money(
+                    data.netCaptured
+                  )}
                 </strong>
 
                 <span className="text-[9px] uppercase text-[#756a60]">
@@ -128,32 +164,41 @@ export default function RevenuePage() {
               </h2>
 
               <div className="flex h-[240px] items-end gap-[5px] overflow-x-auto border-b border-[#ddd0c1] pt-5">
-                {data.daily.map((point) => (
-                  <div
-                    key={point.date}
-                    title={`${point.date}: ${money(point.amount)}`}
-                    className="flex h-full min-w-[18px] flex-1 flex-col items-center justify-end gap-[5px]"
-                  >
-                    <span
-                      className="min-h-[4px] w-full max-w-[30px] bg-[linear-gradient(#8d2638,#4b1520)]"
-                      style={{
-                        height: `${Math.max(
-                          4,
-                          (point.amount / maximum) * 100
-                        )}%`
-                      }}
-                    />
+                {data.daily.map(
+                  (point) => (
+                    <div
+                      key={point.date}
+                      title={`${point.date}: ${money(
+                        point.amount
+                      )}`}
+                      className="flex h-full min-w-[18px] flex-1 flex-col items-center justify-end gap-[5px]"
+                    >
+                      <span
+                        className="min-h-[4px] w-full max-w-[30px] bg-[linear-gradient(#8d2638,#4b1520)]"
+                        style={{
+                          height: `${Math.max(
+                            4,
+                            (point.amount /
+                              maximum) *
+                              100
+                          )}%`
+                        }}
+                      />
 
-                    <small className="-mb-4 rotate-[-45deg] text-[7px] text-[#756a60]">
-                      {point.date.slice(5)}
-                    </small>
-                  </div>
-                ))}
+                      <small className="-mb-4 rotate-[-45deg] text-[7px] text-[#756a60]">
+                        {point.date.slice(
+                          5
+                        )}
+                      </small>
+                    </div>
+                  )
+                )}
               </div>
 
               {!data.daily.length && (
                 <p className="p-[25px] text-[12px] text-[#756a60]">
-                  No captured payments in this period.
+                  No captured payments
+                  in this period.
                 </p>
               )}
             </section>
@@ -163,26 +208,31 @@ export default function RevenuePage() {
                 Revenue by plan
               </h2>
 
-              {data.revenueByPlan.map((row) => (
-                <div
-                  key={row.plan}
-                  className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4 max-[767px]:grid-cols-[auto_1fr_auto]"
-                >
-                  <div>
-                    <strong className="block text-[11px]">
-                      {row.plan}
-                    </strong>
+              {data.revenueByPlan.map(
+                (row) => (
+                  <div
+                    key={row.plan}
+                    className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4 max-[767px]:grid-cols-[auto_1fr_auto]"
+                  >
+                    <div>
+                      <strong className="block text-[11px]">
+                        {row.plan}
+                      </strong>
 
-                    <small className="block text-[9px] text-[#756a60]">
-                      {row.count} payments
-                    </small>
+                      <small className="block text-[9px] text-[#756a60]">
+                        {row.count}{' '}
+                        payments
+                      </small>
+                    </div>
+
+                    <span className="col-start-4 max-[767px]:col-start-3">
+                      {money(
+                        row.amount
+                      )}
+                    </span>
                   </div>
-
-                  <span className="col-start-4 max-[767px]:col-start-3">
-                    {money(row.amount)}
-                  </span>
-                </div>
-              ))}
+                )
+              )}
             </section>
           </>
         )}
