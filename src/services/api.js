@@ -75,9 +75,29 @@ export async function api(
       .json()
       .catch(() => ({
         success: false,
+
         message:
           'Unable to read server response.'
       }));
+
+  /*
+   * Some security-sensitive endpoints,
+   * such as change-password, rotate the
+   * current JWT.
+   *
+   * Persist the fresh token before any
+   * following API request can use the
+   * revoked token.
+   */
+  if (
+    response.ok &&
+    data?.data?.token
+  ) {
+    localStorage.setItem(
+      'ksm_token',
+      data.data.token
+    );
+  }
 
   if (
     response.status === 401

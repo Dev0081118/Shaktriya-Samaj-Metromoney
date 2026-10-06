@@ -1,59 +1,152 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-const schema = new mongoose.Schema(
-  {
-    phone: { type: String, trim: true, unique: true, sparse: true },
-    email: {
-      type: String,
-      lowercase: true,
-      trim: true,
-      unique: true,
-      sparse: true
+
+const schema =
+  new mongoose.Schema(
+    {
+      phone: {
+        type: String,
+        trim: true,
+        unique: true,
+        sparse: true
+      },
+
+      email: {
+        type: String,
+        lowercase: true,
+        trim: true,
+        unique: true,
+        sparse: true
+      },
+
+      password: {
+        type: String,
+        required: true,
+        select: false
+      },
+
+      phoneVerified: {
+        type: Boolean,
+        default: false
+      },
+
+      emailVerified: {
+        type: Boolean,
+        default: false
+      },
+
+      role: {
+        type: String,
+        enum: [
+          'member',
+          'admin',
+          'moderator',
+          'relationship_manager',
+          'super_admin'
+        ],
+        default: 'member'
+      },
+
+      status: {
+        type: String,
+        enum: [
+          'Active',
+          'Suspended',
+          'Blocked',
+          'Deleted'
+        ],
+        default: 'Active'
+      },
+
+      /*
+       * Every JWT carries this value.
+       *
+       * Password change / reset increments it,
+       * instantly invalidating every older session.
+       */
+      tokenVersion: {
+        type: Number,
+        default: 0,
+        min: 0,
+        select: true
+      },
+
+      acceptedTermsVersion:
+        String,
+
+      acceptedPrivacyVersion:
+        String,
+
+      acceptedAt:
+        Date,
+
+      lastLoginAt:
+        Date,
+
+      preferredLanguage: {
+        type: String,
+        enum: [
+          'en',
+          'gu',
+          'hi'
+        ],
+        default: 'en'
+      }
     },
-    password: { type: String, required: true, select: false },
-    phoneVerified: { type: Boolean, default: false },
-    emailVerified: { type: Boolean, default: false },
-    role: {
-      type: String,
-      enum: [
-        'member',
-        'admin',
-        'moderator',
-        'relationship_manager',
-        'super_admin'
-      ],
-      default: 'member'
-    },
-    status: {
-      type: String,
-      enum: ['Active', 'Suspended', 'Blocked', 'Deleted'],
-      default: 'Active'
-    },
-    acceptedTermsVersion: String,
-    acceptedPrivacyVersion: String,
-    acceptedAt: Date,
-    lastLoginAt: Date
-    ,preferredLanguage: {
-      type: String,
-      enum: ['en', 'gu', 'hi'],
-      default: 'en'
+
+    {
+      timestamps: true
     }
-  },
-  { timestamps: true }
-);
-schema.index({ role: 1, status: 1, createdAt: -1 });
-schema.pre('save', async function () {
-  if (this.isModified('password'))
-    this.password = await bcrypt.hash(this.password, 12);
+  );
+
+schema.index({
+  role: 1,
+  status: 1,
+  createdAt: -1
 });
-schema.methods.comparePassword = function (value) {
-  return bcrypt.compare(value, this.password);
-};
-schema.set('toJSON', {
-  transform: (_d, r) => {
-    delete r.password;
-    delete r.__v;
-    return r;
+
+schema.pre(
+  'save',
+  async function () {
+    if (
+      this.isModified(
+        'password'
+      )
+    ) {
+      this.password =
+        await bcrypt.hash(
+          this.password,
+          12
+        );
+    }
   }
-});
-export default mongoose.model('User', schema);
+);
+
+schema.methods.comparePassword =
+  function (value) {
+    return bcrypt.compare(
+      value,
+      this.password
+    );
+  };
+
+schema.set(
+  'toJSON',
+  {
+    transform: (
+      _document,
+      result
+    ) => {
+      delete result.password;
+      delete result.__v;
+      delete result.tokenVersion;
+
+      return result;
+    }
+  }
+);
+
+export default mongoose.model(
+  'User',
+  schema
+);

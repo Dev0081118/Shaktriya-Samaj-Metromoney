@@ -439,3 +439,221 @@ test('relationship manager administration is limited to admins', async () => {
     403
   );
 });
+test(
+  'changing password revokes older sessions and returns a fresh session',
+  async () => {
+    const user =
+      await User.create({
+        email:
+          'password-change@example.com',
+
+        password:
+          'Password123!'
+      });
+
+    const oldToken =
+      jwt.sign(
+        {
+          sub:
+            user.id,
+
+          ver:
+            0
+        },
+
+        process.env
+          .JWT_SECRET
+      );
+
+    const changed =
+      await request(app)
+        .patch(
+          '/api/auth/change-password'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${oldToken}`
+        )
+        .send({
+          currentPassword:
+            'Password123!',
+
+          newPassword:
+            'DifferentPassword456!'
+        });
+
+    assert.equal(
+      changed.status,
+      200
+    );
+
+    assert.ok(
+      changed.body.data.token
+    );
+
+    const oldSession =
+      await request(app)
+        .get(
+          '/api/auth/me'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${oldToken}`
+        );
+
+    assert.equal(
+      oldSession.status,
+      401
+    );
+
+    assert.equal(
+      oldSession.body.code,
+      'SESSION_REVOKED'
+    );
+
+    const freshSession =
+      await request(app)
+        .get(
+          '/api/auth/me'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${changed.body.data.token}`
+        );
+
+    assert.equal(
+      freshSession.status,
+      200
+    );
+  }
+);
+
+test(
+  'password reset revokes every existing session',
+  async () => {
+    const user =
+      await User.create({
+        email:
+          'password-reset@example.com',
+
+        password:
+          'Password123!'
+      });
+
+    const oldToken =
+      jwt.sign(
+        {
+          sub:
+            user.id,
+
+          ver:
+            0
+        },
+
+        process.env
+          .JWT_SECRET
+      );
+
+    /*
+     * We use the real forgot-password endpoint.
+     * Development email output is expected in tests.
+     *
+     * Since the reset code is hashed in MongoDB,
+     * create a known reset record directly for the
+     * actual reset verification step.
+     */
+    const {
+      PasswordReset
+    } =
+      await import(
+        '../src/models/Business.js'
+      );
+
+    const bcryptModule =
+      await import(
+        'bcryptjs'
+      );
+
+    await PasswordReset.create({
+      user:
+        user._id,
+
+      codeHash:
+        await bcryptModule.default.hash(
+          '123456',
+          10
+        ),
+
+      expiresAt:
+        new Date(
+          Date.now() +
+            15 *
+              60 *
+              1000
+        )
+    });
+
+    const reset =
+      await request(app)
+        .post(
+          '/api/auth/reset-password'
+        )
+        .send({
+          email:
+            'password-reset@example.com',
+
+          code:
+            '123456',
+
+          newPassword:
+            'ResetPassword456!'
+        });
+
+    assert.equal(
+      reset.status,
+      200
+    );
+
+    const oldSession =
+      await request(app)
+        .get(
+          '/api/auth/me'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${oldToken}`
+        );
+
+    assert.equal(
+      oldSession.status,
+      401
+    );
+
+    assert.equal(
+      oldSession.body.code,
+      'SESSION_REVOKED'
+    );
+
+    const login =
+      await request(app)
+        .post(
+          '/api/auth/login'
+        )
+        .send({
+          email:
+            'password-reset@example.com',
+
+          password:
+            'ResetPassword456!'
+        });
+
+    assert.equal(
+      login.status,
+      200
+    );
+
+    assert.ok(
+      login.body.data.token
+    );
+  }
+);

@@ -315,41 +315,170 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   }
   ok(res, {}, 'If an account exists, a reset code has been sent.');
 });
-export const resetPassword = asyncHandler(async (req, res) => {
-  const email =
-    typeof req.body.email === 'string'
-      ? req.body.email.trim().toLowerCase()
-      : '';
-  const user = email && (await User.findOne({ email })),
-    record =
-      user &&
-      (await PasswordReset.findOne({ user: user._id, usedAt: null }).sort(
-        '-createdAt'
-      ));
-  if (!record || record.expiresAt < Date.now())
-    throw new ApiError(400, 'The reset code is invalid or expired.');
-  record.attempts += 1;
-  if (record.attempts > 5) {
-    await record.save();
-    throw new ApiError(429, 'Too many reset attempts.');
-  }
-  if (!(await bcrypt.compare(String(req.body.code || ''), record.codeHash))) {
-    await record.save();
-    throw new ApiError(400, 'The reset code is invalid or expired.');
-  }
-  if (!req.body.newPassword || req.body.newPassword.length < 8)
-    throw new ApiError(400, 'New password must be at least 8 characters.');
-  user.password = req.body.newPassword;
-  record.usedAt = new Date();
-  await Promise.all([user.save(), record.save()]);
-  await emailUser(user._id, {
-    security: true,
-    subject: 'Your password was changed',
-    template: 'password-changed',
-    data: { changedAt: new Date().toISOString() }
-  });
-  ok(res, {}, 'Password reset successfully.');
-});
+export const resetPassword =
+  asyncHandler(
+    async (
+      req,
+      res
+    ) => {
+      const email =
+        typeof req.body.email ===
+        'string'
+          ? req.body.email
+              .trim()
+              .toLowerCase()
+          : '';
+
+      const user =
+        email &&
+        (
+          await User.findOne({
+            email
+          }).select(
+            '+password'
+          )
+        );
+
+      const record =
+        user &&
+        (
+          await PasswordReset.findOne({
+            user:
+              user._id,
+
+            usedAt:
+              null
+          }).sort(
+            '-createdAt'
+          )
+        );
+
+      if (
+        !record ||
+        record.expiresAt <
+          Date.now()
+      ) {
+        throw new ApiError(
+          400,
+          'The reset code is invalid or expired.'
+        );
+      }
+
+      record.attempts +=
+        1;
+
+      if (
+        record.attempts >
+        5
+      ) {
+        await record.save();
+
+        throw new ApiError(
+          429,
+          'Too many reset attempts.'
+        );
+      }
+
+      if (
+        !(
+          await bcrypt.compare(
+            String(
+              req.body.code ||
+                ''
+            ),
+
+            record.codeHash
+          )
+        )
+      ) {
+        await record.save();
+
+        throw new ApiError(
+          400,
+          'The reset code is invalid or expired.'
+        );
+      }
+
+      const newPassword =
+        req.body.newPassword;
+
+      if (
+        !newPassword ||
+        newPassword.length <
+          8
+      ) {
+        throw new ApiError(
+          400,
+          'New password must be at least 8 characters.'
+        );
+      }
+
+      if (
+        await user.comparePassword(
+          newPassword
+        )
+      ) {
+        throw new ApiError(
+          400,
+          'New password must be different from your current password.'
+        );
+      }
+
+      user.password =
+        newPassword;
+
+      user.tokenVersion =
+        Number(
+          user.tokenVersion ??
+            0
+        ) + 1;
+
+      record.usedAt =
+        new Date();
+
+      await Promise.all([
+        user.save(),
+        record.save()
+      ]);
+
+      /*
+       * Remove any older unused reset codes.
+       */
+      await PasswordReset.deleteMany({
+        user:
+          user._id,
+
+        usedAt:
+          null
+      });
+
+      await emailUser(
+        user._id,
+        {
+          security:
+            true,
+
+          subject:
+            'Your password was changed',
+
+          template:
+            'password-changed',
+
+          data: {
+            changedAt:
+              new Date()
+                .toISOString()
+          }
+        }
+      );
+
+      ok(
+        res,
+        {},
+        'Password reset successfully. Please sign in again.'
+      );
+    }
+  );
 export const settings = asyncHandler(async (_req, res) =>
   ok(res, {
     settings: await getSystemSettings(),
