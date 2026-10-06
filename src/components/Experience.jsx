@@ -11,10 +11,10 @@ import { useTranslation } from "react-i18next";
 import { gsap, ScrollTrigger } from "../motion/gsap";
 
 const stepImages = [
-  "/assets/public/Heritage Matrimony Profile Creation.png",
-  "/assets/public/Discover Matrimony in Heritage Elegance.png",
-  "/assets/public/Express Interest in Tradition.png",
-  "/assets/public/A Joyful Mutual Match.png"
+  "/assets/public/profile-creation-heritage.webp",
+  "/assets/public/discover-heritage.webp",
+  "/assets/public/express-interest-tradition.webp",
+  "/assets/public/joyful-mutual-match.webp"
 ];
 
 export default function Experience() {

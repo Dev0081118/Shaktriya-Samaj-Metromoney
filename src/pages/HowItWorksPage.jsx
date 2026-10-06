@@ -19,10 +19,10 @@ import Footer from "../components/Footer";
 import { gsap } from "../motion/gsap";
 
 const stageImages = [
-  "/assets/public/Heritage Matrimony Profile Creation.png",
-  "/assets/public/Discover Matrimony in Heritage Elegance.png",
-  "/assets/public/Express Interest in Tradition.png",
-  "/assets/public/A Joyful Mutual Match.png"
+  "/assets/public/profile-creation-heritage.webp",
+  "/assets/public/discover-heritage.webp",
+  "/assets/public/express-interest-tradition.webp",
+  "/assets/public/joyful-mutual-match.webp"
 ];
 
 export default function HowItWorksPage() {
