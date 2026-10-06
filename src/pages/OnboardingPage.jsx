@@ -409,8 +409,13 @@ export default function OnboardingPage() {
     }
     setStep(Math.min(9, step + 1));
   };
-  if (loading)
-    return <div className="app-loading">Preparing your profile…</div>;
+  if (loading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-[var(--ivory)] font-['Cormorant_Garamond'] text-[28px] text-[var(--wine)]">
+        Preparing your profile…
+      </div>
+    );
+  }
   return (
     <div className="onboarding-shell">
       <aside>

@@ -1,39 +1,33 @@
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
-import { useAuth } from "./context/AuthContext";
-import AboutPage from "./pages/AboutPage";
-import HomePage from "./pages/HomePage";
-import AuthPage from "./pages/AuthPage";
-import OnboardingPage from "./pages/OnboardingPage";
-import DashboardPage from "./pages/DashboardPage";
-import DiscoverPage from "./pages/DiscoverPage";
-import ProfilePage from "./pages/ProfilePage";
-import CollectionPage from "./pages/CollectionPage";
-import SettingsPage from "./pages/SettingsPage";
-import MembershipPage from "./pages/MembershipPage";
-import BiodataPage from "./pages/BiodataPage";
-
-import PublicInfoPage from "./pages/PublicInfoPage";
-import HowItWorksPage from "./pages/HowItWorksPage";
-import StoriesPage from "./pages/StoriesPage";
-
-import ContactPage from "./pages/ContactPage";
-import MemberBenefitsPage from "./pages/MemberBenefitsPage";
-
-import AdminPage from "./pages/admin/AdminPage";
-import AdminOperationsPage from "./pages/admin/AdminOperationsPage";
-import ManagerOperationsPage from "./pages/admin/ManagerOperationsPage";
-import ManagerWorkspacePage from "./pages/admin/ManagerWorkspacePage";
-import CustomerOperationsPage from "./pages/admin/CustomerOperationsPage";
-import RevenuePage from "./pages/admin/RevenuePage";
-
-import MemberLayout from "./layouts/MemberLayout";
-
-import { getHomeRouteForRole } from "./utils/roleRoutes";
-
-import LanguageSwitcher from "./components/LanguageSwitcher";
+import LanguageSwitcher from './components/LanguageSwitcher';
+import { useAuth } from './context/AuthContext';
+import MemberLayout from './layouts/MemberLayout';
+import AboutPage from './pages/AboutPage';
+import AuthPage from './pages/AuthPage';
+import BiodataPage from './pages/BiodataPage';
+import CollectionPage from './pages/CollectionPage';
+import ContactPage from './pages/ContactPage';
+import DashboardPage from './pages/DashboardPage';
+import DiscoverPage from './pages/DiscoverPage';
+import HomePage from './pages/HomePage';
+import HowItWorksPage from './pages/HowItWorksPage';
+import MemberBenefitsPage from './pages/MemberBenefitsPage';
+import MembershipPage from './pages/MembershipPage';
+import OnboardingPage from './pages/OnboardingPage';
+import ProfilePage from './pages/ProfilePage';
+import PublicInfoPage from './pages/PublicInfoPage';
+import SettingsPage from './pages/SettingsPage';
+import StoriesPage from './pages/StoriesPage';
+import AdminOperationsPage from './pages/admin/AdminOperationsPage';
+import AdminPage from './pages/admin/AdminPage';
+import CustomerOperationsPage from './pages/admin/CustomerOperationsPage';
+import ManagerOperationsPage from './pages/admin/ManagerOperationsPage';
+import ManagerWorkspacePage from './pages/admin/ManagerWorkspacePage';
+import RevenuePage from './pages/admin/RevenuePage';
+import { getHomeRouteForRole } from './utils/roleRoutes';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -41,8 +35,8 @@ function ProtectedRoute({ children, roles }) {
 
   if (loading) {
     return (
-      <div className="app-loading">
-        {t("states.loading")}
+      <div className="grid min-h-screen place-items-center bg-[var(--ivory)] font-['Cormorant_Garamond'] text-[28px] text-[var(--wine)]">
+        {t('states.loading')}
       </div>
     );
   }
@@ -53,10 +47,7 @@ function ProtectedRoute({ children, roles }) {
 
   if (roles && !roles.includes(user.role)) {
     return (
-      <Navigate
-        to={getHomeRouteForRole(user.role)}
-        replace
-      />
+      <Navigate to={getHomeRouteForRole(user.role)} replace />
     );
   }
 
@@ -69,20 +60,20 @@ function DocumentMeta() {
 
   useEffect(() => {
     const labels = {
-      "/": "Kshatriya Matrimonial Society",
-      "/about": t("nav.about"),
-      "/how-it-works": t("nav.howItWorks"),
-      "/success-stories": t("nav.stories"),
-      "/safety": t("public.safety"),
-      "/membership": t("nav.membership"),
-      "/contact": t("public.contact"),
-      "/dashboard": t("nav.dashboard")
+      '/': 'Kshatriya Matrimonial Society',
+      '/about': t('nav.about'),
+      '/how-it-works': t('nav.howItWorks'),
+      '/success-stories': t('nav.stories'),
+      '/safety': t('public.safety'),
+      '/membership': t('nav.membership'),
+      '/contact': t('public.contact'),
+      '/dashboard': t('nav.dashboard')
     };
 
     document.title =
-      pathname === "/"
-        ? labels["/"]
-        : `${labels[pathname] || "Kshatriya"} | Kshatriya Matrimonial Society`;
+      pathname === '/'
+        ? labels['/']
+        : `${labels[pathname] || 'Kshatriya'} | Kshatriya Matrimonial Society`;
   }, [i18n.language, pathname, t]);
 
   return null;
