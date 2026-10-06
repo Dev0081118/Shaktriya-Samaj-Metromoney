@@ -388,13 +388,13 @@ export default function MembershipPage({
             )}
           </p>
 
-          <h1>
+          <h1 className="mb-5">
             {t(
               'membership.heading'
             )}
           </h1>
 
-          <p>
+          <p className="mb-3">
             {t(
               'membership.body'
             )}
@@ -428,7 +428,7 @@ export default function MembershipPage({
           )}
         </header>
 
-        <div className="plans-grid">
+        <div className="plans-grid ">
           {plans.map(
             (plan) => {
               const current =
@@ -541,12 +541,13 @@ export default function MembershipPage({
                         plan
                       )
                     }
-                    className={
+                    className={ 
                       plan.slug ===
                       'assisted'
                         ? 'primary-button'
                         : 'outline-button'
                     }
+                    
                   >
                     {current
                       ? t(
