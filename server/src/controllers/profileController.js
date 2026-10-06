@@ -421,45 +421,184 @@ export const setPause = asyncHandler(async (req, res) => {
     req.body.paused ? 'Profile paused.' : 'Profile resumed.'
   );
 });
-export const savePhoto = asyncHandler(async (req, res) => {
-  if (!req.file) throw new ApiError(400, 'Choose an image to upload.');
-  const profile = await owned(req.user.id),
-    previous = profile.profilePhotoPublicId || profile.profilePhoto,
-    asset = await mediaService.fromUpload(req.file);
-  profile.profilePhoto = asset.url;
-  profile.profilePhotoPublicId = asset.publicId;
-  profile.completionPercentage = completion(
-    profile,
-    !!(await PartnerPreference.exists({ profileId: profile._id }))
+export const savePhoto =
+  asyncHandler(
+    async (
+      req,
+      res
+    ) => {
+      if (!req.file) {
+        throw new ApiError(
+          400,
+          'Choose an image to upload.'
+        );
+      }
+
+      const profile =
+        await owned(
+          req.user.id
+        );
+
+      const previous =
+        profile
+          .profilePhotoPublicId ||
+        profile.profilePhoto;
+
+      const asset =
+        await mediaService.fromUpload(
+          req.file
+        );
+
+      try {
+        profile.profilePhoto =
+          asset.url;
+
+        profile.profilePhotoPublicId =
+          asset.publicId;
+
+        profile.completionPercentage =
+          completion(
+            profile,
+            !!(
+              await PartnerPreference.exists(
+                {
+                  profileId:
+                    profile._id
+                }
+              )
+            )
+          );
+
+        await profile.save();
+      } catch (error) {
+        /*
+         * Do not leave a newly uploaded asset behind
+         * if MongoDB save fails.
+         */
+        await mediaService
+          .delete(
+            asset.publicId ||
+              asset.url
+          )
+          .catch(
+            () => {}
+          );
+
+        throw error;
+      }
+
+      /*
+       * Delete old image only AFTER the new profile
+       * state has safely persisted.
+       */
+      if (
+        previous &&
+        previous !==
+          asset.url &&
+        previous !==
+          asset.publicId
+      ) {
+        await mediaService
+          .delete(
+            previous
+          )
+          .catch(
+            (error) =>
+              console.error(
+                'Previous profile photo cleanup failed:',
+                error.message
+              )
+          );
+      }
+
+      ok(
+        res,
+        {
+          path:
+            profile.profilePhoto,
+
+          profilePhoto:
+            profile.profilePhoto
+        },
+        'Photo uploaded.',
+        201
+      );
+    }
   );
-  await profile.save();
-  if (previous && previous !== asset.url) await mediaService.delete(previous);
-  ok(
-    res,
-    { path: profile.profilePhoto, profilePhoto: profile.profilePhoto },
-    'Photo uploaded.',
-    201
+export const addGalleryPhoto =
+  asyncHandler(
+    async (
+      req,
+      res
+    ) => {
+      if (!req.file) {
+        throw new ApiError(
+          400,
+          'Choose an image to upload.'
+        );
+      }
+
+      const profile =
+        await owned(
+          req.user.id
+        );
+
+      const settings =
+        await getSystemSettings();
+
+      if (
+        (
+          profile
+            .galleryAssets
+            ?.length ||
+          0
+        ) >=
+        settings.maxPhotos
+      ) {
+        throw new ApiError(
+          409,
+          `Your gallery is limited to ${settings.maxPhotos} photos.`
+        );
+      }
+
+      const asset =
+        await mediaService.fromUpload(
+          req.file
+        );
+
+      try {
+        profile.galleryAssets.push(
+          asset
+        );
+
+        await profile.save();
+      } catch (error) {
+        await mediaService
+          .delete(
+            asset.publicId ||
+              asset.url
+          )
+          .catch(
+            () => {}
+          );
+
+        throw error;
+      }
+
+      ok(
+        res,
+        {
+          gallery:
+            profile.galleryAssets,
+
+          maxPhotos:
+            settings.maxPhotos
+        },
+        'Gallery photo uploaded.',
+        201
+      );
+    }
   );
-});
-export const addGalleryPhoto = asyncHandler(async (req, res) => {
-  if (!req.file) throw new ApiError(400, 'Choose an image to upload.');
-  const profile = await owned(req.user.id),
-    settings = await getSystemSettings();
-  if ((profile.galleryAssets?.length || 0) >= settings.maxPhotos)
-    throw new ApiError(
-      409,
-      `Your gallery is limited to ${settings.maxPhotos} photos.`
-    );
-  const asset = await mediaService.fromUpload(req.file);
-  profile.galleryAssets.push(asset);
-  await profile.save();
-  ok(
-    res,
-    { gallery: profile.galleryAssets, maxPhotos: settings.maxPhotos },
-    'Gallery photo uploaded.',
-    201
-  );
-});
 export const removeGalleryPhoto = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.assetId))
     throw new ApiError(400, 'Invalid gallery asset.');
