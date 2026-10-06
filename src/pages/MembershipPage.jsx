@@ -571,18 +571,6 @@ export default function MembershipPage({
             }
           )}
         </div>
-
-        <p className="payment-note">
-          Payments activate
-          only after
-          server-side
-          signature
-          verification.
-          Closing or failing
-          checkout will not
-          activate your
-          membership.
-        </p>
       </>
     );
 
