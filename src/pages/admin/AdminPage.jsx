@@ -1,177 +1,459 @@
-import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { api, assetUrl } from '../../services/api';
-import { useToast } from '../../context/ToastContext';
-import { useAuth } from '../../context/AuthContext';
+import {
+  Route,
+  Routes,
+  useNavigate,
+  useParams
+} from 'react-router-dom';
+
 import AdminNav from '../../components/AdminNav';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import {
+  api,
+  assetUrl
+} from '../../services/api';
+import {
+  formatCurrency,
+  formatDate
+} from '../../utils/formatters';
+
+const primaryButtonClass =
+  "inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318] disabled:opacity-55";
+
+const outlineButtonClass =
+  "inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white disabled:opacity-55";
+
+const adminTableClass =
+  "mt-10 border border-[#ddd0c1] bg-[#fffdf8] px-[25px] pb-[15px]";
+
+const adminRowClass =
+  "grid grid-cols-[auto_1fr_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4 max-[767px]:grid-cols-[auto_1fr_auto]";
+
+const reportRowClass =
+  "grid grid-cols-[1fr_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4";
+
+const metricCardClass =
+  "border border-[#ddd0c1] bg-[#fffdf8] p-[25px]";
+
+const metricValueClass =
+  "block font-['Cormorant_Garamond'] text-[34px] font-medium";
+
+const metricLabelClass =
+  "text-[9px] uppercase text-[#756a60]";
+
+const operationCardClass =
+  "border border-[#ddd0c1] bg-[#fffdf8] p-6";
+
 function Async({ path, children }) {
-  const [data, setData] = useState(null),
-    [error, setError] = useState('');
+  const [data, setData] = useState(null);
+  const [error, setError] = useState('');
+
   useEffect(() => {
     api(path)
-      .then((r) => setData(r.data))
-      .catch((e) => setError(e.message));
+      .then((response) => setData(response.data))
+      .catch((requestError) =>
+        setError(requestError.message)
+      );
   }, [path]);
-  if (error)
+
+  if (error) {
     return (
-      <div className="empty-state">
-        <p>{error}</p>
+      <div className="border border-[#ddd0c1] bg-[#fffdf8] px-[30px] py-[60px] text-center">
+        <p className="mx-auto max-w-[430px] text-[13px] leading-[1.8] text-[#756a60]">
+          {error}
+        </p>
       </div>
     );
-  if (!data)
-    return <div className="page-skeleton">Loading administration data…</div>;
+  }
+
+  if (!data) {
+    return (
+      <div className="page-skeleton">
+        Loading administration data…
+      </div>
+    );
+  }
+
   return children(data, setData);
 }
+
 function Overview() {
   return (
     <Async path="/admin/dashboard">
-      {(d) => (
+      {(data) => (
         <>
-          <header className="page-heading compact">
-            <p className="eyebrow">Operations control center</p>
-            <h1>Business overview</h1>
+          <header className="mb-[30px]">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+              Operations control center
+            </p>
+
+            <h1 className="mt-3 max-w-[900px] font-['Cormorant_Garamond'] text-[clamp(42px,5vw,66px)] font-medium leading-[0.98] text-[#2c1a18]">
+              Business overview
+            </h1>
           </header>
-          <div className="admin-metrics">
+
+          <div className="grid grid-cols-3 gap-[15px] max-[767px]:grid-cols-2">
             {[
-              [d.customers.total, 'Total customers'],
-              [d.profiles.active || 0, 'Active profiles'],
-              [d.subscriptions.active, 'Paid members'],
-              ...(d.finance ? [[formatCurrency(d.finance.capturedRevenue), 'Captured revenue']] : []),
-              [d.supportSafety.pendingModeration, 'Pending moderation'],
-              [d.supportSafety.openReports, 'Open reports'],
-              [d.supportSafety.openSupport, 'Support tickets'],
-              [d.subscriptions.expiringIn7Days, 'Expiring in 7 days']
-            ].map(([n, l]) => (
-              <article key={l}>
-                <strong>{n}</strong>
-                <span>{l}</span>
+              [
+                data.customers.total,
+                'Total customers'
+              ],
+              [
+                data.profiles.active || 0,
+                'Active profiles'
+              ],
+              [
+                data.subscriptions.active,
+                'Paid members'
+              ],
+              ...(data.finance
+                ? [
+                    [
+                      formatCurrency(
+                        data.finance.capturedRevenue
+                      ),
+                      'Captured revenue'
+                    ]
+                  ]
+                : []),
+              [
+                data.supportSafety.pendingModeration,
+                'Pending moderation'
+              ],
+              [
+                data.supportSafety.openReports,
+                'Open reports'
+              ],
+              [
+                data.supportSafety.openSupport,
+                'Support tickets'
+              ],
+              [
+                data.subscriptions.expiringIn7Days,
+                'Expiring in 7 days'
+              ]
+            ].map(([value, label]) => (
+              <article
+                className={metricCardClass}
+                key={label}
+              >
+                <strong className={metricValueClass}>
+                  {value}
+                </strong>
+
+                <span className={metricLabelClass}>
+                  {label}
+                </span>
               </article>
             ))}
           </div>
-          <div className="admin-dashboard-grid">
-            <section className="operations-card"><h2>Customer acquisition</h2><div className="metric-list"><span>Today <strong>{d.customers.today}</strong></span><span>This week <strong>{d.customers.week}</strong></span><span>This month <strong>{d.customers.month}</strong></span><span>Verified <strong>{d.customers.verified}</strong></span></div></section>
-            <section className="operations-card"><h2>Matrimonial activity</h2><div className="metric-list"><span>Interests <strong>{d.matrimonial.interests}</strong></span><span>Pending <strong>{d.matrimonial.pendingInterests}</strong></span><span>Matches <strong>{d.matrimonial.matches}</strong></span><span>Contact unlocks <strong>{d.matrimonial.contactUnlocks}</strong></span></div></section>
+
+          <div className="mt-6 grid grid-cols-2 gap-[18px] max-[767px]:grid-cols-1">
+            <section className={operationCardClass}>
+              <h2 className="font-['Cormorant_Garamond'] text-[24px] font-medium">
+                Customer acquisition
+              </h2>
+
+              <div className="grid gap-3">
+                {[
+                  ['Today', data.customers.today],
+                  ['This week', data.customers.week],
+                  ['This month', data.customers.month],
+                  ['Verified', data.customers.verified]
+                ].map(([label, value]) => (
+                  <span
+                    key={label}
+                    className="flex justify-between gap-5 border-b border-[#ddd0c1] pb-2"
+                  >
+                    {label}
+
+                    <strong>{value}</strong>
+                  </span>
+                ))}
+              </div>
+            </section>
+
+            <section className={operationCardClass}>
+              <h2 className="font-['Cormorant_Garamond'] text-[24px] font-medium">
+                Matrimonial activity
+              </h2>
+
+              <div className="grid gap-3">
+                {[
+                  [
+                    'Interests',
+                    data.matrimonial.interests
+                  ],
+                  [
+                    'Pending',
+                    data.matrimonial.pendingInterests
+                  ],
+                  [
+                    'Matches',
+                    data.matrimonial.matches
+                  ],
+                  [
+                    'Contact unlocks',
+                    data.matrimonial.contactUnlocks
+                  ]
+                ].map(([label, value]) => (
+                  <span
+                    key={label}
+                    className="flex justify-between gap-5 border-b border-[#ddd0c1] pb-2"
+                  >
+                    {label}
+
+                    <strong>{value}</strong>
+                  </span>
+                ))}
+              </div>
+            </section>
           </div>
+
           <Queue />
         </>
       )}
     </Async>
   );
 }
+
 function Queue() {
-  const nav = useNavigate();
+  const navigate = useNavigate();
+
   return (
     <Async path="/admin/profiles?status=pending_review">
-      {(d) => (
-        <section className="admin-table">
-          <div className="section-title">
+      {(data) => (
+        <section className={adminTableClass}>
+          <div className="my-6 mt-[52px] flex items-end justify-between">
             <div>
-              <p className="eyebrow">Queue</p>
-              <h2>Profiles awaiting review</h2>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+                Queue
+              </p>
+
+              <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
+                Profiles awaiting review
+              </h2>
             </div>
           </div>
-          {d.profiles.length ? (
-            d.profiles.map((p) => (
-              <div className="admin-row" key={p._id}>
-                <span className="avatar">{p.firstName?.[0]}</span>
+
+          {data.profiles.length ? (
+            data.profiles.map((profile) => (
+              <div
+                className={adminRowClass}
+                key={profile._id}
+              >
+                <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#c49b70] font-extrabold text-[#291817]">
+                  {profile.firstName?.[0]}
+                </span>
+
                 <div>
-                  <strong>
-                    {p.firstName} {p.lastName}
+                  <strong className="block text-[11px]">
+                    {profile.firstName}{' '}
+                    {profile.lastName}
                   </strong>
-                  <small>
-                    {p.profileId} • {p.location?.city}
+
+                  <small className="block text-[9px] text-[#756a60]">
+                    {profile.profileId} •{' '}
+                    {profile.location?.city}
                   </small>
                 </div>
-                <time>{formatDate(p.createdAt)}</time>
+
+                <time className="text-[9px] text-[#756a60] max-[767px]:hidden">
+                  {formatDate(profile.createdAt)}
+                </time>
+
                 <button
-                  onClick={() => nav(`/admin/profiles/${p._id}`)}
-                  className="outline-button"
+                  onClick={() =>
+                    navigate(
+                      `/admin/profiles/${profile._id}`
+                    )
+                  }
+                  className={outlineButtonClass}
                 >
                   Review
                 </button>
               </div>
             ))
           ) : (
-            <p className="empty-inline">No pending profiles.</p>
+            <p className="p-[25px] text-[12px] text-[#756a60]">
+              No pending profiles.
+            </p>
           )}
         </section>
       )}
     </Async>
   );
 }
+
 function Review() {
-  const { id } = useParams(),
-    notify = useToast(),
-    nav = useNavigate();
+  const { id } = useParams();
+
+  const notify = useToast();
+  const navigate = useNavigate();
+
   const [notes, setNotes] = useState('');
+
   return (
     <Async path={`/admin/profiles/${id}`}>
-      {(d) => {
-        const p = d.profile;
+      {(data) => {
+        const profile = data.profile;
+
         const act = async (action) => {
           try {
-            await api(`/admin/profiles/${id}/${action}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ notes })
-            });
-            notify('Moderation decision saved.');
-            nav('/admin/profiles');
-          } catch (e) {
-            notify(e.message, 'error');
+            await api(
+              `/admin/profiles/${id}/${action}`,
+              {
+                method: 'PATCH',
+                body: JSON.stringify({
+                  notes
+                })
+              }
+            );
+
+            notify(
+              'Moderation decision saved.'
+            );
+
+            navigate('/admin/profiles');
+          } catch (error) {
+            notify(
+              error.message,
+              'error'
+            );
           }
         };
+
         return (
-          <article className="admin-review">
-            <header>
-              {p.profilePhoto && <img src={assetUrl(p.profilePhoto)} alt="" />}
+          <article className="max-w-[850px] border border-[#ddd0c1] bg-[#fffdf8] p-[35px] max-[767px]:p-5">
+            <header className="flex items-center gap-[30px] max-[767px]:items-start">
+              {profile.profilePhoto && (
+                <img
+                  src={assetUrl(
+                    profile.profilePhoto
+                  )}
+                  alt=""
+                  className="h-[190px] w-[150px] object-cover max-[767px]:h-[120px] max-[767px]:w-[90px]"
+                />
+              )}
+
               <div>
-                <p className="eyebrow">{p.profileId}</p>
-                <h1>
-                  {p.firstName} {p.lastName}
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+                  {profile.profileId}
+                </p>
+
+                <h1 className="font-['Cormorant_Garamond'] text-[48px] font-medium max-[767px]:text-[36px]">
+                  {profile.firstName}{' '}
+                  {profile.lastName}
                 </h1>
+
                 <p>
-                  {p.location?.city}, {p.location?.state} • {p.visibility}
+                  {profile.location?.city},{' '}
+                  {profile.location?.state} •{' '}
+                  {profile.visibility}
                 </p>
               </div>
             </header>
-            <section>
-              <h2>Profile details</h2>
-              <p>{p.aboutMe || 'No introduction supplied.'}</p>
-              <dl>
+
+            <section className="py-[30px]">
+              <h2 className="font-['Cormorant_Garamond'] text-[30px] font-medium">
+                Profile details
+              </h2>
+
+              <p>
+                {profile.aboutMe ||
+                  'No introduction supplied.'}
+              </p>
+
+              <dl className="mt-5 grid grid-cols-3 max-[767px]:grid-cols-2">
                 <div>
-                  <dt>Education</dt>
-                  <dd>{p.education?.highestEducation}</dd>
+                  <dt className="text-[8px] uppercase text-[#756a60]">
+                    Education
+                  </dt>
+
+                  <dd className="font-['Cormorant_Garamond'] text-[20px] font-medium">
+                    {
+                      profile.education
+                        ?.highestEducation
+                    }
+                  </dd>
                 </div>
+
                 <div>
-                  <dt>Occupation</dt>
-                  <dd>{p.career?.occupation}</dd>
+                  <dt className="text-[8px] uppercase text-[#756a60]">
+                    Occupation
+                  </dt>
+
+                  <dd className="font-['Cormorant_Garamond'] text-[20px] font-medium">
+                    {
+                      profile.career
+                        ?.occupation
+                    }
+                  </dd>
                 </div>
+
                 <div>
-                  <dt>Community</dt>
-                  <dd>{p.community?.name}</dd>
+                  <dt className="text-[8px] uppercase text-[#756a60]">
+                    Community
+                  </dt>
+
+                  <dd className="font-['Cormorant_Garamond'] text-[20px] font-medium">
+                    {
+                      profile.community
+                        ?.name
+                    }
+                  </dd>
                 </div>
               </dl>
             </section>
-            <label>
+
+            <label className="grid gap-2 text-[10px] uppercase tracking-[0.1em]">
               Moderation notes
+
               <textarea
                 rows="4"
+                className="border border-[#ddd0c1] bg-white p-[13px]"
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(event) =>
+                  setNotes(event.target.value)
+                }
               />
             </label>
-            <div className="profile-actions">
-              <button onClick={() => act('approve')} className="primary-button">
+
+            <div className="mt-7 flex gap-[10px] max-[767px]:flex-wrap">
+              <button
+                onClick={() =>
+                  act('approve')
+                }
+                className={primaryButtonClass}
+              >
                 Approve
               </button>
-              <button onClick={() => act('changes')} className="outline-button">
+
+              <button
+                onClick={() =>
+                  act('changes')
+                }
+                className={outlineButtonClass}
+              >
                 Request changes
               </button>
-              <button onClick={() => act('reject')} className="outline-button">
+
+              <button
+                onClick={() =>
+                  act('reject')
+                }
+                className={outlineButtonClass}
+              >
                 Reject
               </button>
-              <button onClick={() => act('suspend')} className="outline-button">
+
+              <button
+                onClick={() =>
+                  act('suspend')
+                }
+                className={outlineButtonClass}
+              >
                 Suspend
               </button>
             </div>
@@ -181,58 +463,113 @@ function Review() {
     </Async>
   );
 }
+
 function Users() {
-  const notify = useToast(),
-    { user } = useAuth();
-  const change = async (target, patch, setData) => {
+  const notify = useToast();
+  const { user } = useAuth();
+
+  const change = async (
+    target,
+    patch,
+    setData
+  ) => {
     try {
-      const result = await api(`/admin/users/${target._id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(patch)
-      });
+      const result = await api(
+        `/admin/users/${target._id}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify(patch)
+        }
+      );
+
       setData((current) => ({
         ...current,
-        users: current.users.map((item) =>
-          item._id === target._id ? result.data.user : item
+        users: current.users.map(
+          (item) =>
+            item._id === target._id
+              ? result.data.user
+              : item
         )
       }));
+
       notify('User access updated.');
     } catch (error) {
-      notify(error.message, 'error');
+      notify(
+        error.message,
+        'error'
+      );
     }
   };
+
   return (
     <Async path="/admin/users">
       {(data, setData) => (
-        <section className="admin-table">
-          <div className="section-title">
-            <h2>Members and staff</h2>
+        <section className={adminTableClass}>
+          <div className="my-6 mt-[52px] flex items-end justify-between">
+            <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
+              Members and staff
+            </h2>
           </div>
+
           {data.users.map((member) => (
-            <div className="admin-row" key={member._id}>
-              <span className="avatar">{member.email?.[0].toUpperCase()}</span>
+            <div
+              className={adminRowClass}
+              key={member._id}
+            >
+              <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#c49b70] font-extrabold text-[#291817]">
+                {member.email?.[0].toUpperCase()}
+              </span>
+
               <div>
-                <strong>{member.email}</strong>
-                <small>
+                <strong className="block text-[11px]">
+                  {member.email}
+                </strong>
+
+                <small className="block text-[9px] text-[#756a60]">
                   {member.phone} • {member.role}
                 </small>
               </div>
+
               <select
+                className="border border-[#ddd0c1] bg-white p-[10px]"
                 value={member.status}
                 onChange={(event) =>
-                  change(member, { status: event.target.value }, setData)
+                  change(
+                    member,
+                    {
+                      status:
+                        event.target.value
+                    },
+                    setData
+                  )
                 }
               >
-                {['Active', 'Suspended', 'Blocked'].map((option) => (
-                  <option key={option}>{option}</option>
+                {[
+                  'Active',
+                  'Suspended',
+                  'Blocked'
+                ].map((option) => (
+                  <option key={option}>
+                    {option}
+                  </option>
                 ))}
               </select>
-              {user?.role === 'super_admin' && (
+
+              {user?.role ===
+                'super_admin' && (
                 <select
                   aria-label={`Role for ${member.email}`}
+                  className="border border-[#ddd0c1] bg-white p-[10px]"
                   value={member.role}
                   onChange={(event) =>
-                    change(member, { role: event.target.value }, setData)
+                    change(
+                      member,
+                      {
+                        role:
+                          event.target.value
+                      },
+                      setData
+                    )
                   }
                 >
                   {[
@@ -242,7 +579,9 @@ function Users() {
                     'relationship_manager',
                     'super_admin'
                   ].map((role) => (
-                    <option key={role}>{role}</option>
+                    <option key={role}>
+                      {role}
+                    </option>
                   ))}
                 </select>
               )}
@@ -253,104 +592,224 @@ function Users() {
     </Async>
   );
 }
+
 function Reports() {
   const notify = useToast();
+
   return (
     <Async path="/admin/reports">
-      {(d, setData) => (
-        <section className="admin-table">
-          <div className="section-title">
-            <h2>Member reports</h2>
+      {(data, setData) => (
+        <section className={adminTableClass}>
+          <div className="my-6 mt-[52px] flex items-end justify-between">
+            <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
+              Member reports
+            </h2>
           </div>
-          {d.reports.length ? (
-            d.reports.map((r) => (
-              <div className="admin-row report-row" key={r._id}>
+
+          {data.reports.length ? (
+            data.reports.map((report) => (
+              <div
+                className={reportRowClass}
+                key={report._id}
+              >
                 <div>
-                  <strong>
-                    {r.reason}: {r.reportedProfile?.firstName}
+                  <strong className="block text-[11px]">
+                    {report.reason}:{' '}
+                    {
+                      report.reportedProfile
+                        ?.firstName
+                    }
                   </strong>
-                  <small>
-                    {r.description} • reported by {r.reporter?.email}
+
+                  <small className="block text-[9px] text-[#756a60]">
+                    {report.description} •
+                    reported by{' '}
+                    {report.reporter?.email}
                   </small>
                 </div>
-                <time>{r.status}</time>
+
+                <time className="text-[9px] text-[#756a60]">
+                  {report.status}
+                </time>
+
                 <select
-                  value={r.status}
-                  onChange={async (e) => {
+                  className="border border-[#ddd0c1] bg-white p-[10px]"
+                  value={report.status}
+                  onChange={async (event) => {
                     try {
-                      const out = await api(`/admin/reports/${r._id}`, {
-                        method: 'PATCH',
-                        body: JSON.stringify({ status: e.target.value })
-                      });
-                      setData((x) => ({
-                        ...x,
-                        reports: x.reports.map((i) =>
-                          i._id === r._id ? out.data.report : i
-                        )
-                      }));
-                      notify('Report updated.');
+                      const result =
+                        await api(
+                          `/admin/reports/${report._id}`,
+                          {
+                            method:
+                              'PATCH',
+                            body:
+                              JSON.stringify(
+                                {
+                                  status:
+                                    event
+                                      .target
+                                      .value
+                                }
+                              )
+                          }
+                        );
+
+                      setData(
+                        (current) => ({
+                          ...current,
+                          reports:
+                            current.reports.map(
+                              (item) =>
+                                item._id ===
+                                report._id
+                                  ? result
+                                      .data
+                                      .report
+                                  : item
+                            )
+                        })
+                      );
+
+                      notify(
+                        'Report updated.'
+                      );
                     } catch (error) {
-                      /* Re-render so the select shows the server's status. */
-                      setData((x) => ({ ...x }));
-                      notify(error.message, 'error');
+                      setData(
+                        (current) => ({
+                          ...current
+                        })
+                      );
+
+                      notify(
+                        error.message,
+                        'error'
+                      );
                     }
                   }}
                 >
-                  {['Open', 'Reviewed', 'Resolved', 'Dismissed'].map((x) => (
-                    <option key={x} disabled={x === 'Open'}>
-                      {x}
+                  {[
+                    'Open',
+                    'Reviewed',
+                    'Resolved',
+                    'Dismissed'
+                  ].map((status) => (
+                    <option
+                      key={status}
+                      disabled={
+                        status === 'Open'
+                      }
+                    >
+                      {status}
                     </option>
                   ))}
                 </select>
               </div>
             ))
           ) : (
-            <p className="empty-inline">No reports.</p>
+            <p className="p-[25px] text-[12px] text-[#756a60]">
+              No reports.
+            </p>
           )}
         </section>
       )}
     </Async>
   );
 }
+
 function Subscriptions() {
   return (
     <Async path="/admin/subscriptions">
-      {(d) => (
-        <section className="admin-table">
-          <div className="section-title">
-            <h2>Subscriptions</h2>
+      {(data) => (
+        <section className={adminTableClass}>
+          <div className="my-6 mt-[52px] flex items-end justify-between">
+            <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
+              Subscriptions
+            </h2>
           </div>
-          {d.subscriptions.length ? (
-            d.subscriptions.map((s) => (
-              <div className="admin-row" key={s._id}>
-                <div>
-                  <strong>{s.user?.email}</strong>
-                  <small>{s.plan?.name}</small>
+
+          {data.subscriptions.length ? (
+            data.subscriptions.map(
+              (subscription) => (
+                <div
+                  className={adminRowClass}
+                  key={subscription._id}
+                >
+                  <div>
+                    <strong className="block text-[11px]">
+                      {
+                        subscription.user
+                          ?.email
+                      }
+                    </strong>
+
+                    <small className="block text-[9px] text-[#756a60]">
+                      {
+                        subscription.plan
+                          ?.name
+                      }
+                    </small>
+                  </div>
+
+                  <time className="text-[9px] text-[#756a60] max-[767px]:hidden">
+                    {subscription.status}
+                  </time>
+
+                  <span>
+                    {subscription.payment
+                      ?.status ||
+                      'No payment'}
+                  </span>
                 </div>
-                <time>{s.status}</time>
-                <span>{s.payment?.status || 'No payment'}</span>
-              </div>
-            ))
+              )
+            )
           ) : (
-            <p className="empty-inline">No subscriptions yet.</p>
+            <p className="p-[25px] text-[12px] text-[#756a60]">
+              No subscriptions yet.
+            </p>
           )}
         </section>
       )}
     </Async>
   );
 }
+
 export default function AdminPage() {
   return (
-    <div className="admin-shell">
+    <div className="admin-shell min-h-screen bg-[#f5f0e8]">
       <AdminNav />
-      <main>
+
+      <main className="min-w-0 p-[55px] max-[767px]:px-[15px] max-[767px]:py-[30px]">
         <Routes>
-          <Route index element={<Overview />} />
-          <Route path="profiles" element={<Queue />} />
-          <Route path="profiles/:id" element={<Review />} />
-          <Route path="users" element={<Users />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="subscriptions" element={<Subscriptions />} />
+          <Route
+            index
+            element={<Overview />}
+          />
+
+          <Route
+            path="profiles"
+            element={<Queue />}
+          />
+
+          <Route
+            path="profiles/:id"
+            element={<Review />}
+          />
+
+          <Route
+            path="users"
+            element={<Users />}
+          />
+
+          <Route
+            path="reports"
+            element={<Reports />}
+          />
+
+          <Route
+            path="subscriptions"
+            element={<Subscriptions />}
+          />
         </Routes>
       </main>
     </div>

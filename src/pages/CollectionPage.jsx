@@ -1,10 +1,21 @@
-import { Bell, Bookmark, HeartHandshake, UsersRound } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { api, assetUrl } from '../services/api';
+import {
+  Bell,
+  Bookmark,
+  HeartHandshake,
+  UsersRound
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+
 import { useToast } from '../context/ToastContext';
+import {
+  api,
+  assetUrl
+} from '../services/api';
 import { formatDate } from '../utils/formatters';
+
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+
 const config = {
   interests: {
     icon: HeartHandshake,
@@ -27,24 +38,51 @@ const config = {
     body: 'Important updates will appear here.'
   }
 };
-export default function CollectionPage({ type }) {
-  const [data, setData] = useState([]),
-    [loading, setLoading] = useState(true),
-    [error, setError] = useState(''),
-    [tab, setTab] = useState('incoming');
+
+const primaryButtonClass =
+  "inline-flex min-h-[36px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-[14px] text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318]";
+
+const outlineButtonClass =
+  "inline-flex min-h-[36px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-[14px] text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white";
+
+const textLinkClass =
+  "border-b border-[#c49b70] pb-[3px] text-[12px] font-extrabold text-[#681d25]";
+
+export default function CollectionPage({
+  type
+}) {
+  const [data, setData] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState('');
+
+  const [tab, setTab] =
+    useState('incoming');
+
   const notify = useToast();
+
   const load = async () => {
     setLoading(true);
+
     try {
       const path =
         type === 'interests'
           ? `/interests/${tab}`
           : type === 'matches'
             ? '/matches'
-            : type === 'shortlisted'
+            : type ===
+                'shortlisted'
               ? '/shortlist'
               : '/notifications';
-      const result = (await api(path)).data;
+
+      const result = (
+        await api(path)
+      ).data;
+
       setData(
         result.interests ||
           result.matches ||
@@ -52,180 +90,376 @@ export default function CollectionPage({ type }) {
           result.notifications ||
           []
       );
-    } catch (e) {
-      setError(e.message);
+    } catch (caught) {
+      setError(caught.message);
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     load();
-  }, [type, tab]);
-  const interestAction = async (id, action) => {
-    try {
-      await api(`/interests/${id}/${action}`, { method: 'PATCH' });
-      notify(
-        action === 'accept'
-          ? 'Interest accepted. A mutual match was created.'
-          : `Interest ${action}d.`
-      );
-      load();
-    } catch (e) {
-      notify(e.message, 'error');
-    }
-  };
+  }, [
+    type,
+    tab
+  ]);
+
+  const interestAction =
+    async (id, action) => {
+      try {
+        await api(
+          `/interests/${id}/${action}`,
+          {
+            method: 'PATCH'
+          }
+        );
+
+        notify(
+          action === 'accept'
+            ? 'Interest accepted. A mutual match was created.'
+            : `Interest ${action}d.`
+        );
+
+        load();
+      } catch (caught) {
+        notify(
+          caught.message,
+          'error'
+        );
+      }
+    };
+
   const remove = async (id) => {
     try {
-      await api(`/shortlist/${id}`, { method: 'DELETE' });
-      notify('Removed from shortlist.');
+      await api(
+        `/shortlist/${id}`,
+        {
+          method: 'DELETE'
+        }
+      );
+
+      notify(
+        'Removed from shortlist.'
+      );
+
       load();
-    } catch (e) {
-      notify(e.message, 'error');
+    } catch (caught) {
+      notify(
+        caught.message,
+        'error'
+      );
     }
   };
+
   const read = async (id) => {
-    await api(`/notifications/${id}/read`, { method: 'PATCH' });
-    setData((x) => x.map((n) => (n._id === id ? { ...n, read: true } : n)));
-  };
-  const c = config[type],
-    Icon = c.icon;
-  if (loading)
-    return (
-      <div className="page-skeleton">Loading {c.title.toLowerCase()}…</div>
+    await api(
+      `/notifications/${id}/read`,
+      {
+        method: 'PATCH'
+      }
     );
+
+    setData((current) =>
+      current.map(
+        (notification) =>
+          notification._id === id
+            ? {
+                ...notification,
+                read: true
+              }
+            : notification
+      )
+    );
+  };
+
+  const currentConfig =
+    config[type];
+
+  const Icon =
+    currentConfig.icon;
+
+  if (loading) {
+    return (
+      <div className="page-skeleton">
+        Loading{' '}
+        {currentConfig.title.toLowerCase()}
+        …
+      </div>
+    );
+  }
+
   return (
     <>
-      <header className="page-heading compact">
-        <p className="eyebrow">Private activity</p>
-        <h1>{c.title}</h1>
+      <header className="mb-[30px]">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+          Private activity
+        </p>
+
+        <h1 className="mt-3 max-w-[900px] font-['Cormorant_Garamond'] text-[clamp(42px,5vw,66px)] font-medium leading-[0.98] text-[#2c1a18]">
+          {currentConfig.title}
+        </h1>
       </header>
-      {type === 'interests' && (
-        <div className="tabs">
+
+      {type ===
+        'interests' && (
+        <div className="mb-[22px] flex gap-1 border-b border-[#ddd0c1]">
           <button
-            className={tab === 'incoming' ? 'active' : ''}
-            onClick={() => setTab('incoming')}
+            className={`px-5 py-3 text-[11px] ${
+              tab === 'incoming'
+                ? 'border-b-2 border-[#681d25] text-[#681d25]'
+                : 'text-[#756a60]'
+            }`}
+            onClick={() =>
+              setTab('incoming')
+            }
           >
             Incoming
           </button>
+
           <button
-            className={tab === 'outgoing' ? 'active' : ''}
-            onClick={() => setTab('outgoing')}
+            className={`px-5 py-3 text-[11px] ${
+              tab === 'outgoing'
+                ? 'border-b-2 border-[#681d25] text-[#681d25]'
+                : 'text-[#756a60]'
+            }`}
+            onClick={() =>
+              setTab('outgoing')
+            }
           >
             Sent
           </button>
         </div>
       )}
-      {type === 'notifications' && data.some((n) => !n.read) && (
-        <button
-          className="text-link"
-          onClick={async () => {
-            await api('/notifications/all/read', { method: 'PATCH' });
-            setData((x) => x.map((n) => ({ ...n, read: true })));
-          }}
-        >
-          Mark all read
-        </button>
-      )}
+
+      {type ===
+        'notifications' &&
+        data.some(
+          (item) => !item.read
+        ) && (
+          <button
+            className={textLinkClass}
+            onClick={async () => {
+              await api(
+                '/notifications/all/read',
+                {
+                  method: 'PATCH'
+                }
+              );
+
+              setData(
+                (current) =>
+                  current.map(
+                    (notification) => ({
+                      ...notification,
+                      read: true
+                    })
+                  )
+              );
+            }}
+          >
+            Mark all read
+          </button>
+        )}
+
       {error ? (
-        <div className="empty-state">
-          <p>{error}</p>
+        <div className="border border-[#ddd0c1] bg-[#fffdf8] px-[30px] py-[60px] text-center">
+          <p className="mx-auto max-w-[430px] text-[13px] leading-[1.8] text-[#756a60]">
+            {error}
+          </p>
         </div>
       ) : data.length ? (
-        <div className="collection-list">
+        <div className="grid border border-[#ddd0c1] bg-[#fffdf8]">
           {data.map((item) => {
-            const p = item.profile;
+            const profile =
+              item.profile;
+
             return (
               <article
-                key={item._id || item.matchId}
-                className={item.read === false ? 'unread' : ''}
+                key={
+                  item._id ||
+                  item.matchId
+                }
+                className={`grid grid-cols-[58px_1fr_auto] items-center gap-[18px] border-b border-[#ddd0c1] p-[18px] last:border-b-0 max-[767px]:grid-cols-[45px_1fr] ${
+                  item.read === false
+                    ? 'bg-[#f1e7db]'
+                    : ''
+                }`}
               >
-                {p ? (
-                  p.profilePhoto ? (
-                    <img src={assetUrl(p.profilePhoto)} alt="" />
+                {profile ? (
+                  profile.profilePhoto ? (
+                    <img
+                      src={assetUrl(
+                        profile.profilePhoto
+                      )}
+                      alt=""
+                      className="h-[58px] w-[58px] rounded-full object-cover max-[767px]:h-[45px] max-[767px]:w-[45px]"
+                    />
                   ) : (
-                    <span className="avatar">{p.firstName?.[0]}</span>
+                    <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#c49b70] font-extrabold text-[#291817]">
+                      {
+                        profile
+                          .firstName?.[0]
+                      }
+                    </span>
                   )
                 ) : (
-                  <Icon />
+                  <Icon className="text-[#aa7a42]" />
                 )}
+
                 <div>
-                  {p ? (
+                  {profile ? (
                     <>
-                      <strong>
-                        {p.firstName} {p.lastName}
+                      <strong className="block font-['Cormorant_Garamond'] text-[22px] font-medium">
+                        {
+                          profile.firstName
+                        }{' '}
+                        {
+                          profile.lastName
+                        }
                       </strong>
-                      <small>
-                        {p.location?.city || 'India'} •{' '}
-                        {p.career?.occupation || 'Profession not shared'}
+
+                      <small className="mt-[3px] block text-[10px] text-[#756a60]">
+                        {profile.location
+                          ?.city ||
+                          'India'}{' '}
+                        •{' '}
+                        {profile.career
+                          ?.occupation ||
+                          'Profession not shared'}
                       </small>
                     </>
                   ) : (
                     <>
-                      <strong>{item.title}</strong>
-                      <small>{item.message}</small>
+                      <strong className="block font-['Cormorant_Garamond'] text-[22px] font-medium">
+                        {item.title}
+                      </strong>
+
+                      <small className="mt-[3px] block text-[10px] text-[#756a60]">
+                        {item.message}
+                      </small>
                     </>
                   )}
-                  <time>
-                    {formatDate(item.createdAt || item.matchedAt)}
+
+                  <time className="mt-[3px] block text-[10px] text-[#756a60]">
+                    {formatDate(
+                      item.createdAt ||
+                        item.matchedAt
+                    )}
                   </time>
                 </div>
-                <div className="collection-actions">
-                  {type === 'interests' &&
-                    item.status === 'Pending' &&
-                    (tab === 'incoming' ? (
+
+                <div className="flex items-center gap-2 max-[767px]:col-span-full max-[767px]:flex-wrap">
+                  {type ===
+                    'interests' &&
+                    item.status ===
+                      'Pending' &&
+                    (tab ===
+                    'incoming' ? (
                       <>
                         <button
-                          onClick={() => interestAction(item._id, 'accept')}
-                          className="primary-button"
+                          onClick={() =>
+                            interestAction(
+                              item._id,
+                              'accept'
+                            )
+                          }
+                          className={
+                            primaryButtonClass
+                          }
                         >
                           Accept
                         </button>
+
                         <button
-                          onClick={() => interestAction(item._id, 'decline')}
-                          className="outline-button"
+                          onClick={() =>
+                            interestAction(
+                              item._id,
+                              'decline'
+                            )
+                          }
+                          className={
+                            outlineButtonClass
+                          }
                         >
                           Decline
                         </button>
                       </>
                     ) : (
                       <button
-                        onClick={() => interestAction(item._id, 'withdraw')}
-                        className="outline-button"
+                        onClick={() =>
+                          interestAction(
+                            item._id,
+                            'withdraw'
+                          )
+                        }
+                        className={
+                          outlineButtonClass
+                        }
                       >
                         Withdraw
                       </button>
                     ))}
-                  {p && (
-                    <Link className="text-link" to={`/profile/${p.profileId}`}>
+
+                  {profile && (
+                    <Link
+                      className={
+                        textLinkClass
+                      }
+                      to={`/profile/${profile.profileId}`}
+                    >
                       View profile
                     </Link>
                   )}
-                  {type === 'shortlisted' && (
+
+                  {type ===
+                    'shortlisted' && (
                     <button
-                      onClick={() => remove(p._id)}
-                      className="outline-button"
+                      onClick={() =>
+                        remove(
+                          profile._id
+                        )
+                      }
+                      className={
+                        outlineButtonClass
+                      }
                     >
                       Remove
                     </button>
                   )}
-                  {type === 'notifications' && !item.read && (
-                    <button
-                      onClick={() => read(item._id)}
-                      className="text-link"
-                    >
-                      Mark read
-                    </button>
-                  )}
+
+                  {type ===
+                    'notifications' &&
+                    !item.read && (
+                      <button
+                        onClick={() =>
+                          read(item._id)
+                        }
+                        className={
+                          textLinkClass
+                        }
+                      >
+                        Mark read
+                      </button>
+                    )}
                 </div>
               </article>
             );
           })}
         </div>
       ) : (
-        <div className="empty-state large">
-          <Icon size={34} />
-          <h2>Nothing here yet</h2>
-          <p>{c.body}</p>
+        <div className="flex min-h-[380px] flex-col items-center justify-center border border-[#ddd0c1] bg-[#fffdf8] px-[30px] py-[60px] text-center">
+          <Icon
+            size={34}
+            className="text-[#aa7a42]"
+          />
+
+          <h2 className="m-[15px] font-['Cormorant_Garamond'] text-[34px] font-medium">
+            Nothing here yet
+          </h2>
+
+          <p className="max-w-[430px] text-[13px] leading-[1.8] text-[#756a60]">
+            {currentConfig.body}
+          </p>
         </div>
       )}
     </>

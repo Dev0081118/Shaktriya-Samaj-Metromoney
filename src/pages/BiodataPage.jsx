@@ -1,72 +1,287 @@
-import { ArrowLeft, Printer } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { api, assetUrl } from '../services/api';
+import {
+  ArrowLeft,
+  Printer
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+
+import {
+  api,
+  assetUrl
+} from '../services/api';
+
 export default function BiodataPage() {
-  const [p, setP] = useState(null),
-    [error, setError] = useState(''),
-    [includeSensitive, setIncludeSensitive] = useState(false), { t } = useTranslation();
+  const [profile, setProfile] =
+    useState(null);
+
+  const [error, setError] =
+    useState('');
+
+  const [
+    includeSensitive,
+    setIncludeSensitive
+  ] = useState(false);
+
+  const { t } = useTranslation();
+
   useEffect(() => {
     api('/profiles/me')
-      .then((r) => setP(r.data.profile))
-      .catch((e) => setError(e.message));
+      .then((response) =>
+        setProfile(
+          response.data.profile
+        )
+      )
+      .catch((caught) =>
+        setError(caught.message)
+      );
   }, []);
-  if (error)
+
+  if (error) {
     return (
-      <div className="empty-state">
-        <p>{error}</p>
+      <div className="border border-[#ddd0c1] bg-[#fffdf8] px-[30px] py-[60px] text-center">
+        <p className="mx-auto max-w-[430px] text-[13px] leading-[1.8] text-[#756a60]">
+          {error}
+        </p>
       </div>
     );
-  if (!p) return <div className="page-skeleton">{t('profile.biodataLoading')}</div>;
+  }
+
+  if (!profile) {
+    return (
+      <div className="page-skeleton">
+        {t(
+          'profile.biodataLoading'
+        )}
+      </div>
+    );
+  }
+
+  const fields = [
+    [
+      t('public.finderAge'),
+      `${profile.age} ${t(
+        'profile.years'
+      )}`
+    ],
+    [
+      t('profile.height'),
+      `${profile.height} cm`
+    ],
+    [
+      t('profile.education'),
+      profile.education
+        ?.highestEducation
+    ],
+    [
+      t('profile.profession'),
+      profile.career?.occupation
+    ],
+    [
+      t('profile.location'),
+      `${profile.location?.city}, ${profile.location?.state}`
+    ],
+    [
+      t('profile.family'),
+      profile.family
+        ?.familyDescription
+    ],
+    [
+      'Native place',
+      profile.paternalFamily
+        ?.nativePlace ||
+        profile.location?.nativePlace
+    ],
+    [
+      'Clan / Gotra',
+      profile.paternalFamily
+        ?.clan ||
+        profile.community?.clan
+    ]
+  ];
+
   return (
-    <div className="biodata-shell">
-      <div className="biodata-toolbar">
-        <Link to="/my-profile">
-          <ArrowLeft /> {t('nav.myProfile')}
+    <div className="min-h-screen bg-[#eee4d8] p-[30px] print:bg-white print:p-0">
+      <div className="mx-auto mb-5 flex max-w-[790px] justify-between print:hidden">
+        <Link
+          to="/my-profile"
+          className="flex items-center gap-2 text-[11px] text-[#431318]"
+        >
+          <ArrowLeft className="w-4" />
+
+          {t('nav.myProfile')}
         </Link>
-        <label className="checkbox-label biodata-sensitive-toggle"><input type="checkbox" checked={includeSensitive} onChange={(event) => setIncludeSensitive(event.target.checked)} /> Include sensitive family details</label>
-        <button onClick={() => window.print()}>
-          <Printer /> {t('profile.print')}
+
+        <label className="flex items-center gap-[0.65rem] text-[11px]">
+          <input
+            type="checkbox"
+            className="w-auto"
+            checked={includeSensitive}
+            onChange={(event) =>
+              setIncludeSensitive(
+                event.target.checked
+              )
+            }
+          />
+
+          Include sensitive family details
+        </label>
+
+        <button
+          className="flex items-center gap-2 text-[11px] text-[#431318]"
+          onClick={() =>
+            window.print()
+          }
+        >
+          <Printer className="w-4" />
+
+          {t('profile.print')}
         </button>
       </div>
-      <article className="biodata">
-        <p className="eyebrow">Matrimonial profile • {p.profileId}</p>
-        <header>
+
+      <article className="mx-auto max-w-[790px] bg-[#fffdf8] p-[65px] shadow-[0_15px_50px_#3b21141e] print:max-w-none print:shadow-none">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+          Matrimonial profile •{' '}
+          {profile.profileId}
+        </p>
+
+        <header className="mt-[25px] flex items-center justify-between">
           <div>
-            <h1>
-              {p.firstName} {p.lastName}
+            <h1 className="font-['Cormorant_Garamond'] text-[58px] font-medium text-[#681d25]">
+              {profile.firstName}{' '}
+              {profile.lastName}
             </h1>
-            <p>
-              {p.location?.city}, {p.location?.state}
+
+            <p className="text-[#756a60]">
+              {profile.location?.city},{' '}
+              {profile.location?.state}
             </p>
           </div>
-          {p.profilePhoto && <img src={assetUrl(p.profilePhoto)} alt="" />}
+
+          {profile.profilePhoto && (
+            <img
+              src={assetUrl(
+                profile.profilePhoto
+              )}
+              alt=""
+              className="h-[190px] w-[150px] rounded-t-[75px] object-cover"
+            />
+          )}
         </header>
-        <div className="biodata-rule" />
-        <dl>
-          {[
-            [t('public.finderAge'), `${p.age} ${t('profile.years')}`],
-            [t('profile.height'), `${p.height} cm`],
-            [t('profile.education'), p.education?.highestEducation],
-            [t('profile.profession'), p.career?.occupation],
-            [t('profile.location'), `${p.location?.city}, ${p.location?.state}`],
-            [t('profile.family'), p.family?.familyDescription],
-            ['Native place', p.paternalFamily?.nativePlace || p.location?.nativePlace],
-            ['Clan / Gotra', p.paternalFamily?.clan || p.community?.clan]
-          ].map(([a, b]) => (
-            <div key={a}>
-              <dt>{a}</dt>
-              <dd>{b || t('profile.notShared')}</dd>
-            </div>
-          ))}
+
+        <div className="my-[35px] h-px bg-[#ddd0c1]" />
+
+        <dl className="grid grid-cols-2 gap-[25px]">
+          {fields.map(
+            ([label, value]) => (
+              <div key={label}>
+                <dt className="text-[8px] uppercase tracking-[0.15em] text-[#756a60]">
+                  {label}
+                </dt>
+
+                <dd className="font-['Cormorant_Garamond'] text-[21px] font-medium">
+                  {value ||
+                    t(
+                      'profile.notShared'
+                    )}
+                </dd>
+              </div>
+            )
+          )}
         </dl>
-        <section>
-          <h2>{t('profile.about')}</h2>
-          <p>{p.aboutMe || t('profile.notShared')}</p>
+
+        <section className="mt-[35px] border-t border-[#ddd0c1] pt-[30px]">
+          <h2 className="font-['Cormorant_Garamond'] text-[30px] font-medium">
+            {t('profile.about')}
+          </h2>
+
+          <p className="text-[13px] leading-[1.9] text-[#756a60]">
+            {profile.aboutMe ||
+              t('profile.notShared')}
+          </p>
         </section>
-        {includeSensitive && <section className="biodata-sensitive"><h2>Sensitive family context</h2><p><strong>Maternal family:</strong> {[p.maternalFamily?.maternalFamilySurname, p.maternalFamily?.maternalNativePlace || p.maternalFamily?.maternalVillage].filter(Boolean).join(' • ') || t('profile.notShared')}</p><p><strong>Siblings:</strong> {p.family?.siblingDetails?.map((s) => `${s.relation}${s.name ? ` — ${s.name}` : ''}${s.spouseNativePlace ? `, family connection in ${s.spouseNativePlace}` : ''}`).join('; ') || p.family?.siblings || t('profile.notShared')}</p><p><strong>Marital history:</strong> {p.maritalStatus || t('profile.notShared')}</p><p><strong>Family assets:</strong> {p.familyAssets?.propertySummary || t('profile.notShared')}</p></section>}
-        <footer>Kshatriya Matrimonial Society • {t('profile.privateBiodata')}</footer>
+
+        {includeSensitive && (
+          <section className="mt-[35px] border-t border-[#ddd0c1] pt-[30px]">
+            <h2 className="font-['Cormorant_Garamond'] text-[30px] font-medium">
+              Sensitive family context
+            </h2>
+
+            <p className="text-[13px] leading-[1.9] text-[#756a60]">
+              <strong>
+                Maternal family:
+              </strong>{' '}
+              {[
+                profile.maternalFamily
+                  ?.maternalFamilySurname,
+                profile.maternalFamily
+                  ?.maternalNativePlace ||
+                  profile.maternalFamily
+                    ?.maternalVillage
+              ]
+                .filter(Boolean)
+                .join(' • ') ||
+                t(
+                  'profile.notShared'
+                )}
+            </p>
+
+            <p className="text-[13px] leading-[1.9] text-[#756a60]">
+              <strong>
+                Siblings:
+              </strong>{' '}
+              {profile.family
+                ?.siblingDetails
+                ?.map(
+                  (sibling) =>
+                    `${sibling.relation}${
+                      sibling.name
+                        ? ` — ${sibling.name}`
+                        : ''
+                    }${
+                      sibling.spouseNativePlace
+                        ? `, family connection in ${sibling.spouseNativePlace}`
+                        : ''
+                    }`
+                )
+                .join('; ') ||
+                profile.family
+                  ?.siblings ||
+                t(
+                  'profile.notShared'
+                )}
+            </p>
+
+            <p className="text-[13px] leading-[1.9] text-[#756a60]">
+              <strong>
+                Marital history:
+              </strong>{' '}
+              {profile.maritalStatus ||
+                t(
+                  'profile.notShared'
+                )}
+            </p>
+
+            <p className="text-[13px] leading-[1.9] text-[#756a60]">
+              <strong>
+                Family assets:
+              </strong>{' '}
+              {profile.familyAssets
+                ?.propertySummary ||
+                t(
+                  'profile.notShared'
+                )}
+            </p>
+          </section>
+        )}
+
+        <footer className="mt-[55px] text-center text-[8px] uppercase text-[#756a60]">
+          Kshatriya Matrimonial
+          Society •{' '}
+          {t(
+            'profile.privateBiodata'
+          )}
+        </footer>
       </article>
     </div>
   );

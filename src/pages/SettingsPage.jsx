@@ -1,14 +1,26 @@
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useState
+} from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-const csv = (v) => (Array.isArray(v) ? v.join(', ') : v || ''),
-  arrays = (v) =>
-    String(v || '')
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean);
+import { api } from '../services/api';
+
+const csv = (value) =>
+  Array.isArray(value)
+    ? value.join(', ')
+    : value || '';
+
+const arrays = (value) =>
+  String(value || '')
+    .split(',')
+    .map((item) =>
+      item.trim()
+    )
+    .filter(Boolean);
+
 const privacyOptions = {
   photoVisibility: [
     'Everyone',
@@ -16,58 +28,200 @@ const privacyOptions = {
     'AcceptedInterests',
     'Private'
   ],
-  contactVisibility: ['AcceptedInterests', 'MutualMatches', 'Private'],
+
+  contactVisibility: [
+    'AcceptedInterests',
+    'MutualMatches',
+    'Private'
+  ],
+
   incomeVisibility: [
     'Everyone',
     'RegisteredMembers',
     'AcceptedInterests',
     'Private'
   ],
-  familyVisibility: ['RegisteredMembers', 'AcceptedInterests', 'Private'],
-  familyOverviewVisibility: ['RegisteredMembers', 'AcceptedInterests', 'MutualMatches', 'Private'],
-  maternalFamilyVisibility: ['AcceptedInterests', 'MutualMatches', 'Private'],
-  siblingDetailsVisibility: ['AcceptedInterests', 'MutualMatches', 'Private'],
-  assetVisibility: ['AcceptedInterests', 'MutualMatches', 'Private'],
-  fullNameVisibility: ['Everyone', 'RegisteredMembers']
+
+  familyVisibility: [
+    'RegisteredMembers',
+    'AcceptedInterests',
+    'Private'
+  ],
+
+  familyOverviewVisibility: [
+    'RegisteredMembers',
+    'AcceptedInterests',
+    'MutualMatches',
+    'Private'
+  ],
+
+  maternalFamilyVisibility: [
+    'AcceptedInterests',
+    'MutualMatches',
+    'Private'
+  ],
+
+  siblingDetailsVisibility: [
+    'AcceptedInterests',
+    'MutualMatches',
+    'Private'
+  ],
+
+  assetVisibility: [
+    'AcceptedInterests',
+    'MutualMatches',
+    'Private'
+  ],
+
+  fullNameVisibility: [
+    'Everyone',
+    'RegisteredMembers'
+  ]
 };
-export default function SettingsPage({ section }) {
-  const [form, setForm] = useState({}),
-    [profile, setProfile] = useState(null),
-    [blocks, setBlocks] = useState([]),
-    [notifications, setNotifications] = useState({}),
-    [tab, setTab] = useState(section ? 'Preferences' : 'Privacy'),
-    [loading, setLoading] = useState(true);
-  const { user, logout } = useAuth(),
-    notify = useToast(),
-    navigate = useNavigate();
+
+const labelClass =
+  'grid gap-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#5e4e46]';
+
+const fieldClass =
+  'w-full border border-[#ddd0c1] bg-[#fffdf8] px-[15px] py-[14px] text-[14px] tracking-normal text-[#191614] normal-case outline-none focus:border-[#681d25] focus:shadow-[0_0_0_3px_#681d2510]';
+
+const formClass =
+  'grid gap-[18px] border border-[#ddd0c1] bg-[#fffdf8] p-[35px]';
+
+const formTitleClass =
+  "font-['Cormorant_Garamond'] text-[35px] font-medium";
+
+const primaryButtonClass =
+  'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318]';
+
+const outlineButtonClass =
+  'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white';
+
+const textLinkClass =
+  'border-b border-[#c49b70] pb-[3px] text-[12px] font-extrabold text-[#681d25]';
+
+export default function SettingsPage({
+  section
+}) {
+  const [form, setForm] =
+    useState({});
+
+  const [profile, setProfile] =
+    useState(null);
+
+  const [blocks, setBlocks] =
+    useState([]);
+
+  const [
+    notifications,
+    setNotifications
+  ] = useState({});
+
+  const [tab, setTab] =
+    useState(
+      section
+        ? 'Preferences'
+        : 'Privacy'
+    );
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const {
+    user,
+    logout
+  } = useAuth();
+
+  const notify = useToast();
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (section) {
       api('/preferences')
-        .then((r) => setForm(r.data.preferences))
-        .catch((e) => notify(e.message, 'error'))
-        .finally(() => setLoading(false));
+        .then((response) =>
+          setForm(
+            response.data.preferences
+          )
+        )
+        .catch((error) =>
+          notify(
+            error.message,
+            'error'
+          )
+        )
+        .finally(() =>
+          setLoading(false)
+        );
+
       return;
     }
+
     Promise.all([
       api('/profiles/me'),
       api('/blocks'),
-      api('/notification-preferences')
+      api(
+        '/notification-preferences'
+      )
     ])
-      .then(([p, b, n]) => {
-        setProfile(p.data.profile);
-        setForm(p.data.profile.privacy || {});
-        setBlocks(b.data.blocks || []);
-        setNotifications(n.data.preferences || {});
-      })
-      .catch((e) => notify(e.message, 'error'))
-      .finally(() => setLoading(false));
-  }, [section, notify]);
-  const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const save = async (e) => {
-    e.preventDefault();
+      .then(
+        ([
+          profileResult,
+          blockResult,
+          notificationResult
+        ]) => {
+          setProfile(
+            profileResult.data.profile
+          );
+
+          setForm(
+            profileResult.data.profile
+              .privacy || {}
+          );
+
+          setBlocks(
+            blockResult.data.blocks ||
+              []
+          );
+
+          setNotifications(
+            notificationResult.data
+              .preferences || {}
+          );
+        }
+      )
+      .catch((error) =>
+        notify(
+          error.message,
+          'error'
+        )
+      )
+      .finally(() =>
+        setLoading(false)
+      );
+  }, [
+    section,
+    notify
+  ]);
+
+  const update = (
+    key,
+    value
+  ) => {
+    setForm((current) => ({
+      ...current,
+      [key]: value
+    }));
+  };
+
+  const save = async (event) => {
+    event.preventDefault();
+
     try {
       if (section) {
-        const payload = { ...form };
+        const payload = {
+          ...form
+        };
+
         [
           'locations',
           'states',
@@ -79,289 +233,802 @@ export default function SettingsPage({ section }) {
           'marriageTimeline',
           'maritalStatus',
           'acceptedMaritalStatuses'
-        ].forEach((k) => {
-          if (typeof payload[k] === 'string') payload[k] = arrays(payload[k]);
+        ].forEach((key) => {
+          if (
+            typeof payload[key] ===
+            'string'
+          ) {
+            payload[key] =
+              arrays(payload[key]);
+          }
         });
+
         await api('/preferences', {
           method: 'PUT',
-          body: JSON.stringify(payload)
+          body: JSON.stringify(
+            payload
+          )
         });
-      } else
-        await api('/profiles/privacy', {
+      } else {
+        await api(
+          '/profiles/privacy',
+          {
+            method: 'PATCH',
+            body: JSON.stringify(
+              form
+            )
+          }
+        );
+      }
+
+      notify(
+        section
+          ? 'Preferences saved.'
+          : 'Privacy updated.'
+      );
+    } catch (error) {
+      notify(
+        error.message,
+        'error'
+      );
+    }
+  };
+
+  const password = async (
+    event
+  ) => {
+    event.preventDefault();
+
+    try {
+      await api(
+        '/auth/change-password',
+        {
           method: 'PATCH',
-          body: JSON.stringify(form)
-        });
-      notify(section ? 'Preferences saved.' : 'Privacy updated.');
-    } catch (err) {
-      notify(err.message, 'error');
+          body: JSON.stringify({
+            currentPassword:
+              event.currentTarget
+                .current.value,
+
+            newPassword:
+              event.currentTarget
+                .next.value
+          })
+        }
+      );
+
+      event.currentTarget.reset();
+
+      notify(
+        'Password changed.'
+      );
+    } catch (error) {
+      notify(
+        error.message,
+        'error'
+      );
     }
   };
-  const password = async (e) => {
-    e.preventDefault();
+
+  const lifecycle = async (
+    status
+  ) => {
     try {
-      await api('/auth/change-password', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          currentPassword: e.currentTarget.current.value,
-          newPassword: e.currentTarget.next.value
-        })
-      });
-      e.currentTarget.reset();
-      notify('Password changed.');
-    } catch (err) {
-      notify(err.message, 'error');
-    }
-  };
-  const lifecycle = async (status) => {
-    try {
-      const r = await api('/profiles/lifecycle', {
-        method: 'PATCH',
-        body: JSON.stringify({ status })
-      });
-      setProfile((p) => ({
-        ...p,
-        visibility: r.data.visibility,
-        lifecycleStatus: r.data.status
+      const result = await api(
+        '/profiles/lifecycle',
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            status
+          })
+        }
+      );
+
+      setProfile((current) => ({
+        ...current,
+        visibility:
+          result.data.visibility,
+        lifecycleStatus:
+          result.data.status
       }));
-      notify(r.message);
-    } catch (e) {
-      notify(e.message, 'error');
+
+      notify(result.message);
+    } catch (error) {
+      notify(
+        error.message,
+        'error'
+      );
     }
   };
-  const saveNotifications = async (e) => {
-    e.preventDefault();
-    try {
-      await api('/notification-preferences', {
-        method: 'PUT',
-        body: JSON.stringify(notifications)
-      });
-      notify('Notification preferences saved.');
-    } catch (err) {
-      notify(err.message, 'error');
-    }
-  };
-  const removeAccount = async () => {
-    if (
-      !window.confirm(
-        'Close this account and remove the profile from discovery? This cannot be undone from the app.'
-      )
-    )
-      return;
-    try {
-      await api('/auth/account', { method: 'DELETE' });
-      await logout();
-      navigate('/');
-    } catch (e) {
-      notify(e.message, 'error');
-    }
-  };
-  if (loading) return <div className="page-skeleton">Loading settings…</div>;
+
+  const saveNotifications =
+    async (event) => {
+      event.preventDefault();
+
+      try {
+        await api(
+          '/notification-preferences',
+          {
+            method: 'PUT',
+            body: JSON.stringify(
+              notifications
+            )
+          }
+        );
+
+        notify(
+          'Notification preferences saved.'
+        );
+      } catch (error) {
+        notify(
+          error.message,
+          'error'
+        );
+      }
+    };
+
+  const removeAccount =
+    async () => {
+      if (
+        !window.confirm(
+          'Close this account and remove the profile from discovery? This cannot be undone from the app.'
+        )
+      ) {
+        return;
+      }
+
+      try {
+        await api('/auth/account', {
+          method: 'DELETE'
+        });
+
+        await logout();
+
+        navigate('/');
+      } catch (error) {
+        notify(
+          error.message,
+          'error'
+        );
+      }
+    };
+
+  if (loading) {
+    return (
+      <div className="page-skeleton">
+        Loading settings…
+      </div>
+    );
+  }
+
   return (
     <>
-      <header className="page-heading compact">
-        <p className="eyebrow">Your account</p>
-        <h1>{section ? 'Partner preferences' : 'Settings & privacy'}</h1>
-        <p>
-          Choose what feels comfortable. Sensitive information is filtered by
+      <header className="mb-[30px]">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+          Your account
+        </p>
+
+        <h1 className="mt-3 max-w-[900px] font-['Cormorant_Garamond'] text-[clamp(42px,5vw,66px)] font-medium leading-[0.98] text-[#2c1a18]">
+          {section
+            ? 'Partner preferences'
+            : 'Settings & privacy'}
+        </h1>
+
+        <p className="mt-[18px] max-w-[680px] text-[14px] leading-[1.8] text-[#756a60]">
+          Choose what feels
+          comfortable. Sensitive
+          information is filtered by
           the server.
         </p>
       </header>
+
       {section ? (
-        <form className="settings-form" onSubmit={save}>
-          <h2>The person you hope to meet</h2>
-          <label>
+        <form
+          className={formClass}
+          onSubmit={save}
+        >
+          <h2 className={formTitleClass}>
+            The person you hope to meet
+          </h2>
+
+          <label className={labelClass}>
             Preferred gender
+
             <select
-              value={form.preferredGender || ''}
-              onChange={(e) => update('preferredGender', e.target.value)}
+              className={fieldClass}
+              value={
+                form.preferredGender ||
+                ''
+              }
+              onChange={(event) =>
+                update(
+                  'preferredGender',
+                  event.target.value
+                )
+              }
             >
-              <option value="">Select</option>
-              <option>Female</option>
-              <option>Male</option>
+              <option value="">
+                Select
+              </option>
+
+              <option>
+                Female
+              </option>
+
+              <option>
+                Male
+              </option>
             </select>
           </label>
-          <div className="form-row">
+
+          <div className="grid grid-cols-2 gap-[18px] max-[767px]:grid-cols-1">
             {[
-              ['ageMin', 'Minimum age'],
-              ['ageMax', 'Maximum age'],
-              ['heightMin', 'Minimum height'],
-              ['heightMax', 'Maximum height']
-            ].map(([k, l]) => (
-              <label key={k}>
-                {l}
+              [
+                'ageMin',
+                'Minimum age'
+              ],
+              [
+                'ageMax',
+                'Maximum age'
+              ],
+              [
+                'heightMin',
+                'Minimum height'
+              ],
+              [
+                'heightMax',
+                'Maximum height'
+              ]
+            ].map(
+              ([key, label]) => (
+                <label
+                  key={key}
+                  className={
+                    labelClass
+                  }
+                >
+                  {label}
+
+                  <input
+                    className={
+                      fieldClass
+                    }
+                    type="number"
+                    value={
+                      form[key] ||
+                      ''
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      update(
+                        key,
+                        Number(
+                          event.target
+                            .value
+                        ) || ''
+                      )
+                    }
+                  />
+                </label>
+              )
+            )}
+          </div>
+
+          {[
+            [
+              'locations',
+              'Preferred cities'
+            ],
+            [
+              'states',
+              'Preferred states'
+            ],
+            [
+              'educationPreferences',
+              'Education'
+            ],
+            [
+              'occupationPreferences',
+              'Occupations'
+            ],
+            [
+              'dietPreferences',
+              'Diet'
+            ],
+            [
+              'communityPreferences',
+              'Communities'
+            ]
+          ].map(
+            ([key, label]) => (
+              <label
+                key={key}
+                className={
+                  labelClass
+                }
+              >
+                {label}
+
                 <input
-                  type="number"
-                  value={form[k] || ''}
-                  onChange={(e) => update(k, Number(e.target.value) || '')}
+                  className={
+                    fieldClass
+                  }
+                  value={csv(
+                    form[key]
+                  )}
+                  onChange={(
+                    event
+                  ) =>
+                    update(
+                      key,
+                      event.target
+                        .value
+                    )
+                  }
+                  placeholder="Comma separated"
                 />
               </label>
-            ))}
-          </div>
-          {[
-            ['locations', 'Preferred cities'],
-            ['states', 'Preferred states'],
-            ['educationPreferences', 'Education'],
-            ['occupationPreferences', 'Occupations'],
-            ['dietPreferences', 'Diet'],
-            ['communityPreferences', 'Communities']
-          ].map(([k, l]) => (
-            <label key={k}>
-              {l}
-              <input
-                value={csv(form[k])}
-                onChange={(e) => update(k, e.target.value)}
-                placeholder="Comma separated"
-              />
-            </label>
-          ))}
-          <label>Accepted marital statuses<input value={csv(form.acceptedMaritalStatuses)} onChange={(e) => update('acceptedMaritalStatuses', e.target.value)} placeholder="Never Married, Divorced, Widowed" /></label>
-          <label>Willing to consider remarriage<select value={form.willingForRemarriage || 'Open to Discuss'} onChange={(e) => update('willingForRemarriage', e.target.value)}><option>Yes</option><option>No</option><option>Open to Discuss</option></select></label>
-          <button className="primary-button">Save preferences</button>
+            )
+          )}
+
+          <label className={labelClass}>
+            Accepted marital statuses
+
+            <input
+              className={fieldClass}
+              value={csv(
+                form.acceptedMaritalStatuses
+              )}
+              onChange={(event) =>
+                update(
+                  'acceptedMaritalStatuses',
+                  event.target.value
+                )
+              }
+              placeholder="Never Married, Divorced, Widowed"
+            />
+          </label>
+
+          <label className={labelClass}>
+            Willing to consider
+            remarriage
+
+            <select
+              className={fieldClass}
+              value={
+                form.willingForRemarriage ||
+                'Open to Discuss'
+              }
+              onChange={(event) =>
+                update(
+                  'willingForRemarriage',
+                  event.target.value
+                )
+              }
+            >
+              <option>Yes</option>
+              <option>No</option>
+              <option>
+                Open to Discuss
+              </option>
+            </select>
+          </label>
+
+          <button
+            className={
+              primaryButtonClass
+            }
+          >
+            Save preferences
+          </button>
         </form>
       ) : (
-        <div className="settings-grid">
-          <nav>
+        <div className="grid grid-cols-[220px_1fr] gap-10 max-[767px]:grid-cols-1">
+          <nav className="grid content-start">
             {[
               'Privacy',
               'Account',
               'Password',
               'Notifications',
               'Blocked profiles'
-            ].map((x) => (
+            ].map((item) => (
               <button
-                className={tab === x ? 'active' : ''}
-                onClick={() => setTab(x)}
-                key={x}
+                className={`border-b border-[#ddd0c1] p-[14px] text-left text-[11px] ${
+                  tab === item
+                    ? 'bg-[#fffdf8] font-extrabold text-[#681d25]'
+                    : ''
+                }`}
+                onClick={() =>
+                  setTab(item)
+                }
+                key={item}
               >
-                {x}
+                {item}
               </button>
             ))}
           </nav>
+
           <div>
             {tab === 'Privacy' && (
-              <form className="settings-form" onSubmit={save}>
-                <h2>Privacy controls</h2>
-                {Object.entries(privacyOptions).map(([k, options]) => (
-                  <label key={k}>
-                    {k.replace(/([A-Z])/g, ' $1')}
-                    <select
-                      value={form[k] || ''}
-                      onChange={(e) => update(k, e.target.value)}
+              <form
+                className={
+                  formClass
+                }
+                onSubmit={save}
+              >
+                <h2
+                  className={
+                    formTitleClass
+                  }
+                >
+                  Privacy controls
+                </h2>
+
+                {Object.entries(
+                  privacyOptions
+                ).map(
+                  ([
+                    key,
+                    options
+                  ]) => (
+                    <label
+                      key={key}
+                      className={
+                        labelClass
+                      }
                     >
-                      {options.map((x) => (
-                        <option key={x}>{x}</option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
-                <button className="primary-button">Save changes</button>
+                      {key.replace(
+                        /([A-Z])/g,
+                        ' $1'
+                      )}
+
+                      <select
+                        className={
+                          fieldClass
+                        }
+                        value={
+                          form[key] ||
+                          ''
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          update(
+                            key,
+                            event
+                              .target
+                              .value
+                          )
+                        }
+                      >
+                        {options.map(
+                          (
+                            option
+                          ) => (
+                            <option
+                              key={
+                                option
+                              }
+                            >
+                              {
+                                option
+                              }
+                            </option>
+                          )
+                        )}
+                      </select>
+                    </label>
+                  )
+                )}
+
+                <button
+                  className={
+                    primaryButtonClass
+                  }
+                >
+                  Save changes
+                </button>
               </form>
             )}
+
             {tab === 'Account' && (
-              <section className="settings-form">
-                <h2>Account & profile status</h2>
-                <p>
-                  {user.email} • {user.phone || 'No phone number'}
+              <section className={formClass}>
+                <h2 className={formTitleClass}>
+                  Account & profile status
+                </h2>
+
+                <p className="text-[12px] text-[#756a60]">
+                  {user.email} •{' '}
+                  {user.phone ||
+                    'No phone number'}
                 </p>
-                <p>Current status: {profile?.lifecycleStatus || 'Active'}</p>
-                <div className="profile-actions">
+
+                <p className="text-[12px] text-[#756a60]">
+                  Current status:{' '}
+                  {profile?.lifecycleStatus ||
+                    'Active'}
+                </p>
+
+                <div className="mt-7 flex flex-wrap gap-[10px]">
                   <button
                     onClick={() =>
                       lifecycle(
-                        profile?.lifecycleStatus === 'Paused'
+                        profile?.lifecycleStatus ===
+                          'Paused'
                           ? 'Active'
                           : 'Paused'
                       )
                     }
-                    className="outline-button"
+                    className={
+                      outlineButtonClass
+                    }
                   >
-                    {profile?.lifecycleStatus === 'Paused'
+                    {profile?.lifecycleStatus ===
+                    'Paused'
                       ? 'Resume profile'
                       : 'Pause profile'}
                   </button>
+
                   <button
-                    onClick={() => lifecycle('Married')}
-                    className="outline-button"
+                    onClick={() =>
+                      lifecycle(
+                        'Married'
+                      )
+                    }
+                    className={
+                      outlineButtonClass
+                    }
                   >
-                    We found a match / Got married
+                    We found a match /
+                    Got married
                   </button>
                 </div>
-                <div className="danger-zone">
-                  <h3>Delete account</h3>
-                  <p>
-                    Your profile is hidden immediately and identifying login
-                    data is anonymized.
+
+                <div className="mt-[35px] border-t border-[#d5b8b3] pt-[25px]">
+                  <h3 className="font-['Cormorant_Garamond'] text-[25px] font-medium text-[#681d25]">
+                    Delete account
+                  </h3>
+
+                  <p className="mb-[18px] mt-2 text-[12px] text-[#756a60]">
+                    Your profile is hidden
+                    immediately and
+                    identifying login data is
+                    anonymized.
                   </p>
-                  <button onClick={removeAccount} className="outline-button">
+
+                  <button
+                    onClick={
+                      removeAccount
+                    }
+                    className={
+                      outlineButtonClass
+                    }
+                  >
                     Delete account
                   </button>
                 </div>
               </section>
             )}
+
             {tab === 'Password' && (
-              <form className="settings-form" onSubmit={password}>
-                <h2>Change password</h2>
-                <label>
+              <form
+                className={
+                  formClass
+                }
+                onSubmit={password}
+              >
+                <h2
+                  className={
+                    formTitleClass
+                  }
+                >
+                  Change password
+                </h2>
+
+                <label
+                  className={
+                    labelClass
+                  }
+                >
                   Current password
-                  <input name="current" type="password" required />
+
+                  <input
+                    className={
+                      fieldClass
+                    }
+                    name="current"
+                    type="password"
+                    required
+                  />
                 </label>
-                <label>
+
+                <label
+                  className={
+                    labelClass
+                  }
+                >
                   New password
-                  <input name="next" type="password" minLength="8" required />
+
+                  <input
+                    className={
+                      fieldClass
+                    }
+                    name="next"
+                    type="password"
+                    minLength="8"
+                    required
+                  />
                 </label>
-                <button className="primary-button">Change password</button>
+
+                <button
+                  className={
+                    primaryButtonClass
+                  }
+                >
+                  Change password
+                </button>
               </form>
             )}
-            {tab === 'Notifications' && (
-              <form className="settings-form" onSubmit={saveNotifications}>
-                <h2>Notification preferences</h2>
+
+            {tab ===
+              'Notifications' && (
+              <form
+                className={
+                  formClass
+                }
+                onSubmit={
+                  saveNotifications
+                }
+              >
+                <h2
+                  className={
+                    formTitleClass
+                  }
+                >
+                  Notification preferences
+                </h2>
+
                 {[
-                  ['emailInterests', 'Email for interests'],
-                  ['emailMatches', 'Email for matches'],
-                  ['emailPayments', 'Email for payments'],
-                  ['smsCritical', 'SMS for critical updates'],
-                  ['whatsappFuture', 'Allow future WhatsApp updates']
-                ].map(([k, l]) => (
-                  <label className="check" key={k}>
-                    <input
-                      type="checkbox"
-                      checked={!!notifications[k]}
-                      onChange={(e) =>
-                        setNotifications((n) => ({
-                          ...n,
-                          [k]: e.target.checked
-                        }))
-                      }
-                    />
-                    {l}
-                  </label>
-                ))}
-                <button className="primary-button">Save preferences</button>
+                  [
+                    'emailInterests',
+                    'Email for interests'
+                  ],
+                  [
+                    'emailMatches',
+                    'Email for matches'
+                  ],
+                  [
+                    'emailPayments',
+                    'Email for payments'
+                  ],
+                  [
+                    'smsCritical',
+                    'SMS for critical updates'
+                  ],
+                  [
+                    'whatsappFuture',
+                    'Allow future WhatsApp updates'
+                  ]
+                ].map(
+                  ([
+                    key,
+                    label
+                  ]) => (
+                    <label
+                      className="flex items-center gap-2 text-[11px] text-[#5e4e46]"
+                      key={key}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={
+                          !!notifications[
+                            key
+                          ]
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          setNotifications(
+                            (
+                              current
+                            ) => ({
+                              ...current,
+                              [key]:
+                                event
+                                  .target
+                                  .checked
+                            })
+                          )
+                        }
+                      />
+
+                      {label}
+                    </label>
+                  )
+                )}
+
+                <button
+                  className={
+                    primaryButtonClass
+                  }
+                >
+                  Save preferences
+                </button>
               </form>
             )}
-            {tab === 'Blocked profiles' && (
-              <section className="settings-form">
-                <h2>Blocked profiles</h2>
+
+            {tab ===
+              'Blocked profiles' && (
+              <section
+                className={
+                  formClass
+                }
+              >
+                <h2
+                  className={
+                    formTitleClass
+                  }
+                >
+                  Blocked profiles
+                </h2>
+
                 {blocks.length ? (
-                  blocks.map((b) => (
-                    <div className="blocked-row" key={b._id}>
-                      <span>{b.blockedProfile?.firstName}</span>
-                      <button
-                        className="text-link"
-                        onClick={async () => {
-                          await api(`/blocks/${b.blockedProfile._id}`, {
-                            method: 'DELETE'
-                          });
-                          setBlocks((x) => x.filter((y) => y._id !== b._id));
-                          notify('Profile unblocked.');
-                        }}
+                  blocks.map(
+                    (block) => (
+                      <div
+                        className="flex justify-between border-b border-[#ddd0c1] py-[10px]"
+                        key={
+                          block._id
+                        }
                       >
-                        Unblock
-                      </button>
-                    </div>
-                  ))
+                        <span>
+                          {
+                            block
+                              .blockedProfile
+                              ?.firstName
+                          }
+                        </span>
+
+                        <button
+                          className={
+                            textLinkClass
+                          }
+                          onClick={async () => {
+                            await api(
+                              `/blocks/${block.blockedProfile._id}`,
+                              {
+                                method:
+                                  'DELETE'
+                              }
+                            );
+
+                            setBlocks(
+                              (
+                                current
+                              ) =>
+                                current.filter(
+                                  (
+                                    item
+                                  ) =>
+                                    item._id !==
+                                    block._id
+                                )
+                            );
+
+                            notify(
+                              'Profile unblocked.'
+                            );
+                          }}
+                        >
+                          Unblock
+                        </button>
+                      </div>
+                    )
+                  )
                 ) : (
-                  <p>No blocked profiles.</p>
+                  <p className="text-[12px] text-[#756a60]">
+                    No blocked profiles.
+                  </p>
                 )}
               </section>
             )}
