@@ -556,6 +556,35 @@ export async function activatePayment(
   const now =
     new Date();
 
+  /*
+   * Clean up an expired subscription which may not
+   * yet have been processed by the expiry job.
+   *
+   * This is necessary because the database now
+   * enforces one Active subscription per user.
+   */
+  await Subscription.updateMany(
+    {
+      user:
+        locked.user,
+
+      status:
+        'Active',
+
+      endsAt: {
+        $lte:
+          now
+      }
+    },
+
+    {
+      $set: {
+        status:
+          'Expired'
+      }
+    }
+  );
+
   const existingActiveSubscription =
     await Subscription.findOne({
       user:
@@ -584,38 +613,69 @@ export async function activatePayment(
     );
   }
 
-  const subscription =
-    await Subscription.create({
-      user:
-        locked.user,
+  let subscription;
 
-      plan:
-        plan._id,
+  try {
+    subscription =
+      await Subscription.create({
+        user:
+          locked.user,
 
-      planNameSnapshot:
-        plan.name,
+        plan:
+          plan._id,
 
-      priceSnapshot:
-        plan.price,
+        planNameSnapshot:
+          plan.name,
 
-      entitlementSnapshot:
-        snapshotFor(
-          plan
-        ),
+        priceSnapshot:
+          plan.price,
 
-      status:
-        'Active',
+        entitlementSnapshot:
+          snapshotFor(
+            plan
+          ),
 
-      startsAt:
-        now,
+        status:
+          'Active',
 
-      endsAt:
-        new Date(
-          now.getTime() +
-            plan.durationDays *
-              864e5
-        )
-    });
+        startsAt:
+          now,
+
+        endsAt:
+          new Date(
+            now.getTime() +
+              plan.durationDays *
+                864e5
+          )
+      });
+  } catch (error) {
+    /*
+     * The unique partial index is the final
+     * concurrency guard if two different payment
+     * activations reach this point simultaneously.
+     */
+    if (
+      error?.code ===
+      11000
+    ) {
+      locked.status =
+        'Failed';
+
+      await locked.save();
+
+      throw new ApiError(
+        409,
+        'An active membership already exists for this account.'
+      );
+    }
+
+    locked.status =
+      'Failed';
+
+    await locked.save();
+
+    throw error;
+  }
 
   locked.status =
     'Paid';
@@ -633,7 +693,35 @@ export async function activatePayment(
       providerPaymentId;
   }
 
-  await locked.save();
+  try {
+    await locked.save();
+  } catch (error) {
+    /*
+     * Membership must not remain active if the
+     * associated payment cannot be persisted.
+     */
+    await Subscription.updateOne(
+      {
+        _id:
+          subscription._id,
+
+        status:
+          'Active'
+      },
+
+      {
+        $set: {
+          status:
+            'Cancelled',
+
+          endsAt:
+            new Date()
+        }
+      }
+    );
+
+    throw error;
+  }
 
   await Notification.create({
     user:
@@ -703,7 +791,8 @@ export const verify =
 
         razorpay_signature:
           provided
-      } = req.body;
+      } =
+        req.body;
 
       if (
         !orderId ||
@@ -732,6 +821,9 @@ export const verify =
         );
       }
 
+      /*
+       * Always verify Razorpay's checkout signature.
+       */
       paymentService.verifyCheckout({
         orderId,
         paymentId,
@@ -747,6 +839,42 @@ export const verify =
         throw new ApiError(
           409,
           'Payment identifier does not match the verified order.'
+        );
+      }
+
+      /*
+       * Do not activate membership based only on a
+       * browser checkout response.
+       *
+       * Confirm payment directly with Razorpay.
+       */
+      const providerPayment =
+        await paymentService.fetchPayment(
+          paymentId
+        );
+
+      validateCapturedPayment(
+        payment,
+        providerPayment
+      );
+
+      if (
+        providerPayment.id !==
+        paymentId
+      ) {
+        throw new ApiError(
+          409,
+          'Payment provider returned a different payment identifier.'
+        );
+      }
+
+      if (
+        providerPayment.status !==
+        'captured'
+      ) {
+        throw new ApiError(
+          409,
+          'Payment has not been captured yet.'
         );
       }
 
@@ -858,8 +986,9 @@ export const razorpayWebhook =
             : null;
 
       /*
-       * Unknown external transaction:
-       * acknowledge safely so Razorpay does not retry.
+       * Unknown provider transaction.
+       * Acknowledge it so Razorpay does not retry
+       * indefinitely against our endpoint.
        */
       if (!payment) {
         return ok(
@@ -940,18 +1069,44 @@ export const razorpayWebhook =
               0
           );
 
+        if (
+          !Number.isFinite(
+            refundAmount
+          ) ||
+          refundAmount <=
+            0
+        ) {
+          throw new ApiError(
+            400,
+            'Refund amount is invalid.'
+          );
+        }
+
         const originalAmount =
           amountInPaise(
             payment.amount
           );
 
-        const isFullRefund =
-          refundAmount >=
-          originalAmount;
+        payment.refundedAmountPaise =
+          Number(
+            payment.refundedAmountPaise ||
+              0
+          ) +
+          refundAmount;
 
+        /*
+         * Multiple partial refunds are accumulated.
+         * Subscription is cancelled only when the
+         * total refunded amount reaches the original
+         * captured amount.
+         */
         if (
-          isFullRefund
+          payment.refundedAmountPaise >=
+          originalAmount
         ) {
+          payment.refundedAmountPaise =
+            originalAmount;
+
           payment.status =
             'Refunded';
 

@@ -2386,3 +2386,305 @@ test(
     );
   }
 );
+test(
+  'multiple partial refunds cumulatively cancel a fully refunded membership',
+  async () => {
+    process.env.RAZORPAY_WEBHOOK_SECRET =
+      'refund-webhook-secret';
+
+    const member =
+      await User.create({
+        email:
+          'refund-member@example.com',
+
+        password:
+          'Password123!'
+      });
+
+    const plan =
+      await Plan.create({
+        name:
+          'Refund Test',
+
+        slug:
+          'refund-test',
+
+        price:
+          1000,
+
+        durationDays:
+          30
+      });
+
+    const subscription =
+      await Subscription.create({
+        user:
+          member._id,
+
+        plan:
+          plan._id,
+
+        planNameSnapshot:
+          plan.name,
+
+        priceSnapshot:
+          plan.price,
+
+        entitlementSnapshot:
+          {},
+
+        status:
+          'Active',
+
+        startsAt:
+          new Date(),
+
+        endsAt:
+          new Date(
+            Date.now() +
+              30 *
+                864e5
+          )
+      });
+
+    const payment =
+      await Payment.create({
+        user:
+          member._id,
+
+        plan:
+          plan._id,
+
+        subscription:
+          subscription._id,
+
+        provider:
+          'razorpay',
+
+        providerOrderId:
+          'order_refund_test',
+
+        providerPaymentId:
+          'pay_refund_test',
+
+        amount:
+          1000,
+
+        status:
+          'Paid',
+
+        verifiedAt:
+          new Date()
+      });
+
+    const sendRefund =
+      async (
+        id,
+        amount
+      ) => {
+        const event = {
+          event:
+            'refund.processed',
+
+          payload: {
+            refund: {
+              entity: {
+                id,
+
+                payment_id:
+                  'pay_refund_test',
+
+                amount
+              }
+            }
+          }
+        };
+
+        const body =
+          JSON.stringify(
+            event
+          );
+
+        const signature =
+          crypto
+            .createHmac(
+              'sha256',
+              process.env
+                .RAZORPAY_WEBHOOK_SECRET
+            )
+            .update(
+              body
+            )
+            .digest(
+              'hex'
+            );
+
+        return request(app)
+          .post(
+            '/api/webhooks/razorpay'
+          )
+          .set(
+            'Content-Type',
+            'application/json'
+          )
+          .set(
+            'x-razorpay-signature',
+            signature
+          )
+          .set(
+            'x-razorpay-event-id',
+            `evt_${id}`
+          )
+          .send(
+            body
+          );
+      };
+
+    assert.equal(
+      (
+        await sendRefund(
+          'refund_one',
+          40000
+        )
+      ).status,
+      200
+    );
+
+    let saved =
+      await Payment.findById(
+        payment._id
+      );
+
+    assert.equal(
+      saved.refundedAmountPaise,
+      40000
+    );
+
+    assert.equal(
+      saved.status,
+      'Paid'
+    );
+
+    assert.equal(
+      (
+        await sendRefund(
+          'refund_two',
+          60000
+        )
+      ).status,
+      200
+    );
+
+    saved =
+      await Payment.findById(
+        payment._id
+      );
+
+    const savedSubscription =
+      await Subscription.findById(
+        subscription._id
+      );
+
+    assert.equal(
+      saved.refundedAmountPaise,
+      100000
+    );
+
+    assert.equal(
+      saved.status,
+      'Refunded'
+    );
+
+    assert.equal(
+      savedSubscription.status,
+      'Cancelled'
+    );
+  }
+);
+
+test(
+  'database prevents two active memberships for the same member',
+  async () => {
+    const member =
+      await User.create({
+        email:
+          'double-membership@example.com',
+
+        password:
+          'Password123!'
+      });
+
+    const plan =
+      await Plan.create({
+        name:
+          'Concurrency Test',
+
+        slug:
+          'concurrency-test',
+
+        price:
+          100,
+
+        durationDays:
+          30
+      });
+
+    const base = {
+      user:
+        member._id,
+
+      plan:
+        plan._id,
+
+      planNameSnapshot:
+        plan.name,
+
+      priceSnapshot:
+        plan.price,
+
+      entitlementSnapshot:
+        {},
+
+      status:
+        'Active',
+
+      startsAt:
+        new Date(),
+
+      endsAt:
+        new Date(
+          Date.now() +
+            30 *
+              864e5
+        )
+    };
+
+    await Subscription.create(
+      base
+    );
+
+    await assert.rejects(
+      () =>
+        Subscription.create(
+          base
+        ),
+
+      (
+        error
+      ) =>
+        error?.code ===
+        11000
+    );
+
+    assert.equal(
+      await Subscription.countDocuments({
+        user:
+          member._id,
+
+        status:
+          'Active'
+      }),
+      1
+    );
+  }
+);
