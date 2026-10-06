@@ -290,126 +290,339 @@ export const saveNotificationPreferences = asyncHandler(async (req, res) => {
     'Notification preferences saved.'
   );
 });
-export const forgotPassword = asyncHandler(async (req, res) => {
-  const email =
-    typeof req.body.email === 'string'
-      ? req.body.email.trim().toLowerCase()
-      : '';
-  const user = email && (await User.findOne({ email }));
-  if (user) {
-    const code = String(crypto.randomInt(100000, 1000000));
-    await PasswordReset.deleteMany({ user: user._id });
-    await PasswordReset.create({
-      user: user._id,
-      codeHash: await bcrypt.hash(code, 10),
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000)
-    });
-    sendEmailSafely({
-      to: user.email,
-      subject: 'Your password reset code',
-      template: 'password-reset',
-      data: { code }
-    });
-    if (process.env.NODE_ENV !== 'production')
-      console.info(`[development reset code] ${user.email}: ${code}`);
-  }
-  ok(res, {}, 'If an account exists, a reset code has been sent.');
-});
-export const resetPassword =
+export const forgotPassword =
   asyncHandler(
     async (
       req,
       res
     ) => {
       const email =
-        typeof req.body.email ===
+        typeof req.body
+          .email ===
         'string'
           ? req.body.email
               .trim()
               .toLowerCase()
           : '';
 
-      const user =
-        email &&
-        (
-          await User.findOne({
-            email
-          }).select(
-            '+password'
-          )
-        );
-
-      const record =
-        user &&
-        (
-          await PasswordReset.findOne({
-            user:
-              user._id,
-
-            usedAt:
-              null
-          }).sort(
-            '-createdAt'
-          )
-        );
+      /*
+       * Always return the same public response.
+       * This prevents account enumeration.
+       */
+      const genericResponse =
+        () =>
+          ok(
+            res,
+            {},
+            'If an account exists, a reset code has been sent.'
+          );
 
       if (
-        !record ||
-        record.expiresAt <
-          Date.now()
-      ) {
-        throw new ApiError(
-          400,
-          'The reset code is invalid or expired.'
-        );
-      }
-
-      record.attempts +=
-        1;
-
-      if (
-        record.attempts >
-        5
-      ) {
-        await record.save();
-
-        throw new ApiError(
-          429,
-          'Too many reset attempts.'
-        );
-      }
-
-      if (
-        !(
-          await bcrypt.compare(
-            String(
-              req.body.code ||
-                ''
-            ),
-
-            record.codeHash
-          )
+        !email ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+          email
         )
       ) {
-        await record.save();
+        return genericResponse();
+      }
 
+      const user =
+        await User.findOne({
+          email
+        });
+
+      if (!user) {
+        return genericResponse();
+      }
+
+      /*
+       * Destination-level password reset cooldown.
+       * IP-level limiting already exists separately.
+       */
+      const recent =
+        await PasswordReset.findOne({
+          user:
+            user._id,
+
+          usedAt:
+            null,
+
+          createdAt: {
+            $gte:
+              new Date(
+                Date.now() -
+                  60 *
+                    1000
+              )
+          }
+        })
+          .sort(
+            '-createdAt'
+          )
+          .lean();
+
+      if (recent) {
+        return genericResponse();
+      }
+
+      const code =
+        String(
+          crypto.randomInt(
+            100000,
+            1000000
+          )
+        );
+
+      /*
+       * Invalidate older unused codes before creating
+       * the newest reset challenge.
+       */
+      await PasswordReset.deleteMany({
+        user:
+          user._id,
+
+        usedAt:
+          null
+      });
+
+      const record =
+        await PasswordReset.create({
+          user:
+            user._id,
+
+          codeHash:
+            await bcrypt.hash(
+              code,
+              10
+            ),
+
+          expiresAt:
+            new Date(
+              Date.now() +
+                15 *
+                  60 *
+                  1000
+            )
+        });
+
+      const sent =
+        await sendEmailSafely({
+          to:
+            user.email,
+
+          subject:
+            'Your password reset code',
+
+          template:
+            'password-reset',
+
+          data: {
+            code,
+
+            expiresIn:
+              '15 minutes'
+          },
+
+          language:
+            user.preferredLanguage ||
+            'en'
+        });
+
+      /*
+       * Do not leave a usable reset code in MongoDB
+       * when the mail provider rejected delivery.
+       */
+      if (!sent) {
+        await PasswordReset.deleteOne({
+          _id:
+            record._id
+        });
+
+        return genericResponse();
+      }
+
+      if (
+        process.env
+          .NODE_ENV !==
+        'production'
+      ) {
+        console.info(
+          `[development reset code] ${user.email}: ${code}`
+        );
+      }
+
+      return genericResponse();
+    }
+  );
+  export const resetPassword =
+  asyncHandler(
+    async (
+      req,
+      res
+    ) => {
+      const email =
+        typeof req.body
+          .email ===
+        'string'
+          ? req.body.email
+              .trim()
+              .toLowerCase()
+          : '';
+
+      const code =
+        String(
+          req.body.code ||
+            ''
+        ).trim();
+
+      const newPassword =
+        typeof req.body
+          .newPassword ===
+        'string'
+          ? req.body
+              .newPassword
+          : '';
+
+      if (
+        !email ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+          email
+        ) ||
+        !/^\d{6}$/.test(
+          code
+        )
+      ) {
         throw new ApiError(
           400,
           'The reset code is invalid or expired.'
         );
       }
 
-      const newPassword =
-        req.body.newPassword;
-
       if (
-        !newPassword ||
         newPassword.length <
-          8
+        8
       ) {
         throw new ApiError(
           400,
           'New password must be at least 8 characters.'
+        );
+      }
+
+      const user =
+        await User.findOne({
+          email
+        }).select(
+          '+password'
+        );
+
+      if (!user) {
+        throw new ApiError(
+          400,
+          'The reset code is invalid or expired.'
+        );
+      }
+
+      const now =
+        new Date();
+
+      /*
+       * Atomically consume one verification attempt.
+       *
+       * This avoids two concurrent requests reading
+       * the same attempt count and both incrementing
+       * it independently.
+       */
+      const record =
+        await PasswordReset.findOneAndUpdate(
+          {
+            user:
+              user._id,
+
+            usedAt:
+              null,
+
+            expiresAt: {
+              $gt:
+                now
+            },
+
+            attempts: {
+              $lt:
+                5
+            }
+          },
+
+          {
+            $inc: {
+              attempts:
+                1
+            }
+          },
+
+          {
+            sort: {
+              createdAt:
+                -1
+            },
+
+            returnDocument:
+              'after'
+          }
+        );
+
+      if (!record) {
+        const locked =
+          await PasswordReset.exists({
+            user:
+              user._id,
+
+            usedAt:
+              null,
+
+            expiresAt: {
+              $gt:
+                now
+            },
+
+            attempts: {
+              $gte:
+                5
+            }
+          });
+
+        if (locked) {
+          throw new ApiError(
+            429,
+            'Too many reset attempts. Request a new code.'
+          );
+        }
+
+        throw new ApiError(
+          400,
+          'The reset code is invalid or expired.'
+        );
+      }
+
+      const valid =
+        await bcrypt.compare(
+          code,
+          record.codeHash
+        );
+
+      if (!valid) {
+        if (
+          record.attempts >=
+          5
+        ) {
+          throw new ApiError(
+            429,
+            'Too many reset attempts. Request a new code.'
+          );
+        }
+
+        throw new ApiError(
+          400,
+          'The reset code is invalid or expired.'
         );
       }
 
@@ -438,20 +651,31 @@ export const resetPassword =
 
       await Promise.all([
         user.save(),
+
         record.save()
       ]);
 
       /*
-       * Remove any older unused reset codes.
+       * Remove all other unused recovery codes.
        */
       await PasswordReset.deleteMany({
         user:
           user._id,
 
         usedAt:
-          null
+          null,
+
+        _id: {
+          $ne:
+            record._id
+        }
       });
 
+      /*
+       * Security notification is best effort.
+       * Password change itself must not fail because
+       * the email provider is temporarily unavailable.
+       */
       await emailUser(
         user._id,
         {

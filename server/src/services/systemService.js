@@ -1,4 +1,6 @@
-import { SystemSetting } from '../models/Business.js';
+import {
+  SystemSetting
+} from '../models/Business.js';
 
 export const systemDefaults = {
   platformName:
@@ -46,10 +48,14 @@ const required = (
 
   configured:
     keys.every(
-      (key) =>
+      (
+        key
+      ) =>
         Boolean(
           String(
-            process.env[key] ||
+            process.env[
+              key
+            ] ||
               ''
           ).trim()
         )
@@ -57,9 +63,13 @@ const required = (
 
   missing:
     keys.filter(
-      (key) =>
+      (
+        key
+      ) =>
         !String(
-          process.env[key] ||
+          process.env[
+            key
+          ] ||
             ''
         ).trim()
     )
@@ -67,20 +77,24 @@ const required = (
 
 export function providerDiagnostics() {
   const otp =
-      process.env.OTP_PROVIDER ||
-      'development',
+    process.env
+      .OTP_PROVIDER ||
+    'development';
 
-    media =
-      process.env.MEDIA_PROVIDER ||
-      'local',
+  const media =
+    process.env
+      .MEDIA_PROVIDER ||
+    'local';
 
-    email =
-      process.env.EMAIL_PROVIDER ||
-      'development';
+  const email =
+    process.env
+      .EMAIL_PROVIDER ||
+    'development';
 
   return {
     otp:
-      otp === 'twilio'
+      otp ===
+      'twilio'
         ? required(
             'twilio',
             [
@@ -89,7 +103,8 @@ export function providerDiagnostics() {
               'TWILIO_FROM_NUMBER'
             ]
           )
-        : otp === 'msg91'
+        : otp ===
+            'msg91'
           ? required(
               'msg91',
               [
@@ -109,7 +124,8 @@ export function providerDiagnostics() {
             },
 
     media:
-      media === 'cloudinary'
+      media ===
+      'cloudinary'
         ? required(
             'cloudinary',
             [
@@ -130,7 +146,8 @@ export function providerDiagnostics() {
           },
 
     email:
-      email === 'resend'
+      email ===
+      'resend'
         ? required(
             'resend',
             [
@@ -161,90 +178,148 @@ export function providerDiagnostics() {
   };
 }
 
-const validateJwtSecret = () => {
-  const secret =
-    String(
-      process.env.JWT_SECRET ||
-        ''
-    ).trim();
-
-  if (
-    secret.length < 32
-  ) {
-    throw new Error(
-      'JWT_SECRET must contain at least 32 characters in production.'
-    );
-  }
-
-  const unsafeValues = [
-    'replace-with-a-long-random-secret',
-    'replace-with-at-least-32-random-characters',
-    'secret',
-    'changeme',
-    'development-secret'
-  ];
-
-  if (
-    unsafeValues.includes(
-      secret.toLowerCase()
-    )
-  ) {
-    throw new Error(
-      'JWT_SECRET is using an unsafe placeholder value.'
-    );
-  }
-};
-
-const validateClientUrls = () => {
-  const values =
-    String(
-      process.env.CLIENT_URL ||
-        ''
-    )
-      .split(',')
-      .map(
-        (value) =>
-          value.trim()
-      )
-      .filter(Boolean);
-
-  if (!values.length) {
-    throw new Error(
-      'CLIENT_URL is required in production.'
-    );
-  }
-
-  for (
-    const value
-    of values
-  ) {
-    let parsed;
-
-    try {
-      parsed =
-        new URL(value);
-    } catch {
-      throw new Error(
-        `CLIENT_URL contains an invalid URL: ${value}`
-      );
-    }
+const validateJwtSecret =
+  () => {
+    const secret =
+      String(
+        process.env
+          .JWT_SECRET ||
+          ''
+      ).trim();
 
     if (
-      parsed.protocol !==
-        'https:' &&
-      parsed.hostname !==
-        'localhost'
+      secret.length <
+      32
     ) {
       throw new Error(
-        `Production CLIENT_URL must use HTTPS: ${value}`
+        'JWT_SECRET must contain at least 32 characters in production.'
       );
     }
-  }
-};
+
+    const unsafeValues = [
+      'replace-with-a-long-random-secret',
+      'replace-with-at-least-32-random-characters',
+      'secret',
+      'changeme',
+      'development-secret'
+    ];
+
+    if (
+      unsafeValues.includes(
+        secret.toLowerCase()
+      )
+    ) {
+      throw new Error(
+        'JWT_SECRET is using an unsafe placeholder value.'
+      );
+    }
+  };
+
+const validateClientUrls =
+  () => {
+    const values =
+      String(
+        process.env
+          .CLIENT_URL ||
+          ''
+      )
+        .split(
+          ','
+        )
+        .map(
+          (
+            value
+          ) =>
+            value.trim()
+        )
+        .filter(
+          Boolean
+        );
+
+    if (
+      !values.length
+    ) {
+      throw new Error(
+        'CLIENT_URL is required in production.'
+      );
+    }
+
+    for (
+      const value
+      of values
+    ) {
+      let parsed;
+
+      try {
+        parsed =
+          new URL(
+            value
+          );
+      } catch {
+        throw new Error(
+          `CLIENT_URL contains an invalid URL: ${value}`
+        );
+      }
+
+      if (
+        parsed.protocol !==
+          'https:' &&
+        parsed.hostname !==
+          'localhost'
+      ) {
+        throw new Error(
+          `Production CLIENT_URL must use HTTPS: ${value}`
+        );
+      }
+    }
+  };
+
+const validateEmailConfig =
+  () => {
+    const provider =
+      String(
+        process.env
+          .EMAIL_PROVIDER ||
+          ''
+      ).trim();
+
+    if (
+      provider !==
+      'resend'
+    ) {
+      throw new Error(
+        'Production EMAIL_PROVIDER must be resend.'
+      );
+    }
+
+    const from =
+      String(
+        process.env
+          .EMAIL_FROM ||
+          ''
+      ).trim();
+
+    /*
+     * Supports:
+     * noreply@example.com
+     * Kshatriya Matrimonial <noreply@example.com>
+     */
+    const match =
+      from.match(
+        /(?:<)?([^\s<>@]+@[^\s<>@]+\.[^\s<>@]+)(?:>)?/
+      );
+
+    if (!match) {
+      throw new Error(
+        'EMAIL_FROM must contain a valid sender email address.'
+      );
+    }
+  };
 
 export function validateProductionConfig() {
   if (
-    process.env.NODE_ENV !==
+    process.env
+      .NODE_ENV !==
     'production'
   ) {
     return;
@@ -271,7 +346,9 @@ export function validateProductionConfig() {
       providers
     )
   ].filter(
-    (item) =>
+    (
+      item
+    ) =>
       !item.configured ||
       [
         'development',
@@ -287,25 +364,33 @@ export function validateProductionConfig() {
     throw new Error(
       `Production configuration is incomplete: ${failures
         .map(
-          (item) =>
+          (
+            item
+          ) =>
             `${
               item.name
             } (${
               item.missing
-                ?.join(', ') ||
+                ?.join(
+                  ', '
+                ) ||
               'development-only provider'
             })`
         )
-        .join('; ')}`
+        .join(
+          '; '
+        )}`
     );
   }
 
   validateJwtSecret();
   validateClientUrls();
+  validateEmailConfig();
 
   const razorpayKeyId =
     String(
-      process.env.RAZORPAY_KEY_ID ||
+      process.env
+        .RAZORPAY_KEY_ID ||
         ''
     );
 
