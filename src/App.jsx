@@ -1,10 +1,16 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation
+} from 'react-router-dom';
 
 import LanguageSwitcher from './components/LanguageSwitcher';
 import { useAuth } from './context/AuthContext';
 import MemberLayout from './layouts/MemberLayout';
+
 import AboutPage from './pages/AboutPage';
 import AuthPage from './pages/AuthPage';
 import BiodataPage from './pages/BiodataPage';
@@ -21,33 +27,58 @@ import ProfilePage from './pages/ProfilePage';
 import PublicInfoPage from './pages/PublicInfoPage';
 import SettingsPage from './pages/SettingsPage';
 import StoriesPage from './pages/StoriesPage';
+
 import AdminOperationsPage from './pages/admin/AdminOperationsPage';
 import AdminPage from './pages/admin/AdminPage';
 import CustomerOperationsPage from './pages/admin/CustomerOperationsPage';
 import ManagerOperationsPage from './pages/admin/ManagerOperationsPage';
 import ManagerWorkspacePage from './pages/admin/ManagerWorkspacePage';
 import RevenuePage from './pages/admin/RevenuePage';
+
 import { getHomeRouteForRole } from './utils/roleRoutes';
 
-function ProtectedRoute({ children, roles }) {
-  const { user, loading } = useAuth();
-  const { t } = useTranslation();
+function ProtectedRoute({
+  children,
+  roles
+}) {
+  const {
+    user,
+    loading
+  } = useAuth();
+
+  const { t } =
+    useTranslation();
 
   if (loading) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[var(--ivory)] font-['Cormorant_Garamond'] text-[28px] text-[var(--wine)]">
-        {t('states.loading')}
+      <div className="grid min-h-screen place-items-center bg-[#f5f0e8] font-['Cormorant_Garamond'] text-[28px] font-medium text-[#681d25]">
+        {t(
+          'states.loading'
+        )}
       </div>
     );
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
   }
 
-  if (roles && !roles.includes(user.role)) {
+  if (
+    roles &&
+    !roles.includes(user.role)
+  ) {
     return (
-      <Navigate to={getHomeRouteForRole(user.role)} replace />
+      <Navigate
+        to={getHomeRouteForRole(
+          user.role
+        )}
+        replace
+      />
     );
   }
 
@@ -55,26 +86,57 @@ function ProtectedRoute({ children, roles }) {
 }
 
 function DocumentMeta() {
-  const { pathname } = useLocation();
-  const { t, i18n } = useTranslation();
+  const { pathname } =
+    useLocation();
+
+  const {
+    t,
+    i18n
+  } = useTranslation();
 
   useEffect(() => {
     const labels = {
-      '/': 'Kshatriya Matrimonial Society',
-      '/about': t('nav.about'),
-      '/how-it-works': t('nav.howItWorks'),
-      '/success-stories': t('nav.stories'),
-      '/safety': t('public.safety'),
-      '/membership': t('nav.membership'),
-      '/contact': t('public.contact'),
-      '/dashboard': t('nav.dashboard')
+      '/':
+        'Kshatriya Matrimonial Society',
+
+      '/about':
+        t('nav.about'),
+
+      '/how-it-works':
+        t(
+          'nav.howItWorks'
+        ),
+
+      '/success-stories':
+        t('nav.stories'),
+
+      '/safety':
+        t('public.safety'),
+
+      '/membership':
+        t(
+          'nav.membership'
+        ),
+
+      '/contact':
+        t('public.contact'),
+
+      '/dashboard':
+        t('nav.dashboard')
     };
 
     document.title =
       pathname === '/'
         ? labels['/']
-        : `${labels[pathname] || 'Kshatriya'} | Kshatriya Matrimonial Society`;
-  }, [i18n.language, pathname, t]);
+        : `${
+            labels[pathname] ||
+            'Kshatriya'
+          } | Kshatriya Matrimonial Society`;
+  }, [
+    i18n.language,
+    pathname,
+    t
+  ]);
 
   return null;
 }
@@ -94,27 +156,33 @@ export default function App() {
 
         <Route
           path="/login"
-          element={<AuthPage mode="login" />}
+          element={
+            <AuthPage mode="login" />
+          }
         />
 
         <Route
           path="/register"
-          element={<AuthPage mode="register" />}
+          element={
+            <AuthPage mode="register" />
+          }
         />
 
         <Route
           path="/forgot-password"
-          element={<AuthPage mode="forgot" />}
+          element={
+            <AuthPage mode="forgot" />
+          }
         />
 
         <Route
           path="/membership"
-          element={<MembershipPage publicView />}
+          element={
+            <MembershipPage
+              publicView
+            />
+          }
         />
-
-        {/* ======================================
-            PUBLIC PAGES
-        ======================================= */}
 
         <Route
           path="/about"
@@ -123,166 +191,201 @@ export default function App() {
 
         <Route
           path="/how-it-works"
-          element={<HowItWorksPage />}
+          element={
+            <HowItWorksPage />
+          }
         />
 
         <Route
           path="/success-stories"
-          element={<StoriesPage />}
+          element={
+            <StoriesPage />
+          }
         />
 
         <Route
           path="/safety"
-          element={<PublicInfoPage type="safety" />}
+          element={
+            <PublicInfoPage
+              type="safety"
+            />
+          }
         />
 
         <Route
           path="/privacy"
-          element={<PublicInfoPage type="privacy" />}
+          element={
+            <PublicInfoPage
+              type="privacy"
+            />
+          }
         />
 
         <Route
           path="/terms"
-          element={<PublicInfoPage type="terms" />}
+          element={
+            <PublicInfoPage
+              type="terms"
+            />
+          }
         />
 
         <Route
           path="/refunds"
-          element={<PublicInfoPage type="refunds" />}
+          element={
+            <PublicInfoPage
+              type="refunds"
+            />
+          }
         />
 
         <Route
           path="/contact"
-          element={<ContactPage />}
+          element={
+            <ContactPage />
+          }
         />
-
-        {/* ======================================
-            MEMBER ONBOARDING
-        ======================================= */}
 
         <Route
           path="/onboarding"
           element={
-            <ProtectedRoute roles={["member"]}>
+            <ProtectedRoute
+              roles={['member']}
+            >
               <OnboardingPage />
             </ProtectedRoute>
           }
         />
 
-        {/* ======================================
-            MEMBER ROUTES
-        ======================================= */}
-
         <Route
           element={
-            <ProtectedRoute roles={["member"]}>
+            <ProtectedRoute
+              roles={['member']}
+            >
               <MemberLayout />
             </ProtectedRoute>
           }
         >
           <Route
             path="/dashboard"
-            element={<DashboardPage />}
+            element={
+              <DashboardPage />
+            }
           />
 
           <Route
             path="/discover"
-            element={<DiscoverPage />}
+            element={
+              <DiscoverPage />
+            }
           />
 
           <Route
             path="/profile/:profileId"
-            element={<ProfilePage />}
+            element={
+              <ProfilePage />
+            }
           />
 
           <Route
             path="/my-profile"
-            element={<ProfilePage own />}
+            element={
+              <ProfilePage own />
+            }
           />
 
           <Route
             path="/preferences"
             element={
-              <SettingsPage section="preferences" />
+              <SettingsPage
+                section="preferences"
+              />
             }
           />
 
           <Route
             path="/settings"
-            element={<SettingsPage />}
+            element={
+              <SettingsPage />
+            }
           />
 
           <Route
             path="/benefits"
-            element={<MemberBenefitsPage />}
+            element={
+              <MemberBenefitsPage />
+            }
           />
 
           <Route
             path="/interests"
             element={
-              <CollectionPage type="interests" />
+              <CollectionPage
+                type="interests"
+              />
             }
           />
 
           <Route
             path="/matches"
             element={
-              <CollectionPage type="matches" />
+              <CollectionPage
+                type="matches"
+              />
             }
           />
 
           <Route
             path="/shortlisted"
             element={
-              <CollectionPage type="shortlisted" />
+              <CollectionPage
+                type="shortlisted"
+              />
             }
           />
 
           <Route
             path="/notifications"
             element={
-              <CollectionPage type="notifications" />
+              <CollectionPage
+                type="notifications"
+              />
             }
           />
         </Route>
 
-        {/* ======================================
-            BIODATA
-        ======================================= */}
-
         <Route
           path="/my-profile/biodata"
           element={
-            <ProtectedRoute roles={["member"]}>
+            <ProtectedRoute
+              roles={['member']}
+            >
               <BiodataPage />
             </ProtectedRoute>
           }
         />
 
-        {/* ======================================
-            MANAGER
-        ======================================= */}
-
         <Route
           path="/manager/*"
           element={
             <ProtectedRoute
-              roles={["relationship_manager"]}
+              roles={[
+                'relationship_manager'
+              ]}
             >
               <ManagerWorkspacePage />
             </ProtectedRoute>
           }
         />
 
-        {/* ======================================
-            ADMIN
-        ======================================= */}
-
         <Route
           path="/admin/customers/*"
           element={
             <ProtectedRoute
-              roles={["admin", "super_admin"]}
+              roles={[
+                'admin',
+                'super_admin'
+              ]}
             >
               <CustomerOperationsPage />
             </ProtectedRoute>
@@ -292,7 +395,11 @@ export default function App() {
         <Route
           path="/admin/revenue"
           element={
-            <ProtectedRoute roles={["super_admin"]}>
+            <ProtectedRoute
+              roles={[
+                'super_admin'
+              ]}
+            >
               <RevenuePage />
             </ProtectedRoute>
           }
@@ -301,8 +408,14 @@ export default function App() {
         <Route
           path="/admin/system-health"
           element={
-            <ProtectedRoute roles={["super_admin"]}>
-              <AdminOperationsPage type="health" />
+            <ProtectedRoute
+              roles={[
+                'super_admin'
+              ]}
+            >
+              <AdminOperationsPage
+                type="health"
+              />
             </ProtectedRoute>
           }
         />
@@ -311,9 +424,14 @@ export default function App() {
           path="/admin/support"
           element={
             <ProtectedRoute
-              roles={["admin", "super_admin"]}
+              roles={[
+                'admin',
+                'super_admin'
+              ]}
             >
-              <AdminOperationsPage type="support" />
+              <AdminOperationsPage
+                type="support"
+              />
             </ProtectedRoute>
           }
         />
@@ -322,7 +440,10 @@ export default function App() {
           path="/admin/relationship-managers"
           element={
             <ProtectedRoute
-              roles={["admin", "super_admin"]}
+              roles={[
+                'admin',
+                'super_admin'
+              ]}
             >
               <ManagerOperationsPage />
             </ProtectedRoute>
@@ -332,8 +453,14 @@ export default function App() {
         <Route
           path="/admin/plans"
           element={
-            <ProtectedRoute roles={["super_admin"]}>
-              <AdminOperationsPage type="plans" />
+            <ProtectedRoute
+              roles={[
+                'super_admin'
+              ]}
+            >
+              <AdminOperationsPage
+                type="plans"
+              />
             </ProtectedRoute>
           }
         />
@@ -342,9 +469,14 @@ export default function App() {
           path="/admin/payments"
           element={
             <ProtectedRoute
-              roles={["admin", "super_admin"]}
+              roles={[
+                'admin',
+                'super_admin'
+              ]}
             >
-              <AdminOperationsPage type="payments" />
+              <AdminOperationsPage
+                type="payments"
+              />
             </ProtectedRoute>
           }
         />
@@ -352,8 +484,14 @@ export default function App() {
         <Route
           path="/admin/settings"
           element={
-            <ProtectedRoute roles={["super_admin"]}>
-              <AdminOperationsPage type="settings" />
+            <ProtectedRoute
+              roles={[
+                'super_admin'
+              ]}
+            >
+              <AdminOperationsPage
+                type="settings"
+              />
             </ProtectedRoute>
           }
         />
@@ -361,8 +499,14 @@ export default function App() {
         <Route
           path="/admin/audit-logs"
           element={
-            <ProtectedRoute roles={["super_admin"]}>
-              <AdminOperationsPage type="audit" />
+            <ProtectedRoute
+              roles={[
+                'super_admin'
+              ]}
+            >
+              <AdminOperationsPage
+                type="audit"
+              />
             </ProtectedRoute>
           }
         />
@@ -372,19 +516,15 @@ export default function App() {
           element={
             <ProtectedRoute
               roles={[
-                "admin",
-                "moderator",
-                "super_admin"
+                'admin',
+                'moderator',
+                'super_admin'
               ]}
             >
               <AdminPage />
             </ProtectedRoute>
           }
         />
-
-        {/* ======================================
-            FALLBACK
-        ======================================= */}
 
         <Route
           path="*"
