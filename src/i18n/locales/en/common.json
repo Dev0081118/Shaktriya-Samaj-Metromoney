@@ -206,5 +206,92 @@
     "body": "Create a thoughtful profile, discover people at your own pace and let the next conversation happen when it feels right.",
     "action": "Create free profile"
   }
+},
+"aboutPage": {
+  "hero": {
+    "eyebrow": "Why we exist",
+    "title": "Marriage deserves more than an algorithm and a profile card.",
+    "body": "Kshatriya Matrimonial Society was created around a simple belief: technology should help families discover thoughtfully, without turning one of life's most personal decisions into an endless marketplace.",
+    "imageAlt": "A family gathered in a heritage setting",
+    "imageEyebrow": "Our belief",
+    "imageQuote": "A meaningful introduction should feel considered before it ever feels convenient.",
+    "trustNote": "Profiles, photographs and contact details are designed to move gradually—not automatically.",
+    "values": {
+      "heritage": "Heritage",
+      "choice": "Personal choice",
+      "dignity": "Dignity"
+    }
+  },
+  "manifesto": {
+    "eyebrow": "Our manifesto",
+    "intro": "We do not believe better matrimonial technology means making the human decision faster.",
+    "line1": "Technology can narrow the search.",
+    "line2": "Families can provide context.",
+    "line3": "But people must decide what comes next."
+  },
+  "why": {
+    "eyebrow": "The reason behind the platform",
+    "title": "A calmer way to begin something important.",
+    "body1": "Many matrimonial platforms are built around volume: more profiles, more visibility, more messages and more urgency. We wanted to begin somewhere else—with enough information to make a thoughtful choice, and enough privacy to let trust develop at its own pace.",
+    "body2": "Our role is not to predict a marriage or promise compatibility. Our role is to create a respectful environment where members and families can discover, express interest, mutually accept and reveal contact only when both sides are ready."
+  },
+  "principles": {
+    "eyebrow": "What guides us",
+    "title": "Four principles shape every product decision.",
+    "memberLed": {
+      "title": "Member-led, even when family is involved.",
+      "body": "Parents and families may support the journey, but the person represented by the profile remains at the centre of every introduction."
+    },
+    "familyContext": {
+      "title": "Family context without removing individuality.",
+      "body": "Shared cultural context can make introductions more meaningful, but every person, household and expectation remains distinct."
+    },
+    "privacy": {
+      "title": "Privacy should be a product behaviour.",
+      "body": "Contact information and sensitive profile details should not become public simply because someone created an account."
+    },
+    "intent": {
+      "title": "Intent matters more than endless engagement.",
+      "body": "The platform should help people move toward respectful introductions—not keep them scrolling for the sake of activity."
+    }
+  },
+  "balance": {
+    "eyebrow": "Tradition meets technology",
+    "title": "Modern tools. Human pace.",
+    "body1": "Discovery, preference filtering, moderation, privacy controls and structured contact requests can remove friction from the process.",
+    "body2": "But software should never replace judgement, family conversations, independent verification or the time people need to understand one another.",
+    "tech": {
+      "title": "Technology does",
+      "body": "Organise information, protect access, narrow discovery and make the journey clearer."
+    },
+    "people": {
+      "title": "People decide",
+      "body": "Who feels right, when to speak, how families meet and whether a relationship should move forward."
+    }
+  },
+  "refuse": {
+    "eyebrow": "What we refuse to become",
+    "title": "Growth should not cost the platform its character.",
+    "body": "As the society grows, these are boundaries we want the product to remember.",
+    "items": {
+      "swipe": "An endless swipe feed designed only to maximise screen time.",
+      "directory": "A public biodata directory where private information is easy to collect.",
+      "pressure": "A system that pressures members to reveal contact details before they are ready.",
+      "promises": "A platform that presents algorithms, badges or cultural similarity as a guarantee of compatibility."
+    }
+  },
+  "founder": {
+    "eyebrow": "A note from the people building it",
+    "quote": "We want the product to feel modern without asking our community to leave its dignity, family context or traditions behind.",
+    "body": "The ambition is not simply to build another matrimonial website. It is to build a platform our own families would feel comfortable using—clear enough for a new generation, respectful enough for the generation that guides them.",
+    "signature": "The Kshatriya Matrimonial Society team",
+    "role": "Built for the community"
+  },
+  "cta": {
+    "eyebrow": "Begin thoughtfully",
+    "title": "Create a profile when the journey feels right.",
+    "body": "Registration begins free. You remain in control of how your profile, interests and contact details move through the platform.",
+    "action": "Create your profile"
+  }
 }
 }

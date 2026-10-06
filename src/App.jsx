@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "./context/AuthContext";
-
+import AboutPage from "./pages/AboutPage";
 import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -127,7 +127,7 @@ export default function App() {
 
         <Route
           path="/about"
-          element={<PublicInfoPage type="about" />}
+          element={<AboutPage />}
         />
 
         <Route
