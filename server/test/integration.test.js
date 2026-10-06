@@ -232,7 +232,14 @@ test('captured payment webhooks are idempotent and snapshot plan entitlements', 
     event = {
       event: 'payment.captured',
       payload: {
-        payment: { entity: { id: 'pay_test', order_id: 'order_test' } }
+        payment: {
+              entity: {
+                id: 'pay_test',
+                order_id: 'order_test',
+                amount: 499900,
+                currency: 'INR'
+              }
+            }
       }
     },
     body = JSON.stringify(event),

@@ -5,65 +5,323 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import mongoose from 'mongoose';
 import crypto from 'node:crypto';
+
 import routes from './routes/index.js';
-import { razorpayWebhook } from './controllers/membershipController.js';
-import { ApiError } from './utils/http.js';
-import { providerDiagnostics } from './services/systemService.js';
-const app = express(),
-  configuredOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+
+import {
+  razorpayWebhook
+} from './controllers/membershipController.js';
+
+import {
+  ApiError
+} from './utils/http.js';
+
+import {
+  providerDiagnostics
+} from './services/systemService.js';
+
+const app =
+  express();
+
+const configuredOrigins =
+  (
+    process.env.CLIENT_URL ||
+    'http://localhost:5173'
+  )
     .split(',')
-    .map((x) => x.trim());
-if (process.env.NODE_ENV !== 'production')
-  configuredOrigins.push('http://127.0.0.1:5173');
-app.disable('x-powered-by');
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+    .map(
+      (value) =>
+        value.trim()
+    )
+    .filter(Boolean);
+
+if (
+  process.env.NODE_ENV !==
+  'production'
+) {
+  configuredOrigins.push(
+    'http://127.0.0.1:5173'
+  );
+}
+
+app.disable(
+  'x-powered-by'
+);
+
+app.set(
+  'trust proxy',
+  1
+);
+
 app.use(
-  cors({
-    origin: (origin, callback) =>
-      !origin || configuredOrigins.includes(origin)
-        ? callback(null, true)
-        : callback(new ApiError(403, 'Origin is not allowed.')),
-    credentials: false
+  helmet({
+    crossOriginResourcePolicy: {
+      policy:
+        'cross-origin'
+    }
   })
 );
-app.use((req, res, next) => {
-  req.id = req.headers['x-request-id'] || crypto.randomUUID();
-  res.setHeader('x-request-id', req.id);
-  next();
-});
-if (process.env.NODE_ENV !== 'test')
+
+app.use(
+  cors({
+    origin: (
+      origin,
+      callback
+    ) =>
+      !origin ||
+      configuredOrigins.includes(
+        origin
+      )
+        ? callback(
+            null,
+            true
+          )
+        : callback(
+            new ApiError(
+              403,
+              'Origin is not allowed.'
+            )
+          ),
+
+    credentials:
+      false
+  })
+);
+
+app.use(
+  (
+    req,
+    res,
+    next
+  ) => {
+    req.id =
+      req.headers[
+        'x-request-id'
+      ] ||
+      crypto.randomUUID();
+
+    res.setHeader(
+      'x-request-id',
+      req.id
+    );
+
+    next();
+  }
+);
+
+if (
+  process.env.NODE_ENV !==
+  'test'
+) {
   app.use(
-    morgan((tokens, req, res) =>
-      JSON.stringify({
-        event: 'http_request',
-        requestId: req.id,
-        method: tokens.method(req, res),
-        path: tokens.url(req, res),
-        status: Number(tokens.status(req, res)),
-        responseMs: Number(tokens['response-time'](req, res))
-      })
+    morgan(
+      (
+        tokens,
+        req,
+        res
+      ) =>
+        JSON.stringify({
+          event:
+            'http_request',
+
+          requestId:
+            req.id,
+
+          method:
+            tokens.method(
+              req,
+              res
+            ),
+
+          path:
+            tokens.url(
+              req,
+              res
+            ),
+
+          status:
+            Number(
+              tokens.status(
+                req,
+                res
+              )
+            ),
+
+          responseMs:
+            Number(
+              tokens[
+                'response-time'
+              ](
+                req,
+                res
+              )
+            )
+        })
     )
   );
+}
+
+/*
+ * Razorpay needs exact raw request bytes
+ * for webhook signature validation.
+ *
+ * Keep this BEFORE express.json().
+ */
 app.post(
   '/api/webhooks/razorpay',
-  express.raw({ type: 'application/json', limit: '256kb' }),
+
+  express.raw({
+    type:
+      'application/json',
+
+    limit:
+      '256kb'
+  }),
+
   razorpayWebhook
 );
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-app.use('/uploads', express.static('uploads'));
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 30,
-    standardHeaders: true,
-    legacyHeaders: false
-  }),
-  otpLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 8,
-    standardHeaders: true,
-    legacyHeaders: false
+
+app.use(
+  express.json({
+    limit:
+      '1mb'
+  })
+);
+
+app.use(
+  express.urlencoded({
+    extended:
+      true,
+
+    limit:
+      '1mb'
+  })
+);
+
+/*
+ * Local uploads are useful during development.
+ *
+ * Production config already requires Cloudinary,
+ * therefore newly uploaded production media
+ * will not depend on this directory.
+ */
+app.use(
+  '/uploads',
+  express.static(
+    'uploads',
+    {
+      fallthrough:
+        true,
+
+      maxAge:
+        process.env.NODE_ENV ===
+        'production'
+          ? '1d'
+          : 0
+    }
+  )
+);
+
+const authLimiter =
+  rateLimit({
+    windowMs:
+      15 *
+      60 *
+      1000,
+
+    limit:
+      30,
+
+    standardHeaders:
+      true,
+
+    legacyHeaders:
+      false,
+
+    message: {
+      success:
+        false,
+
+      message:
+        'Too many authentication attempts. Please try again later.'
+    }
   });
+
+const otpLimiter =
+  rateLimit({
+    windowMs:
+      15 *
+      60 *
+      1000,
+
+    limit:
+      8,
+
+    standardHeaders:
+      true,
+
+    legacyHeaders:
+      false,
+
+    message: {
+      success:
+        false,
+
+      message:
+        'Too many verification attempts. Please try again later.'
+    }
+  });
+
+const supportLimiter =
+  rateLimit({
+    windowMs:
+      60 *
+      60 *
+      1000,
+
+    limit:
+      10,
+
+    standardHeaders:
+      true,
+
+    legacyHeaders:
+      false,
+
+    message: {
+      success:
+        false,
+
+      message:
+        'Too many support requests. Please try again later.'
+    }
+  });
+
+const paymentLimiter =
+  rateLimit({
+    windowMs:
+      15 *
+      60 *
+      1000,
+
+    limit:
+      20,
+
+    standardHeaders:
+      true,
+
+    legacyHeaders:
+      false,
+
+    message: {
+      success:
+        false,
+
+      message:
+        'Too many payment requests. Please try again shortly.'
+    }
+  });
+
 app.use(
   [
     '/api/auth/login',
@@ -73,66 +331,222 @@ app.use(
   ],
   authLimiter
 );
-app.use(['/api/auth/send-otp', '/api/auth/verify-otp'], otpLimiter);
-app.get('/api/health', (_q, r) =>
-  r.json({
-    success: true,
-    message: 'API is healthy.',
-    data: { environment: process.env.NODE_ENV || 'development' }
-  })
+
+app.use(
+  [
+    '/api/auth/send-otp',
+    '/api/auth/verify-otp'
+  ],
+  otpLimiter
 );
-app.get('/api/ready', (_q, r) => {
-  const database = mongoose.connection.readyState === 1,
-    providers = providerDiagnostics(),
-    providerState = Object.fromEntries(
-      Object.entries(providers).map(([key, value]) => [
-        key,
-        { name: value.name, configured: value.configured }
-      ])
-    ),
-    ready =
+
+app.use(
+  '/api/support',
+  supportLimiter
+);
+
+app.use(
+  [
+    '/api/payments/orders',
+    '/api/payments/verify'
+  ],
+  paymentLimiter
+);
+
+app.get(
+  '/api/health',
+  (_req, res) =>
+    res.json({
+      success:
+        true,
+
+      message:
+        'API is healthy.',
+
+      data: {
+        environment:
+          process.env.NODE_ENV ||
+          'development'
+      }
+    })
+);
+
+app.get(
+  '/api/ready',
+  (_req, res) => {
+    const database =
+      mongoose.connection
+        .readyState === 1;
+
+    const providers =
+      providerDiagnostics();
+
+    const providerState =
+      Object.fromEntries(
+        Object.entries(
+          providers
+        ).map(
+          ([
+            key,
+            value
+          ]) => [
+            key,
+            {
+              name:
+                value.name,
+
+              configured:
+                value.configured
+            }
+          ]
+        )
+      );
+
+    const ready =
       database &&
-      (process.env.NODE_ENV !== 'production' ||
-        Object.values(providers).every((provider) => provider.configured));
-  r.status(ready ? 200 : 503).json({
-    success: ready,
-    message: ready ? 'API is ready.' : 'A required dependency is not ready.',
-    data: {
-      database: database ? 'connected' : 'unavailable',
-      providers: providerState
+      (
+        process.env.NODE_ENV !==
+          'production' ||
+        Object.values(
+          providers
+        ).every(
+          (provider) =>
+            provider.configured
+        )
+      );
+
+    res
+      .status(
+        ready
+          ? 200
+          : 503
+      )
+      .json({
+        success:
+          ready,
+
+        message:
+          ready
+            ? 'API is ready.'
+            : 'A required dependency is not ready.',
+
+        data: {
+          database:
+            database
+              ? 'connected'
+              : 'unavailable',
+
+          providers:
+            providerState
+        }
+      });
+  }
+);
+
+app.use(
+  '/api',
+  routes
+);
+
+app.use(
+  (
+    _req,
+    _res,
+    next
+  ) =>
+    next(
+      new ApiError(
+        404,
+        'Route not found.'
+      )
+    )
+);
+
+app.use(
+  (
+    error,
+    req,
+    res,
+    _next
+  ) => {
+    const status =
+      error.status ||
+      (
+        error.name ===
+          'ValidationError' ||
+        error.name ===
+          'CastError'
+          ? 400
+          : 500
+      );
+
+    if (
+      error.code ===
+      11000
+    ) {
+      return res
+        .status(409)
+        .json({
+          success:
+            false,
+
+          message:
+            'A record with these details already exists.',
+
+          errors:
+            [],
+
+          requestId:
+            req.id
+        });
     }
-  });
-});
-app.use('/api', routes);
-app.use((_q, _r, next) => next(new ApiError(404, 'Route not found.')));
-app.use((error, req, res, _next) => {
-  const status =
-    error.status ||
-    (error.name === 'ValidationError' || error.name === 'CastError'
-      ? 400
-      : 500);
-  if (error.code === 11000)
-    return res.status(409).json({
-      success: false,
-      message: 'A record with these details already exists.',
-      errors: [],
-      requestId: req.id
-    });
-  if (status === 500)
-    console.error({
-      event: 'request_error',
-      requestId: req.id,
-      route: req.originalUrl,
-      status,
-      error: error.message
-    });
-  res.status(status).json({
-    success: false,
-    ...(error.apiCode ? { code: error.apiCode } : {}),
-    message:
-      status === 500 ? 'An unexpected server error occurred.' : error.message,
-    errors: error.errors || [],
-    requestId: req.id
-  });
-});
+
+    if (
+      status === 500
+    ) {
+      console.error({
+        event:
+          'request_error',
+
+        requestId:
+          req.id,
+
+        route:
+          req.originalUrl,
+
+        status,
+
+        error:
+          error.message
+      });
+    }
+
+    res
+      .status(status)
+      .json({
+        success:
+          false,
+
+        ...(error.apiCode
+          ? {
+              code:
+                error.apiCode
+            }
+          : {}),
+
+        message:
+          status === 500
+            ? 'An unexpected server error occurred.'
+            : error.message,
+
+        errors:
+          error.errors ||
+          [],
+
+        requestId:
+          req.id
+      });
+  }
+);
+
 export default app;
