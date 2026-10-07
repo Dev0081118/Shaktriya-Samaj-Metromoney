@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
+import sharp from 'sharp';
+
 import {
   ApiError
 } from '../utils/http.js';
@@ -10,6 +12,37 @@ const UPLOAD_DIRECTORY =
   path.resolve(
     'uploads'
   );
+
+const CLOUDINARY_FOLDER =
+  'kshatriya/profiles';
+
+/*
+ * Upload protection.
+ *
+ * Multer already rejects requests above 5 MB,
+ * but mediaService does not assume that every
+ * caller necessarily came through Multer.
+ */
+const MAX_SOURCE_BYTES =
+  5 *
+  1024 *
+  1024;
+
+/*
+ * Never store oversized matrimonial profile photos.
+ *
+ * 1600px is more than enough for profile/detail
+ * screens while keeping storage and bandwidth
+ * under control.
+ */
+const MAX_IMAGE_WIDTH =
+  1600;
+
+const MAX_IMAGE_HEIGHT =
+  1600;
+
+const WEBP_QUALITY =
+  80;
 
 const IMAGE_TYPES = {
   jpeg: {
@@ -37,38 +70,53 @@ const IMAGE_TYPES = {
   }
 };
 
-const credentials = () => {
-  const {
-    CLOUDINARY_CLOUD_NAME:
-      cloudName,
+const credentials =
+  () => {
+    const {
+      CLOUDINARY_CLOUD_NAME:
+        cloudName,
 
-    CLOUDINARY_API_KEY:
-      apiKey,
+      CLOUDINARY_API_KEY:
+        apiKey,
 
-    CLOUDINARY_API_SECRET:
-      apiSecret
-  } = process.env;
+      CLOUDINARY_API_SECRET:
+        apiSecret
+    } =
+      process.env;
 
-  if (
-    !cloudName ||
-    !apiKey ||
-    !apiSecret
-  ) {
-    throw new Error(
-      'Cloudinary credentials are incomplete.'
-    );
-  }
+    if (
+      !cloudName ||
+      !apiKey ||
+      !apiSecret
+    ) {
+      throw new Error(
+        'Cloudinary credentials are incomplete.'
+      );
+    }
 
-  return {
-    cloudName,
-    apiKey,
-    apiSecret
+    return {
+      cloudName:
+        String(
+          cloudName
+        ).trim(),
+
+      apiKey:
+        String(
+          apiKey
+        ).trim(),
+
+      apiSecret:
+        String(
+          apiSecret
+        ).trim()
+    };
   };
-};
 
 /*
  * Browser-supplied MIME type cannot be trusted.
- * Detect the real format from the file signature.
+ *
+ * Determine the actual format from its bytes
+ * before Sharp or Cloudinary receives it.
  */
 export function detectImageType(
   buffer
@@ -84,7 +132,7 @@ export function detectImageType(
   }
 
   /*
-   * JPEG:
+   * JPEG
    * FF D8 FF
    */
   if (
@@ -99,7 +147,7 @@ export function detectImageType(
   }
 
   /*
-   * PNG:
+   * PNG
    * 89 50 4E 47 0D 0A 1A 0A
    */
   const pngSignature = [
@@ -127,7 +175,7 @@ export function detectImageType(
   }
 
   /*
-   * WebP:
+   * WebP
    * RIFF....WEBP
    */
   if (
@@ -156,71 +204,270 @@ export function detectImageType(
   return null;
 }
 
-const validateUpload = (
-  file
-) => {
+const validateUpload =
+  (
+    file
+  ) => {
+    if (
+      !file?.buffer ||
+      !Buffer.isBuffer(
+        file.buffer
+      )
+    ) {
+      throw new ApiError(
+        400,
+        'Choose a valid image to upload.'
+      );
+    }
+
+    if (
+      file.buffer.length >
+      MAX_SOURCE_BYTES
+    ) {
+      throw new ApiError(
+        413,
+        'Image size cannot exceed 5 MB.'
+      );
+    }
+
+    const detected =
+      detectImageType(
+        file.buffer
+      );
+
+    if (!detected) {
+      throw new ApiError(
+        400,
+        'The uploaded file is not a valid JPG, PNG, or WebP image.'
+      );
+    }
+
+    /*
+     * If the browser says "JPEG" but the bytes
+     * are actually PNG/WebP, reject it.
+     */
+    if (
+      file.mimetype &&
+      file.mimetype !==
+        detected.mime
+    ) {
+      throw new ApiError(
+        400,
+        'The uploaded image format does not match its file type.'
+      );
+    }
+
+    return detected;
+  };
+
+/*
+ * Security + storage optimization.
+ *
+ * Sharp does the following:
+ *
+ * - reads only a valid image
+ * - auto-rotates using EXIF orientation
+ * - strips metadata because we do not call withMetadata()
+ * - limits maximum dimensions to 1600 x 1600
+ * - never enlarges a smaller photo
+ * - converts everything to WebP
+ * - compresses with quality 80
+ */
+export async function optimizeImage(
+  buffer
+) {
   if (
-    !file?.buffer
+    !Buffer.isBuffer(
+      buffer
+    )
   ) {
     throw new ApiError(
       400,
-      'Choose a valid image to upload.'
+      'Invalid image buffer.'
     );
   }
 
-  const detected =
-    detectImageType(
-      file.buffer
-    );
+  try {
+    const {
+      data,
+      info
+    } =
+      await sharp(
+        buffer,
+        {
+          failOn:
+            'error',
 
-  if (!detected) {
-    throw new ApiError(
-      400,
-      'The uploaded file is not a valid JPG, PNG, or WebP image.'
-    );
-  }
+          limitInputPixels:
+            40_000_000
+        }
+      )
+        .rotate()
+        .resize({
+          width:
+            MAX_IMAGE_WIDTH,
 
-  /*
-   * If claimed MIME and real bytes disagree,
-   * reject instead of silently accepting.
-   */
-  if (
-    file.mimetype &&
-    file.mimetype !==
-      detected.mime
+          height:
+            MAX_IMAGE_HEIGHT,
+
+          fit:
+            'inside',
+
+          withoutEnlargement:
+            true,
+
+          fastShrinkOnLoad:
+            true
+        })
+        .webp({
+          quality:
+            WEBP_QUALITY,
+
+          effort:
+            4,
+
+          smartSubsample:
+            true
+        })
+        .toBuffer({
+          resolveWithObject:
+            true
+        });
+
+    if (
+      !data?.length
+    ) {
+      throw new Error(
+        'Sharp returned an empty image.'
+      );
+    }
+
+    if (
+      !info.width ||
+      !info.height
+    ) {
+      throw new Error(
+        'Optimized image dimensions are missing.'
+      );
+    }
+
+    return {
+      buffer:
+        data,
+
+      mime:
+        'image/webp',
+
+      extension:
+        '.webp',
+
+      width:
+        info.width,
+
+      height:
+        info.height,
+
+      bytes:
+        data.length
+    };
+  } catch (
+    error
   ) {
+    console.error(
+      'Image optimization failed:',
+      error.message
+    );
+
     throw new ApiError(
       400,
-      'The uploaded image format does not match its file type.'
+      'The image could not be processed. Please upload a valid JPG, PNG, or WebP image.'
     );
   }
+}
 
-  return detected;
-};
+/*
+ * Cloudinary URLs can be transformed without
+ * storing another copy of the original image.
+ *
+ * Upload:
+ *   one optimized WebP
+ *
+ * Delivery:
+ *   Cloudinary chooses WebP/AVIF/etc. depending
+ *   on the requesting browser via f_auto.
+ *
+ * q_auto lets Cloudinary tune delivery quality.
+ */
+function cloudinaryDeliveryUrl(
+  secureUrl
+) {
+  if (
+    !secureUrl
+  ) {
+    return secureUrl;
+  }
 
-const cloudinaryId = (
-  url
-) => {
-  const match =
-    String(
-      url ||
-        ''
-    ).match(
-      /\/upload\/(?:v\d+\/)?(.+)\.[a-z0-9]+$/i
-    );
+  return String(
+    secureUrl
+  ).replace(
+    '/image/upload/',
+    '/image/upload/f_auto,q_auto,c_limit,w_1600,h_1600/'
+  );
+}
 
-  return match?.[1];
-};
+/*
+ * Useful later for cards/list pages.
+ *
+ * We deliberately do not save a separate thumbnail
+ * file, because Cloudinary can generate and cache
+ * it from the single optimized stored asset.
+ */
+export function cloudinaryThumbnailUrl(
+  secureUrl
+) {
+  if (
+    !secureUrl
+  ) {
+    return secureUrl;
+  }
 
+  return String(
+    secureUrl
+  ).replace(
+    '/image/upload/',
+    '/image/upload/f_auto,q_auto,c_fill,g_auto,w_400,h_400/'
+  );
+}
+
+const cloudinaryId =
+  (
+    url
+  ) => {
+    const match =
+      String(
+        url ||
+          ''
+      ).match(
+        /\/upload\/(?:[^/]+\/)*(?:v\d+\/)?(.+)\.[a-z0-9]+$/i
+      );
+
+    return match?.[1];
+  };
+
+/*
+ * Cloudinary signed upload.
+ *
+ * The API secret NEVER goes to the browser.
+ */
 async function cloudinaryUpload(
-  file,
-  detected
+  optimized
 ) {
   const {
     cloudName,
     apiKey,
     apiSecret
-  } = credentials();
+  } =
+    credentials();
 
   const timestamp =
     Math.floor(
@@ -228,8 +475,21 @@ async function cloudinaryUpload(
         1000
     );
 
-  const folder =
-    'kshatriya/profiles';
+  const publicId =
+    `profile_${Date.now()}_${crypto
+      .randomBytes(
+        8
+      )
+      .toString(
+        'hex'
+      )}`;
+
+  /*
+   * Parameters must be alphabetically represented
+   * exactly as signed.
+   */
+  const signatureSource =
+    `folder=${CLOUDINARY_FOLDER}&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
 
   const signature =
     crypto
@@ -237,7 +497,7 @@ async function cloudinaryUpload(
         'sha1'
       )
       .update(
-        `folder=${folder}&timestamp=${timestamp}${apiSecret}`
+        signatureSource
       )
       .digest(
         'hex'
@@ -246,21 +506,18 @@ async function cloudinaryUpload(
   const form =
     new FormData();
 
-  const safeFilename =
-    `profile${detected.extension}`;
-
   form.append(
     'file',
     new Blob(
       [
-        file.buffer
+        optimized.buffer
       ],
       {
         type:
-          detected.mime
+          optimized.mime
       }
     ),
-    safeFilename
+    `${publicId}${optimized.extension}`
   );
 
   form.append(
@@ -277,7 +534,12 @@ async function cloudinaryUpload(
 
   form.append(
     'folder',
-    folder
+    CLOUDINARY_FOLDER
+  );
+
+  form.append(
+    'public_id',
+    publicId
   );
 
   form.append(
@@ -285,17 +547,40 @@ async function cloudinaryUpload(
     signature
   );
 
-  const response =
-    await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-      {
-        method:
-          'POST',
+  let response;
 
-        body:
-          form
-      }
+  try {
+    response =
+      await fetch(
+        `https://api.cloudinary.com/v1_1/${encodeURIComponent(
+          cloudName
+        )}/image/upload`,
+        {
+          method:
+            'POST',
+
+          body:
+            form,
+
+          signal:
+            AbortSignal.timeout(
+              20000
+            )
+        }
+      );
+  } catch (
+    error
+  ) {
+    console.error(
+      'Cloudinary upload request failed:',
+      error.message
     );
+
+    throw new ApiError(
+      502,
+      'Image storage is temporarily unavailable.'
+    );
+  }
 
   const data =
     await response
@@ -304,11 +589,26 @@ async function cloudinaryUpload(
         () => ({})
       );
 
-  if (!response.ok) {
-    throw new Error(
-      data.error
-        ?.message ||
-        'Cloud image upload failed.'
+  if (
+    !response.ok
+  ) {
+    console.error(
+      'Cloudinary upload rejected:',
+      {
+        status:
+          response.status,
+
+        message:
+          data
+            ?.error
+            ?.message ||
+          'unknown'
+      }
+    );
+
+    throw new ApiError(
+      502,
+      'Image storage rejected the upload.'
     );
   }
 
@@ -316,17 +616,50 @@ async function cloudinaryUpload(
     !data.secure_url ||
     !data.public_id
   ) {
-    throw new Error(
-      'Cloud image provider returned an invalid response.'
+    throw new ApiError(
+      502,
+      'Image storage returned an invalid response.'
     );
   }
 
   return {
+    /*
+     * Existing frontend continues using `url`.
+     *
+     * This delivery URL tells Cloudinary to
+     * automatically optimize format + quality.
+     */
     url:
-      data.secure_url,
+      cloudinaryDeliveryUrl(
+        data.secure_url
+      ),
 
     publicId:
-      data.public_id
+      data.public_id,
+
+    /*
+     * Returned for future card/gallery optimization.
+     * Current schema/controller does not need it.
+     */
+    thumbnailUrl:
+      cloudinaryThumbnailUrl(
+        data.secure_url
+      ),
+
+    width:
+      optimized.width,
+
+    height:
+      optimized.height,
+
+    bytes:
+      optimized.bytes,
+
+    format:
+      'webp',
+
+    provider:
+      'cloudinary'
   };
 }
 
@@ -342,7 +675,9 @@ async function cloudinaryDelete(
         asset
       : asset?.publicId;
 
-  if (!publicId) {
+  if (
+    !publicId
+  ) {
     return;
   }
 
@@ -350,7 +685,8 @@ async function cloudinaryDelete(
     cloudName,
     apiKey,
     apiSecret
-  } = credentials();
+  } =
+    credentials();
 
   const timestamp =
     Math.floor(
@@ -386,27 +722,56 @@ async function cloudinaryDelete(
       signature
     });
 
-  const response =
-    await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,
-      {
-        method:
-          'POST',
+  let response;
 
-        body
-      }
+  try {
+    response =
+      await fetch(
+        `https://api.cloudinary.com/v1_1/${encodeURIComponent(
+          cloudName
+        )}/image/destroy`,
+        {
+          method:
+            'POST',
+
+          body,
+
+          signal:
+            AbortSignal.timeout(
+              15000
+            )
+        }
+      );
+  } catch (
+    error
+  ) {
+    console.error(
+      'Cloudinary image deletion request failed:',
+      error.message
     );
 
-  if (!response.ok) {
+    return;
+  }
+
+  if (
+    !response.ok
+  ) {
     console.error(
-      'Cloud image deletion failed.'
+      'Cloudinary image deletion failed:',
+      response.status
     );
   }
 }
 
+/*
+ * Local development still uses exactly the same
+ * optimized WebP pipeline.
+ *
+ * This means development behavior remains close
+ * to production even without Cloudinary credentials.
+ */
 async function localUpload(
-  file,
-  detected
+  optimized
 ) {
   await fs.mkdir(
     UPLOAD_DIRECTORY,
@@ -423,7 +788,7 @@ async function localUpload(
       )
       .toString(
         'hex'
-      )}${detected.extension}`;
+      )}.webp`;
 
   const destination =
     path.join(
@@ -433,7 +798,7 @@ async function localUpload(
 
   await fs.writeFile(
     destination,
-    file.buffer,
+    optimized.buffer,
     {
       flag:
         'wx'
@@ -445,7 +810,22 @@ async function localUpload(
       `/uploads/${filename}`,
 
     publicId:
-      filename
+      filename,
+
+    width:
+      optimized.width,
+
+    height:
+      optimized.height,
+
+    bytes:
+      optimized.bytes,
+
+    format:
+      'webp',
+
+    provider:
+      'local'
   };
 }
 
@@ -464,19 +844,22 @@ async function localDelete(
   }
 
   /*
-   * basename prevents ../ path traversal even if
-   * malformed data somehow enters the database.
+   * basename protects local development from
+   * ../ path traversal.
    */
   const filename =
     path.basename(
-      String(raw)
-        .replace(
-          /^\/uploads\//,
-          ''
-        )
+      String(
+        raw
+      ).replace(
+        /^\/uploads\//,
+        ''
+      )
     );
 
-  if (!filename) {
+  if (
+    !filename
+  ) {
     return;
   }
 
@@ -491,7 +874,9 @@ async function localDelete(
       target
     )
     .catch(
-      (error) => {
+      (
+        error
+      ) => {
         if (
           error.code !==
           'ENOENT'
@@ -506,23 +891,38 @@ export const mediaService = {
   async fromUpload(
     file
   ) {
-    const detected =
-      validateUpload(
-        file
+    /*
+     * Validate original bytes before decoding.
+     */
+    validateUpload(
+      file
+    );
+
+    /*
+     * Every provider receives only the optimized
+     * version. We never persist the original
+     * multi-megabyte upload.
+     */
+    const optimized =
+      await optimizeImage(
+        file.buffer
       );
 
     const provider =
-      process.env
-        .MEDIA_PROVIDER ||
-      'local';
+      String(
+        process.env
+          .MEDIA_PROVIDER ||
+          'local'
+      )
+        .trim()
+        .toLowerCase();
 
     if (
       provider ===
       'local'
     ) {
       return localUpload(
-        file,
-        detected
+        optimized
       );
     }
 
@@ -531,8 +931,7 @@ export const mediaService = {
       'cloudinary'
     ) {
       return cloudinaryUpload(
-        file,
-        detected
+        optimized
       );
     }
 
@@ -544,14 +943,20 @@ export const mediaService = {
   async delete(
     asset
   ) {
-    if (!asset) {
+    if (
+      !asset
+    ) {
       return;
     }
 
     const provider =
-      process.env
-        .MEDIA_PROVIDER ||
-      'local';
+      String(
+        process.env
+          .MEDIA_PROVIDER ||
+          'local'
+      )
+        .trim()
+        .toLowerCase();
 
     if (
       provider ===
