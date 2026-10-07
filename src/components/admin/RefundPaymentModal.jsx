@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState
@@ -56,6 +57,17 @@ const reasons = [
   ]
 ];
 
+const terminalStatus =
+  (
+    status
+  ) =>
+    [
+      'Processed',
+      'Failed'
+    ].includes(
+      status
+    );
+
 export default function RefundPaymentModal({
   payment,
   onClose,
@@ -68,13 +80,17 @@ export default function RefundPaymentModal({
     type,
     setType
   ] =
-    useState('full');
+    useState(
+      'full'
+    );
 
   const [
     amount,
     setAmount
   ] =
-    useState('');
+    useState(
+      ''
+    );
 
   const [
     reasonCode,
@@ -88,70 +104,205 @@ export default function RefundPaymentModal({
     reason,
     setReason
   ] =
-    useState('');
+    useState(
+      ''
+    );
 
   const [
     loading,
     setLoading
   ] =
-    useState(false);
+    useState(
+      false
+    );
+
+  const [
+    syncing,
+    setSyncing
+  ] =
+    useState(
+      false
+    );
 
   const [
     history,
     setHistory
   ] =
-    useState([]);
+    useState(
+      []
+    );
 
   const [
     historyLoading,
     setHistoryLoading
   ] =
-    useState(true);
+    useState(
+      true
+    );
+
+  const [
+    localPayment,
+    setLocalPayment
+  ] =
+    useState(
+      payment
+    );
+
+const paymentId =
+  payment?._id;
+
+const loadHistory =
+  useCallback(
+    async () => {
+      if (
+        !paymentId
+      ) {
+        return;
+      }
+
+      setHistoryLoading(
+        true
+      );
+
+      try {
+        const response =
+          await api(
+            `/admin/payments/${paymentId}/refunds`
+          );
+
+        setHistory(
+          response
+            .data
+            ?.refunds ||
+            []
+        );
+
+        if (
+          response
+            .data
+            ?.payment
+        ) {
+          setLocalPayment(
+            response
+              .data
+              .payment
+          );
+        }
+      } catch {
+        setHistory(
+          []
+        );
+      } finally {
+        setHistoryLoading(
+          false
+        );
+      }
+    },
+
+    [
+      paymentId
+    ]
+  );
+
+  useEffect(
+    () => {
+      let active =
+        true;
+
+      const load =
+        async () => {
+          if (
+            !active
+          ) {
+            return;
+          }
+
+          await loadHistory();
+        };
+
+      load();
+
+      return () => {
+        active =
+          false;
+      };
+    },
+
+    [
+      loadHistory
+    ]
+  );
 
   const original =
     Number(
-      payment?.amount ||
+      localPayment
+        ?.amount ||
+        payment?.amount ||
         0
     );
 
   const refunded =
     Number(
-      payment
+      localPayment
         ?.refundedAmountPaise ||
         0
-    ) / 100;
+    ) /
+    100;
 
   const pending =
     Number(
-      payment
+      localPayment
         ?.refundPendingPaise ||
         0
-    ) / 100;
+    ) /
+    100;
 
   const remaining =
     Math.max(
       0,
+
       original -
         refunded -
         pending
     );
 
+  const latestRefund =
+    history[
+      0
+    ] ||
+    null;
+
+  const hasPendingRefund =
+    Boolean(
+      latestRefund &&
+      !terminalStatus(
+        latestRefund.status
+      ) &&
+      latestRefund
+        .providerRefundId
+    );
+
   const canRefund =
-    payment?.status ===
+    localPayment
+      ?.status ===
       'Paid' &&
-    payment?.provider ===
+    localPayment
+      ?.provider ===
       'razorpay' &&
     Boolean(
-      payment
+      localPayment
         ?.providerPaymentId
     ) &&
-    pending === 0 &&
-    remaining > 0;
+    pending ===
+      0 &&
+    remaining >
+      0;
 
   const selectedAmount =
     useMemo(
       () =>
-        type === 'full'
+        type ===
+        'full'
           ? remaining
           : Number(
               amount ||
@@ -164,75 +315,6 @@ export default function RefundPaymentModal({
         remaining
       ]
     );
-
-  useEffect(
-    () => {
-      let active =
-        true;
-
-      if (
-        !payment?._id
-      ) {
-        return () => {
-          active =
-            false;
-        };
-      }
-
-      api(
-        `/admin/payments/${payment._id}/refunds`
-      )
-        .then(
-          (
-            response
-          ) => {
-            if (
-              !active
-            ) {
-              return;
-            }
-
-            setHistory(
-              response
-                .data
-                ?.refunds ||
-                []
-            );
-          }
-        )
-        .catch(
-          () => {
-            if (
-              active
-            ) {
-              setHistory(
-                []
-              );
-            }
-          }
-        )
-        .finally(
-          () => {
-            if (
-              active
-            ) {
-              setHistoryLoading(
-                false
-              );
-            }
-          }
-        );
-
-      return () => {
-        active =
-          false;
-      };
-    },
-
-    [
-      payment?._id
-    ]
-  );
 
   const submit =
     async (
@@ -247,8 +329,10 @@ export default function RefundPaymentModal({
       }
 
       if (
-        reason.trim()
-          .length < 10
+        reason
+          .trim()
+          .length <
+        10
       ) {
         notify(
           'Please enter a meaningful refund reason.',
@@ -260,7 +344,7 @@ export default function RefundPaymentModal({
 
       if (
         type ===
-          'partial'
+        'partial'
       ) {
         const partial =
           Number(
@@ -271,7 +355,8 @@ export default function RefundPaymentModal({
           !Number.isFinite(
             partial
           ) ||
-          partial <= 0 ||
+          partial <=
+            0 ||
           partial >=
             remaining
         ) {
@@ -318,12 +403,12 @@ export default function RefundPaymentModal({
         );
 
         notify(
-          'Refund submitted to Razorpay. Waiting for provider confirmation.'
+          'Refund submitted to Razorpay.'
         );
 
-        await onSubmitted?.();
+        await loadHistory();
 
-        onClose();
+        await onSubmitted?.();
       } catch (
         error
       ) {
@@ -333,6 +418,71 @@ export default function RefundPaymentModal({
         );
       } finally {
         setLoading(
+          false
+        );
+      }
+    };
+
+  const syncStatus =
+    async () => {
+      if (
+        !payment?._id
+      ) {
+        return;
+      }
+
+      setSyncing(
+        true
+      );
+
+      try {
+        const response =
+          await api(
+            `/admin/payments/${payment._id}/refund/sync`,
+            {
+              method:
+                'POST'
+            }
+          );
+
+        const providerStatus =
+          response
+            .data
+            ?.providerStatus;
+
+        if (
+          providerStatus ===
+          'processed'
+        ) {
+          notify(
+            'Refund confirmed by Razorpay and synchronized.'
+          );
+        } else if (
+          providerStatus ===
+          'failed'
+        ) {
+          notify(
+            'Razorpay reports that this refund failed.',
+            'error'
+          );
+        } else {
+          notify(
+            'Refund is still processing at Razorpay.'
+          );
+        }
+
+        await loadHistory();
+
+        await onSubmitted?.();
+      } catch (
+        error
+      ) {
+        notify(
+          error.message,
+          'error'
+        );
+      } finally {
+        setSyncing(
           false
         );
       }
@@ -364,8 +514,10 @@ export default function RefundPaymentModal({
         </h2>
 
         <p className="mt-2 break-all text-[11px] leading-6 text-[#756a60]">
-          {payment
-            .providerPaymentId ||
+          {localPayment
+            ?.providerPaymentId ||
+            payment
+              .providerPaymentId ||
             'No Razorpay payment ID'}
         </p>
 
@@ -397,12 +549,16 @@ export default function RefundPaymentModal({
           <article className="border border-[#ddd0c1] p-4">
             <strong className="block text-[16px]">
               {formatCurrency(
-                remaining
+                Math.max(
+                  0,
+                  original -
+                    refunded
+                )
               )}
             </strong>
 
             <span className="text-[9px] uppercase text-[#756a60]">
-              Remaining
+              Refundable
             </span>
           </article>
         </div>
@@ -410,87 +566,204 @@ export default function RefundPaymentModal({
         {pending >
           0 && (
           <div className="mt-5 border border-[#d9b76d] bg-[#fff7df] p-4 text-[12px] leading-6 text-[#6c4b10]">
-            A refund of{' '}
             <strong>
+              Refund pending{' '}
               {formatCurrency(
                 pending
               )}
-            </strong>{' '}
-            is waiting for Razorpay confirmation.
+            </strong>
+
+            <p className="mt-1">
+              Razorpay confirmation has not yet been applied to this database.
+            </p>
+
+            <button
+              type="button"
+              className={`${outlineButtonClass} mt-3`}
+              disabled={
+                syncing
+              }
+              onClick={
+                syncStatus
+              }
+            >
+              {syncing
+                ? 'Checking Razorpay…'
+                : 'Sync status with Razorpay'}
+            </button>
+          </div>
+        )}
+
+        {hasPendingRefund &&
+          pending ===
+            0 && (
+          <div className="mt-5 border border-[#d9b76d] bg-[#fff7df] p-4 text-[12px] leading-6 text-[#6c4b10]">
+            A refund request is waiting for provider reconciliation.
+
+            <button
+              type="button"
+              className={`${outlineButtonClass} mt-3`}
+              disabled={
+                syncing
+              }
+              onClick={
+                syncStatus
+              }
+            >
+              {syncing
+                ? 'Checking Razorpay…'
+                : 'Sync status with Razorpay'}
+            </button>
           </div>
         )}
 
         {!canRefund &&
           pending ===
-            0 && (
+            0 &&
+          !hasPendingRefund &&
+          localPayment
+            ?.status !==
+            'Refunded' && (
           <div className="mt-5 border border-[#d7b4b4] bg-[#fff3f3] p-4 text-[12px] leading-6 text-[#681d25]">
-            This transaction is not currently eligible for an admin refund.
+            This transaction is not currently eligible for another admin refund.
           </div>
         )}
 
-        <form
-          className="mt-6 grid gap-5"
-          onSubmit={
-            submit
-          }
-        >
-          <label className={labelClass}>
-            Refund type
+        {localPayment
+          ?.status ===
+          'Refunded' && (
+          <div className="mt-5 border border-[#9fc6ac] bg-[#edf8f0] p-4 text-[12px] leading-6 text-[#255b35]">
+            <strong>
+              Fully refunded
+            </strong>
 
-            <select
-              className={inputClass}
-              value={
-                type
-              }
-              disabled={
-                !canRefund
-              }
-              onChange={(
-                event
-              ) =>
-                setType(
-                  event
-                    .target
-                    .value
-                )
-              }
-            >
-              <option value="full">
-                Full remaining refund
-              </option>
+            <p className="mt-1">
+              Razorpay has confirmed the complete refund and the related active membership has been cancelled.
+            </p>
+          </div>
+        )}
 
-              <option value="partial">
-                Partial refund
-              </option>
-            </select>
-          </label>
-
-          {type ===
-            'partial' && (
+        {canRefund && (
+          <form
+            className="mt-6 grid gap-5"
+            onSubmit={
+              submit
+            }
+          >
             <label className={labelClass}>
-              Refund amount (INR)
+              Refund type
 
-              <input
-                required
-                min="0.01"
-                step="0.01"
-                type="number"
+              <select
                 className={inputClass}
                 value={
-                  amount
+                  type
                 }
-                disabled={
-                  !canRefund
-                }
-                max={Math.max(
-                  0,
-                  remaining -
-                    0.01
-                )}
                 onChange={(
                   event
                 ) =>
-                  setAmount(
+                  setType(
+                    event
+                      .target
+                      .value
+                  )
+                }
+              >
+                <option value="full">
+                  Full remaining refund
+                </option>
+
+                <option value="partial">
+                  Partial refund
+                </option>
+              </select>
+            </label>
+
+            {type ===
+              'partial' && (
+              <label className={labelClass}>
+                Refund amount (INR)
+
+                <input
+                  required
+                  min="0.01"
+                  step="0.01"
+                  type="number"
+                  className={inputClass}
+                  value={
+                    amount
+                  }
+                  max={Math.max(
+                    0,
+                    remaining -
+                      0.01
+                  )}
+                  onChange={(
+                    event
+                  ) =>
+                    setAmount(
+                      event
+                        .target
+                        .value
+                    )
+                  }
+                />
+              </label>
+            )}
+
+            <label className={labelClass}>
+              Refund reason
+
+              <select
+                className={inputClass}
+                value={
+                  reasonCode
+                }
+                onChange={(
+                  event
+                ) =>
+                  setReasonCode(
+                    event
+                      .target
+                      .value
+                  )
+                }
+              >
+                {reasons.map(
+                  ([
+                    value,
+                    label
+                  ]) => (
+                    <option
+                      value={
+                        value
+                      }
+                      key={
+                        value
+                      }
+                    >
+                      {label}
+                    </option>
+                  )
+                )}
+              </select>
+            </label>
+
+            <label className={labelClass}>
+              Internal explanation
+
+              <textarea
+                required
+                minLength="10"
+                maxLength="1000"
+                className={`${inputClass} min-h-[110px] resize-y`}
+                placeholder="Explain why this refund is being approved…"
+                value={
+                  reason
+                }
+                onChange={(
+                  event
+                ) =>
+                  setReason(
                     event
                       .target
                       .value
@@ -498,121 +771,55 @@ export default function RefundPaymentModal({
                 }
               />
             </label>
-          )}
 
-          <label className={labelClass}>
-            Refund reason
+            <div className="border border-[#ddd0c1] bg-[#f7f0e7] p-4 text-[11px] leading-6 text-[#66574f]">
+              Requested refund:{' '}
 
-            <select
-              className={inputClass}
-              value={
-                reasonCode
-              }
-              disabled={
-                !canRefund
-              }
-              onChange={(
-                event
-              ) =>
-                setReasonCode(
-                  event
-                    .target
-                    .value
-                )
-              }
-            >
-              {reasons.map(
-                ([
-                  value,
-                  label
-                ]) => (
-                  <option
-                    value={
-                      value
-                    }
-                    key={
-                      value
-                    }
-                  >
-                    {label}
-                  </option>
-                )
-              )}
-            </select>
-          </label>
+              <strong>
+                {formatCurrency(
+                  selectedAmount
+                )}
+              </strong>
 
-          <label className={labelClass}>
-            Internal explanation
+              <br />
 
-            <textarea
-              required
-              minLength="10"
-              maxLength="1000"
-              className={`${inputClass} min-h-[110px] resize-y`}
-              placeholder="Explain why this refund is being approved…"
-              value={
-                reason
-              }
-              disabled={
-                !canRefund
-              }
-              onChange={(
-                event
-              ) =>
-                setReason(
-                  event
-                    .target
-                    .value
-                )
-              }
-            />
-          </label>
+              Full refund cancels the related active membership after Razorpay confirms the refund. Partial refund keeps the membership active.
+            </div>
 
-          <div className="border border-[#ddd0c1] bg-[#f7f0e7] p-4 text-[11px] leading-6 text-[#66574f]">
-            Requested refund:{' '}
-            <strong>
-              {formatCurrency(
-                selectedAmount
-              )}
-            </strong>
+            <div className="flex gap-3 max-[600px]:flex-col">
+              <button
+                className={primaryButtonClass}
+                disabled={
+                  loading
+                }
+              >
+                {loading
+                  ? 'Submitting refund…'
+                  : 'Confirm refund'}
+              </button>
+            </div>
+          </form>
+        )}
 
-            <br />
-
-            Full refund cancels the related active membership only after Razorpay confirms the refund. Partial refund keeps the membership active.
-          </div>
-
-          <div className="flex gap-3 max-[600px]:flex-col">
-            <button
-              className={primaryButtonClass}
-              disabled={
-                loading ||
-                !canRefund
-              }
-            >
-              {loading
-                ? 'Submitting refund…'
-                : 'Confirm refund'}
-            </button>
+        <section className="mt-8 border-t border-[#ddd0c1] pt-6">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-['Cormorant_Garamond'] text-[25px] font-medium text-[#2c1a18]">
+              Refund history
+            </h3>
 
             <button
               type="button"
-              className={outlineButtonClass}
+              className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#681d25]"
               disabled={
-                loading
+                historyLoading
               }
               onClick={
-                onClose
+                loadHistory
               }
             >
-              Cancel
+              Refresh
             </button>
           </div>
-        </form>
-
-        <section className="mt-8 border-t border-[#ddd0c1] pt-6">
-          <h3 className="font-['Cormorant_Garamond'] text-[25px] font-medium text-[#2c1a18]">
-            Refund history
-          </h3>
 
           {historyLoading ? (
             <p className="mt-3 text-[11px] text-[#756a60]">
@@ -648,6 +855,14 @@ export default function RefundPaymentModal({
                         <small className="mt-1 block text-[9px] leading-5 text-[#756a60]">
                           {refund.reason}
                         </small>
+
+                        {refund
+                          .providerRefundId && (
+                          <small className="mt-1 block break-all text-[9px] text-[#756a60]">
+                            Razorpay:{' '}
+                            {refund.providerRefundId}
+                          </small>
+                        )}
                       </div>
 
                       <span className="text-[10px] font-extrabold uppercase text-[#681d25]">
@@ -666,6 +881,16 @@ export default function RefundPaymentModal({
                       )}
                     </small>
 
+                    {refund
+                      .processedAt && (
+                      <small className="mt-1 block text-[9px] text-[#756a60]">
+                        Processed:{' '}
+                        {formatDate(
+                          refund.processedAt
+                        )}
+                      </small>
+                    )}
+
                     {refund.failureMessage && (
                       <small className="mt-1 block text-[9px] text-[#a22b34]">
                         {refund.failureMessage}
@@ -677,6 +902,22 @@ export default function RefundPaymentModal({
             </div>
           )}
         </section>
+
+        <div className="mt-7 border-t border-[#ddd0c1] pt-5">
+          <button
+            type="button"
+            className={outlineButtonClass}
+            disabled={
+              loading ||
+              syncing
+            }
+            onClick={
+              onClose
+            }
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -50,37 +50,105 @@ const safeEqual = (
   );
 };
 
-const razorpayAuth = () => {
-  const keyId =
-    String(
-      process.env
-        .RAZORPAY_KEY_ID ||
-        ''
-    );
+const razorpayAuth =
+  () => {
+    const keyId =
+      String(
+        process.env
+          .RAZORPAY_KEY_ID ||
+          ''
+      ).trim();
 
-  const secret =
-    String(
-      process.env
-        .RAZORPAY_KEY_SECRET ||
-        ''
-    );
+    const secret =
+      String(
+        process.env
+          .RAZORPAY_KEY_SECRET ||
+          ''
+      ).trim();
 
-  if (
-    !keyId ||
-    !secret
-  ) {
-    throw new ApiError(
-      503,
-      'Payment provider is not configured.'
-    );
-  }
+    if (
+      !keyId ||
+      !secret
+    ) {
+      throw new ApiError(
+        503,
+        'Payment provider is not configured.'
+      );
+    }
 
-  return Buffer.from(
-    `${keyId}:${secret}`
-  ).toString(
-    'base64'
-  );
-};
+    return Buffer.from(
+      `${keyId}:${secret}`
+    ).toString(
+      'base64'
+    );
+  };
+
+const providerRequest =
+  async (
+    url,
+    options = {},
+    message =
+      'Payment provider is temporarily unavailable.'
+  ) => {
+    const auth =
+      razorpayAuth();
+
+    let response;
+
+    try {
+      response =
+        await fetch(
+          url,
+          {
+            ...options,
+
+            headers: {
+              Authorization:
+                `Basic ${auth}`,
+
+              ...(options.body
+                ? {
+                    'Content-Type':
+                      'application/json'
+                  }
+                : {}),
+
+              ...options.headers
+            },
+
+            signal:
+              AbortSignal.timeout(
+                10000
+              )
+          }
+        );
+    } catch (
+      error
+    ) {
+      throw new ApiError(
+        502,
+        message,
+        [],
+        undefined,
+        {
+          cause:
+            error
+        }
+      );
+    }
+
+    const data =
+      await response
+        .json()
+        .catch(
+          () => ({})
+        );
+
+    return {
+      response,
+      data
+    };
+  };
 
 export const paymentService = {
   async createOrder({
@@ -94,69 +162,41 @@ export const paymentService = {
       process.env
         .RAZORPAY_KEY_SECRET
     ) {
-      const auth =
-        razorpayAuth();
+      const {
+        response,
+        data
+      } =
+        await providerRequest(
+          'https://api.razorpay.com/v1/orders',
+          {
+            method:
+              'POST',
 
-      let response;
+            body:
+              JSON.stringify({
+                amount:
+                  Math.round(
+                    Number(
+                      amount
+                    ) *
+                      100
+                  ),
 
-      try {
-        response =
-          await fetch(
-            'https://api.razorpay.com/v1/orders',
-            {
-              method:
-                'POST',
+                currency:
+                  'INR',
 
-              headers: {
-                Authorization:
-                  `Basic ${auth}`,
+                receipt,
 
-                'Content-Type':
-                  'application/json'
-              },
-
-              body:
-                JSON.stringify({
-                  amount:
-                    Math.round(
-                      Number(
-                        amount
-                      ) *
-                        100
-                    ),
-
-                  currency:
-                    'INR',
-
-                  receipt,
-
-                  notes: {
-                    user:
-                      String(
-                        user
-                      )
-                  }
-                }),
-
-              signal:
-                AbortSignal.timeout(
-                  10000
-                )
-            }
-          );
-      } catch {
-        throw new ApiError(
-          502,
+                notes: {
+                  user:
+                    String(
+                      user
+                    )
+                }
+              })
+          },
           'Payment provider is temporarily unavailable.'
         );
-      }
-
-      const data =
-        await response
-          .json()
-          .catch(
-            () => ({})
-          );
 
       if (
         !response.ok ||
@@ -263,45 +303,20 @@ export const paymentService = {
       );
     }
 
-    const auth =
-      razorpayAuth();
-
-    let response;
-
-    try {
-      response =
-        await fetch(
-          `https://api.razorpay.com/v1/payments/${encodeURIComponent(
-            paymentId
-          )}`,
-          {
-            method:
-              'GET',
-
-            headers: {
-              Authorization:
-                `Basic ${auth}`
-            },
-
-            signal:
-              AbortSignal.timeout(
-                10000
-              )
-          }
-        );
-    } catch {
-      throw new ApiError(
-        502,
+    const {
+      response,
+      data
+    } =
+      await providerRequest(
+        `https://api.razorpay.com/v1/payments/${encodeURIComponent(
+          paymentId
+        )}`,
+        {
+          method:
+            'GET'
+        },
         'Unable to confirm payment with the payment provider.'
       );
-    }
-
-    const data =
-      await response
-        .json()
-        .catch(
-          () => ({})
-        );
 
     if (
       !response.ok ||
@@ -315,48 +330,39 @@ export const paymentService = {
 
     return data;
   },
+
   async createRefund({
-  paymentId,
-  amountPaise,
-  refundRequestId,
-  reason,
-  requestedBy
-}) {
-  if (
-    !paymentId ||
-    !Number.isInteger(
-      amountPaise
-    ) ||
-    amountPaise <= 0
-  ) {
-    throw new ApiError(
-      400,
-      'A valid refund amount is required.'
-    );
-  }
+    paymentId,
+    amountPaise,
+    refundRequestId,
+    reason,
+    requestedBy
+  }) {
+    if (
+      !paymentId ||
+      !Number.isInteger(
+        amountPaise
+      ) ||
+      amountPaise <=
+        0
+    ) {
+      throw new ApiError(
+        400,
+        'A valid refund amount is required.'
+      );
+    }
 
-  const auth =
-    razorpayAuth();
-
-  let response;
-
-  try {
-    response =
-      await fetch(
+    const {
+      response,
+      data
+    } =
+      await providerRequest(
         `https://api.razorpay.com/v1/payments/${encodeURIComponent(
           paymentId
         )}/refund`,
         {
           method:
             'POST',
-
-          headers: {
-            Authorization:
-              `Basic ${auth}`,
-
-            'Content-Type':
-              'application/json'
-          },
 
           body:
             JSON.stringify({
@@ -388,73 +394,116 @@ export const paymentService = {
                     200
                   )
               }
-            }),
+            })
+        },
+        'Unable to submit refund to the payment provider.'
+      );
 
-          signal:
-            AbortSignal.timeout(
-              10000
-            )
+    if (
+      !response.ok ||
+      !data?.id
+    ) {
+      console.error(
+        'Razorpay refund rejected:',
+        {
+          status:
+            response.status,
+
+          code:
+            data?.error
+              ?.code ||
+            'unknown'
         }
       );
-  } catch {
-    throw new ApiError(
-      502,
-      'Unable to submit refund to the payment provider.'
-    );
-  }
 
-  const data =
-    await response
-      .json()
-      .catch(
-        () => ({})
+      throw new ApiError(
+        502,
+        data?.error
+          ?.description ||
+          'Payment provider rejected the refund request.'
+      );
+    }
+
+    return {
+      provider:
+        'razorpay',
+
+      providerRefundId:
+        data.id,
+
+      paymentId:
+        data.payment_id ||
+        paymentId,
+
+      amountPaise:
+        Number(
+          data.amount ||
+            amountPaise
+        ),
+
+      currency:
+        data.currency ||
+        'INR',
+
+      status:
+        String(
+          data.status ||
+            'pending'
+        ).toLowerCase(),
+
+      raw:
+        data
+    };
+  },
+
+  /*
+   * Fetch a refund directly from Razorpay.
+   *
+   * This is the fallback when the webhook is delayed,
+   * unavailable locally, or was missed.
+   */
+  async fetchRefund(
+    refundId
+  ) {
+    if (
+      !refundId
+    ) {
+      throw new ApiError(
+        400,
+        'Refund identifier is required.'
+      );
+    }
+
+    const {
+      response,
+      data
+    } =
+      await providerRequest(
+        `https://api.razorpay.com/v1/refunds/${encodeURIComponent(
+          refundId
+        )}`,
+        {
+          method:
+            'GET'
+        },
+        'Unable to fetch refund status from the payment provider.'
       );
 
-  if (
-    !response.ok ||
-    !data?.id
-  ) {
-    console.error(
-      'Razorpay refund rejected:',
-      {
-        status:
-          response.status,
+    if (
+      !response.ok ||
+      !data?.id
+    ) {
+      throw new ApiError(
+        502,
+        data?.error
+          ?.description ||
+          'Unable to fetch refund status from the payment provider.'
+      );
+    }
 
-        code:
-          data?.error?.code ||
-          'unknown'
-      }
-    );
+    return data;
+  },
 
-    throw new ApiError(
-      502,
-      data?.error?.description ||
-        'Payment provider rejected the refund request.'
-    );
-  }
-
-  return {
-    provider:
-      'razorpay',
-
-    providerRefundId:
-      data.id,
-
-    paymentId:
-      data.payment_id ||
-      paymentId,
-
-    amountPaise:
-      Number(
-        data.amount ||
-          amountPaise
-      ),
-
-    status:
-      data.status ||
-      'submitted'
-  };
-},
   verifyWebhook(
     rawBody,
     provided

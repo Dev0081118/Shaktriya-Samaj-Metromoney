@@ -22,63 +22,30 @@ import {
 } from '../../utils/formatters';
 
 const emptyPlan = {
-  name:
-    '',
-
-  slug:
-    '',
-
-  price:
-    0,
-
-  durationDays:
-    90,
-
-  active:
-    true,
+  name: '',
+  slug: '',
+  price: 0,
+  durationDays: 90,
+  active: true,
 
   features: {
-    interestLimit:
-      0,
-
-    contactViewLimit:
-      0,
-
-    messageLimit:
-      0,
-
-    advancedSearch:
-      false,
-
-    profileBoost:
-      false,
-
-    prioritySupport:
-      false,
-
-    relationshipManager:
-      false
+    interestLimit: 0,
+    contactViewLimit: 0,
+    messageLimit: 0,
+    advancedSearch: false,
+    profileBoost: false,
+    prioritySupport: false,
+    relationshipManager: false
   }
 };
 
 const paths = {
-  support:
-    '/admin/support',
-
-  plans:
-    '/admin/plans',
-
-  payments:
-    '/admin/payments',
-
-  settings:
-    '/admin/settings',
-
-  audit:
-    '/admin/audit-logs',
-
-  health:
-    '/admin/system-health'
+  support: '/admin/support',
+  plans: '/admin/plans',
+  payments: '/admin/payments',
+  settings: '/admin/settings',
+  audit: '/admin/audit-logs',
+  health: '/admin/system-health'
 };
 
 const primaryButtonClass =
@@ -136,34 +103,22 @@ export default function AdminOperationsPage({
   const [
     data,
     setData
-  ] =
-    useState(
-      null
-    );
+  ] = useState(null);
 
   const [
     error,
     setError
-  ] =
-    useState(
-      ''
-    );
+  ] = useState('');
 
   const [
     editing,
     setEditing
-  ] =
-    useState(
-      emptyPlan
-    );
+  ] = useState(emptyPlan);
 
   const [
     refundingPayment,
     setRefundingPayment
-  ] =
-    useState(
-      null
-    );
+  ] = useState(null);
 
   const notify =
     useToast();
@@ -214,8 +169,7 @@ export default function AdminOperationsPage({
           await api(
             `/admin/support/${ticket._id}`,
             {
-              method:
-                'PATCH',
+              method: 'PATCH',
 
               body:
                 JSON.stringify({
@@ -237,9 +191,7 @@ export default function AdminOperationsPage({
                 ) =>
                   item._id ===
                   ticket._id
-                    ? result
-                        .data
-                        .ticket
+                    ? result.data.ticket
                     : item
               )
           })
@@ -279,9 +231,7 @@ export default function AdminOperationsPage({
           'paymentsEnabled'
         ]
       ) {
-        form[
-          key
-        ] =
+        form[key] =
           event
             .currentTarget
             .elements[
@@ -300,8 +250,7 @@ export default function AdminOperationsPage({
           await api(
             '/admin/settings',
             {
-              method:
-                'PATCH',
+              method: 'PATCH',
 
               body:
                 JSON.stringify(
@@ -433,9 +382,7 @@ export default function AdminOperationsPage({
       : type ===
           'health'
         ? 'System health'
-        : type[
-            0
-          ].toUpperCase() +
+        : type[0].toUpperCase() +
           type.slice(
             1
           );
@@ -797,6 +744,7 @@ export default function AdminOperationsPage({
                         </time>
 
                         <button
+                          type="button"
                           className={outlineButtonClass}
                           onClick={() =>
                             setEditing({
@@ -843,15 +791,23 @@ export default function AdminOperationsPage({
                         ) /
                         100;
 
-                      const refundable =
-                        payment.status ===
-                          'Paid' &&
+                      const canOpenRefund =
                         payment.provider ===
                           'razorpay' &&
                         Boolean(
                           payment
                             .providerPaymentId
                         ) &&
+                        (
+                          payment.status ===
+                            'Paid' ||
+                          payment.status ===
+                            'Refunded'
+                        );
+
+                      const canCreateRefund =
+                        payment.status ===
+                          'Paid' &&
                         pending ===
                           0 &&
                         refunded <
@@ -919,7 +875,7 @@ export default function AdminOperationsPage({
                             type="button"
                             className={outlineButtonClass}
                             disabled={
-                              !refundable
+                              !canOpenRefund
                             }
                             onClick={() =>
                               setRefundingPayment(
@@ -929,11 +885,13 @@ export default function AdminOperationsPage({
                           >
                             {payment.status ===
                             'Refunded'
-                              ? 'Refunded'
+                              ? 'View refund'
                               : pending >
                                   0
-                                ? 'Pending'
-                                : 'Refund'}
+                                ? 'Sync refund'
+                                : canCreateRefund
+                                  ? 'Refund'
+                                  : 'View'}
                           </button>
                         </div>
                       );

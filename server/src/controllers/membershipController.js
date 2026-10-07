@@ -2,17 +2,16 @@ import {
   Plan,
   Payment,
   Subscription,
-  Notification,
-  RefundRequest
+  Notification
 } from '../models/Platform.js';
-
-import {
-  AuditLog
-} from '../models/Business.js';
 
 import {
   paymentService
 } from '../services/paymentService.js';
+
+import {
+  reconcileRefund
+} from '../services/refundService.js';
 
 import {
   getUserEntitlements,
@@ -121,10 +120,6 @@ const validateCapturedPayment =
     }
   };
 
-/*
- * Public pricing.
- * Free remains an internal fallback plan.
- */
 export const publicPlans =
   asyncHandler(
     async (
@@ -154,9 +149,6 @@ export const publicPlans =
       )
   );
 
-/*
- * Logged-in member membership.
- */
 export const subscriptionMe =
   asyncHandler(
     async (
@@ -267,9 +259,6 @@ export const entitlements =
       )
   );
 
-/*
- * Create Razorpay order.
- */
 export const createOrder =
   asyncHandler(
     async (
@@ -568,10 +557,6 @@ export async function activatePayment(
   const now =
     new Date();
 
-  /*
-   * Clean expired subscriptions before enforcing
-   * the unique Active-subscription constraint.
-   */
   await Subscription.updateMany(
     {
       user:
@@ -700,10 +685,6 @@ export async function activatePayment(
   try {
     await locked.save();
   } catch (error) {
-    /*
-     * Roll back the membership if payment persistence
-     * fails after subscription creation.
-     */
     await Subscription.updateOne(
       {
         _id:
@@ -774,9 +755,6 @@ export async function activatePayment(
   return locked;
 }
 
-/*
- * Razorpay Checkout verification.
- */
 export const verify =
   asyncHandler(
     async (
@@ -822,14 +800,9 @@ export const verify =
         );
       }
 
-      /*
-       * Always verify checkout signature.
-       */
       paymentService.verifyCheckout({
         orderId,
-
         paymentId,
-
         signature:
           provided
       });
@@ -845,9 +818,6 @@ export const verify =
         );
       }
 
-      /*
-       * Confirm provider state directly with Razorpay.
-       */
       const providerPayment =
         await paymentService.fetchPayment(
           paymentId
@@ -905,9 +875,6 @@ export const verify =
     }
   );
 
-/*
- * Razorpay webhook.
- */
 export const razorpayWebhook =
   asyncHandler(
     async (
@@ -987,10 +954,6 @@ export const razorpayWebhook =
               })
             : null;
 
-      /*
-       * Unknown provider transaction.
-       * Acknowledge safely to stop unnecessary retries.
-       */
       if (!payment) {
         return ok(
           res,
@@ -1000,10 +963,9 @@ export const razorpayWebhook =
       }
 
       if (
-        payment.processedEvents
-          .includes(
-            eventId
-          )
+        payment.processedEvents.includes(
+          eventId
+        )
       ) {
         return ok(
           res,
@@ -1058,309 +1020,50 @@ export const razorpayWebhook =
             payment.providerPaymentId =
               paymentEntity.id;
           }
+
+          await payment.save();
         }
       } else if (
-        event.event ===
-        'refund.processed'
+        [
+          'refund.processed',
+          'refund.failed'
+        ].includes(
+          event.event
+        )
       ) {
-        const refundAmount =
-          Number(
-            refundEntity
-              ?.amount ||
-              0
-          );
-
         if (
-          !Number.isFinite(
-            refundAmount
-          ) ||
-          refundAmount <=
-            0
+          !refundEntity
         ) {
           throw new ApiError(
             400,
-            'Refund amount is invalid.'
+            'Refund webhook payload is incomplete.'
           );
         }
-
-        if (
-          String(
-            refundEntity
-              ?.payment_id ||
-              ''
-          ) !==
-          String(
-            payment
-              .providerPaymentId ||
-              ''
-          )
-        ) {
-          throw new ApiError(
-            409,
-            'Refund does not belong to this payment.'
-          );
-        }
-
-        const refundRequest =
-          refundEntity?.id
-            ? await RefundRequest.findOne({
-                providerRefundId:
-                  refundEntity.id
-              })
-            : null;
 
         /*
-         * RefundRequest provides provider-refund-level
-         * idempotency even if Razorpay retries with a
-         * different webhook event ID.
+         * Some webhook payloads may not include
+         * a normalized `status` field. The event
+         * name itself is authoritative here.
          */
-        if (
-          refundRequest?.status ===
-          'Processed'
-        ) {
-          payment.processedEvents.addToSet(
-            eventId
-          );
+        const normalizedEntity = {
+          ...refundEntity,
 
-          await payment.save();
+          status:
+            event.event ===
+            'refund.processed'
+              ? 'processed'
+              : 'failed'
+        };
 
-          return ok(
-            res,
-            {},
-            'Refund already processed.'
-          );
-        }
-
-        const originalAmount =
-          amountInPaise(
-            payment.amount
-          );
-
-        const previousRefunded =
-          Number(
-            payment
-              .refundedAmountPaise ||
-              0
-          );
-
-        const nextRefunded =
-          Math.min(
-            originalAmount,
-
-            previousRefunded +
-              refundAmount
-          );
-
-        payment.refundedAmountPaise =
-          nextRefunded;
-
-        payment.refundPendingPaise =
-          Math.max(
-            0,
-
-            Number(
-              payment
-                .refundPendingPaise ||
-                0
-            ) -
-              refundAmount
-          );
-
-        const isFullRefund =
-          nextRefunded >=
-          originalAmount;
-
-        if (
-          isFullRefund
-        ) {
-          payment.status =
-            'Refunded';
-
-          payment.refundPendingPaise =
-            0;
-
-          if (
-            payment.subscription
-          ) {
-            await Subscription.updateOne(
-              {
-                _id:
-                  payment.subscription,
-
-                status:
-                  'Active'
-              },
-
-              {
-                $set: {
-                  status:
-                    'Cancelled',
-
-                  endsAt:
-                    new Date()
-                }
-              }
-            );
-          }
-        } else {
-          /*
-           * Partial refund:
-           * payment stays Paid and membership stays active.
-           */
-          payment.status =
-            'Paid';
-        }
-
-        if (
-          refundRequest
-        ) {
-          refundRequest.status =
-            'Processed';
-
-          refundRequest.processedAt =
-            new Date();
-
-          await refundRequest.save();
-        }
-
-        await AuditLog.create({
-          action:
-            'payment.refund.processed',
-
-          entityType:
-            'Payment',
-
-          entityId:
-            String(
-              payment._id
-            ),
-
-          metadata: {
-            providerRefundId:
-              refundEntity?.id,
-
-            refundRequest:
-              refundRequest
-                ? String(
-                    refundRequest._id
-                  )
-                : null,
-
-            refundAmountPaise:
-              refundAmount,
-
-            cumulativeRefundedPaise:
-              nextRefunded,
-
-            fullRefund:
-              isFullRefund
-          }
+        await reconcileRefund({
+          providerRefund:
+            normalizedEntity
         });
 
-        await Notification.create({
-          user:
-            payment.user,
-
-          type:
-            'SYSTEM',
-
-          title:
-            isFullRefund
-              ? 'Payment refunded'
-              : 'Partial refund processed',
-
-          message:
-            isFullRefund
-              ? 'Your payment has been fully refunded. The related membership has been cancelled.'
-              : `A partial refund of INR ${(
-                  refundAmount /
-                  100
-                ).toFixed(
-                  2
-                )} has been processed.`
-        });
-      } else if (
-        event.event ===
-        'refund.failed'
-      ) {
-        const refundRequest =
-          refundEntity?.id
-            ? await RefundRequest.findOne({
-                providerRefundId:
-                  refundEntity.id
-              })
-            : null;
-
-        const failedAmount =
-          Number(
-            refundEntity
-              ?.amount ||
-              refundRequest
-                ?.amountPaise ||
-              0
+        payment =
+          await Payment.findById(
+            payment._id
           );
-
-        if (
-          failedAmount >
-          0
-        ) {
-          payment.refundPendingPaise =
-            Math.max(
-              0,
-
-              Number(
-                payment
-                  .refundPendingPaise ||
-                  0
-              ) -
-                failedAmount
-            );
-        } else {
-          payment.refundPendingPaise =
-            0;
-        }
-
-        if (
-          refundRequest
-        ) {
-          refundRequest.status =
-            'Failed';
-
-          refundRequest.failureMessage =
-            refundEntity
-              ?.error_description ||
-            'Refund failed at payment provider.';
-
-          await refundRequest.save();
-        }
-
-        await AuditLog.create({
-          action:
-            'payment.refund.failed',
-
-          entityType:
-            'Payment',
-
-          entityId:
-            String(
-              payment._id
-            ),
-
-          metadata: {
-            providerRefundId:
-              refundEntity?.id,
-
-            refundRequest:
-              refundRequest
-                ? String(
-                    refundRequest._id
-                  )
-                : null,
-
-            amountPaise:
-              failedAmount
-          }
-        });
       } else {
         return ok(
           res,
