@@ -214,16 +214,16 @@ const subscription = new mongoose.Schema(
     },
 
     planNameSnapshot: {
-  type: String,
-  trim: true,
-  default: 'Membership'
-},
+      type: String,
+      trim: true,
+      default: 'Membership'
+    },
 
-priceSnapshot: {
-  type: Number,
-  default: 0,
-  min: 0
-},
+    priceSnapshot: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
 
     entitlementSnapshot: {
       interestLimit: {
@@ -296,7 +296,8 @@ priceSnapshot: {
  * Hard guarantee:
  * one Active membership per user.
  *
- * Historical Expired/Cancelled subscriptions remain allowed.
+ * Historical Expired/Cancelled subscriptions
+ * remain allowed.
  */
 subscription.index(
   {
@@ -304,6 +305,7 @@ subscription.index(
   },
   {
     unique: true,
+
     partialFilterExpression: {
       status: 'Active'
     }
@@ -344,16 +346,20 @@ const payment = new mongoose.Schema(
       default: 'mock'
     },
 
+    /*
+     * Provider IDs must be unique whenever present.
+     *
+     * They remain optional because development/mock
+     * payments may not have Razorpay identifiers.
+     */
     providerOrderId: {
       type: String,
-      trim: true,
-      index: true
+      trim: true
     },
 
     providerPaymentId: {
       type: String,
-      trim: true,
-      index: true
+      trim: true
     },
 
     amount: {
@@ -393,11 +399,13 @@ const payment = new mongoose.Schema(
       default: 0,
       min: 0
     },
+
     refundPendingPaise: {
       type: Number,
       default: 0,
       min: 0
     },
+
     processedEvents: {
       type: [
         String
@@ -410,156 +418,184 @@ const payment = new mongoose.Schema(
   }
 );
 
+/*
+ * Razorpay order/payment identifiers are globally
+ * unique provider references.
+ *
+ * sparse:true allows documents where the provider
+ * identifier has not been assigned yet.
+ */
+payment.index(
+  {
+    providerOrderId: 1
+  },
+  {
+    unique: true,
+    sparse: true
+  }
+);
+
+payment.index(
+  {
+    providerPaymentId: 1
+  },
+  {
+    unique: true,
+    sparse: true
+  }
+);
+
 payment.index({
   user: 1,
   status: 1,
   createdAt: -1
 });
+
 const refundRequest = new mongoose.Schema(
-    {
-      payment: {
-        type:
-          mongoose.Schema.Types
-            .ObjectId,
+  {
+    payment: {
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
 
-        ref:
-          'Payment',
+      ref:
+        'Payment',
 
-        required:
-          true,
+      required:
+        true,
 
-        index:
-          true
-      },
-
-      user: {
-        type:
-          mongoose.Schema.Types
-            .ObjectId,
-
-        ref:
-          'User',
-
-        required:
-          true,
-
-        index:
-          true
-      },
-
-      requestedBy: {
-        type:
-          mongoose.Schema.Types
-            .ObjectId,
-
-        ref:
-          'User',
-
-        required:
-          true
-      },
-
-      type: {
-        type:
-          String,
-
-        enum: [
-          'Full',
-          'Partial'
-        ],
-
-        required:
-          true
-      },
-
-      reasonCode: {
-        type:
-          String,
-
-        enum: [
-          'duplicate_payment',
-          'technical_failure',
-          'membership_activation_failure',
-          'incorrect_plan',
-          'admin_exception',
-          'other'
-        ],
-
-        required:
-          true
-      },
-
-      reason: {
-        type:
-          String,
-
-        required:
-          true,
-
-        trim:
-          true,
-
-        minLength:
-          10,
-
-        maxLength:
-          1000
-      },
-
-      amountPaise: {
-        type:
-          Number,
-
-        required:
-          true,
-
-        min:
-          1
-      },
-
-      providerRefundId: {
-        type:
-          String,
-
-        trim:
-          true
-      },
-
-      status: {
-        type:
-          String,
-
-        enum: [
-          'Requested',
-          'Submitted',
-          'Processed',
-          'Failed'
-        ],
-
-        default:
-          'Requested',
-
-        index:
-          true
-      },
-
-      failureMessage: {
-        type:
-          String,
-
-        maxLength:
-          1000
-      },
-
-      processedAt:
-        Date
+      index:
+        true
     },
 
-    {
-      timestamps:
+    user: {
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'User',
+
+      required:
+        true,
+
+      index:
         true
-    }
-  );
+    },
+
+    requestedBy: {
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'User',
+
+      required:
+        true
+    },
+
+    type: {
+      type:
+        String,
+
+      enum: [
+        'Full',
+        'Partial'
+      ],
+
+      required:
+        true
+    },
+
+    reasonCode: {
+      type:
+        String,
+
+      enum: [
+        'duplicate_payment',
+        'technical_failure',
+        'membership_activation_failure',
+        'incorrect_plan',
+        'admin_exception',
+        'other'
+      ],
+
+      required:
+        true
+    },
+
+    reason: {
+      type:
+        String,
+
+      required:
+        true,
+
+      trim:
+        true,
+
+      minLength:
+        10,
+
+      maxLength:
+        1000
+    },
+
+    amountPaise: {
+      type:
+        Number,
+
+      required:
+        true,
+
+      min:
+        1
+    },
+
+    providerRefundId: {
+      type:
+        String,
+
+      trim:
+        true
+    },
+
+    status: {
+      type:
+        String,
+
+      enum: [
+        'Requested',
+        'Submitted',
+        'Processed',
+        'Failed'
+      ],
+
+      default:
+        'Requested',
+
+      index:
+        true
+    },
+
+    failureMessage: {
+      type:
+        String,
+
+      maxLength:
+        1000
+    },
+
+    processedAt:
+      Date
+  },
+
+  {
+    timestamps:
+      true
+  }
+);
 
 refundRequest.index({
   payment:
@@ -583,6 +619,7 @@ refundRequest.index(
       true
   }
 );
+
 export const Notification =
   mongoose.model(
     'Notification',
@@ -618,6 +655,7 @@ export const Payment =
     'Payment',
     payment
   );
+
 export const RefundRequest =
   mongoose.model(
     'RefundRequest',
