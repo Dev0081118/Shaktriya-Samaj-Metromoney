@@ -107,7 +107,7 @@ const localizedCopy = {
       'आपको संपर्क विवरण के लिए अनुरोध मिला है',
 
     'contact-accepted':
-      'आपका संपर्क अनुरोध स्वीकार हुआ है',
+      'आपकी संपर्क अनुरोध स्वीकृत हुई है',
 
     'payment-receipt':
       'भुगतान प्राप्त हुआ',
@@ -205,6 +205,204 @@ const validEmail = (
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
     value.trim()
   );
+
+const cleanHeader = (
+  value
+) =>
+    String(
+      value || ''
+    )
+      .replace(
+        /[\r\n]+/g,
+        ' '
+      )
+      .trim();
+
+const encodeMimeHeader =
+  (
+    value
+  ) =>
+    `=?UTF-8?B?${Buffer.from(
+      cleanHeader(
+        value
+      ),
+      'utf8'
+    ).toString(
+      'base64'
+    )}?=`;
+
+const base64Url =
+  (
+    value
+  ) =>
+    Buffer.from(
+      value,
+      'utf8'
+    )
+      .toString(
+        'base64'
+      )
+      .replace(
+        /\+/g,
+        '-'
+      )
+      .replace(
+        /\//g,
+        '_'
+      )
+      .replace(
+        /=+$/g,
+        ''
+      );
+
+const gmailConfig =
+  () => {
+    const clientId =
+      String(
+        process.env
+          .GMAIL_CLIENT_ID ||
+          ''
+      ).trim();
+
+    const clientSecret =
+      String(
+        process.env
+          .GMAIL_CLIENT_SECRET ||
+          ''
+      ).trim();
+
+    const refreshToken =
+      String(
+        process.env
+          .GMAIL_REFRESH_TOKEN ||
+          ''
+      ).trim();
+
+    const senderEmail =
+      String(
+        process.env
+          .GMAIL_SENDER_EMAIL ||
+          ''
+      ).trim();
+
+    const from =
+      String(
+        process.env
+          .EMAIL_FROM ||
+          senderEmail
+      ).trim();
+
+    if (
+      !clientId ||
+      !clientSecret ||
+      !refreshToken ||
+      !senderEmail ||
+      !validEmail(
+        senderEmail
+      )
+    ) {
+      throw new Error(
+        'Gmail API credentials are incomplete.'
+      );
+    }
+
+    return {
+      clientId,
+      clientSecret,
+      refreshToken,
+      senderEmail,
+      from
+    };
+  };
+
+async function gmailAccessToken() {
+  const {
+    clientId,
+    clientSecret,
+    refreshToken
+  } =
+    gmailConfig();
+
+  let response;
+
+  try {
+    response =
+      await fetch(
+        'https://oauth2.googleapis.com/token',
+        {
+          method:
+            'POST',
+
+          headers: {
+            'Content-Type':
+              'application/x-www-form-urlencoded'
+          },
+
+          body:
+            new URLSearchParams({
+              client_id:
+                clientId,
+
+              client_secret:
+                clientSecret,
+
+              refresh_token:
+                refreshToken,
+
+              grant_type:
+                'refresh_token'
+            }),
+
+          signal:
+            AbortSignal.timeout(
+              10000
+            )
+        }
+      );
+  } catch (
+    error
+  ) {
+    throw new Error(
+      'Google OAuth token request failed.',
+      {
+        cause:
+          error
+      }
+    );
+  }
+
+  const result =
+    await response
+      .json()
+      .catch(
+        () => ({})
+      );
+
+  if (
+    !response.ok ||
+    !result
+      ?.access_token
+  ) {
+    console.error(
+      'Google OAuth token request rejected:',
+      {
+        status:
+          response.status,
+
+        error:
+          result?.error ||
+          'unknown'
+      }
+    );
+
+    throw new Error(
+      'Google OAuth authorization failed.'
+    );
+  }
+
+  return result
+    .access_token;
+}
 
 export function renderEmailHtml(
   template,
@@ -380,6 +578,207 @@ export function renderEmailHtml(
   `;
 }
 
+export function buildGmailRawMessage({
+  to,
+  from,
+  subject,
+  html,
+  replyTo
+}) {
+  if (
+    !validEmail(
+      to
+    )
+  ) {
+    throw new Error(
+      'A valid recipient email is required.'
+    );
+  }
+
+  const safeFrom =
+    cleanHeader(
+      from
+    );
+
+  const safeSubject =
+    cleanHeader(
+      subject
+    );
+
+  if (
+    !safeFrom ||
+    !safeSubject
+  ) {
+    throw new Error(
+      'Email sender and subject are required.'
+    );
+  }
+
+  const body =
+    Buffer.from(
+      html,
+      'utf8'
+    ).toString(
+      'base64'
+    );
+
+  const headers = [
+    `From: ${safeFrom}`,
+    `To: ${to.trim()}`,
+    `Subject: ${encodeMimeHeader(
+      safeSubject
+    )}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64'
+  ];
+
+  if (
+    replyTo &&
+    validEmail(
+      replyTo
+    )
+  ) {
+    headers.push(
+      `Reply-To: ${replyTo.trim()}`
+    );
+  }
+
+  const message =
+    `${headers.join(
+      '\r\n'
+    )}\r\n\r\n${body}`;
+
+  return base64Url(
+    message
+  );
+}
+
+async function sendWithGmail({
+  to,
+  subject,
+  html
+}) {
+  const {
+    senderEmail,
+    from
+  } =
+    gmailConfig();
+
+  const accessToken =
+    await gmailAccessToken();
+
+  const replyTo =
+    String(
+      process.env
+        .EMAIL_REPLY_TO ||
+        ''
+    ).trim();
+
+  const raw =
+    buildGmailRawMessage({
+      to,
+      from:
+        from ||
+        senderEmail,
+      subject,
+      html,
+      replyTo
+    });
+
+  let response;
+
+  try {
+    response =
+      await fetch(
+        'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+        {
+          method:
+            'POST',
+
+          headers: {
+            Authorization:
+              `Bearer ${accessToken}`,
+
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+              raw
+            }),
+
+          signal:
+            AbortSignal.timeout(
+              10000
+            )
+        }
+      );
+  } catch (
+    error
+  ) {
+    throw new Error(
+      'Gmail API request failed.',
+      {
+        cause:
+          error
+      }
+    );
+  }
+
+  const result =
+    await response
+      .json()
+      .catch(
+        () => ({})
+      );
+
+  if (
+    !response.ok
+  ) {
+    console.error(
+      'Gmail API rejected email:',
+      {
+        status:
+          response.status,
+
+        code:
+          result
+            ?.error
+            ?.status ||
+          result
+            ?.error
+            ?.code ||
+          'unknown'
+      }
+    );
+
+    throw new Error(
+      'Gmail API rejected the message.'
+    );
+  }
+
+  if (
+    !result?.id
+  ) {
+    throw new Error(
+      'Gmail API returned an invalid response.'
+    );
+  }
+
+  return {
+    provider:
+      'gmail',
+
+    id:
+      result.id,
+
+    threadId:
+      result.threadId
+  };
+}
+
 export const emailService = {
   async send({
     to,
@@ -400,7 +799,7 @@ export const emailService = {
 
     const cleanSubject =
       typeof subject ===
-      'string'
+        'string'
         ? subject
             .trim()
             .slice(
@@ -409,7 +808,9 @@ export const emailService = {
             )
         : '';
 
-    if (!cleanSubject) {
+    if (
+      !cleanSubject
+    ) {
       throw new Error(
         'Email subject is required.'
       );
@@ -421,9 +822,13 @@ export const emailService = {
       );
 
     const provider =
-      process.env
-        .EMAIL_PROVIDER ||
-      'development';
+      String(
+        process.env
+          .EMAIL_PROVIDER ||
+          'development'
+      )
+        .trim()
+        .toLowerCase();
 
     if (
       provider ===
@@ -445,6 +850,28 @@ export const emailService = {
         provider:
           'development'
       };
+    }
+
+    const html =
+      renderEmailHtml(
+        template,
+        safe,
+        language
+      );
+
+    if (
+      provider ===
+      'gmail'
+    ) {
+      return sendWithGmail({
+        to:
+          to.trim(),
+
+        subject:
+          cleanSubject,
+
+        html
+      });
     }
 
     if (
@@ -503,12 +930,7 @@ export const emailService = {
                   subject:
                     cleanSubject,
 
-                  html:
-                    renderEmailHtml(
-                      template,
-                      safe,
-                      language
-                    )
+                  html
                 }),
 
               signal:
@@ -517,30 +939,17 @@ export const emailService = {
                 )
             }
           );
-      } catch (error) {
-  if (
-    error?.name ===
-      'TimeoutError' ||
-    error?.name ===
-      'AbortError'
-  ) {
-    throw new Error(
-      'Email provider request timed out.',
-      {
-        cause:
-          error
-      }
-    );
-  }
-
-  throw new Error(
-    'Email provider is currently unavailable.',
-    {
-      cause:
+      } catch (
         error
-    }
-  );
-}
+      ) {
+        throw new Error(
+          'Email provider is currently unavailable.',
+          {
+            cause:
+              error
+          }
+        );
+      }
 
       const result =
         await response
@@ -602,7 +1011,9 @@ export async function sendEmailSafely(
     );
 
     return true;
-  } catch (error) {
+  } catch (
+    error
+  ) {
     console.error(
       'Email delivery failed:',
       error.message

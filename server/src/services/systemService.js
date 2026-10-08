@@ -147,24 +147,36 @@ export function providerDiagnostics() {
 
     email:
       email ===
-      'resend'
+      'gmail'
         ? required(
-            'resend',
+            'gmail',
             [
-              'RESEND_API_KEY',
+              'GMAIL_CLIENT_ID',
+              'GMAIL_CLIENT_SECRET',
+              'GMAIL_REFRESH_TOKEN',
+              'GMAIL_SENDER_EMAIL',
               'EMAIL_FROM'
             ]
           )
-        : {
-            name:
-              'development',
+        : email ===
+            'resend'
+          ? required(
+              'resend',
+              [
+                'RESEND_API_KEY',
+                'EMAIL_FROM'
+              ]
+            )
+          : {
+              name:
+                'development',
 
-            configured:
-              true,
+              configured:
+                true,
 
-            missing:
-              []
-          },
+              missing:
+                []
+            },
 
     payments:
       required(
@@ -281,14 +293,20 @@ const validateEmailConfig =
         process.env
           .EMAIL_PROVIDER ||
           ''
-      ).trim();
+      )
+        .trim()
+        .toLowerCase();
 
     if (
-      provider !==
-      'resend'
+      ![
+        'gmail',
+        'resend'
+      ].includes(
+        provider
+      )
     ) {
       throw new Error(
-        'Production EMAIL_PROVIDER must be resend.'
+        'Production EMAIL_PROVIDER must be gmail or resend.'
       );
     }
 
@@ -299,20 +317,40 @@ const validateEmailConfig =
           ''
       ).trim();
 
-    /*
-     * Supports:
-     * noreply@example.com
-     * Kshatriya Matrimonial <noreply@example.com>
-     */
     const match =
       from.match(
         /(?:<)?([^\s<>@]+@[^\s<>@]+\.[^\s<>@]+)(?:>)?/
       );
 
-    if (!match) {
+    if (
+      !match
+    ) {
       throw new Error(
         'EMAIL_FROM must contain a valid sender email address.'
       );
+    }
+
+    if (
+      provider ===
+      'gmail'
+    ) {
+      const sender =
+        String(
+          process.env
+            .GMAIL_SENDER_EMAIL ||
+            ''
+        ).trim();
+
+      if (
+        !sender ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+          sender
+        )
+      ) {
+        throw new Error(
+          'GMAIL_SENDER_EMAIL must contain a valid Gmail sender address.'
+        );
+      }
     }
   };
 
