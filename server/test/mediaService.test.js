@@ -1,13 +1,11 @@
 import test from 'node:test';
-
 import assert from 'node:assert/strict';
 
 import sharp from 'sharp';
 
 import {
   detectImageType,
-  optimizeImage,
-  cloudinaryThumbnailUrl
+  optimizeImage
 } from '../src/services/mediaService.js';
 
 test(
@@ -102,7 +100,7 @@ test(
 );
 
 test(
-  'optimizeImage converts uploaded image to WebP',
+  'optimizeImage converts uploaded JPEG to WebP',
   async () => {
     const source =
       await sharp({
@@ -149,9 +147,26 @@ test(
       '.webp'
     );
 
+    assert.equal(
+      optimized.width,
+      800
+    );
+
+    assert.equal(
+      optimized.height,
+      600
+    );
+
     assert.ok(
-      optimized.buffer.length >
+      optimized.buffer
+        .length >
         0
+    );
+
+    assert.equal(
+      optimized.bytes,
+      optimized.buffer
+        .length
     );
 
     const metadata =
@@ -177,7 +192,7 @@ test(
 );
 
 test(
-  'optimizeImage limits large images to maximum 1600px dimensions',
+  'optimizeImage limits large images to 1600px maximum dimensions',
   async () => {
     const source =
       await sharp({
@@ -216,14 +231,9 @@ test(
         optimized.buffer
       ).metadata();
 
-    assert.ok(
-      metadata.width <=
-        1600
-    );
-
-    assert.ok(
-      metadata.height <=
-        1600
+    assert.equal(
+      metadata.format,
+      'webp'
     );
 
     assert.equal(
@@ -234,6 +244,16 @@ test(
     assert.equal(
       metadata.height,
       1200
+    );
+
+    assert.ok(
+      metadata.width <=
+        1600
+    );
+
+    assert.ok(
+      metadata.height <=
+        1600
     );
   }
 );
@@ -287,23 +307,38 @@ test(
       metadata.height,
       400
     );
+
+    assert.equal(
+      metadata.format,
+      'webp'
+    );
   }
 );
 
 test(
-  'cloudinaryThumbnailUrl creates optimized 400px square delivery URL',
-  () => {
-    const original =
-      'https://res.cloudinary.com/demo/image/upload/v123/kshatriya/profiles/photo.webp';
-
-    const thumbnail =
-      cloudinaryThumbnailUrl(
-        original
+  'optimizeImage rejects non-image buffers',
+  async () => {
+    const fake =
+      Buffer.from(
+        'this is not an image'
       );
 
-    assert.equal(
-      thumbnail,
-      'https://res.cloudinary.com/demo/image/upload/f_auto,q_auto,c_fill,g_auto,w_400,h_400/v123/kshatriya/profiles/photo.webp'
+    await assert.rejects(
+      () =>
+        optimizeImage(
+          fake
+        ),
+      (
+        error
+      ) => {
+        assert.equal(
+          error.statusCode ||
+            error.status,
+          400
+        );
+
+        return true;
+      }
     );
   }
 );

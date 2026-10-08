@@ -1,119 +1,500 @@
-import { Interest, Match } from '../models/Interaction.js';
-import { Block } from '../models/Platform.js';
-import { ContactRequest } from '../models/Business.js';
-import { calculateAge } from '../utils/profile.js';
-const allowed = (rule, { registered, accepted, matched }) =>
-  rule === 'Everyone' ||
-  (rule === 'RegisteredMembers' && registered) ||
-  (rule === 'AcceptedInterests' && accepted) ||
-  (rule === 'MutualMatches' && matched);
-export async function relationshipContext(profile, viewer) {
+import {
+  Interest,
+  Match
+} from '../models/Interaction.js';
+
+import {
+  Block
+} from '../models/Platform.js';
+
+import {
+  ContactRequest
+} from '../models/Business.js';
+
+import {
+  calculateAge
+} from '../utils/profile.js';
+
+import {
+  mediaService
+} from './mediaService.js';
+
+const allowed =
+  (
+    rule,
+    {
+      registered,
+      accepted,
+      matched
+    }
+  ) =>
+    rule ===
+      'Everyone' ||
+    (
+      rule ===
+        'RegisteredMembers' &&
+      registered
+    ) ||
+    (
+      rule ===
+        'AcceptedInterests' &&
+      accepted
+    ) ||
+    (
+      rule ===
+        'MutualMatches' &&
+      matched
+    );
+
+export async function relationshipContext(
+  profile,
+  viewer
+) {
   const owner =
-      String(profile.userId?._id || profile.userId) === String(viewer._id),
-    privileged = ['admin', 'moderator', 'super_admin'].includes(viewer.role);
-  if (owner || privileged)
+      String(
+        profile.userId?._id ||
+          profile.userId
+      ) ===
+      String(
+        viewer._id
+      ),
+
+    privileged =
+      [
+        'admin',
+        'moderator',
+        'super_admin'
+      ].includes(
+        viewer.role
+      );
+
+  if (
+    owner ||
+    privileged
+  ) {
     return {
       owner,
       privileged,
-      registered: true,
-      accepted: true,
-      matched: true,
-      contactUnlocked: true,
-      blocked: false
+      registered:
+        true,
+      accepted:
+        true,
+      matched:
+        true,
+      contactUnlocked:
+        true,
+      blocked:
+        false
     };
-  const viewerProfile = await profile.constructor
-    .findOne({ userId: viewer._id })
-    .select('_id');
-  if (!viewerProfile)
-    return { registered: true, blocked: false, contactUnlocked: false };
-  const [blocked, accepted, matched, contactRequest] = await Promise.all([
-    Block.exists({
-      $or: [
-        { user: viewer._id, blockedProfile: profile._id },
-        {
-          user: profile.userId?._id || profile.userId,
-          blockedProfile: viewerProfile._id
-        }
-      ]
-    }),
-    Interest.exists({
-      status: 'Accepted',
-      $or: [
-        { senderProfile: viewerProfile._id, receiverProfile: profile._id },
-        { senderProfile: profile._id, receiverProfile: viewerProfile._id }
-      ]
-    }),
-    Match.exists({
-      pairKey: [String(viewerProfile._id), String(profile._id)]
-        .sort()
-        .join(':'),
-      status: 'Active'
-    }),
-    ContactRequest.findOne({
-      status: 'Accepted',
-      $or: [
-        { requesterProfile: viewerProfile._id, receiverProfile: profile._id },
-        { requesterProfile: profile._id, receiverProfile: viewerProfile._id }
-      ]
-    }).lean()
-  ]);
+  }
+
+  const viewerProfile =
+    await profile.constructor
+      .findOne({
+        userId:
+          viewer._id
+      })
+      .select(
+        '_id'
+      );
+
+  if (
+    !viewerProfile
+  ) {
+    return {
+      registered:
+        true,
+      blocked:
+        false,
+      contactUnlocked:
+        false
+    };
+  }
+
+  const [
+    blocked,
+    accepted,
+    matched,
+    contactRequest
+  ] =
+    await Promise.all([
+      Block.exists({
+        $or: [
+          {
+            user:
+              viewer._id,
+            blockedProfile:
+              profile._id
+          },
+          {
+            user:
+              profile.userId?._id ||
+              profile.userId,
+            blockedProfile:
+              viewerProfile._id
+          }
+        ]
+      }),
+
+      Interest.exists({
+        status:
+          'Accepted',
+
+        $or: [
+          {
+            senderProfile:
+              viewerProfile._id,
+            receiverProfile:
+              profile._id
+          },
+          {
+            senderProfile:
+              profile._id,
+            receiverProfile:
+              viewerProfile._id
+          }
+        ]
+      }),
+
+      Match.exists({
+        pairKey: [
+          String(
+            viewerProfile._id
+          ),
+          String(
+            profile._id
+          )
+        ]
+          .sort()
+          .join(
+            ':'
+          ),
+
+        status:
+          'Active'
+      }),
+
+      ContactRequest.findOne({
+        status:
+          'Accepted',
+
+        $or: [
+          {
+            requesterProfile:
+              viewerProfile._id,
+            receiverProfile:
+              profile._id
+          },
+          {
+            requesterProfile:
+              profile._id,
+            receiverProfile:
+              viewerProfile._id
+          }
+        ]
+      }).lean()
+    ]);
+
   const contactUnlocked =
     !!contactRequest &&
-    (String(contactRequest.requesterProfile) === String(viewerProfile._id)
-      ? !!contactRequest.requesterUnlockedAt
-      : !!contactRequest.receiverUnlockedAt);
+    (
+      String(
+        contactRequest
+          .requesterProfile
+      ) ===
+      String(
+        viewerProfile._id
+      )
+        ? !!contactRequest
+            .requesterUnlockedAt
+        : !!contactRequest
+            .receiverUnlockedAt
+    );
+
   return {
-    owner: false,
-    privileged: false,
-    registered: true,
-    accepted: !!accepted,
-    matched: !!matched,
+    owner:
+      false,
+
+    privileged:
+      false,
+
+    registered:
+      true,
+
+    accepted:
+      !!accepted,
+
+    matched:
+      !!matched,
+
     contactUnlocked,
-    blocked: !!blocked
+
+    blocked:
+      !!blocked
   };
 }
-export async function serializeProfileForViewer(profile, viewer) {
-  const p = profile.toObject ? profile.toObject() : structuredClone(profile),
-    context = await relationshipContext(profile, viewer);
-  if (context.blocked) return null;
-  const privacy = p.privacy || {};
-  p.age = calculateAge(p.dateOfBirth);
+
+const secureProfileMedia =
+  (
+    profileObject
+  ) => {
+    if (
+      profileObject
+        .profilePhoto
+    ) {
+      profileObject.profilePhoto =
+        mediaService.accessUrl({
+          publicId:
+            profileObject
+              .profilePhotoPublicId,
+
+          url:
+            profileObject
+              .profilePhoto
+        });
+    }
+
+    if (
+      Array.isArray(
+        profileObject
+          .galleryAssets
+      )
+    ) {
+      profileObject.galleryAssets =
+        profileObject.galleryAssets
+          .map(
+            (
+              asset
+            ) => {
+              const secureUrl =
+                mediaService.accessUrl({
+                  publicId:
+                    asset
+                      .publicId,
+
+                  url:
+                    asset.url
+                });
+
+              if (
+                !secureUrl
+              ) {
+                return null;
+              }
+
+              return {
+                _id:
+                  asset._id,
+
+                url:
+                  secureUrl
+              };
+            }
+          )
+          .filter(
+            Boolean
+          );
+    }
+
+    /*
+     * Do not expose Cloudinary public IDs.
+     * They are storage identifiers, not client data.
+     */
+    delete profileObject
+      .profilePhotoPublicId;
+
+    return profileObject;
+  };
+
+export async function serializeProfileForViewer(
+  profile,
+  viewer
+) {
+  const p =
+      profile.toObject
+        ? profile.toObject()
+        : structuredClone(
+            profile
+          ),
+
+    context =
+      await relationshipContext(
+        profile,
+        viewer
+      );
+
+  if (
+    context.blocked
+  ) {
+    return null;
+  }
+
+  const privacy =
+    p.privacy ||
+    {};
+
+  p.age =
+    calculateAge(
+      p.dateOfBirth
+    );
+
   delete p.dateOfBirth;
   delete p.moderatedBy;
-  delete p.profilePhotoPublicId;
-  if (!context.owner && !context.privileged) {
-    if (!allowed(privacy.photoVisibility || 'RegisteredMembers', context)) {
-      p.profilePhoto = null;
-      p.gallery = [];
-      p.galleryAssets = [];
+
+  if (
+    !context.owner &&
+    !context.privileged
+  ) {
+    if (
+      !allowed(
+        privacy.photoVisibility ||
+          'RegisteredMembers',
+        context
+      )
+    ) {
+      p.profilePhoto =
+        null;
+
+      p.gallery =
+        [];
+
+      p.galleryAssets =
+        [];
+
+      delete p.profilePhotoPublicId;
     }
-    if (!allowed(privacy.fullNameVisibility || 'RegisteredMembers', context)) {
+
+    if (
+      !allowed(
+        privacy.fullNameVisibility ||
+          'RegisteredMembers',
+        context
+      )
+    ) {
       delete p.lastName;
       delete p.middleName;
     }
-    if (!allowed(privacy.incomeVisibility || 'Private', context) && p.career)
-      delete p.career.annualIncome;
-    const familyRule = privacy.familyOverviewVisibility || privacy.familyVisibility || 'AcceptedInterests';
-    if (!allowed(familyRule, context)) {
+
+    if (
+      !allowed(
+        privacy.incomeVisibility ||
+          'Private',
+        context
+      ) &&
+      p.career
+    ) {
+      delete p.career
+        .annualIncome;
+    }
+
+    const familyRule =
+      privacy
+        .familyOverviewVisibility ||
+      privacy
+        .familyVisibility ||
+      'AcceptedInterests';
+
+    if (
+      !allowed(
+        familyRule,
+        context
+      )
+    ) {
       delete p.family;
       delete p.paternalFamily;
-    } else if (p.family && !allowed(privacy.siblingDetailsVisibility || 'AcceptedInterests', context))
-      delete p.family.siblingDetails;
-    if (!allowed(privacy.maternalFamilyVisibility || 'AcceptedInterests', context))
+    } else if (
+      p.family &&
+      !allowed(
+        privacy
+          .siblingDetailsVisibility ||
+          'AcceptedInterests',
+        context
+      )
+    ) {
+      delete p.family
+        .siblingDetails;
+    }
+
+    if (
+      !allowed(
+        privacy
+          .maternalFamilyVisibility ||
+          'AcceptedInterests',
+        context
+      )
+    ) {
       delete p.maternalFamily;
-    if (!allowed(privacy.assetVisibility || 'Private', context))
+    }
+
+    if (
+      !allowed(
+        privacy.assetVisibility ||
+          'Private',
+        context
+      )
+    ) {
       delete p.familyAssets;
-    // Marital history can contain legal and child details. Status remains on the profile;
-    // the deeper context is shared only after an accepted introduction.
-    if (!context.accepted && !context.matched) delete p.maritalHistory;
+    }
+
+    /*
+     * Marital history may contain legal /
+     * children-related information.
+     */
+    if (
+      !context.accepted &&
+      !context.matched
+    ) {
+      delete p.maritalHistory;
+    }
+
     delete p.biodataPrivacy;
-    if (context.contactUnlocked && p.userId && typeof p.userId === 'object')
+
+    if (
+      context.contactUnlocked &&
+      p.userId &&
+      typeof p.userId ===
+        'object'
+    ) {
       p.contact = {
-        email: p.userId.email,
-        phone: p.userId.phone,
-        whatsappPhone: p.userId.phone?.replace(/\D/g, '')
+        email:
+          p.userId.email,
+
+        phone:
+          p.userId.phone,
+
+        whatsappPhone:
+          p.userId.phone
+            ?.replace(
+              /\D/g,
+              ''
+            )
       };
+    }
+
     delete p.userId;
   }
+
+  /*
+   * Only generate a temporary media URL AFTER
+   * all privacy rules have been checked.
+   */
+  if (
+    p.profilePhoto ||
+    (
+      Array.isArray(
+        p.galleryAssets
+      ) &&
+      p.galleryAssets
+        .length >
+        0
+    )
+  ) {
+    secureProfileMedia(
+      p
+    );
+  } else {
+    delete p.profilePhotoPublicId;
+  }
+
   return p;
 }

@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 
 import sharp from 'sharp';
+import { v2 as cloudinary } from 'cloudinary';
 
 import {
   ApiError
@@ -16,25 +17,11 @@ const UPLOAD_DIRECTORY =
 const CLOUDINARY_FOLDER =
   'kshatriya/profiles';
 
-/*
- * Upload protection.
- *
- * Multer already rejects requests above 5 MB,
- * but mediaService does not assume that every
- * caller necessarily came through Multer.
- */
 const MAX_SOURCE_BYTES =
   5 *
   1024 *
   1024;
 
-/*
- * Never store oversized matrimonial profile photos.
- *
- * 1600px is more than enough for profile/detail
- * screens while keeping storage and bandwidth
- * under control.
- */
 const MAX_IMAGE_WIDTH =
   1600;
 
@@ -43,6 +30,16 @@ const MAX_IMAGE_HEIGHT =
 
 const WEBP_QUALITY =
   80;
+
+/*
+ * Temporary access URL lifetime.
+ *
+ * Signed URLs generated for authorized viewers
+ * should not remain reusable indefinitely.
+ */
+const PRIVATE_URL_TTL_SECONDS =
+  10 *
+  60;
 
 const IMAGE_TYPES = {
   jpeg: {
@@ -70,7 +67,7 @@ const IMAGE_TYPES = {
   }
 };
 
-const credentials =
+const cloudinaryCredentials =
   () => {
     const {
       CLOUDINARY_CLOUD_NAME:
@@ -112,11 +109,36 @@ const credentials =
     };
   };
 
+const configureCloudinary =
+  () => {
+    const {
+      cloudName,
+      apiKey,
+      apiSecret
+    } =
+      cloudinaryCredentials();
+
+    cloudinary.config({
+      cloud_name:
+        cloudName,
+
+      api_key:
+        apiKey,
+
+      api_secret:
+        apiSecret,
+
+      secure:
+        true
+    });
+
+    return cloudinary;
+  };
+
 /*
- * Browser-supplied MIME type cannot be trusted.
+ * Do not trust browser-provided MIME type.
  *
- * Determine the actual format from its bytes
- * before Sharp or Cloudinary receives it.
+ * Validate the actual file signature first.
  */
 export function detectImageType(
   buffer
@@ -235,7 +257,9 @@ const validateUpload =
         file.buffer
       );
 
-    if (!detected) {
+    if (
+      !detected
+    ) {
       throw new ApiError(
         400,
         'The uploaded file is not a valid JPG, PNG, or WebP image.'
@@ -243,8 +267,8 @@ const validateUpload =
     }
 
     /*
-     * If the browser says "JPEG" but the bytes
-     * are actually PNG/WebP, reject it.
+     * Reject files where claimed MIME and
+     * actual binary format disagree.
      */
     if (
       file.mimetype &&
@@ -261,17 +285,14 @@ const validateUpload =
   };
 
 /*
- * Security + storage optimization.
+ * Optimize every incoming profile/gallery photo.
  *
- * Sharp does the following:
- *
- * - reads only a valid image
- * - auto-rotates using EXIF orientation
- * - strips metadata because we do not call withMetadata()
- * - limits maximum dimensions to 1600 x 1600
- * - never enlarges a smaller photo
- * - converts everything to WebP
- * - compresses with quality 80
+ * - auto-rotate from EXIF orientation
+ * - strip metadata
+ * - maximum 1600x1600
+ * - preserve aspect ratio
+ * - never enlarge smaller images
+ * - convert to WebP
  */
 export async function optimizeImage(
   buffer
@@ -335,19 +356,12 @@ export async function optimizeImage(
         });
 
     if (
-      !data?.length
-    ) {
-      throw new Error(
-        'Sharp returned an empty image.'
-      );
-    }
-
-    if (
+      !data?.length ||
       !info.width ||
       !info.height
     ) {
       throw new Error(
-        'Optimized image dimensions are missing.'
+        'Optimized image is invalid.'
       );
     }
 
@@ -386,94 +400,50 @@ export async function optimizeImage(
 }
 
 /*
- * Cloudinary URLs can be transformed without
- * storing another copy of the original image.
+ * Stable authenticated Cloudinary reference.
  *
- * Upload:
- *   one optimized WebP
+ * IMPORTANT:
+ * This deliberately contains NO /s--signature--/.
  *
- * Delivery:
- *   Cloudinary chooses WebP/AVIF/etc. depending
- *   on the requesting browser via f_auto.
- *
- * q_auto lets Cloudinary tune delivery quality.
+ * MongoDB stores only this stable inaccessible
+ * reference. A temporary authorized URL is generated
+ * separately when the API serializes the profile.
  */
-function cloudinaryDeliveryUrl(
-  secureUrl
+function authenticatedCanonicalUrl(
+  publicId
 ) {
   if (
-    !secureUrl
+    !publicId
   ) {
-    return secureUrl;
+    return null;
   }
 
-  return String(
-    secureUrl
-  ).replace(
-    '/image/upload/',
-    '/image/upload/f_auto,q_auto,c_limit,w_1600,h_1600/'
+  const {
+    cloudName
+  } =
+    cloudinaryCredentials();
+
+  return (
+    `https://res.cloudinary.com/` +
+    `${encodeURIComponent(
+      cloudName
+    )}/image/authenticated/` +
+    `${publicId}.webp`
   );
 }
 
 /*
- * Useful later for cards/list pages.
+ * Upload only the optimized image.
  *
- * We deliberately do not save a separate thumbnail
- * file, because Cloudinary can generate and cache
- * it from the single optimized stored asset.
- */
-export function cloudinaryThumbnailUrl(
-  secureUrl
-) {
-  if (
-    !secureUrl
-  ) {
-    return secureUrl;
-  }
-
-  return String(
-    secureUrl
-  ).replace(
-    '/image/upload/',
-    '/image/upload/f_auto,q_auto,c_fill,g_auto,w_400,h_400/'
-  );
-}
-
-const cloudinaryId =
-  (
-    url
-  ) => {
-    const match =
-      String(
-        url ||
-          ''
-      ).match(
-        /\/upload\/(?:[^/]+\/)*(?:v\d+\/)?(.+)\.[a-z0-9]+$/i
-      );
-
-    return match?.[1];
-  };
-
-/*
- * Cloudinary signed upload.
- *
- * The API secret NEVER goes to the browser.
+ * Cloudinary `authenticated` delivery type means
+ * the asset should not be available via a normal
+ * unsigned public delivery URL.
  */
 async function cloudinaryUpload(
   optimized
 ) {
-  const {
-    cloudName,
-    apiKey,
-    apiSecret
-  } =
-    credentials();
-
-  const timestamp =
-    Math.floor(
-      Date.now() /
-        1000
-    );
+  const client =
+    configureCloudinary();
 
   const publicId =
     `profile_${Date.now()}_${crypto
@@ -484,95 +454,112 @@ async function cloudinaryUpload(
         'hex'
       )}`;
 
-  /*
-   * Parameters must be alphabetically represented
-   * exactly as signed.
-   */
-  const signatureSource =
-    `folder=${CLOUDINARY_FOLDER}&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
-
-  const signature =
-    crypto
-      .createHash(
-        'sha1'
-      )
-      .update(
-        signatureSource
-      )
-      .digest(
-        'hex'
-      );
-
-  const form =
-    new FormData();
-
-  form.append(
-    'file',
-    new Blob(
-      [
-        optimized.buffer
-      ],
-      {
-        type:
-          optimized.mime
-      }
-    ),
-    `${publicId}${optimized.extension}`
-  );
-
-  form.append(
-    'api_key',
-    apiKey
-  );
-
-  form.append(
-    'timestamp',
-    String(
-      timestamp
-    )
-  );
-
-  form.append(
-    'folder',
-    CLOUDINARY_FOLDER
-  );
-
-  form.append(
-    'public_id',
-    publicId
-  );
-
-  form.append(
-    'signature',
-    signature
-  );
-
-  let response;
-
   try {
-    response =
-      await fetch(
-        `https://api.cloudinary.com/v1_1/${encodeURIComponent(
-          cloudName
-        )}/image/upload`,
-        {
-          method:
-            'POST',
+    const result =
+      await new Promise(
+        (
+          resolve,
+          reject
+        ) => {
+          const stream =
+            client.uploader.upload_stream(
+              {
+                resource_type:
+                  'image',
 
-          body:
-            form,
+                type:
+                  'authenticated',
 
-          signal:
-            AbortSignal.timeout(
-              20000
-            )
+                folder:
+                  CLOUDINARY_FOLDER,
+
+                public_id:
+                  publicId,
+
+                format:
+                  'webp',
+
+                overwrite:
+                  false
+              },
+              (
+                error,
+                uploaded
+              ) => {
+                if (
+                  error
+                ) {
+                  reject(
+                    error
+                  );
+
+                  return;
+                }
+
+                resolve(
+                  uploaded
+                );
+              }
+            );
+
+          stream.end(
+            optimized.buffer
+          );
         }
       );
+
+    if (
+      !result?.public_id
+    ) {
+      throw new Error(
+        'Cloud image provider returned an invalid response.'
+      );
+    }
+
+    /*
+     * DO NOT store result.secure_url.
+     *
+     * Cloudinary may return a signed delivery URL
+     * containing /s--...--/.
+     *
+     * We only store our stable unsigned
+     * authenticated reference.
+     */
+    const canonicalUrl =
+      authenticatedCanonicalUrl(
+        result.public_id
+      );
+
+    return {
+      url:
+        canonicalUrl,
+
+      publicId:
+        result.public_id,
+
+      width:
+        optimized.width,
+
+      height:
+        optimized.height,
+
+      bytes:
+        optimized.bytes,
+
+      format:
+        'webp',
+
+      provider:
+        'cloudinary',
+
+      deliveryType:
+        'authenticated'
+    };
   } catch (
     error
   ) {
     console.error(
-      'Cloudinary upload request failed:',
+      'Cloudinary upload failed:',
       error.message
     );
 
@@ -581,86 +568,93 @@ async function cloudinaryUpload(
       'Image storage is temporarily unavailable.'
     );
   }
+}
 
-  const data =
-    await response
-      .json()
-      .catch(
-        () => ({})
-      );
+/*
+ * Generate a temporary Cloudinary access URL.
+ *
+ * This is called only AFTER profile privacy /
+ * relationship authorization has succeeded.
+ */
+function cloudinaryAccessUrl(
+  {
+    publicId,
+    fallbackUrl,
+    expiresIn =
+      PRIVATE_URL_TTL_SECONDS
+  }
+) {
+  /*
+   * Migration compatibility:
+   *
+   * Old images may still have been uploaded using
+   * normal Cloudinary /image/upload/ delivery.
+   *
+   * Until those images are replaced/migrated,
+   * preserve their existing URL.
+   */
+  if (
+    fallbackUrl &&
+    String(
+      fallbackUrl
+    ).includes(
+      '/image/upload/'
+    )
+  ) {
+    return fallbackUrl;
+  }
 
   if (
-    !response.ok
+    !publicId
   ) {
-    console.error(
-      'Cloudinary upload rejected:',
-      {
-        status:
-          response.status,
+    return fallbackUrl ||
+      null;
+  }
 
-        message:
-          data
-            ?.error
-            ?.message ||
-          'unknown'
+  const client =
+    configureCloudinary();
+
+  const expiresAt =
+    Math.floor(
+      Date.now() /
+        1000
+    ) +
+    Math.max(
+      60,
+      Number(
+        expiresIn
+      ) ||
+        PRIVATE_URL_TTL_SECONDS
+    );
+
+  try {
+    return client.utils.private_download_url(
+      publicId,
+      'webp',
+      {
+        resource_type:
+          'image',
+
+        type:
+          'authenticated',
+
+        expires_at:
+          expiresAt,
+
+        attachment:
+          false
       }
     );
-
-    throw new ApiError(
-      502,
-      'Image storage rejected the upload.'
-    );
-  }
-
-  if (
-    !data.secure_url ||
-    !data.public_id
+  } catch (
+    error
   ) {
-    throw new ApiError(
-      502,
-      'Image storage returned an invalid response.'
+    console.error(
+      'Cloudinary private URL generation failed:',
+      error.message
     );
+
+    return null;
   }
-
-  return {
-    /*
-     * Existing frontend continues using `url`.
-     *
-     * This delivery URL tells Cloudinary to
-     * automatically optimize format + quality.
-     */
-    url:
-      cloudinaryDeliveryUrl(
-        data.secure_url
-      ),
-
-    publicId:
-      data.public_id,
-
-    /*
-     * Returned for future card/gallery optimization.
-     * Current schema/controller does not need it.
-     */
-    thumbnailUrl:
-      cloudinaryThumbnailUrl(
-        data.secure_url
-      ),
-
-    width:
-      optimized.width,
-
-    height:
-      optimized.height,
-
-    bytes:
-      optimized.bytes,
-
-    format:
-      'webp',
-
-    provider:
-      'cloudinary'
-  };
 }
 
 async function cloudinaryDelete(
@@ -668,11 +662,8 @@ async function cloudinaryDelete(
 ) {
   const publicId =
     typeof asset ===
-    'string'
-      ? cloudinaryId(
-          asset
-        ) ||
-        asset
+      'string'
+      ? asset
       : asset?.publicId;
 
   if (
@@ -681,94 +672,38 @@ async function cloudinaryDelete(
     return;
   }
 
-  const {
-    cloudName,
-    apiKey,
-    apiSecret
-  } =
-    credentials();
-
-  const timestamp =
-    Math.floor(
-      Date.now() /
-        1000
-    );
-
-  const signature =
-    crypto
-      .createHash(
-        'sha1'
-      )
-      .update(
-        `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`
-      )
-      .digest(
-        'hex'
-      );
-
-  const body =
-    new URLSearchParams({
-      public_id:
-        publicId,
-
-      timestamp:
-        String(
-          timestamp
-        ),
-
-      api_key:
-        apiKey,
-
-      signature
-    });
-
-  let response;
+  const client =
+    configureCloudinary();
 
   try {
-    response =
-      await fetch(
-        `https://api.cloudinary.com/v1_1/${encodeURIComponent(
-          cloudName
-        )}/image/destroy`,
-        {
-          method:
-            'POST',
+    await client.uploader.destroy(
+      publicId,
+      {
+        resource_type:
+          'image',
 
-          body,
+        type:
+          'authenticated',
 
-          signal:
-            AbortSignal.timeout(
-              15000
-            )
-        }
-      );
+        invalidate:
+          true
+      }
+    );
   } catch (
     error
   ) {
     console.error(
-      'Cloudinary image deletion request failed:',
-      error.message
-    );
-
-    return;
-  }
-
-  if (
-    !response.ok
-  ) {
-    console.error(
       'Cloudinary image deletion failed:',
-      response.status
+      error.message
     );
   }
 }
 
 /*
- * Local development still uses exactly the same
- * optimized WebP pipeline.
+ * Local-development fallback.
  *
- * This means development behavior remains close
- * to production even without Cloudinary credentials.
+ * Local uploads still pass through the same
+ * Sharp optimization pipeline.
  */
 async function localUpload(
   optimized
@@ -834,19 +769,17 @@ async function localDelete(
 ) {
   const raw =
     typeof asset ===
-    'string'
+      'string'
       ? asset
       : asset?.publicId ||
         asset?.url;
 
-  if (!raw) {
+  if (
+    !raw
+  ) {
     return;
   }
 
-  /*
-   * basename protects local development from
-   * ../ path traversal.
-   */
   const filename =
     path.basename(
       String(
@@ -887,21 +820,30 @@ async function localDelete(
     );
 }
 
+const providerName =
+  () =>
+    String(
+      process.env
+        .MEDIA_PROVIDER ||
+        'local'
+    )
+      .trim()
+      .toLowerCase();
+
 export const mediaService = {
   async fromUpload(
     file
   ) {
     /*
-     * Validate original bytes before decoding.
+     * Validate original bytes first.
      */
     validateUpload(
       file
     );
 
     /*
-     * Every provider receives only the optimized
-     * version. We never persist the original
-     * multi-megabyte upload.
+     * Never persist the original multi-megabyte
+     * upload. Providers receive only optimized WebP.
      */
     const optimized =
       await optimizeImage(
@@ -909,13 +851,7 @@ export const mediaService = {
       );
 
     const provider =
-      String(
-        process.env
-          .MEDIA_PROVIDER ||
-          'local'
-      )
-        .trim()
-        .toLowerCase();
+      providerName();
 
     if (
       provider ===
@@ -940,6 +876,49 @@ export const mediaService = {
     );
   },
 
+  /*
+   * Generate the URL the frontend is actually
+   * allowed to receive.
+   */
+  accessUrl(
+    {
+      publicId,
+      url,
+      expiresIn
+    }
+  ) {
+    const provider =
+      providerName();
+
+    if (
+      provider ===
+      'local'
+    ) {
+      return (
+        url ||
+        (
+          publicId
+            ? `/uploads/${publicId}`
+            : null
+        )
+      );
+    }
+
+    if (
+      provider ===
+      'cloudinary'
+    ) {
+      return cloudinaryAccessUrl({
+        publicId,
+        fallbackUrl:
+          url,
+        expiresIn
+      });
+    }
+
+    return null;
+  },
+
   async delete(
     asset
   ) {
@@ -950,13 +929,7 @@ export const mediaService = {
     }
 
     const provider =
-      String(
-        process.env
-          .MEDIA_PROVIDER ||
-          'local'
-      )
-        .trim()
-        .toLowerCase();
+      providerName();
 
     if (
       provider ===
