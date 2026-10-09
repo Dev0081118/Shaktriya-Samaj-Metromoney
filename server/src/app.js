@@ -23,6 +23,21 @@ import {
 const app =
   express();
 
+const isProduction =
+  process.env.NODE_ENV ===
+  'production';
+
+const isTest =
+  process.env.NODE_ENV ===
+  'test';
+
+/*
+ * Frontend origins allowed to call the API.
+ *
+ * Multiple URLs can be supplied:
+ *
+ * CLIENT_URL=https://example.com,https://www.example.com
+ */
 const configuredOrigins =
   (
     process.env.CLIENT_URL ||
@@ -30,78 +45,268 @@ const configuredOrigins =
   )
     .split(',')
     .map(
-      (value) =>
+      (
+        value
+      ) =>
         value.trim()
     )
-    .filter(Boolean);
+    .filter(
+      Boolean
+    );
 
 if (
-  process.env.NODE_ENV !==
-  'production'
+  !isProduction
 ) {
-  configuredOrigins.push(
-    'http://127.0.0.1:5173'
-  );
+  for (
+    const origin
+    of [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173'
+    ]
+  ) {
+    if (
+      !configuredOrigins.includes(
+        origin
+      )
+    ) {
+      configuredOrigins.push(
+        origin
+      );
+    }
+  }
 }
 
+/*
+ * Do not disclose Express.
+ */
 app.disable(
   'x-powered-by'
 );
 
+/*
+ * Reverse-proxy handling.
+ *
+ * Production deployments normally sit behind
+ * Render / Railway / Nginx / another HTTPS proxy.
+ *
+ * Local development does not need proxy trust.
+ */
 app.set(
   'trust proxy',
-  1
+  isProduction
+    ? 1
+    : false
 );
 
+/*
+ * Security headers.
+ *
+ * This process primarily serves a JSON API rather
+ * than the React frontend, therefore the safest CSP
+ * is intentionally strict.
+ *
+ * The React/Vite deployment should define its own
+ * browser-facing CSP separately.
+ */
 app.use(
   helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: [
+          "'none'"
+        ],
+
+        baseUri: [
+          "'none'"
+        ],
+
+        frameAncestors: [
+          "'none'"
+        ],
+
+        formAction: [
+          "'none'"
+        ]
+      }
+    },
+
+    crossOriginEmbedderPolicy:
+      false,
+
+    /*
+     * Development may still serve /uploads to a
+     * frontend running on port 5173.
+     *
+     * Production photos use authenticated
+     * Cloudinary delivery.
+     */
     crossOriginResourcePolicy: {
       policy:
         'cross-origin'
-    }
+    },
+
+    referrerPolicy: {
+      policy:
+        'no-referrer'
+    },
+
+    frameguard: {
+      action:
+        'deny'
+    },
+
+    noSniff:
+      true,
+
+    hsts:
+      isProduction
+        ? {
+            maxAge:
+              31536000,
+
+            includeSubDomains:
+              true,
+
+            preload:
+              false
+          }
+        : false
   })
 );
 
+/*
+ * Explicit Permissions Policy.
+ *
+ * The backend API never needs direct access to
+ * browser sensors/devices.
+ */
+app.use(
+  (
+    _req,
+    res,
+    next
+  ) => {
+    res.setHeader(
+      'Permissions-Policy',
+      [
+        'camera=()',
+        'microphone=()',
+        'geolocation=()',
+        'payment=()',
+        'usb=()'
+      ].join(
+        ', '
+      )
+    );
+
+    next();
+  }
+);
+
+/*
+ * CORS.
+ *
+ * Requests with no Origin header are still allowed
+ * because server-to-server calls, webhooks and
+ * testing tools commonly omit Origin.
+ */
 app.use(
   cors({
     origin: (
       origin,
       callback
-    ) =>
-      !origin ||
-      configuredOrigins.includes(
-        origin
-      )
-        ? callback(
-            null,
-            true
-          )
-        : callback(
-            new ApiError(
-              403,
-              'Origin is not allowed.'
-            )
-          ),
+    ) => {
+      if (
+        !origin
+      ) {
+        return callback(
+          null,
+          true
+        );
+      }
+
+      if (
+        configuredOrigins.includes(
+          origin
+        )
+      ) {
+        return callback(
+          null,
+          true
+        );
+      }
+
+      return callback(
+        new ApiError(
+          403,
+          'Origin is not allowed.'
+        )
+      );
+    },
+
+    methods: [
+      'GET',
+      'POST',
+      'PUT',
+      'PATCH',
+      'DELETE',
+      'OPTIONS'
+    ],
+
+    allowedHeaders: [
+      'Authorization',
+      'Content-Type',
+      'X-Request-Id'
+    ],
+
+    exposedHeaders: [
+      'X-Request-Id',
+      'RateLimit-Limit',
+      'RateLimit-Remaining',
+      'RateLimit-Reset'
+    ],
 
     credentials:
-      false
+      false,
+
+    maxAge:
+      86400
   })
 );
 
+/*
+ * Request correlation ID.
+ *
+ * Avoid trusting arbitrarily long values supplied
+ * by external clients.
+ */
 app.use(
   (
     req,
     res,
     next
   ) => {
-    req.id =
+    const supplied =
       req.headers[
         'x-request-id'
-      ] ||
-      crypto.randomUUID();
+      ];
+
+    const validSuppliedId =
+      typeof supplied ===
+        'string' &&
+      supplied.length <=
+        128 &&
+      /^[a-zA-Z0-9._:-]+$/.test(
+        supplied
+      );
+
+    req.id =
+      validSuppliedId
+        ? supplied
+        : crypto.randomUUID();
 
     res.setHeader(
-      'x-request-id',
+      'X-Request-Id',
       req.id
     );
 
@@ -109,9 +314,14 @@ app.use(
   }
 );
 
+/*
+ * Structured HTTP logging.
+ *
+ * Avoid logging Authorization headers, request
+ * bodies, cookies or other secrets.
+ */
 if (
-  process.env.NODE_ENV !==
-  'test'
+  !isTest
 ) {
   app.use(
     morgan(
@@ -162,10 +372,10 @@ if (
 }
 
 /*
- * Razorpay needs exact raw request bytes
- * for webhook signature validation.
+ * Razorpay webhook MUST receive the exact raw body
+ * used for Razorpay's HMAC signature.
  *
- * Keep this BEFORE express.json().
+ * Keep this route BEFORE express.json().
  */
 app.post(
   '/api/webhooks/razorpay',
@@ -181,10 +391,19 @@ app.post(
   razorpayWebhook
 );
 
+/*
+ * Normal API body parsing.
+ *
+ * Keep payload limits deliberately small.
+ * Images are handled separately through Multer.
+ */
 app.use(
   express.json({
     limit:
-      '1mb'
+      '1mb',
+
+    strict:
+      true
   })
 );
 
@@ -194,16 +413,19 @@ app.use(
       true,
 
     limit:
-      '1mb'
+      '1mb',
+
+    parameterLimit:
+      100
   })
 );
 
 /*
- * Local uploads are useful during development.
+ * Local media fallback.
  *
- * Production config already requires Cloudinary,
- * therefore newly uploaded production media
- * will not depend on this directory.
+ * Production uses authenticated Cloudinary assets,
+ * therefore this should mainly be useful during
+ * local development.
  */
 app.use(
   '/uploads',
@@ -213,15 +435,23 @@ app.use(
       fallthrough:
         true,
 
+      index:
+        false,
+
+      dotfiles:
+        'deny',
+
       maxAge:
-        process.env.NODE_ENV ===
-        'production'
+        isProduction
           ? '1d'
           : 0
     }
   )
 );
 
+/*
+ * Authentication brute-force protection.
+ */
 const authLimiter =
   rateLimit({
     windowMs:
@@ -233,9 +463,12 @@ const authLimiter =
       30,
 
     standardHeaders:
-      true,
+      'draft-7',
 
     legacyHeaders:
+      false,
+
+    skipSuccessfulRequests:
       false,
 
     message: {
@@ -247,6 +480,10 @@ const authLimiter =
     }
   });
 
+/*
+ * OTP endpoints get a stricter limiter because
+ * they may trigger an external SMS provider.
+ */
 const otpLimiter =
   rateLimit({
     windowMs:
@@ -258,7 +495,7 @@ const otpLimiter =
       8,
 
     standardHeaders:
-      true,
+      'draft-7',
 
     legacyHeaders:
       false,
@@ -283,7 +520,7 @@ const supportLimiter =
       10,
 
     standardHeaders:
-      true,
+      'draft-7',
 
     legacyHeaders:
       false,
@@ -308,7 +545,7 @@ const paymentLimiter =
       20,
 
     standardHeaders:
-      true,
+      'draft-7',
 
     legacyHeaders:
       false,
@@ -322,12 +559,54 @@ const paymentLimiter =
     }
   });
 
+/*
+ * Lightweight safety net for the whole API.
+ *
+ * Endpoint-specific limiters above/below remain
+ * stricter where necessary.
+ *
+ * This limit is intentionally generous so normal
+ * member dashboard/discovery usage is unaffected.
+ */
+const apiLimiter =
+  rateLimit({
+    windowMs:
+      15 *
+      60 *
+      1000,
+
+    limit:
+      isProduction
+        ? 600
+        : 5000,
+
+    standardHeaders:
+      'draft-7',
+
+    legacyHeaders:
+      false,
+
+    message: {
+      success:
+        false,
+
+      message:
+        'Too many requests. Please try again shortly.'
+    }
+  });
+
+app.use(
+  '/api',
+  apiLimiter
+);
+
 app.use(
   [
     '/api/auth/login',
     '/api/auth/register',
     '/api/auth/forgot-password',
-    '/api/auth/reset-password'
+    '/api/auth/reset-password',
+    '/api/auth/change-password'
   ],
   authLimiter
 );
@@ -353,9 +632,17 @@ app.use(
   paymentLimiter
 );
 
+/*
+ * Liveness probe.
+ *
+ * Does not expose secrets or database details.
+ */
 app.get(
   '/api/health',
-  (_req, res) =>
+  (
+    _req,
+    res
+  ) =>
     res.json({
       success:
         true,
@@ -371,12 +658,22 @@ app.get(
     })
 );
 
+/*
+ * Readiness probe.
+ *
+ * Only exposes provider name/configured state,
+ * never credentials or missing secret values.
+ */
 app.get(
   '/api/ready',
-  (_req, res) => {
+  (
+    _req,
+    res
+  ) => {
     const database =
       mongoose.connection
-        .readyState === 1;
+        .readyState ===
+      1;
 
     const providers =
       providerDiagnostics();
@@ -405,12 +702,13 @@ app.get(
     const ready =
       database &&
       (
-        process.env.NODE_ENV !==
-          'production' ||
+        !isProduction ||
         Object.values(
           providers
         ).every(
-          (provider) =>
+          (
+            provider
+          ) =>
             provider.configured
         )
       );
@@ -448,6 +746,9 @@ app.use(
   routes
 );
 
+/*
+ * Unknown route.
+ */
 app.use(
   (
     _req,
@@ -462,6 +763,12 @@ app.use(
     )
 );
 
+/*
+ * Central error handler.
+ *
+ * Production responses never expose stack traces,
+ * MongoDB internals or provider errors.
+ */
 app.use(
   (
     error,
@@ -485,7 +792,9 @@ app.use(
       11000
     ) {
       return res
-        .status(409)
+        .status(
+          409
+        )
         .json({
           success:
             false,
@@ -502,7 +811,8 @@ app.use(
     }
 
     if (
-      status === 500
+      status >=
+      500
     ) {
       console.error({
         event:
@@ -522,20 +832,25 @@ app.use(
     }
 
     res
-      .status(status)
+      .status(
+        status
+      )
       .json({
         success:
           false,
 
-        ...(error.apiCode
-          ? {
-              code:
-                error.apiCode
-            }
-          : {}),
+        ...(
+          error.apiCode
+            ? {
+                code:
+                  error.apiCode
+              }
+            : {}
+        ),
 
         message:
-          status === 500
+          status >=
+          500
             ? 'An unexpected server error occurred.'
             : error.message,
 
