@@ -11,17 +11,125 @@ import {
   getSystemSettings
 } from '../services/systemService.js';
 
+/*
+ * Session cookie name.
+ *
+ * Keep this centralized because the same name
+ * will be used when login/register start issuing
+ * httpOnly cookies in the next step.
+ */
+export const SESSION_COOKIE_NAME =
+  'ksm_session';
+
+/*
+ * Read one cookie without adding another package.
+ *
+ * We intentionally keep cookie parsing minimal
+ * because we only need the session cookie here.
+ */
+const readCookie = (
+  req,
+  name
+) => {
+  const header =
+    req.headers.cookie;
+
+  if (
+    typeof header !==
+      'string' ||
+    !header
+  ) {
+    return null;
+  }
+
+  const prefix =
+    `${name}=`;
+
+  const entry =
+    header
+      .split(';')
+      .map(
+        (value) =>
+          value.trim()
+      )
+      .find(
+        (value) =>
+          value.startsWith(
+            prefix
+          )
+      );
+
+  if (!entry) {
+    return null;
+  }
+
+  const value =
+    entry.slice(
+      prefix.length
+    );
+
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return decodeURIComponent(
+      value
+    );
+  } catch {
+    return null;
+  }
+};
+
+/*
+ * Migration-safe token reader.
+ *
+ * During the cookie migration we support both:
+ *
+ * 1. httpOnly session cookie
+ * 2. legacy Authorization Bearer token
+ *
+ * Cookie takes priority once present.
+ *
+ * After the frontend migration is complete,
+ * Bearer support can be removed separately.
+ */
 const readToken = (
   req
-) =>
-  req.headers.authorization
-    ?.startsWith(
+) => {
+  const cookieToken =
+    readCookie(
+      req,
+      SESSION_COOKIE_NAME
+    );
+
+  if (
+    cookieToken
+  ) {
+    return cookieToken;
+  }
+
+  const authorization =
+    req.headers.authorization;
+
+  if (
+    typeof authorization ===
+      'string' &&
+    authorization.startsWith(
       'Bearer '
     )
-    ? req.headers.authorization.slice(
-        7
-      )
-    : null;
+  ) {
+    const token =
+      authorization
+        .slice(7)
+        .trim();
+
+    return token ||
+      null;
+  }
+
+  return null;
+};
 
 const verifyToken = (
   token
@@ -74,7 +182,9 @@ export const protect =
       next
     ) => {
       const token =
-        readToken(req);
+        readToken(
+          req
+        );
 
       if (!token) {
         throw new ApiError(
@@ -147,7 +257,9 @@ export const optionalProtect =
       next
     ) => {
       const token =
-        readToken(req);
+        readToken(
+          req
+        );
 
       if (!token) {
         return next();

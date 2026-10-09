@@ -22,7 +22,11 @@ import {
   emailUser
 } from '../services/notificationEmailService.js';
 
- const normalizePhone = (
+import {
+  setSessionCookie
+} from '../utils/sessionCookie.js';
+
+const normalizePhone = (
   value
 ) => {
   if (
@@ -52,6 +56,7 @@ import {
 
   return `+${digits}`;
 };
+
 const tokenFor = (
   user
 ) =>
@@ -110,42 +115,42 @@ export const register =
       }
 
       const email =
-          typeof req.body.email ===
-          'string'
-            ? req.body.email
-                .trim()
-                .toLowerCase()
-            : '',
+        typeof req.body.email ===
+        'string'
+          ? req.body.email
+              .trim()
+              .toLowerCase()
+          : '';
 
-        password =
-          req.body.password,
+      const password =
+        req.body.password;
 
-        phone =
-          normalizePhone(
-            req.body.phone
-          );
+      const phone =
+        normalizePhone(
+          req.body.phone
+        );
 
       if (
-            !email ||
-            !password ||
-            password.length <
-              8
-          ) {
-            throw new ApiError(
-              400,
-              'Email and a password of at least 8 characters are required.'
-            );
-          }
+        !email ||
+        !password ||
+        password.length <
+          8
+      ) {
+        throw new ApiError(
+          400,
+          'Email and a password of at least 8 characters are required.'
+        );
+      }
 
-          if (
-            req.body.phone &&
-            !phone
-          ) {
-            throw new ApiError(
-              400,
-              'Enter a valid mobile number.'
-            );
-        }
+      if (
+        req.body.phone &&
+        !phone
+      ) {
+        throw new ApiError(
+          400,
+          'Enter a valid mobile number.'
+        );
+      }
 
       if (
         req.body
@@ -233,15 +238,31 @@ export const register =
         }
       );
 
+      const token =
+        tokenFor(
+          user
+        );
+
+      /*
+       * Primary browser session:
+       * secure httpOnly cookie.
+       *
+       * Token is still returned temporarily
+       * for backward compatibility while the
+       * frontend is migrated away from
+       * localStorage.
+       */
+      setSessionCookie(
+        res,
+        token
+      );
+
       ok(
         res,
         {
           user,
 
-          token:
-            tokenFor(
-              user
-            )
+          token
         },
 
         'Account created.',
@@ -258,17 +279,17 @@ export const login =
       res
     ) => {
       const email =
-          typeof req.body.email ===
-          'string'
-            ? req.body.email
-                .trim()
-                .toLowerCase()
-            : null,
+        typeof req.body.email ===
+        'string'
+          ? req.body.email
+              .trim()
+              .toLowerCase()
+          : null;
 
-        phone =
-          normalizePhone(
-            req.body.phone
-          );
+      const phone =
+        normalizePhone(
+          req.body.phone
+        );
 
       if (
         (
@@ -343,15 +364,30 @@ export const login =
         }
       );
 
+      const token =
+        tokenFor(
+          user
+        );
+
+      /*
+       * Browser receives the JWT through an
+       * httpOnly cookie.
+       */
+      setSessionCookie(
+        res,
+        token
+      );
+
       ok(
         res,
         {
           user,
 
-          token:
-            tokenFor(
-              user
-            )
+          /*
+           * Temporary legacy response.
+           * Removed after frontend migration.
+           */
+          token
         },
 
         'Signed in.'
@@ -474,9 +510,7 @@ export const confirmOtp =
           req.body.phone
         );
 
-      if (
-        !phone
-      ) {
+      if (!phone) {
         throw new ApiError(
           400,
           'Enter a valid mobile number.'
@@ -495,9 +529,7 @@ export const confirmOtp =
           '_id'
         );
 
-      if (
-        existing
-      ) {
+      if (existing) {
         throw new ApiError(
           409,
           'This mobile number is already associated with another account.'
@@ -610,17 +642,31 @@ export const changePassword =
       );
 
       /*
-       * Return a fresh token for the current device.
-       * All previous tokens immediately become invalid.
+       * Password change revokes every old session.
+       *
+       * Create a fresh session for this browser
+       * using the incremented tokenVersion.
+       */
+      const token =
+        tokenFor(
+          user
+        );
+
+      setSessionCookie(
+        res,
+        token
+      );
+
+      /*
+       * Token remains in the response only during
+       * the localStorage migration period.
        */
       ok(
         res,
         {
-          token:
-            tokenFor(
-              user
-            )
+          token
         },
+
         'Password changed.'
       );
     }

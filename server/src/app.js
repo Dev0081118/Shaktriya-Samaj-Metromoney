@@ -267,7 +267,7 @@ app.use(
     ],
 
     credentials:
-      false,
+      true,
 
     maxAge:
       86400
