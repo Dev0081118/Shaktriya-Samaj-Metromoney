@@ -34,6 +34,10 @@ const cookieSameSite =
 
 const cookieSecure =
   () => {
+    /*
+     * SameSite=None is accepted by modern browsers
+     * only when Secure is also enabled.
+     */
     if (
       cookieSameSite() ===
       'none'
@@ -44,7 +48,7 @@ const cookieSecure =
     return isProduction();
   };
 
-const maxAge =
+const cookieMaxAge =
   () => {
     const configured =
       Number(
@@ -56,15 +60,13 @@ const maxAge =
       Number.isFinite(
         configured
       ) &&
-      configured >
-        0
+      configured > 0
     ) {
       return configured;
     }
 
     /*
-     * Default matches the current
-     * JWT default lifetime: 7 days.
+     * Default matches JWT_EXPIRES_IN=7d.
      */
     return (
       7 *
@@ -87,7 +89,10 @@ const baseOptions =
       cookieSameSite(),
 
     path:
-      '/'
+      '/',
+
+    priority:
+      'high'
   });
 
 export const setSessionCookie =
@@ -102,7 +107,7 @@ export const setSessionCookie =
         ...baseOptions(),
 
         maxAge:
-          maxAge()
+          cookieMaxAge()
       }
     );
   };

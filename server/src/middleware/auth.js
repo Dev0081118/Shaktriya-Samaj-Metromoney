@@ -11,22 +11,10 @@ import {
   getSystemSettings
 } from '../services/systemService.js';
 
-/*
- * Session cookie name.
- *
- * Keep this centralized because the same name
- * will be used when login/register start issuing
- * httpOnly cookies in the next step.
- */
-export const SESSION_COOKIE_NAME =
-  'ksm_session';
+import {
+  SESSION_COOKIE_NAME
+} from '../utils/sessionCookie.js';
 
-/*
- * Read one cookie without adding another package.
- *
- * We intentionally keep cookie parsing minimal
- * because we only need the session cookie here.
- */
 const readCookie = (
   req,
   name
@@ -82,17 +70,16 @@ const readCookie = (
 };
 
 /*
- * Migration-safe token reader.
+ * Browser authentication now uses the httpOnly
+ * session cookie.
  *
- * During the cookie migration we support both:
+ * Bearer support remains available for:
+ * - automated tests
+ * - trusted API clients
+ * - transitional compatibility
  *
- * 1. httpOnly session cookie
- * 2. legacy Authorization Bearer token
- *
- * Cookie takes priority once present.
- *
- * After the frontend migration is complete,
- * Bearer support can be removed separately.
+ * The browser frontend no longer stores or sends
+ * JWTs itself.
  */
 const readToken = (
   req
@@ -148,14 +135,6 @@ const sessionIsCurrent = (
   payload,
   user
 ) => {
-  /*
-   * Existing JWTs created before tokenVersion was added
-   * are treated as version 0.
-   *
-   * This avoids logging everyone out immediately after
-   * this deployment, while still allowing password
-   * changes to invalidate old sessions.
-   */
   const tokenVersion =
     Number(
       payload.ver ??
@@ -294,7 +273,8 @@ export const optionalProtect =
         }
       } catch {
         /*
-         * Public request continues anonymously.
+         * Optional authentication:
+         * invalid sessions continue anonymously.
          */
       }
 

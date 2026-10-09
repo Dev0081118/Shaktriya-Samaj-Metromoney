@@ -8,7 +8,9 @@ import * as interact from '../controllers/interactionController.js';
 import * as admin from '../controllers/adminController.js';
 import * as business from '../controllers/businessController.js';
 import * as refund from '../controllers/refundController.js';
-
+import {
+  clearSessionCookie
+} from '../utils/sessionCookie.js';
 import {
   dashboard
 } from '../controllers/dashboardController.js';
@@ -147,7 +149,11 @@ router.post(
   (
     _req,
     res
-  ) =>
+  ) => {
+    clearSessionCookie(
+      res
+    );
+
     res.json({
       success:
         true,
@@ -157,7 +163,8 @@ router.post(
 
       data:
         {}
-    })
+    });
+  }
 );
 
 router.delete(

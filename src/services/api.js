@@ -18,7 +18,9 @@ export const assetUrl = (
   }
 
   if (
-    path.startsWith('http')
+    path.startsWith(
+      'http'
+    )
   ) {
     return path;
   }
@@ -35,11 +37,6 @@ export async function api(
   path,
   options = {}
 ) {
-  const token =
-    localStorage.getItem(
-      'ksm_token'
-    );
-
   const isForm =
     options.body instanceof
     FormData;
@@ -50,6 +47,14 @@ export async function api(
       {
         ...options,
 
+        /*
+         * Browser authentication is now handled
+         * exclusively by the secure httpOnly
+         * session cookie.
+         */
+        credentials:
+          'include',
+
         headers: {
           ...(isForm
             ? {}
@@ -57,13 +62,6 @@ export async function api(
                 'Content-Type':
                   'application/json'
               }),
-
-          ...(token
-            ? {
-                Authorization:
-                  `Bearer ${token}`
-              }
-            : {}),
 
           ...options.headers
         }
@@ -74,38 +72,17 @@ export async function api(
     await response
       .json()
       .catch(() => ({
-        success: false,
+        success:
+          false,
 
         message:
           'Unable to read server response.'
       }));
 
-  /*
-   * Some security-sensitive endpoints,
-   * such as change-password, rotate the
-   * current JWT.
-   *
-   * Persist the fresh token before any
-   * following API request can use the
-   * revoked token.
-   */
   if (
-    response.ok &&
-    data?.data?.token
+    response.status ===
+    401
   ) {
-    localStorage.setItem(
-      'ksm_token',
-      data.data.token
-    );
-  }
-
-  if (
-    response.status === 401
-  ) {
-    localStorage.removeItem(
-      'ksm_token'
-    );
-
     window.dispatchEvent(
       new Event(
         'ksm:unauthorized'

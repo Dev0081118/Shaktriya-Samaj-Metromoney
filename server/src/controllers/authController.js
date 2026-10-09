@@ -42,11 +42,6 @@ const normalizePhone = (
       ''
     );
 
-  /*
-   * E.164 allows at most 15 digits.
-   * Minimum 8 avoids obviously invalid values
-   * while still supporting international numbers.
-   */
   if (
     digits.length < 8 ||
     digits.length > 15
@@ -87,6 +82,24 @@ const tokenFor = (
         'HS256'
     }
   );
+
+/*
+ * JWTs must never be exposed to normal browser
+ * JavaScript.
+ *
+ * Integration tests still need the token while
+ * testing Bearer-based API compatibility.
+ */
+const testToken =
+  (
+    token
+  ) =>
+    process.env.NODE_ENV ===
+      'test'
+      ? {
+          token
+        }
+      : {};
 
 const legalVersion =
   () =>
@@ -132,7 +145,8 @@ export const register =
 
       if (
         !email ||
-        !password ||
+        typeof password !==
+          'string' ||
         password.length <
           8
       ) {
@@ -243,15 +257,6 @@ export const register =
           user
         );
 
-      /*
-       * Primary browser session:
-       * secure httpOnly cookie.
-       *
-       * Token is still returned temporarily
-       * for backward compatibility while the
-       * frontend is migrated away from
-       * localStorage.
-       */
       setSessionCookie(
         res,
         token
@@ -262,7 +267,9 @@ export const register =
         {
           user,
 
-          token
+          ...testToken(
+            token
+          )
         },
 
         'Account created.',
@@ -369,10 +376,6 @@ export const login =
           user
         );
 
-      /*
-       * Browser receives the JWT through an
-       * httpOnly cookie.
-       */
       setSessionCookie(
         res,
         token
@@ -383,11 +386,9 @@ export const login =
         {
           user,
 
-          /*
-           * Temporary legacy response.
-           * Removed after frontend migration.
-           */
-          token
+          ...testToken(
+            token
+          )
         },
 
         'Signed in.'
@@ -569,7 +570,8 @@ export const changePassword =
       } = req.body;
 
       if (
-        !newPassword ||
+        typeof newPassword !==
+          'string' ||
         newPassword.length <
           8
       ) {
@@ -642,10 +644,10 @@ export const changePassword =
       );
 
       /*
-       * Password change revokes every old session.
+       * All previous sessions now have the old
+       * tokenVersion and are invalid.
        *
-       * Create a fresh session for this browser
-       * using the incremented tokenVersion.
+       * This browser receives a fresh cookie.
        */
       const token =
         tokenFor(
@@ -657,14 +659,12 @@ export const changePassword =
         token
       );
 
-      /*
-       * Token remains in the response only during
-       * the localStorage migration period.
-       */
       ok(
         res,
         {
-          token
+          ...testToken(
+            token
+          )
         },
 
         'Password changed.'
