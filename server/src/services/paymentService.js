@@ -50,7 +50,7 @@ const safeEqual = (
   );
 };
 
-const razorpayAuth =
+const razorpayConfig =
   () => {
     const keyId =
       String(
@@ -59,7 +59,7 @@ const razorpayAuth =
           ''
       ).trim();
 
-    const secret =
+    const keySecret =
       String(
         process.env
           .RAZORPAY_KEY_SECRET ||
@@ -68,7 +68,7 @@ const razorpayAuth =
 
     if (
       !keyId ||
-      !secret
+      !keySecret
     ) {
       throw new ApiError(
         503,
@@ -76,18 +76,82 @@ const razorpayAuth =
       );
     }
 
+    return {
+      keyId,
+      keySecret
+    };
+  };
+
+const razorpayAuth =
+  () => {
+    const {
+      keyId,
+      keySecret
+    } =
+      razorpayConfig();
+
     return Buffer.from(
-      `${keyId}:${secret}`
+      `${keyId}:${keySecret}`
     ).toString(
       'base64'
     );
+  };
+
+const parseProviderResponse =
+  async (
+    response
+  ) => {
+    /*
+     * Real fetch responses support text().
+     *
+     * Some integration-test mocks expose only
+     * json(), so support both safely.
+     */
+    if (
+      typeof response?.text ===
+      'function'
+    ) {
+      const rawText =
+        await response.text();
+
+      if (!rawText) {
+        return {};
+      }
+
+      try {
+        return JSON.parse(
+          rawText
+        );
+      } catch {
+        return {
+          raw:
+            rawText.slice(
+              0,
+              1000
+            )
+        };
+      }
+    }
+
+    if (
+      typeof response?.json ===
+      'function'
+    ) {
+      try {
+        return await response.json();
+      } catch {
+        return {};
+      }
+    }
+
+    return {};
   };
 
 const providerRequest =
   async (
     url,
     options = {},
-    message =
+    fallbackMessage =
       'Payment provider is temporarily unavailable.'
   ) => {
     const auth =
@@ -106,6 +170,9 @@ const providerRequest =
               Authorization:
                 `Basic ${auth}`,
 
+              Accept:
+                'application/json',
+
               ...(options.body
                 ? {
                     'Content-Type':
@@ -118,37 +185,96 @@ const providerRequest =
 
             signal:
               AbortSignal.timeout(
-                10000
+                15000
               )
           }
         );
     } catch (
       error
     ) {
+      console.error(
+        'RAZORPAY NETWORK ERROR:',
+        {
+          name:
+            error?.name ||
+            'Error',
+
+          message:
+            error?.message ||
+            'Unknown network error'
+        }
+      );
+
       throw new ApiError(
         502,
-        message,
-        [],
-        undefined,
-        {
-          cause:
-            error
-        }
+        fallbackMessage
       );
     }
 
     const data =
-      await response
-        .json()
-        .catch(
-          () => ({})
-        );
+      await parseProviderResponse(
+        response
+      );
 
     return {
       response,
       data
     };
   };
+
+const providerErrorMessage =
+  (
+    data,
+    fallback
+  ) =>
+    data?.error
+      ?.description ||
+    data?.error
+      ?.reason ||
+    data?.description ||
+    data?.message ||
+    fallback;
+
+const providerErrorDetails =
+  (
+    response,
+    data
+  ) => ({
+    httpStatus:
+      response?.status ||
+      null,
+
+    errorCode:
+      data?.error
+        ?.code ||
+      null,
+
+    description:
+      data?.error
+        ?.description ||
+      data?.description ||
+      null,
+
+    source:
+      data?.error
+        ?.source ||
+      null,
+
+    step:
+      data?.error
+        ?.step ||
+      null,
+
+    reason:
+      data?.error
+        ?.reason ||
+      null,
+
+    metadata:
+      data?.error
+        ?.metadata ||
+      null
+  });
 
 export const paymentService = {
   async createOrder({
@@ -162,6 +288,24 @@ export const paymentService = {
       process.env
         .RAZORPAY_KEY_SECRET
     ) {
+      const numericAmount =
+        Number(
+          amount
+        );
+
+      if (
+        !Number.isFinite(
+          numericAmount
+        ) ||
+        numericAmount <=
+          0
+      ) {
+        throw new ApiError(
+          400,
+          'A valid payment amount is required.'
+        );
+      }
+
       const {
         response,
         data
@@ -176,9 +320,7 @@ export const paymentService = {
               JSON.stringify({
                 amount:
                   Math.round(
-                    Number(
-                      amount
-                    ) *
+                    numericAmount *
                       100
                   ),
 
@@ -200,11 +342,22 @@ export const paymentService = {
 
       if (
         !response.ok ||
-        !data.id
+        !data?.id
       ) {
+        console.error(
+          'RAZORPAY ORDER ERROR:',
+          providerErrorDetails(
+            response,
+            data
+          )
+        );
+
         throw new ApiError(
           502,
-          'Unable to create a secure payment order.'
+          providerErrorMessage(
+            data,
+            'Unable to create a secure payment order.'
+          )
         );
       }
 
@@ -215,7 +368,8 @@ export const paymentService = {
         providerOrderId:
           data.id,
 
-        amount,
+        amount:
+          numericAmount,
 
         currency:
           data.currency ||
@@ -264,10 +418,14 @@ export const paymentService = {
     signature:
       provided
   }) {
-    if (
-      !process.env
-        .RAZORPAY_KEY_SECRET
-    ) {
+    const secret =
+      String(
+        process.env
+          .RAZORPAY_KEY_SECRET ||
+          ''
+      ).trim();
+
+    if (!secret) {
       throw new ApiError(
         503,
         'Payment verification is not configured.'
@@ -275,11 +433,21 @@ export const paymentService = {
     }
 
     if (
+      !orderId ||
+      !paymentId ||
+      !provided
+    ) {
+      throw new ApiError(
+        400,
+        'Payment verification details are incomplete.'
+      );
+    }
+
+    if (
       !safeEqual(
         signature(
           `${orderId}|${paymentId}`,
-          process.env
-            .RAZORPAY_KEY_SECRET
+          secret
         ),
         provided
       )
@@ -320,11 +488,26 @@ export const paymentService = {
 
     if (
       !response.ok ||
-      !data.id
+      !data?.id
     ) {
+      console.error(
+        'RAZORPAY PAYMENT FETCH ERROR:',
+        {
+          paymentId,
+
+          ...providerErrorDetails(
+            response,
+            data
+          )
+        }
+      );
+
       throw new ApiError(
         502,
-        'Unable to confirm payment with the payment provider.'
+        providerErrorMessage(
+          data,
+          'Unable to confirm payment with the payment provider.'
+        )
       );
     }
 
@@ -338,8 +521,14 @@ export const paymentService = {
     reason,
     requestedBy
   }) {
+    if (!paymentId) {
+      throw new ApiError(
+        400,
+        'Payment identifier is required.'
+      );
+    }
+
     if (
-      !paymentId ||
       !Number.isInteger(
         amountPaise
       ) ||
@@ -352,6 +541,25 @@ export const paymentService = {
       );
     }
 
+    if (!refundRequestId) {
+      throw new ApiError(
+        400,
+        'Refund request identifier is required.'
+      );
+    }
+
+    /*
+     * Do not pre-fetch the Razorpay payment here.
+     *
+     * The refund endpoint itself validates whether
+     * the payment exists, belongs to the account,
+     * is captured, and still has refundable balance.
+     *
+     * Avoiding a second provider request also:
+     * - reduces latency
+     * - avoids race conditions between GET + refund
+     * - keeps test/provider behaviour deterministic
+     */
     const {
       response,
       data
@@ -369,12 +577,6 @@ export const paymentService = {
               amount:
                 amountPaise,
 
-              receipt:
-                `rf_${refundRequestId}`.slice(
-                  0,
-                  40
-                ),
-
               notes: {
                 refundRequestId:
                   String(
@@ -388,7 +590,8 @@ export const paymentService = {
 
                 reason:
                   String(
-                    reason
+                    reason ||
+                    ''
                   ).slice(
                     0,
                     200
@@ -404,23 +607,30 @@ export const paymentService = {
       !data?.id
     ) {
       console.error(
-        'Razorpay refund rejected:',
+        'RAZORPAY REFUND ERROR:',
         {
-          status:
-            response.status,
+          paymentId,
 
-          code:
-            data?.error
-              ?.code ||
-            'unknown'
+          amountPaise,
+
+          refundRequestId:
+            String(
+              refundRequestId
+            ),
+
+          ...providerErrorDetails(
+            response,
+            data
+          )
         }
       );
 
       throw new ApiError(
         502,
-        data?.error
-          ?.description ||
+        providerErrorMessage(
+          data,
           'Payment provider rejected the refund request.'
+        )
       );
     }
 
@@ -449,25 +659,19 @@ export const paymentService = {
         String(
           data.status ||
             'pending'
-        ).toLowerCase(),
+        )
+          .trim()
+          .toLowerCase(),
 
       raw:
         data
     };
   },
 
-  /*
-   * Fetch a refund directly from Razorpay.
-   *
-   * This is the fallback when the webhook is delayed,
-   * unavailable locally, or was missed.
-   */
   async fetchRefund(
     refundId
   ) {
-    if (
-      !refundId
-    ) {
+    if (!refundId) {
       throw new ApiError(
         400,
         'Refund identifier is required.'
@@ -493,11 +697,24 @@ export const paymentService = {
       !response.ok ||
       !data?.id
     ) {
+      console.error(
+        'RAZORPAY REFUND FETCH ERROR:',
+        {
+          refundId,
+
+          ...providerErrorDetails(
+            response,
+            data
+          )
+        }
+      );
+
       throw new ApiError(
         502,
-        data?.error
-          ?.description ||
+        providerErrorMessage(
+          data,
           'Unable to fetch refund status from the payment provider.'
+        )
       );
     }
 
@@ -508,13 +725,24 @@ export const paymentService = {
     rawBody,
     provided
   ) {
-    if (
-      !process.env
-        .RAZORPAY_WEBHOOK_SECRET
-    ) {
+    const secret =
+      String(
+        process.env
+          .RAZORPAY_WEBHOOK_SECRET ||
+          ''
+      ).trim();
+
+    if (!secret) {
       throw new ApiError(
         503,
         'Payment webhook is not configured.'
+      );
+    }
+
+    if (!provided) {
+      throw new ApiError(
+        400,
+        'Webhook signature is missing.'
       );
     }
 
@@ -522,8 +750,7 @@ export const paymentService = {
       !safeEqual(
         signature(
           rawBody,
-          process.env
-            .RAZORPAY_WEBHOOK_SECRET
+          secret
         ),
         provided
       )
