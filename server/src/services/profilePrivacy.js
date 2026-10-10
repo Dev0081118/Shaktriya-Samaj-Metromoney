@@ -102,10 +102,24 @@ export async function relationshipContext(
     !viewerProfile
   ) {
     return {
+      owner:
+        false,
+
+      privileged:
+        false,
+
       registered:
         true,
+
+      accepted:
+        false,
+
+      matched:
+        false,
+
       blocked:
         false,
+
       contactUnlocked:
         false
     };
@@ -123,13 +137,16 @@ export async function relationshipContext(
           {
             user:
               viewer._id,
+
             blockedProfile:
               profile._id
           },
+
           {
             user:
               profile.userId?._id ||
               profile.userId,
+
             blockedProfile:
               viewerProfile._id
           }
@@ -144,12 +161,15 @@ export async function relationshipContext(
           {
             senderProfile:
               viewerProfile._id,
+
             receiverProfile:
               profile._id
           },
+
           {
             senderProfile:
               profile._id,
+
             receiverProfile:
               viewerProfile._id
           }
@@ -161,6 +181,7 @@ export async function relationshipContext(
           String(
             viewerProfile._id
           ),
+
           String(
             profile._id
           )
@@ -182,12 +203,15 @@ export async function relationshipContext(
           {
             requesterProfile:
               viewerProfile._id,
+
             receiverProfile:
               profile._id
           },
+
           {
             requesterProfile:
               profile._id,
+
             receiverProfile:
               viewerProfile._id
           }
@@ -269,8 +293,7 @@ const secureProfileMedia =
               const secureUrl =
                 mediaService.accessUrl({
                   publicId:
-                    asset
-                      .publicId,
+                    asset.publicId,
 
                   url:
                     asset.url
@@ -297,13 +320,77 @@ const secureProfileMedia =
     }
 
     /*
-     * Do not expose Cloudinary public IDs.
-     * They are storage identifiers, not client data.
+     * Storage IDs are never client-facing.
      */
     delete profileObject
       .profilePhotoPublicId;
 
     return profileObject;
+  };
+
+const removeBirthAndAstrologyDetails =
+  (
+    profileObject
+  ) => {
+    delete profileObject
+      .dateOfBirth;
+
+    delete profileObject
+      .birthDetails;
+
+    delete profileObject
+      .astrology;
+  };
+
+const sanitizeContactDetails =
+  (
+    profileObject,
+    context,
+    privacy
+  ) => {
+    if (
+      !profileObject
+        .contactDetails
+    ) {
+      return;
+    }
+
+    const contactRule =
+      privacy
+        .contactAddressVisibility ||
+      'Private';
+
+    /*
+     * Structured contact/address data
+     * requires BOTH:
+     *
+     * 1. contact unlock
+     * 2. privacy rule permission
+     *
+     * Owner/admins bypass these checks.
+     */
+    if (
+      !context.contactUnlocked ||
+      !allowed(
+        contactRule,
+        context
+      )
+    ) {
+      delete profileObject
+        .contactDetails;
+
+      return;
+    }
+
+    /*
+     * Even after contact unlock,
+     * only expose fields the member
+     * intentionally stored.
+     */
+    profileObject.contactDetails = {
+      ...profileObject
+        .contactDetails
+    };
   };
 
 export async function serializeProfileForViewer(
@@ -333,13 +420,35 @@ export async function serializeProfileForViewer(
     p.privacy ||
     {};
 
+  /*
+   * Age is safe to expose according to
+   * the existing product behavior.
+   */
   p.age =
     calculateAge(
       p.dateOfBirth
     );
 
-  delete p.dateOfBirth;
   delete p.moderatedBy;
+
+  /*
+   * CRITICAL:
+   *
+   * Existing behavior removed dateOfBirth
+   * for EVERYONE, including the owner.
+   *
+   * That broke Edit Profile because
+   * /profiles/me could never return DOB.
+   *
+   * Owner and privileged staff retain the
+   * real date so forms/admin tools can work.
+   */
+  if (
+    !context.owner &&
+    !context.privileged
+  ) {
+    delete p.dateOfBirth;
+  }
 
   if (
     !context.owner &&
@@ -387,6 +496,10 @@ export async function serializeProfileForViewer(
         .annualIncome;
     }
 
+    /*
+     * Family overview controls:
+     * immediate family + paternal family.
+     */
     const familyRule =
       privacy
         .familyOverviewVisibility ||
@@ -415,6 +528,11 @@ export async function serializeProfileForViewer(
         .siblingDetails;
     }
 
+    /*
+     * Maternal family and all three Mosal
+     * lineage branches use the same
+     * dedicated maternal privacy rule.
+     */
     if (
       !allowed(
         privacy
@@ -424,8 +542,13 @@ export async function serializeProfileForViewer(
       )
     ) {
       delete p.maternalFamily;
+      delete p.maternalLineage;
     }
 
+    /*
+     * Family/property assets remain
+     * private unless specifically enabled.
+     */
     if (
       !allowed(
         privacy.assetVisibility ||
@@ -437,8 +560,30 @@ export async function serializeProfileForViewer(
     }
 
     /*
-     * Marital history may contain legal /
-     * children-related information.
+     * Birth-time/place and astrology
+     * are controlled together.
+     */
+    if (
+      !allowed(
+        privacy.astrologyVisibility ||
+          'RegisteredMembers',
+        context
+      )
+    ) {
+      delete p.birthDetails;
+      delete p.astrology;
+    }
+
+    /*
+     * Exact DOB itself is not exposed to
+     * other members. They receive age.
+     */
+    delete p.dateOfBirth;
+
+    /*
+     * Previous-marriage legal/children
+     * details require an accepted interest
+     * or mutual match.
      */
     if (
       !context.accepted &&
@@ -447,8 +592,27 @@ export async function serializeProfileForViewer(
       delete p.maritalHistory;
     }
 
+    /*
+     * Contact details use their own
+     * privacy gate + contact unlock.
+     */
+    sanitizeContactDetails(
+      p,
+      context,
+      privacy
+    );
+
+    /*
+     * Biodata generation switches are
+     * owner configuration, not public
+     * profile information.
+     */
     delete p.biodataPrivacy;
 
+    /*
+     * Existing account-level phone/email
+     * unlock flow stays intact.
+     */
     if (
       context.contactUnlocked &&
       p.userId &&
@@ -471,12 +635,38 @@ export async function serializeProfileForViewer(
       };
     }
 
+    /*
+     * Never expose the underlying User
+     * document to another member.
+     */
     delete p.userId;
   }
 
   /*
-   * Only generate a temporary media URL AFTER
-   * all privacy rules have been checked.
+   * Defensive rule:
+   *
+   * If a non-owner ever reaches this
+   * point without astrology permission,
+   * exact birth details must still be
+   * unavailable.
+   */
+  if (
+    !context.owner &&
+    !context.privileged &&
+    !allowed(
+      privacy.astrologyVisibility ||
+        'RegisteredMembers',
+      context
+    )
+  ) {
+    removeBirthAndAstrologyDetails(
+      p
+    );
+  }
+
+  /*
+   * Only generate temporary media URLs
+   * AFTER all privacy decisions.
    */
   if (
     p.profilePhoto ||
