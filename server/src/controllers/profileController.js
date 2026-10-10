@@ -397,6 +397,146 @@ const profilePayload =
     return safe;
   };
 
+const nestedProfileSections = [
+  'location',
+  'community',
+  'education',
+  'career',
+  'lifestyle',
+  'family',
+  'privacy',
+  'maritalHistory',
+  'paternalFamily',
+  'maternalFamily',
+  'familyAssets',
+  'biodataPrivacy'
+];
+
+const plainObject =
+  (
+    value
+  ) => {
+    if (
+      !value
+    ) {
+      return {};
+    }
+
+    if (
+      typeof value.toObject ===
+        'function'
+    ) {
+      return value.toObject();
+    }
+
+    if (
+      typeof value ===
+        'object' &&
+      !Array.isArray(
+        value
+      )
+    ) {
+      return {
+        ...value
+      };
+    }
+
+    return {};
+  };
+
+const mergeProfileData =
+  (
+    profile,
+    incoming
+  ) => {
+    const topLevel = {
+      ...incoming
+    };
+
+    for (
+      const key
+      of nestedProfileSections
+    ) {
+      delete topLevel[
+        key
+      ];
+    }
+
+    Object.assign(
+      profile,
+      topLevel
+    );
+
+    for (
+      const key
+      of nestedProfileSections
+    ) {
+      if (
+        incoming[
+          key
+        ] ===
+        undefined
+      ) {
+        continue;
+      }
+
+      const existing =
+        plainObject(
+          profile[
+            key
+          ]
+        );
+
+      if (
+        key ===
+        'familyAssets'
+      ) {
+        const incomingAssets =
+          incoming.familyAssets ||
+          {};
+
+        const existingLand =
+          plainObject(
+            existing.agricultureLand
+          );
+
+        const incomingLand =
+          incomingAssets.agricultureLand;
+
+        profile.familyAssets = {
+          ...existing,
+          ...incomingAssets,
+
+          ...(
+            incomingLand !==
+            undefined
+              ? {
+                  agricultureLand: {
+                    ...existingLand,
+                    ...incomingLand
+                  }
+                }
+              : {
+                  agricultureLand:
+                    existing.agricultureLand
+                }
+          )
+        };
+
+        continue;
+      }
+
+      profile[
+        key
+      ] = {
+        ...existing,
+        ...incoming[
+          key
+        ]
+      };
+    }
+  };
+
 const escapedRegex =
   (
     value
@@ -456,20 +596,6 @@ export const upsert =
         }
       }
 
-      if (
-        safe.visibility ===
-          'pending_review' &&
-        (
-          !safe.firstName ||
-          !safe.profileFor
-        )
-      ) {
-        throw new ApiError(
-          400,
-          'Profile name and profile owner are required before review.'
-        );
-      }
-
       let profile =
         await MatrimonialProfile.findOne({
           userId:
@@ -479,21 +605,35 @@ export const upsert =
       if (
         profile
       ) {
-        Object.assign(
+        mergeProfileData(
           profile,
           safe
         );
-
-        await profile.save();
       } else {
         profile =
-          await MatrimonialProfile.create({
+          new MatrimonialProfile({
             ...safe,
 
             userId:
               req.user.id
           });
       }
+
+      if (
+        profile.visibility ===
+          'pending_review' &&
+        (
+          !profile.firstName ||
+          !profile.profileFor
+        )
+      ) {
+        throw new ApiError(
+          400,
+          'Profile name and profile owner are required before review.'
+        );
+      }
+
+      await profile.save();
 
       const preference =
         await PartnerPreference.findOne({
@@ -1322,12 +1462,14 @@ export const savePreferences =
             profileId:
               profile._id
           },
+
           {
             ...safe,
 
             profileId:
               profile._id
           },
+
           {
             upsert:
               true,
