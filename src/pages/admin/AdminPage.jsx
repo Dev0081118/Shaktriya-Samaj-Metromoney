@@ -1,4 +1,9 @@
-import { useEffect, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState
+} from 'react';
+
 import {
   Route,
   Routes,
@@ -6,63 +11,216 @@ import {
   useParams
 } from 'react-router-dom';
 
+import {
+  RefreshCw,
+  ArrowRight,
+  ShieldCheck,
+  UserRound,
+  WalletCards
+} from 'lucide-react';
+
 import AdminNav from '../../components/AdminNav';
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
+
+import {
+  useAuth
+} from '../../context/AuthContext';
+
+import {
+  useToast
+} from '../../context/ToastContext';
+
 import {
   api,
   assetUrl
 } from '../../services/api';
+
 import {
   formatCurrency,
   formatDate
 } from '../../utils/formatters';
 
 const primaryButtonClass =
-  "inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318] disabled:opacity-55";
+  "inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318] disabled:cursor-not-allowed disabled:opacity-55";
 
 const outlineButtonClass =
-  "inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white disabled:opacity-55";
+  "inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white disabled:cursor-not-allowed disabled:opacity-55";
 
 const adminTableClass =
   "mt-10 border border-[#ddd0c1] bg-[#fffdf8] px-[25px] pb-[15px]";
 
 const adminRowClass =
-  "grid grid-cols-[auto_1fr_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4 max-[767px]:grid-cols-[auto_1fr_auto]";
+  "grid grid-cols-[auto_1fr_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4 max-[767px]:grid-cols-[auto_1fr]";
 
 const reportRowClass =
-  "grid grid-cols-[1fr_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4";
+  "grid grid-cols-[1fr_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4 max-[767px]:grid-cols-1";
 
 const metricCardClass =
   "border border-[#ddd0c1] bg-[#fffdf8] p-[25px]";
 
 const metricValueClass =
-  "block font-['Cormorant_Garamond'] text-[34px] font-medium";
+  "block font-['Cormorant_Garamond'] text-[34px] font-medium text-[#2c1a18]";
 
 const metricLabelClass =
-  "text-[9px] uppercase text-[#756a60]";
+  "mt-1 block text-[9px] font-bold uppercase tracking-[0.08em] text-[#756a60]";
 
 const operationCardClass =
   "border border-[#ddd0c1] bg-[#fffdf8] p-6";
 
-function Async({ path, children }) {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState('');
+const detailCardClass =
+  "border border-[#ddd0c1] bg-[#fffdf8] p-5";
 
-  useEffect(() => {
-    api(path)
-      .then((response) => setData(response.data))
-      .catch((requestError) =>
-        setError(requestError.message)
-      );
-  }, [path]);
+const detailLabelClass =
+  "text-[8px] font-extrabold uppercase tracking-[0.12em] text-[#756a60]";
 
-  if (error) {
+const detailValueClass =
+  "mt-1 break-words font-['Cormorant_Garamond'] text-[20px] font-medium text-[#2c1a18]";
+
+const displayValue = (
+  value,
+  fallback = 'Not provided'
+) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ''
+  ) {
+    return fallback;
+  }
+
+  return value;
+};
+
+function Async({
+  path,
+  children
+}) {
+  const [
+    data,
+    setData
+  ] =
+    useState(null);
+
+  const [
+    error,
+    setError
+  ] =
+    useState('');
+
+  const [
+    refreshing,
+    setRefreshing
+  ] =
+    useState(false);
+
+  const reload =
+    useCallback(
+      async () => {
+        setRefreshing(
+          true
+        );
+
+        setError('');
+
+        try {
+          const response =
+            await api(
+              path
+            );
+
+          setData(
+            response.data
+          );
+        } catch (
+          requestError
+        ) {
+          setError(
+            requestError.message
+          );
+        } finally {
+          setRefreshing(
+            false
+          );
+        }
+      },
+      [
+        path
+      ]
+    );
+
+  useEffect(
+    () => {
+      let active =
+        true;
+
+      api(path)
+        .then(
+          (
+            response
+          ) => {
+            if (
+              !active
+            ) {
+              return;
+            }
+
+            setData(
+              response.data
+            );
+
+            setError(
+              ''
+            );
+          }
+        )
+        .catch(
+          (
+            requestError
+          ) => {
+            if (
+              !active
+            ) {
+              return;
+            }
+
+            setError(
+              requestError.message
+            );
+          }
+        );
+
+      return () => {
+        active =
+          false;
+      };
+    },
+    [
+      path
+    ]
+  );
+
+  if (
+    error &&
+    !data
+  ) {
     return (
       <div className="border border-[#ddd0c1] bg-[#fffdf8] px-[30px] py-[60px] text-center">
         <p className="mx-auto max-w-[430px] text-[13px] leading-[1.8] text-[#756a60]">
           {error}
         </p>
+
+        <button
+          type="button"
+          className={`${outlineButtonClass} mt-5`}
+          onClick={
+            reload
+          }
+        >
+          <RefreshCw
+            size={15}
+          />
+
+          Retry
+        </button>
       </div>
     );
   }
@@ -70,145 +228,510 @@ function Async({ path, children }) {
   if (!data) {
     return (
       <div className="page-skeleton">
-        Loading administration data…
+        Loading administration
+        data…
       </div>
     );
   }
 
-  return children(data, setData);
+  return children(
+    data,
+    setData,
+    {
+      reload,
+      refreshing,
+      error
+    }
+  );
 }
 
 function Overview() {
+  const navigate =
+    useNavigate();
+
+  const {
+    user
+  } =
+    useAuth();
+
   return (
     <Async path="/admin/dashboard">
-      {(data) => (
+      {(
+        data,
+        _setData,
+        {
+          reload,
+          refreshing
+        }
+      ) => (
         <>
-          <header className="mb-[30px]">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
-              Operations control center
-            </p>
+          <header className="mb-[30px] flex items-end justify-between gap-5 max-[767px]:items-start">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+                Operations control
+                center
+              </p>
 
-            <h1 className="mt-3 max-w-[900px] font-['Cormorant_Garamond'] text-[clamp(42px,5vw,66px)] font-medium leading-[0.98] text-[#2c1a18]">
-              Business overview
-            </h1>
+              <h1 className="mt-3 max-w-[900px] font-['Cormorant_Garamond'] text-[clamp(42px,5vw,66px)] font-medium leading-[0.98] text-[#2c1a18]">
+                Business overview
+              </h1>
+
+              <p className="mt-4 max-w-[700px] text-[13px] leading-7 text-[#756a60]">
+                Live operational
+                snapshot of members,
+                moderation,
+                matrimonial activity
+                and memberships.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className={
+                outlineButtonClass
+              }
+              disabled={
+                refreshing
+              }
+              onClick={
+                reload
+              }
+            >
+              <RefreshCw
+                size={15}
+                className={
+                  refreshing
+                    ? 'animate-spin'
+                    : ''
+                }
+              />
+
+              Refresh
+            </button>
           </header>
 
-          <div className="grid grid-cols-3 gap-[15px] max-[767px]:grid-cols-2">
+          <div className="grid grid-cols-4 gap-[15px] max-[1100px]:grid-cols-3 max-[767px]:grid-cols-2">
             {[
               [
-                data.customers.total,
+                data.customers
+                  ?.total ||
+                  0,
+
                 'Total customers'
               ],
+
               [
-                data.profiles.active || 0,
+                data.customers
+                  ?.active ||
+                  0,
+
+                'Active accounts'
+              ],
+
+              [
+                data.profiles
+                  ?.active ||
+                  0,
+
                 'Active profiles'
               ],
+
               [
-                data.subscriptions.active,
+                data.subscriptions
+                  ?.active ||
+                  0,
+
                 'Paid members'
               ],
+
               ...(data.finance
                 ? [
                     [
                       formatCurrency(
-                        data.finance.capturedRevenue
+                        data.finance
+                          .capturedRevenue ||
+                          0
                       ),
+
                       'Captured revenue'
                     ]
                   ]
                 : []),
+
               [
-                data.supportSafety.pendingModeration,
+                data.supportSafety
+                  ?.pendingModeration ||
+                  0,
+
                 'Pending moderation'
               ],
+
               [
-                data.supportSafety.openReports,
+                data.supportSafety
+                  ?.openReports ||
+                  0,
+
                 'Open reports'
               ],
+
               [
-                data.supportSafety.openSupport,
+                data.supportSafety
+                  ?.openSupport ||
+                  0,
+
                 'Support tickets'
               ],
+
               [
-                data.subscriptions.expiringIn7Days,
+                data.subscriptions
+                  ?.expiringIn7Days ||
+                  0,
+
                 'Expiring in 7 days'
               ]
-            ].map(([value, label]) => (
-              <article
-                className={metricCardClass}
-                key={label}
-              >
-                <strong className={metricValueClass}>
-                  {value}
-                </strong>
+            ].map(
+              ([
+                value,
+                label
+              ]) => (
+                <article
+                  className={
+                    metricCardClass
+                  }
+                  key={
+                    label
+                  }
+                >
+                  <strong
+                    className={
+                      metricValueClass
+                    }
+                  >
+                    {value}
+                  </strong>
 
-                <span className={metricLabelClass}>
-                  {label}
-                </span>
-              </article>
-            ))}
+                  <span
+                    className={
+                      metricLabelClass
+                    }
+                  >
+                    {label}
+                  </span>
+                </article>
+              )
+            )}
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-[18px] max-[767px]:grid-cols-1">
-            <section className={operationCardClass}>
-              <h2 className="font-['Cormorant_Garamond'] text-[24px] font-medium">
-                Customer acquisition
+            <section
+              className={
+                operationCardClass
+              }
+            >
+              <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium text-[#2c1a18]">
+                Customer
+                acquisition
               </h2>
+
+              <p className="mb-5 mt-1 text-[11px] text-[#756a60]">
+                Account creation and
+                verification activity.
+              </p>
 
               <div className="grid gap-3">
                 {[
-                  ['Today', data.customers.today],
-                  ['This week', data.customers.week],
-                  ['This month', data.customers.month],
-                  ['Verified', data.customers.verified]
-                ].map(([label, value]) => (
-                  <span
-                    key={label}
-                    className="flex justify-between gap-5 border-b border-[#ddd0c1] pb-2"
-                  >
-                    {label}
+                  [
+                    'Today',
+                    data.customers
+                      ?.today ||
+                      0
+                  ],
 
-                    <strong>{value}</strong>
-                  </span>
-                ))}
+                  [
+                    'This week',
+                    data.customers
+                      ?.week ||
+                      0
+                  ],
+
+                  [
+                    'This month',
+                    data.customers
+                      ?.month ||
+                      0
+                  ],
+
+                  [
+                    'Verified',
+                    data.customers
+                      ?.verified ||
+                      0
+                  ],
+
+                  [
+                    'Suspended',
+                    data.customers
+                      ?.suspended ||
+                      0
+                  ],
+
+                  [
+                    'Blocked',
+                    data.customers
+                      ?.blocked ||
+                      0
+                  ]
+                ].map(
+                  ([
+                    label,
+                    value
+                  ]) => (
+                    <span
+                      key={
+                        label
+                      }
+                      className="flex justify-between gap-5 border-b border-[#ddd0c1] pb-2 text-[12px]"
+                    >
+                      {label}
+
+                      <strong>
+                        {value}
+                      </strong>
+                    </span>
+                  )
+                )}
               </div>
+
+              {[
+                'admin',
+                'super_admin'
+              ].includes(
+                user?.role
+              ) && (
+                <button
+                  type="button"
+                  className={`${outlineButtonClass} mt-5`}
+                  onClick={() =>
+                    navigate(
+                      '/admin/customers'
+                    )
+                  }
+                >
+                  Manage customers
+
+                  <ArrowRight
+                    size={14}
+                  />
+                </button>
+              )}
             </section>
 
-            <section className={operationCardClass}>
-              <h2 className="font-['Cormorant_Garamond'] text-[24px] font-medium">
-                Matrimonial activity
+            <section
+              className={
+                operationCardClass
+              }
+            >
+              <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium text-[#2c1a18]">
+                Matrimonial
+                activity
               </h2>
+
+              <p className="mb-5 mt-1 text-[11px] text-[#756a60]">
+                Member engagement and
+                relationship activity.
+              </p>
 
               <div className="grid gap-3">
                 {[
                   [
                     'Interests',
-                    data.matrimonial.interests
+                    data.matrimonial
+                      ?.interests ||
+                      0
                   ],
+
                   [
-                    'Pending',
-                    data.matrimonial.pendingInterests
+                    'Pending interests',
+                    data.matrimonial
+                      ?.pendingInterests ||
+                      0
                   ],
+
                   [
                     'Matches',
-                    data.matrimonial.matches
+                    data.matrimonial
+                      ?.matches ||
+                      0
                   ],
+
+                  [
+                    'Contact requests',
+                    data.matrimonial
+                      ?.contactRequests ||
+                      0
+                  ],
+
                   [
                     'Contact unlocks',
-                    data.matrimonial.contactUnlocks
-                  ]
-                ].map(([label, value]) => (
-                  <span
-                    key={label}
-                    className="flex justify-between gap-5 border-b border-[#ddd0c1] pb-2"
-                  >
-                    {label}
+                    data.matrimonial
+                      ?.contactUnlocks ||
+                      0
+                  ],
 
-                    <strong>{value}</strong>
-                  </span>
-                ))}
+                  [
+                    'Shortlists',
+                    data.matrimonial
+                      ?.shortlists ||
+                      0
+                  ]
+                ].map(
+                  ([
+                    label,
+                    value
+                  ]) => (
+                    <span
+                      key={
+                        label
+                      }
+                      className="flex justify-between gap-5 border-b border-[#ddd0c1] pb-2 text-[12px]"
+                    >
+                      {label}
+
+                      <strong>
+                        {value}
+                      </strong>
+                    </span>
+                  )
+                )}
               </div>
+
+              <button
+                type="button"
+                className={`${outlineButtonClass} mt-5`}
+                onClick={() =>
+                  navigate(
+                    '/admin/profiles'
+                  )
+                }
+              >
+                Review profiles
+
+                <ArrowRight
+                  size={14}
+                />
+              </button>
             </section>
+          </div>
+
+          <div className="mt-6 grid grid-cols-3 gap-[15px] max-[900px]:grid-cols-1">
+            <button
+              type="button"
+              className="flex items-center justify-between border border-[#ddd0c1] bg-[#fffdf8] p-5 text-left transition hover:border-[#aa7a42]"
+              onClick={() =>
+                navigate(
+                  '/admin/profiles'
+                )
+              }
+            >
+              <span>
+                <ShieldCheck
+                  size={20}
+                  className="mb-3 text-[#681d25]"
+                />
+
+                <strong className="block font-['Cormorant_Garamond'] text-[24px] font-medium">
+                  Moderation queue
+                </strong>
+
+                <small className="text-[10px] text-[#756a60]">
+                  {
+                    data
+                      .supportSafety
+                      ?.pendingModeration ||
+                    0
+                  }{' '}
+                  profiles waiting
+                </small>
+              </span>
+
+              <ArrowRight
+                size={17}
+              />
+            </button>
+
+            {[
+              'admin',
+              'super_admin'
+            ].includes(
+              user?.role
+            ) && (
+              <button
+                type="button"
+                className="flex items-center justify-between border border-[#ddd0c1] bg-[#fffdf8] p-5 text-left transition hover:border-[#aa7a42]"
+                onClick={() =>
+                  navigate(
+                    '/admin/subscriptions'
+                  )
+                }
+              >
+                <span>
+                  <UserRound
+                    size={20}
+                    className="mb-3 text-[#681d25]"
+                  />
+
+                  <strong className="block font-['Cormorant_Garamond'] text-[24px] font-medium">
+                    Memberships
+                  </strong>
+
+                  <small className="text-[10px] text-[#756a60]">
+                    {
+                      data
+                        .subscriptions
+                        ?.active ||
+                      0
+                    }{' '}
+                    active
+                  </small>
+                </span>
+
+                <ArrowRight
+                  size={17}
+                />
+              </button>
+            )}
+
+            {user?.role ===
+              'super_admin' && (
+              <button
+                type="button"
+                className="flex items-center justify-between border border-[#ddd0c1] bg-[#fffdf8] p-5 text-left transition hover:border-[#aa7a42]"
+                onClick={() =>
+                  navigate(
+                    '/admin/revenue'
+                  )
+                }
+              >
+                <span>
+                  <WalletCards
+                    size={20}
+                    className="mb-3 text-[#681d25]"
+                  />
+
+                  <strong className="block font-['Cormorant_Garamond'] text-[24px] font-medium">
+                    Revenue
+                  </strong>
+
+                  <small className="text-[10px] text-[#756a60]">
+                    Payment analytics
+                  </small>
+                </span>
+
+                <ArrowRight
+                  size={17}
+                />
+              </button>
+            )}
           </div>
 
           <Queue />
@@ -219,65 +742,132 @@ function Overview() {
 }
 
 function Queue() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   return (
     <Async path="/admin/profiles?status=pending_review">
-      {(data) => (
-        <section className={adminTableClass}>
-          <div className="my-6 mt-[52px] flex items-end justify-between">
+      {(
+        data,
+        _setData,
+        {
+          reload,
+          refreshing
+        }
+      ) => (
+        <section
+          className={
+            adminTableClass
+          }
+        >
+          <div className="my-6 mt-[52px] flex items-end justify-between gap-4">
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
                 Queue
               </p>
 
               <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
-                Profiles awaiting review
+                Profiles awaiting
+                review
               </h2>
             </div>
+
+            <button
+              type="button"
+              className={
+                outlineButtonClass
+              }
+              onClick={
+                reload
+              }
+              disabled={
+                refreshing
+              }
+            >
+              <RefreshCw
+                size={14}
+                className={
+                  refreshing
+                    ? 'animate-spin'
+                    : ''
+                }
+              />
+
+              Refresh
+            </button>
           </div>
 
-          {data.profiles.length ? (
-            data.profiles.map((profile) => (
-              <div
-                className={adminRowClass}
-                key={profile._id}
-              >
-                <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#c49b70] font-extrabold text-[#291817]">
-                  {profile.firstName?.[0]}
-                </span>
-
-                <div>
-                  <strong className="block text-[11px]">
-                    {profile.firstName}{' '}
-                    {profile.lastName}
-                  </strong>
-
-                  <small className="block text-[9px] text-[#756a60]">
-                    {profile.profileId} •{' '}
-                    {profile.location?.city}
-                  </small>
-                </div>
-
-                <time className="text-[9px] text-[#756a60] max-[767px]:hidden">
-                  {formatDate(profile.createdAt)}
-                </time>
-
-                <button
-                  onClick={() =>
-                    navigate(
-                      `/admin/profiles/${profile._id}`
-                    )
+          {data.profiles
+            ?.length ? (
+            data.profiles.map(
+              (
+                profile
+              ) => (
+                <div
+                  className={
+                    adminRowClass
                   }
-                  className={outlineButtonClass}
+                  key={
+                    profile._id
+                  }
                 >
-                  Review
-                </button>
-              </div>
-            ))
+                  <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#c49b70] font-extrabold text-[#291817]">
+                    {profile
+                      .firstName?.[0] ||
+                      '?'}
+                  </span>
+
+                  <div>
+                    <strong className="block text-[11px]">
+                      {
+                        profile.firstName
+                      }{' '}
+                      {
+                        profile.lastName
+                      }
+                    </strong>
+
+                    <small className="block text-[9px] text-[#756a60]">
+                      {
+                        profile.profileId
+                      }{' '}
+                      •{' '}
+                      {
+                        profile
+                          .location
+                          ?.city ||
+                        'Location pending'
+                      }
+                    </small>
+                  </div>
+
+                  <time className="text-[9px] text-[#756a60] max-[767px]:hidden">
+                    {formatDate(
+                      profile.createdAt
+                    )}
+                  </time>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(
+                        `/admin/profiles/${profile._id}`
+                      )
+                    }
+                    className={
+                      outlineButtonClass
+                    }
+                  >
+                    Review
+                  </button>
+                </div>
+              )
+            )
           ) : (
             <p className="p-[25px] text-[12px] text-[#756a60]">
-              No pending profiles.
+              No profiles are
+              currently awaiting
+              review.
             </p>
           )}
         </section>
@@ -287,174 +877,491 @@ function Queue() {
 }
 
 function Review() {
-  const { id } = useParams();
+  const {
+    id
+  } =
+    useParams();
 
-  const notify = useToast();
-  const navigate = useNavigate();
+  const notify =
+    useToast();
 
-  const [notes, setNotes] = useState('');
+  const navigate =
+    useNavigate();
+
+  const [
+    notes,
+    setNotes
+  ] =
+    useState('');
+
+  const [
+    busyAction,
+    setBusyAction
+  ] =
+    useState('');
 
   return (
-    <Async path={`/admin/profiles/${id}`}>
-      {(data) => {
-        const profile = data.profile;
+    <Async
+      path={`/admin/profiles/${id}`}
+    >
+      {(
+        data,
+        _setData,
+        {
+          reload
+        }
+      ) => {
+        const profile =
+          data.profile;
 
-        const act = async (action) => {
-          try {
-            await api(
-              `/admin/profiles/${id}/${action}`,
-              {
-                method: 'PATCH',
-                body: JSON.stringify({
-                  notes
-                })
-              }
+        const act =
+          async (
+            action
+          ) => {
+            if (
+              [
+                'changes',
+                'reject',
+                'suspend'
+              ].includes(
+                action
+              ) &&
+              notes
+                .trim()
+                .length <
+                5
+            ) {
+              notify(
+                'Please enter a meaningful moderation note before this action.',
+                'error'
+              );
+
+              return;
+            }
+
+            setBusyAction(
+              action
             );
 
-            notify(
-              'Moderation decision saved.'
-            );
+            try {
+              await api(
+                `/admin/profiles/${id}/${action}`,
+                {
+                  method:
+                    'PATCH',
 
-            navigate('/admin/profiles');
-          } catch (error) {
-            notify(
-              error.message,
-              'error'
-            );
-          }
-        };
+                  body:
+                    JSON.stringify({
+                      notes:
+                        notes.trim()
+                    })
+                }
+              );
+
+              notify(
+                'Moderation decision saved.'
+              );
+
+              navigate(
+                '/admin/profiles'
+              );
+            } catch (
+              error
+            ) {
+              notify(
+                error.message,
+                'error'
+              );
+
+              await reload();
+            } finally {
+              setBusyAction(
+                ''
+              );
+            }
+          };
 
         return (
-          <article className="max-w-[850px] border border-[#ddd0c1] bg-[#fffdf8] p-[35px] max-[767px]:p-5">
-            <header className="flex items-center gap-[30px] max-[767px]:items-start">
-              {profile.profilePhoto && (
+          <article className="max-w-[1050px] border border-[#ddd0c1] bg-[#fffdf8] p-[35px] max-[767px]:p-5">
+            <header className="flex items-start gap-[30px] max-[767px]:flex-col">
+              {profile
+                .profilePhoto && (
                 <img
                   src={assetUrl(
-                    profile.profilePhoto
+                    profile
+                      .profilePhoto
                   )}
                   alt=""
-                  className="h-[190px] w-[150px] object-cover max-[767px]:h-[120px] max-[767px]:w-[90px]"
+                  className="h-[190px] w-[150px] object-cover"
                 />
               )}
 
-              <div>
+              <div className="min-w-0">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
-                  {profile.profileId}
+                  {
+                    profile.profileId
+                  }
                 </p>
 
-                <h1 className="font-['Cormorant_Garamond'] text-[48px] font-medium max-[767px]:text-[36px]">
-                  {profile.firstName}{' '}
-                  {profile.lastName}
+                <h1 className="mt-2 font-['Cormorant_Garamond'] text-[48px] font-medium leading-none text-[#2c1a18] max-[767px]:text-[36px]">
+                  {
+                    profile.firstName
+                  }{' '}
+                  {
+                    profile.middleName
+                  }{' '}
+                  {
+                    profile.lastName
+                  }
                 </h1>
 
-                <p>
-                  {profile.location?.city},{' '}
-                  {profile.location?.state} •{' '}
-                  {profile.visibility}
+                <p className="mt-3 text-[12px] text-[#756a60]">
+                  {profile
+                    .location
+                    ?.city ||
+                    'City not provided'}
+                  ,{' '}
+                  {profile
+                    .location
+                    ?.state ||
+                    'State not provided'}{' '}
+                  •{' '}
+                  {
+                    profile.visibility
+                  }
                 </p>
+
+                {profile
+                  .moderationNotes && (
+                  <p className="mt-4 border-l-2 border-[#aa7a42] pl-4 text-[11px] leading-6 text-[#756a60]">
+                    Previous note:{' '}
+                    {
+                      profile
+                        .moderationNotes
+                    }
+                  </p>
+                )}
               </div>
             </header>
 
-            <section className="py-[30px]">
+            <section className="mt-8">
               <h2 className="font-['Cormorant_Garamond'] text-[30px] font-medium">
                 Profile details
               </h2>
 
-              <p>
+              <p className="mt-3 max-w-[850px] text-[12px] leading-7 text-[#756a60]">
                 {profile.aboutMe ||
                   'No introduction supplied.'}
               </p>
 
-              <dl className="mt-5 grid grid-cols-3 max-[767px]:grid-cols-2">
-                <div>
-                  <dt className="text-[8px] uppercase text-[#756a60]">
-                    Education
-                  </dt>
+              <dl className="mt-5 grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[520px]:grid-cols-1">
+                {[
+                  [
+                    'Profile for',
+                    profile.profileFor
+                  ],
 
-                  <dd className="font-['Cormorant_Garamond'] text-[20px] font-medium">
-                    {
-                      profile.education
-                        ?.highestEducation
-                    }
-                  </dd>
-                </div>
+                  [
+                    'Gender',
+                    profile.gender
+                  ],
 
-                <div>
-                  <dt className="text-[8px] uppercase text-[#756a60]">
-                    Occupation
-                  </dt>
+                  [
+                    'Date of birth',
+                    profile
+                      .dateOfBirth
+                      ? formatDate(
+                          profile
+                            .dateOfBirth
+                        )
+                      : null
+                  ],
 
-                  <dd className="font-['Cormorant_Garamond'] text-[20px] font-medium">
-                    {
-                      profile.career
-                        ?.occupation
-                    }
-                  </dd>
-                </div>
+                  [
+                    'Age',
+                    profile.age
+                  ],
 
-                <div>
-                  <dt className="text-[8px] uppercase text-[#756a60]">
-                    Community
-                  </dt>
+                  [
+                    'Height',
+                    profile.height
+                      ? `${profile.height} cm`
+                      : null
+                  ],
 
-                  <dd className="font-['Cormorant_Garamond'] text-[20px] font-medium">
-                    {
-                      profile.community
-                        ?.name
-                    }
-                  </dd>
-                </div>
+                  [
+                    'Marital status',
+                    profile.maritalStatus
+                  ],
+
+                  [
+                    'Education',
+                    profile
+                      .education
+                      ?.highestEducation
+                  ],
+
+                  [
+                    'Occupation',
+                    profile
+                      .career
+                      ?.occupation
+                  ],
+
+                  [
+                    'Company',
+                    profile
+                      .career
+                      ?.companyName ||
+                      profile
+                        .career
+                        ?.businessName
+                  ],
+
+                  [
+                    'Community',
+                    profile
+                      .community
+                      ?.name
+                  ],
+
+                  [
+                    'Clan',
+                    profile
+                      .community
+                      ?.clan ||
+                      profile
+                        .paternalFamily
+                        ?.clan
+                  ],
+
+                  [
+                    'Native place',
+                    profile
+                      .paternalFamily
+                      ?.nativePlace ||
+                      profile
+                        .location
+                        ?.nativePlace
+                  ]
+                ].map(
+                  ([
+                    label,
+                    value
+                  ]) => (
+                    <div
+                      key={
+                        label
+                      }
+                      className={
+                        detailCardClass
+                      }
+                    >
+                      <dt
+                        className={
+                          detailLabelClass
+                        }
+                      >
+                        {label}
+                      </dt>
+
+                      <dd
+                        className={
+                          detailValueClass
+                        }
+                      >
+                        {displayValue(
+                          value
+                        )}
+                      </dd>
+                    </div>
+                  )
+                )}
               </dl>
             </section>
 
-            <label className="grid gap-2 text-[10px] uppercase tracking-[0.1em]">
+            <section className="mt-8 grid grid-cols-2 gap-4 max-[767px]:grid-cols-1">
+              <div
+                className={
+                  detailCardClass
+                }
+              >
+                <h3 className="font-['Cormorant_Garamond'] text-[24px] font-medium">
+                  Family
+                </h3>
+
+                <p className="mt-3 text-[11px] leading-7 text-[#756a60]">
+                  Father:{' '}
+                  {displayValue(
+                    profile.family
+                      ?.fatherName
+                  )}
+                </p>
+
+                <p className="text-[11px] leading-7 text-[#756a60]">
+                  Mother:{' '}
+                  {displayValue(
+                    profile.family
+                      ?.motherName
+                  )}
+                </p>
+
+                <p className="text-[11px] leading-7 text-[#756a60]">
+                  Family location:{' '}
+                  {displayValue(
+                    profile.family
+                      ?.familyLocation
+                  )}
+                </p>
+              </div>
+
+              <div
+                className={
+                  detailCardClass
+                }
+              >
+                <h3 className="font-['Cormorant_Garamond'] text-[24px] font-medium">
+                  Heritage
+                </h3>
+
+                <p className="mt-3 text-[11px] leading-7 text-[#756a60]">
+                  Paternal village:{' '}
+                  {displayValue(
+                    profile
+                      .paternalFamily
+                      ?.ancestralVillage
+                  )}
+                </p>
+
+                <p className="text-[11px] leading-7 text-[#756a60]">
+                  Maternal surname:{' '}
+                  {displayValue(
+                    profile
+                      .maternalFamily
+                      ?.maternalFamilySurname
+                  )}
+                </p>
+
+                <p className="text-[11px] leading-7 text-[#756a60]">
+                  Maternal village:{' '}
+                  {displayValue(
+                    profile
+                      .maternalFamily
+                      ?.maternalVillage ||
+                      profile
+                        .maternalFamily
+                        ?.maternalNativePlace
+                  )}
+                </p>
+              </div>
+            </section>
+
+            <label className="mt-8 grid gap-2 text-[10px] font-bold uppercase tracking-[0.1em]">
               Moderation notes
 
               <textarea
-                rows="4"
-                className="border border-[#ddd0c1] bg-white p-[13px]"
-                value={notes}
-                onChange={(event) =>
-                  setNotes(event.target.value)
+                rows="5"
+                className="border border-[#ddd0c1] bg-white p-[13px] text-[13px] font-normal normal-case tracking-normal outline-none focus:border-[#681d25]"
+                value={
+                  notes
                 }
+                onChange={(
+                  event
+                ) =>
+                  setNotes(
+                    event
+                      .target
+                      .value
+                  )
+                }
+                placeholder="Explain approval concerns, requested corrections or suspension reason."
               />
             </label>
 
-            <div className="mt-7 flex gap-[10px] max-[767px]:flex-wrap">
+            <div className="mt-7 flex flex-wrap gap-[10px]">
               <button
+                type="button"
                 onClick={() =>
-                  act('approve')
+                  act(
+                    'approve'
+                  )
                 }
-                className={primaryButtonClass}
+                disabled={
+                  !!busyAction
+                }
+                className={
+                  primaryButtonClass
+                }
               >
-                Approve
+                {busyAction ===
+                'approve'
+                  ? 'Saving…'
+                  : 'Approve'}
               </button>
 
               <button
+                type="button"
                 onClick={() =>
-                  act('changes')
+                  act(
+                    'changes'
+                  )
                 }
-                className={outlineButtonClass}
+                disabled={
+                  !!busyAction
+                }
+                className={
+                  outlineButtonClass
+                }
               >
                 Request changes
               </button>
 
               <button
+                type="button"
                 onClick={() =>
-                  act('reject')
+                  act(
+                    'reject'
+                  )
                 }
-                className={outlineButtonClass}
+                disabled={
+                  !!busyAction
+                }
+                className={
+                  outlineButtonClass
+                }
               >
                 Reject
               </button>
 
               <button
+                type="button"
                 onClick={() =>
-                  act('suspend')
+                  act(
+                    'suspend'
+                  )
                 }
-                className={outlineButtonClass}
+                disabled={
+                  !!busyAction
+                }
+                className={
+                  outlineButtonClass
+                }
               >
                 Suspend
+              </button>
+
+              <button
+                type="button"
+                className={
+                  outlineButtonClass
+                }
+                onClick={() =>
+                  navigate(
+                    '/admin/profiles'
+                  )
+                }
+              >
+                Back
               </button>
             </div>
           </article>
@@ -465,128 +1372,364 @@ function Review() {
 }
 
 function Users() {
-  const notify = useToast();
-  const { user } = useAuth();
+  const notify =
+    useToast();
 
-  const change = async (
-    target,
-    patch,
-    setData
-  ) => {
-    try {
-      const result = await api(
-        `/admin/users/${target._id}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify(patch)
+  const {
+    user
+  } =
+    useAuth();
+
+  const [
+    busyUser,
+    setBusyUser
+  ] =
+    useState('');
+
+  const change =
+    async (
+      target,
+      patch,
+      setData
+    ) => {
+      setBusyUser(
+        target._id
+      );
+
+      try {
+        const result =
+          await api(
+            `/admin/users/${target._id}`,
+            {
+              method:
+                'PATCH',
+
+              body:
+                JSON.stringify(
+                  patch
+                )
+            }
+          );
+
+        setData(
+          (
+            current
+          ) => ({
+            ...current,
+
+            users:
+              current.users.map(
+                (
+                  item
+                ) =>
+                  item._id ===
+                  target._id
+                    ? result
+                        .data
+                        .user
+                    : item
+              )
+          })
+        );
+
+        notify(
+          'User access updated.'
+        );
+      } catch (
+        error
+      ) {
+        notify(
+          error.message,
+          'error'
+        );
+      } finally {
+        setBusyUser(
+          ''
+        );
+      }
+    };
+
+  const changeStatus =
+    async (
+      member,
+      nextStatus,
+      setData
+    ) => {
+      if (
+        nextStatus ===
+        member.status
+      ) {
+        return;
+      }
+
+      let reason;
+
+      if (
+        nextStatus !==
+        'Active'
+      ) {
+        reason =
+          window.prompt(
+            `Reason for changing ${member.email} to ${nextStatus}:`
+          );
+
+        if (
+          reason ===
+          null
+        ) {
+          return;
         }
-      );
 
-      setData((current) => ({
-        ...current,
-        users: current.users.map(
-          (item) =>
-            item._id === target._id
-              ? result.data.user
-              : item
-        )
-      }));
+        reason =
+          reason.trim();
 
-      notify('User access updated.');
-    } catch (error) {
-      notify(
-        error.message,
-        'error'
+        if (
+          reason.length <
+          5
+        ) {
+          notify(
+            'Please provide a reason of at least 5 characters.',
+            'error'
+          );
+
+          return;
+        }
+      }
+
+      await change(
+        member,
+        {
+          status:
+            nextStatus,
+
+          ...(reason
+            ? {
+                reason
+              }
+            : {})
+        },
+        setData
       );
-    }
-  };
+    };
+
+  const changeRole =
+    async (
+      member,
+      role,
+      setData
+    ) => {
+      if (
+        role ===
+        member.role
+      ) {
+        return;
+      }
+
+      const confirmed =
+        window.confirm(
+          `Change ${member.email} role from ${member.role} to ${role}?`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      await change(
+        member,
+        {
+          role
+        },
+        setData
+      );
+    };
 
   return (
     <Async path="/admin/users">
-      {(data, setData) => (
-        <section className={adminTableClass}>
-          <div className="my-6 mt-[52px] flex items-end justify-between">
-            <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
-              Members and staff
-            </h2>
+      {(
+        data,
+        setData,
+        {
+          reload,
+          refreshing
+        }
+      ) => (
+        <section
+          className={
+            adminTableClass
+          }
+        >
+          <div className="my-6 mt-[52px] flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+                Access control
+              </p>
+
+              <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
+                Members and staff
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              className={
+                outlineButtonClass
+              }
+              disabled={
+                refreshing
+              }
+              onClick={
+                reload
+              }
+            >
+              <RefreshCw
+                size={14}
+                className={
+                  refreshing
+                    ? 'animate-spin'
+                    : ''
+                }
+              />
+
+              Refresh
+            </button>
           </div>
 
-          {data.users.map((member) => (
-            <div
-              className={adminRowClass}
-              key={member._id}
-            >
-              <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#c49b70] font-extrabold text-[#291817]">
-                {member.email?.[0].toUpperCase()}
-              </span>
-
-              <div>
-                <strong className="block text-[11px]">
-                  {member.email}
-                </strong>
-
-                <small className="block text-[9px] text-[#756a60]">
-                  {member.phone} • {member.role}
-                </small>
-              </div>
-
-              <select
-                className="border border-[#ddd0c1] bg-white p-[10px]"
-                value={member.status}
-                onChange={(event) =>
-                  change(
-                    member,
-                    {
-                      status:
-                        event.target.value
-                    },
-                    setData
-                  )
-                }
-              >
-                {[
-                  'Active',
-                  'Suspended',
-                  'Blocked'
-                ].map((option) => (
-                  <option key={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-
-              {user?.role ===
-                'super_admin' && (
-                <select
-                  aria-label={`Role for ${member.email}`}
-                  className="border border-[#ddd0c1] bg-white p-[10px]"
-                  value={member.role}
-                  onChange={(event) =>
-                    change(
-                      member,
-                      {
-                        role:
-                          event.target.value
-                      },
-                      setData
-                    )
+          {data.users
+            ?.length ? (
+            data.users.map(
+              (
+                member
+              ) => (
+                <div
+                  className={
+                    adminRowClass
+                  }
+                  key={
+                    member._id
                   }
                 >
-                  {[
-                    'member',
-                    'moderator',
-                    'admin',
-                    'relationship_manager',
-                    'super_admin'
-                  ].map((role) => (
-                    <option key={role}>
-                      {role}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          ))}
+                  <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#c49b70] font-extrabold text-[#291817]">
+                    {member
+                      .email?.[0]
+                      ?.toUpperCase() ||
+                      '?'}
+                  </span>
+
+                  <div className="min-w-0">
+                    <strong className="block truncate text-[11px]">
+                      {
+                        member.email
+                      }
+                    </strong>
+
+                    <small className="block text-[9px] text-[#756a60]">
+                      {member.phone ||
+                        'No phone'}{' '}
+                      •{' '}
+                      {
+                        member.role
+                      }
+                    </small>
+                  </div>
+
+                  <select
+                    aria-label={`Status for ${member.email}`}
+                    className="border border-[#ddd0c1] bg-white p-[10px] text-[11px]"
+                    value={
+                      member.status
+                    }
+                    disabled={
+                      busyUser ===
+                      member._id
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      changeStatus(
+                        member,
+                        event
+                          .target
+                          .value,
+                        setData
+                      )
+                    }
+                  >
+                    {[
+                      'Active',
+                      'Suspended',
+                      'Blocked'
+                    ].map(
+                      (
+                        option
+                      ) => (
+                        <option
+                          key={
+                            option
+                          }
+                        >
+                          {
+                            option
+                          }
+                        </option>
+                      )
+                    )}
+                  </select>
+
+                  {user?.role ===
+                    'super_admin' && (
+                    <select
+                      aria-label={`Role for ${member.email}`}
+                      className="border border-[#ddd0c1] bg-white p-[10px] text-[11px]"
+                      value={
+                        member.role
+                      }
+                      disabled={
+                        busyUser ===
+                        member._id
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        changeRole(
+                          member,
+                          event
+                            .target
+                            .value,
+                          setData
+                        )
+                      }
+                    >
+                      {[
+                        'member',
+                        'moderator',
+                        'admin',
+                        'relationship_manager',
+                        'super_admin'
+                      ].map(
+                        (
+                          role
+                        ) => (
+                          <option
+                            key={
+                              role
+                            }
+                          >
+                            {
+                              role
+                            }
+                          </option>
+                        )
+                      )}
+                    </select>
+                  )}
+                </div>
+              )
+            )
+          ) : (
+            <p className="p-6 text-[12px] text-[#756a60]">
+              No users found.
+            </p>
+          )}
         </section>
       )}
     </Async>
@@ -594,121 +1737,218 @@ function Users() {
 }
 
 function Reports() {
-  const notify = useToast();
+  const notify =
+    useToast();
+
+  const [
+    busyReport,
+    setBusyReport
+  ] =
+    useState('');
 
   return (
     <Async path="/admin/reports">
-      {(data, setData) => (
-        <section className={adminTableClass}>
-          <div className="my-6 mt-[52px] flex items-end justify-between">
-            <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
-              Member reports
-            </h2>
+      {(
+        data,
+        setData,
+        {
+          reload,
+          refreshing
+        }
+      ) => (
+        <section
+          className={
+            adminTableClass
+          }
+        >
+          <div className="my-6 mt-[52px] flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+                Safety
+              </p>
+
+              <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
+                Member reports
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              className={
+                outlineButtonClass
+              }
+              onClick={
+                reload
+              }
+              disabled={
+                refreshing
+              }
+            >
+              <RefreshCw
+                size={14}
+                className={
+                  refreshing
+                    ? 'animate-spin'
+                    : ''
+                }
+              />
+
+              Refresh
+            </button>
           </div>
 
-          {data.reports.length ? (
-            data.reports.map((report) => (
-              <div
-                className={reportRowClass}
-                key={report._id}
-              >
-                <div>
-                  <strong className="block text-[11px]">
-                    {report.reason}:{' '}
-                    {
-                      report.reportedProfile
+          {data.reports
+            ?.length ? (
+            data.reports.map(
+              (
+                report
+              ) => (
+                <div
+                  className={
+                    reportRowClass
+                  }
+                  key={
+                    report._id
+                  }
+                >
+                  <div>
+                    <strong className="block text-[11px]">
+                      {report.reason}
+
+                      {report
+                        .reportedProfile
                         ?.firstName
+                        ? `: ${report.reportedProfile.firstName} ${report.reportedProfile.lastName || ''}`
+                        : ''}
+                    </strong>
+
+                    <small className="mt-1 block max-w-[700px] text-[9px] leading-5 text-[#756a60]">
+                      {report.description ||
+                        'No description provided.'}
+                      {' • '}
+                      reported by{' '}
+                      {report.reporter
+                        ?.email ||
+                        'Unknown member'}
+                    </small>
+                  </div>
+
+                  <span className="text-[9px] font-bold uppercase text-[#756a60]">
+                    {
+                      report.status
                     }
-                  </strong>
+                  </span>
 
-                  <small className="block text-[9px] text-[#756a60]">
-                    {report.description} •
-                    reported by{' '}
-                    {report.reporter?.email}
-                  </small>
-                </div>
+                  <select
+                    aria-label={`Report status ${report._id}`}
+                    className="border border-[#ddd0c1] bg-white p-[10px] text-[11px]"
+                    value={
+                      report.status
+                    }
+                    disabled={
+                      busyReport ===
+                      report._id
+                    }
+                    onChange={async (
+                      event
+                    ) => {
+                      const nextStatus =
+                        event
+                          .target
+                          .value;
 
-                <time className="text-[9px] text-[#756a60]">
-                  {report.status}
-                </time>
+                      if (
+                        nextStatus ===
+                        report.status
+                      ) {
+                        return;
+                      }
 
-                <select
-                  className="border border-[#ddd0c1] bg-white p-[10px]"
-                  value={report.status}
-                  onChange={async (event) => {
-                    try {
-                      const result =
-                        await api(
-                          `/admin/reports/${report._id}`,
-                          {
-                            method:
-                              'PATCH',
-                            body:
-                              JSON.stringify(
-                                {
+                      setBusyReport(
+                        report._id
+                      );
+
+                      try {
+                        const result =
+                          await api(
+                            `/admin/reports/${report._id}`,
+                            {
+                              method:
+                                'PATCH',
+
+                              body:
+                                JSON.stringify({
                                   status:
-                                    event
-                                      .target
-                                      .value
-                                }
+                                    nextStatus
+                                })
+                            }
+                          );
+
+                        setData(
+                          (
+                            current
+                          ) => ({
+                            ...current,
+
+                            reports:
+                              current.reports.map(
+                                (
+                                  item
+                                ) =>
+                                  item._id ===
+                                  report._id
+                                    ? result
+                                        .data
+                                        .report
+                                    : item
                               )
-                          }
+                          })
                         );
 
-                      setData(
-                        (current) => ({
-                          ...current,
-                          reports:
-                            current.reports.map(
-                              (item) =>
-                                item._id ===
-                                report._id
-                                  ? result
-                                      .data
-                                      .report
-                                  : item
-                            )
-                        })
-                      );
+                        notify(
+                          'Report updated.'
+                        );
+                      } catch (
+                        error
+                      ) {
+                        notify(
+                          error.message,
+                          'error'
+                        );
 
-                      notify(
-                        'Report updated.'
-                      );
-                    } catch (error) {
-                      setData(
-                        (current) => ({
-                          ...current
-                        })
-                      );
-
-                      notify(
-                        error.message,
-                        'error'
-                      );
-                    }
-                  }}
-                >
-                  {[
-                    'Open',
-                    'Reviewed',
-                    'Resolved',
-                    'Dismissed'
-                  ].map((status) => (
-                    <option
-                      key={status}
-                      disabled={
-                        status === 'Open'
+                        await reload();
+                      } finally {
+                        setBusyReport(
+                          ''
+                        );
                       }
+                    }}
+                  >
+                    <option
+                      value="Open"
+                      disabled
                     >
-                      {status}
+                      Open
                     </option>
-                  ))}
-                </select>
-              </div>
-            ))
+
+                    <option value="Reviewed">
+                      Reviewed
+                    </option>
+
+                    <option value="Resolved">
+                      Resolved
+                    </option>
+
+                    <option value="Dismissed">
+                      Dismissed
+                    </option>
+                  </select>
+                </div>
+              )
+            )
           ) : (
             <p className="p-[25px] text-[12px] text-[#756a60]">
-              No reports.
+              No member reports.
             </p>
           )}
         </section>
@@ -720,48 +1960,158 @@ function Reports() {
 function Subscriptions() {
   return (
     <Async path="/admin/subscriptions">
-      {(data) => (
-        <section className={adminTableClass}>
-          <div className="my-6 mt-[52px] flex items-end justify-between">
-            <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
-              Subscriptions
-            </h2>
+      {(
+        data,
+        _setData,
+        {
+          reload,
+          refreshing
+        }
+      ) => (
+        <section
+          className={
+            adminTableClass
+          }
+        >
+          <div className="my-6 mt-[52px] flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+                Memberships
+              </p>
+
+              <h2 className="font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
+                Subscriptions
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              className={
+                outlineButtonClass
+              }
+              onClick={
+                reload
+              }
+              disabled={
+                refreshing
+              }
+            >
+              <RefreshCw
+                size={14}
+                className={
+                  refreshing
+                    ? 'animate-spin'
+                    : ''
+                }
+              />
+
+              Refresh
+            </button>
           </div>
 
-          {data.subscriptions.length ? (
+          {data
+            .subscriptions
+            ?.length ? (
             data.subscriptions.map(
-              (subscription) => (
-                <div
-                  className={adminRowClass}
-                  key={subscription._id}
-                >
-                  <div>
-                    <strong className="block text-[11px]">
-                      {
-                        subscription.user
-                          ?.email
-                      }
-                    </strong>
+              (
+                subscription
+              ) => {
+                const paidAmount =
+                  Number(
+                    subscription
+                      .payment
+                      ?.amount ||
+                      subscription
+                        .priceSnapshot ||
+                      0
+                  );
 
-                    <small className="block text-[9px] text-[#756a60]">
-                      {
-                        subscription.plan
-                          ?.name
-                      }
-                    </small>
+                const refunded =
+                  Number(
+                    subscription
+                      .payment
+                      ?.refundedAmountPaise ||
+                      0
+                  ) /
+                  100;
+
+                return (
+                  <div
+                    className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-[18px] border-t border-[#ddd0c1] py-4 max-[900px]:grid-cols-[1fr_auto] max-[520px]:grid-cols-1"
+                    key={
+                      subscription._id
+                    }
+                  >
+                    <div>
+                      <strong className="block text-[11px]">
+                        {subscription
+                          .user
+                          ?.email ||
+                          'Unknown member'}
+                      </strong>
+
+                      <small className="mt-1 block text-[9px] text-[#756a60]">
+                        {subscription
+                          .plan
+                          ?.name ||
+                          subscription
+                            .planNameSnapshot ||
+                          'Historical plan'}
+                      </small>
+                    </div>
+
+                    <div className="text-[10px]">
+                      <strong className="block">
+                        {
+                          subscription.status
+                        }
+                      </strong>
+
+                      <small className="text-[#756a60]">
+                        Ends{' '}
+                        {subscription
+                          .endsAt
+                          ? formatDate(
+                              subscription
+                                .endsAt
+                            )
+                          : '—'}
+                      </small>
+                    </div>
+
+                    <div className="text-[10px]">
+                      <strong className="block">
+                        {subscription
+                          .payment
+                          ?.status ||
+                          'No payment'}
+                      </strong>
+
+                      <small className="text-[#756a60]">
+                        Payment
+                      </small>
+                    </div>
+
+                    <div className="text-right max-[520px]:text-left">
+                      <strong className="block font-['Cormorant_Garamond'] text-[20px] font-medium">
+                        {formatCurrency(
+                          paidAmount
+                        )}
+                      </strong>
+
+                      {refunded >
+                        0 && (
+                        <small className="text-[9px] text-[#681d25]">
+                          Refunded{' '}
+                          {formatCurrency(
+                            refunded
+                          )}
+                        </small>
+                      )}
+                    </div>
                   </div>
-
-                  <time className="text-[9px] text-[#756a60] max-[767px]:hidden">
-                    {subscription.status}
-                  </time>
-
-                  <span>
-                    {subscription.payment
-                      ?.status ||
-                      'No payment'}
-                  </span>
-                </div>
-              )
+                );
+              }
             )
           ) : (
             <p className="p-[25px] text-[12px] text-[#756a60]">
@@ -783,32 +2133,44 @@ export default function AdminPage() {
         <Routes>
           <Route
             index
-            element={<Overview />}
+            element={
+              <Overview />
+            }
           />
 
           <Route
             path="profiles"
-            element={<Queue />}
+            element={
+              <Queue />
+            }
           />
 
           <Route
             path="profiles/:id"
-            element={<Review />}
+            element={
+              <Review />
+            }
           />
 
           <Route
             path="users"
-            element={<Users />}
+            element={
+              <Users />
+            }
           />
 
           <Route
             path="reports"
-            element={<Reports />}
+            element={
+              <Reports />
+            }
           />
 
           <Route
             path="subscriptions"
-            element={<Subscriptions />}
+            element={
+              <Subscriptions />
+            }
           />
         </Routes>
       </main>

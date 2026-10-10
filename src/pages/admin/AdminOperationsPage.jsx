@@ -1,9 +1,17 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 import {
+  useCallback,
   useEffect,
   useState
 } from 'react';
+
+import {
+  CheckCircle2,
+  CircleAlert,
+  Clock3,
+  RefreshCw,
+  Server,
+  ShieldCheck
+} from 'lucide-react';
 
 import AdminNav from '../../components/AdminNav';
 import RefundPaymentModal from '../../components/admin/RefundPaymentModal';
@@ -21,11 +29,11 @@ import {
   formatDate
 } from '../../utils/formatters';
 
-const emptyPlan = {
+const createEmptyPlan = () => ({
   name: '',
   slug: '',
   price: 0,
-  durationDays: 90,
+  durationDays: 30,
   active: true,
 
   features: {
@@ -37,22 +45,76 @@ const emptyPlan = {
     prioritySupport: false,
     relationshipManager: false
   }
-};
+});
 
 const paths = {
-  support: '/admin/support',
-  plans: '/admin/plans',
-  payments: '/admin/payments',
-  settings: '/admin/settings',
-  audit: '/admin/audit-logs',
-  health: '/admin/system-health'
+  support:
+    '/admin/support',
+
+  plans:
+    '/admin/plans',
+
+  payments:
+    '/admin/payments',
+
+  settings:
+    '/admin/settings',
+
+  audit:
+    '/admin/audit-logs',
+
+  health:
+    '/admin/system-health'
+};
+
+const titles = {
+  support:
+    'Support',
+
+  plans:
+    'Plans',
+
+  payments:
+    'Payments',
+
+  settings:
+    'System settings',
+
+  audit:
+    'Audit logs',
+
+  health:
+    'System health'
+};
+
+const descriptions = {
+  support:
+    'Review and resolve member support requests.',
+
+  plans:
+    'Manage membership pricing, limits and paid entitlements.',
+
+  payments:
+    'Review Razorpay transactions and manage refund workflows.',
+
+  settings:
+    'Control platform availability and operational defaults.',
+
+  audit:
+    'Review important administrative and security actions.',
+
+  health:
+    'Check API, database and provider readiness.'
 };
 
 const primaryButtonClass =
-  "inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318] disabled:opacity-55";
+  "inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318] disabled:cursor-not-allowed disabled:opacity-55";
 
 const outlineButtonClass =
   "inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white disabled:cursor-not-allowed disabled:opacity-55";
+
+const dangerButtonClass =
+  "inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#b46a70] bg-transparent px-5 text-[12px] font-extrabold text-[#681d25] transition duration-200 hover:bg-[#681d2508] disabled:cursor-not-allowed disabled:opacity-55";
 
 const labelClass =
   "grid gap-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#5e4e46]";
@@ -64,36 +126,116 @@ const checkboxLabelClass =
   "flex flex-row items-center gap-2 text-[11px] font-extrabold text-[#5e4e46] normal-case tracking-normal";
 
 const adminTableClass =
-  "mt-10 border border-[#ddd0c1] bg-[#fffdf8] px-[25px] pb-[15px]";
-
-const adminRowClass =
-  "grid grid-cols-[1fr_auto_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4 max-[767px]:grid-cols-[1fr_auto]";
-
-const reportRowClass =
-  "grid grid-cols-[1fr_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4";
+  "mt-8 border border-[#ddd0c1] bg-[#fffdf8] px-[25px] pb-[15px]";
 
 const metricClass =
   "border border-[#ddd0c1] bg-[#fffdf8] p-[25px]";
 
 const metricValueClass =
-  "block font-['Cormorant_Garamond'] text-[34px] font-medium";
+  "block font-['Cormorant_Garamond'] text-[34px] font-medium text-[#2c1a18]";
 
 const metricLabelClass =
-  "text-[9px] uppercase text-[#756a60]";
+  "mt-1 block text-[9px] font-bold uppercase tracking-[0.08em] text-[#756a60]";
 
 function PageHeader({
+  type,
+  refreshing,
+  onRefresh
+}) {
+  return (
+    <header className="mb-[30px] flex items-end justify-between gap-5 max-[767px]:items-start">
+      <div>
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+          Operations
+        </p>
+
+        <h1 className="mt-3 max-w-[900px] font-['Cormorant_Garamond'] text-[clamp(42px,5vw,66px)] font-medium leading-[0.98] text-[#2c1a18]">
+          {titles[type]}
+        </h1>
+
+        <p className="mt-4 max-w-[680px] text-[13px] leading-7 text-[#756a60]">
+          {descriptions[type]}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        className={outlineButtonClass}
+        disabled={refreshing}
+        onClick={onRefresh}
+      >
+        <RefreshCw
+          size={15}
+          className={
+            refreshing
+              ? 'animate-spin'
+              : ''
+          }
+        />
+
+        Refresh
+      </button>
+    </header>
+  );
+}
+
+function EmptyState({
   children
 }) {
   return (
-    <header className="mb-[30px]">
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
-        Operations
-      </p>
+    <div className="border-t border-[#ddd0c1] px-4 py-12 text-center text-[12px] text-[#756a60]">
+      {children}
+    </div>
+  );
+}
 
-      <h1 className="mt-3 max-w-[900px] font-['Cormorant_Garamond'] text-[clamp(42px,5vw,66px)] font-medium leading-[0.98] text-[#2c1a18]">
-        {children}
-      </h1>
-    </header>
+function StatusBadge({
+  status
+}) {
+  const normalized =
+    String(
+      status ||
+        ''
+    ).toLowerCase();
+
+  const positive =
+    [
+      'paid',
+      'processed',
+      'active',
+      'available',
+      'configured',
+      'resolved',
+      'closed'
+    ].includes(
+      normalized
+    );
+
+  const warning =
+    [
+      'pending',
+      'submitted',
+      'requested',
+      'processing',
+      'in progress',
+      'open'
+    ].includes(
+      normalized
+    );
+
+  return (
+    <span
+      className={`inline-flex rounded-full border px-[9px] py-[5px] text-[9px] font-bold uppercase ${
+        positive
+          ? 'border-[#76946f] bg-[#76946f0d] text-[#45643f]'
+          : warning
+            ? 'border-[#b58a4c] bg-[#b58a4c0d] text-[#75551f]'
+            : 'border-[#b46a70] bg-[#681d2508] text-[#681d25]'
+      }`}
+    >
+      {status ||
+        'Unknown'}
+    </span>
   );
 }
 
@@ -103,73 +245,185 @@ export default function AdminOperationsPage({
   const [
     data,
     setData
-  ] = useState(null);
+  ] =
+    useState(null);
 
   const [
     error,
     setError
-  ] = useState('');
+  ] =
+    useState('');
+
+  const [
+    refreshing,
+    setRefreshing
+  ] =
+    useState(false);
+
+  const [
+    busyId,
+    setBusyId
+  ] =
+    useState('');
+
+  const [
+    saving,
+    setSaving
+  ] =
+    useState(false);
 
   const [
     editing,
     setEditing
-  ] = useState(emptyPlan);
+  ] =
+    useState(
+      createEmptyPlan
+    );
 
   const [
     refundingPayment,
     setRefundingPayment
-  ] = useState(null);
+  ] =
+    useState(null);
 
   const notify =
     useToast();
 
-  const load = () =>
-    api(
-      paths[type]
-    )
-      .then(
-        (
-          result
-        ) => {
+  const path =
+    paths[type];
+
+  const reload =
+    useCallback(
+      async () => {
+        if (!path) {
+          return;
+        }
+
+        setRefreshing(
+          true
+        );
+
+        setError('');
+
+        try {
+          const result =
+            await api(
+              path
+            );
+
           setData(
             result.data
           );
-
-          setError(
-            ''
-          );
-        }
-      )
-      .catch(
-        (
+        } catch (
           caught
-        ) => {
+        ) {
           setError(
             caught.message
           );
+        } finally {
+          setRefreshing(
+            false
+          );
         }
-      );
+      },
+      [
+        path
+      ]
+    );
 
   useEffect(
     () => {
-      load();
+      if (!path) {
+        return undefined;
+      }
+
+      let active =
+        true;
+
+      api(path)
+        .then(
+          (
+            result
+          ) => {
+            if (
+              !active
+            ) {
+              return;
+            }
+
+            setData(
+              result.data
+            );
+
+            setError(
+              ''
+            );
+          }
+        )
+        .catch(
+          (
+            caught
+          ) => {
+            if (
+              !active
+            ) {
+              return;
+            }
+
+            setError(
+              caught.message
+            );
+          }
+        );
+
+      return () => {
+        active =
+          false;
+      };
     },
     [
-      type
+      path
     ]
   );
+
+  if (!path) {
+    return (
+      <div className="admin-shell min-h-screen bg-[#f5f0e8]">
+        <AdminNav />
+
+        <main className="min-w-0 p-[55px] max-[767px]:px-[15px] max-[767px]:py-[30px]">
+          <div className="border border-[#ddd0c1] bg-[#fffdf8] px-[30px] py-[60px] text-center">
+            Unknown administration
+            section.
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const updateTicket =
     async (
       ticket,
       status
     ) => {
+      if (
+        status ===
+        ticket.status
+      ) {
+        return;
+      }
+
+      setBusyId(
+        ticket._id
+      );
+
       try {
         const result =
           await api(
             `/admin/support/${ticket._id}`,
             {
-              method: 'PATCH',
+              method:
+                'PATCH',
 
               body:
                 JSON.stringify({
@@ -191,7 +445,9 @@ export default function AdminOperationsPage({
                 ) =>
                   item._id ===
                   ticket._id
-                    ? result.data.ticket
+                    ? result
+                        .data
+                        .ticket
                     : item
               )
           })
@@ -207,6 +463,10 @@ export default function AdminOperationsPage({
           caught.message,
           'error'
         );
+      } finally {
+        setBusyId(
+          ''
+        );
       }
     };
 
@@ -216,10 +476,13 @@ export default function AdminOperationsPage({
     ) => {
       event.preventDefault();
 
+      const target =
+        event.currentTarget;
+
       const form =
         Object.fromEntries(
           new FormData(
-            event.currentTarget
+            target
           )
         );
 
@@ -232,12 +495,9 @@ export default function AdminOperationsPage({
         ]
       ) {
         form[key] =
-          event
-            .currentTarget
-            .elements[
-              key
-            ]
-            .checked;
+          target.elements[
+            key
+          ].checked;
       }
 
       form.maxPhotos =
@@ -245,12 +505,48 @@ export default function AdminOperationsPage({
           form.maxPhotos
         );
 
+      if (
+        !Number.isInteger(
+          form.maxPhotos
+        ) ||
+        form.maxPhotos <
+          1 ||
+        form.maxPhotos >
+          20
+      ) {
+        notify(
+          'Maximum photos must be between 1 and 20.',
+          'error'
+        );
+
+        return;
+      }
+
+      if (
+        !String(
+          form.platformName ||
+            ''
+        ).trim()
+      ) {
+        notify(
+          'Platform name is required.',
+          'error'
+        );
+
+        return;
+      }
+
+      setSaving(
+        true
+      );
+
       try {
         const result =
           await api(
             '/admin/settings',
             {
-              method: 'PATCH',
+              method:
+                'PATCH',
 
               body:
                 JSON.stringify(
@@ -282,6 +578,10 @@ export default function AdminOperationsPage({
           caught.message,
           'error'
         );
+      } finally {
+        setSaving(
+          false
+        );
       }
     };
 
@@ -291,8 +591,74 @@ export default function AdminOperationsPage({
     ) => {
       event.preventDefault();
 
+      const name =
+        editing.name
+          .trim();
+
+      const slug =
+        editing.slug
+          .trim()
+          .toLowerCase();
+
+      if (
+        !name ||
+        !slug
+      ) {
+        notify(
+          'Plan name and slug are required.',
+          'error'
+        );
+
+        return;
+      }
+
+      if (
+        !/^[a-z0-9-]+$/.test(
+          slug
+        )
+      ) {
+        notify(
+          'Plan slug may contain lowercase letters, numbers and hyphens only.',
+          'error'
+        );
+
+        return;
+      }
+
+      if (
+        Number(
+          editing.price
+        ) <
+        0
+      ) {
+        notify(
+          'Plan price cannot be negative.',
+          'error'
+        );
+
+        return;
+      }
+
+      if (
+        Number(
+          editing.durationDays
+        ) <=
+        0
+      ) {
+        notify(
+          'Plan duration must be greater than zero.',
+          'error'
+        );
+
+        return;
+      }
+
+      setSaving(
+        true
+      );
+
       try {
-        const path =
+        const requestPath =
           editing._id
             ? `/admin/plans/${editing._id}`
             : '/admin/plans';
@@ -303,22 +669,36 @@ export default function AdminOperationsPage({
             : 'POST';
 
         await api(
-          path,
+          requestPath,
           {
             method,
 
             body:
-              JSON.stringify(
-                editing
-              )
+              JSON.stringify({
+                ...editing,
+
+                name,
+
+                slug,
+
+                price:
+                  Number(
+                    editing.price
+                  ),
+
+                durationDays:
+                  Number(
+                    editing.durationDays
+                  )
+              })
           }
         );
 
         setEditing(
-          emptyPlan
+          createEmptyPlan()
         );
 
-        await load();
+        await reload();
 
         notify(
           'Plan saved. Existing subscriptions keep their entitlement snapshot.'
@@ -329,6 +709,10 @@ export default function AdminOperationsPage({
         notify(
           caught.message,
           'error'
+        );
+      } finally {
+        setSaving(
+          false
         );
       }
     };
@@ -375,113 +759,205 @@ export default function AdminOperationsPage({
       );
     };
 
-  const pageTitle =
-    type ===
-      'audit'
-      ? 'Audit logs'
-      : type ===
-          'health'
-        ? 'System health'
-        : type[0].toUpperCase() +
-          type.slice(
-            1
-          );
+  const startEditingPlan =
+    (
+      plan
+    ) => {
+      setEditing({
+        ...createEmptyPlan(),
+
+        ...plan,
+
+        features: {
+          ...createEmptyPlan()
+            .features,
+
+          ...plan.features
+        }
+      });
+
+      window.scrollTo({
+        top:
+          0,
+
+        behavior:
+          'smooth'
+      });
+    };
 
   return (
     <div className="admin-shell min-h-screen bg-[#f5f0e8]">
       <AdminNav />
 
       <main className="min-w-0 p-[55px] max-[767px]:px-[15px] max-[767px]:py-[30px]">
-        {error ? (
+        <PageHeader
+          type={type}
+          refreshing={
+            refreshing
+          }
+          onRefresh={
+            reload
+          }
+        />
+
+        {error &&
+        !data ? (
           <div className="border border-[#ddd0c1] bg-[#fffdf8] px-[30px] py-[60px] text-center">
+            <CircleAlert
+              className="mx-auto mb-4 text-[#681d25]"
+            />
+
             <p className="mx-auto max-w-[430px] text-[13px] leading-[1.8] text-[#756a60]">
               {error}
             </p>
+
+            <button
+              type="button"
+              className={`${outlineButtonClass} mt-5`}
+              onClick={
+                reload
+              }
+            >
+              Retry
+            </button>
           </div>
         ) : !data ? (
           <div className="page-skeleton">
-            Loading administration data…
+            Loading administration
+            data…
           </div>
         ) : (
           <>
-            <PageHeader>
-              {pageTitle}
-            </PageHeader>
+            {error && (
+              <div className="mb-5 border border-[#b46a70] bg-[#681d2508] p-4 text-[11px] text-[#681d25]">
+                {error}
+              </div>
+            )}
 
             {type ===
               'support' && (
-              <section className={adminTableClass}>
-                {data.tickets.map(
-                  (
-                    ticket
-                  ) => (
-                    <div
-                      className={reportRowClass}
-                      key={
-                        ticket._id
-                      }
-                    >
-                      <div>
-                        <strong className="block text-[11px]">
-                          {ticket.priority ===
-                          'Priority'
-                            ? 'Priority · '
-                            : ''}
+              <section
+                className={
+                  adminTableClass
+                }
+              >
+                <div className="flex items-end justify-between gap-4 py-6">
+                  <div>
+                    <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
+                      Support queue
+                    </h2>
 
-                          {ticket.category}:{' '}
-                          {ticket.name}
-                        </strong>
+                    <p className="mt-1 text-[10px] text-[#756a60]">
+                      {
+                        data
+                          .tickets
+                          ?.length ||
+                        0
+                      }{' '}
+                      tickets
+                    </p>
+                  </div>
+                </div>
 
-                        <small className="block text-[9px] text-[#756a60]">
-                          {ticket.email}{' '}
-                          ·{' '}
-                          {ticket.message}
-                        </small>
-                      </div>
-
-                      <time className="text-[9px] text-[#756a60]">
-                        {formatDate(
-                          ticket.createdAt
-                        )}
-                      </time>
-
-                      <select
-                        className="border border-[#ddd0c1] bg-white p-[10px]"
-                        value={
-                          ticket.status
-                        }
-                        onChange={(
-                          event
-                        ) =>
-                          updateTicket(
-                            ticket,
-                            event
-                              .target
-                              .value
-                          )
+                {data.tickets
+                  ?.length ? (
+                  data.tickets.map(
+                    (
+                      ticket
+                    ) => (
+                      <div
+                        className="grid grid-cols-[1fr_auto_auto] items-center gap-[15px] border-t border-[#ddd0c1] py-4 max-[767px]:grid-cols-1"
+                        key={
+                          ticket._id
                         }
                       >
-                        {[
-                          'Open',
-                          'In Progress',
-                          'Resolved',
-                          'Closed'
-                        ].map(
-                          (
-                            option
-                          ) => (
-                            <option
-                              key={
-                                option
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <strong className="block text-[11px]">
+                              {
+                                ticket.category
                               }
-                            >
-                              {option}
-                            </option>
-                          )
-                        )}
-                      </select>
-                    </div>
+                              :{' '}
+                              {
+                                ticket.name
+                              }
+                            </strong>
+
+                            {ticket.priority ===
+                              'Priority' && (
+                              <span className="rounded-full border border-[#b58a4c] px-2 py-1 text-[8px] font-bold uppercase text-[#75551f]">
+                                Priority
+                              </span>
+                            )}
+                          </div>
+
+                          <small className="mt-1 block break-words text-[9px] leading-5 text-[#756a60]">
+                            {
+                              ticket.email
+                            }
+                            {' · '}
+                            {
+                              ticket.message
+                            }
+                          </small>
+                        </div>
+
+                        <time className="text-[9px] text-[#756a60]">
+                          {formatDate(
+                            ticket.createdAt
+                          )}
+                        </time>
+
+                        <select
+                          aria-label={`Status for support ticket ${ticket._id}`}
+                          className="border border-[#ddd0c1] bg-white p-[10px] text-[11px]"
+                          value={
+                            ticket.status
+                          }
+                          disabled={
+                            busyId ===
+                            ticket._id
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            updateTicket(
+                              ticket,
+                              event
+                                .target
+                                .value
+                            )
+                          }
+                        >
+                          {[
+                            'Open',
+                            'In Progress',
+                            'Resolved',
+                            'Closed'
+                          ].map(
+                            (
+                              option
+                            ) => (
+                              <option
+                                key={
+                                  option
+                                }
+                              >
+                                {
+                                  option
+                                }
+                              </option>
+                            )
+                          )}
+                        </select>
+                      </div>
+                    )
                   )
+                ) : (
+                  <EmptyState>
+                    No support
+                    tickets.
+                  </EmptyState>
                 )}
               </section>
             )}
@@ -490,185 +966,292 @@ export default function AdminOperationsPage({
               'plans' && (
               <>
                 <form
-                  className="grid gap-[18px] border border-[#ddd0c1] bg-[#fffdf8] p-[35px]"
+                  className="grid gap-[18px] border border-[#ddd0c1] bg-[#fffdf8] p-[35px] max-[767px]:p-5"
                   onSubmit={
                     savePlan
                   }
+                  noValidate
                 >
-                  <h2 className="font-['Cormorant_Garamond'] text-[35px] font-medium">
-                    {editing._id
-                      ? 'Edit plan'
-                      : 'Create plan'}
-                  </h2>
+                  <div>
+                    <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#91683f]">
+                      Membership
+                      configuration
+                    </p>
 
-                  {[
-                    [
-                      'name',
-                      'Name'
-                    ],
+                    <h2 className="mt-2 font-['Cormorant_Garamond'] text-[35px] font-medium">
+                      {editing._id
+                        ? 'Edit plan'
+                        : 'Create plan'}
+                    </h2>
+                  </div>
 
-                    [
-                      'slug',
-                      'Slug'
-                    ],
+                  <div className="grid grid-cols-2 gap-[18px] max-[767px]:grid-cols-1">
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Name
 
-                    [
-                      'price',
-                      'Price (INR)'
-                    ],
-
-                    [
-                      'durationDays',
-                      'Duration (days)'
-                    ]
-                  ].map(
-                    ([
-                      key,
-                      label
-                    ]) => (
-                      <label
-                        className={labelClass}
-                        key={
-                          key
+                      <input
+                        required
+                        className={
+                          inputClass
                         }
-                      >
-                        {label}
-
-                        <input
-                          required
-                          className={inputClass}
-                          name={
-                            key
-                          }
-                          type={
-                            [
-                              'price',
-                              'durationDays'
-                            ].includes(
-                              key
-                            )
-                              ? 'number'
-                              : 'text'
-                          }
-                          value={
-                            editing[
-                              key
-                            ]
-                          }
-                          onChange={(
+                        value={
+                          editing.name
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          planField(
+                            'name',
                             event
-                          ) =>
-                            planField(
-                              key,
+                              .target
+                              .value
+                          )
+                        }
+                      />
+                    </label>
 
-                              [
-                                'price',
-                                'durationDays'
-                              ].includes(
-                                key
-                              )
-                                ? Number(
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Slug
+
+                      <input
+                        required
+                        className={
+                          inputClass
+                        }
+                        value={
+                          editing.slug
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          planField(
+                            'slug',
+                            event
+                              .target
+                              .value
+                              .toLowerCase()
+                          )
+                        }
+                      />
+                    </label>
+
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Price (INR)
+
+                      <input
+                        required
+                        min="0"
+                        type="number"
+                        className={
+                          inputClass
+                        }
+                        value={
+                          editing.price
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          planField(
+                            'price',
+                            Number(
+                              event
+                                .target
+                                .value
+                            )
+                          )
+                        }
+                      />
+                    </label>
+
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Duration
+                      (days)
+
+                      <input
+                        required
+                        min="1"
+                        type="number"
+                        className={
+                          inputClass
+                        }
+                        value={
+                          editing.durationDays
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          planField(
+                            'durationDays',
+                            Number(
+                              event
+                                .target
+                                .value
+                            )
+                          )
+                        }
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mt-2 border-t border-[#ddd0c1] pt-6">
+                    <h3 className="font-['Cormorant_Garamond'] text-[25px] font-medium">
+                      Usage limits
+                    </h3>
+
+                    <div className="mt-4 grid grid-cols-3 gap-[18px] max-[767px]:grid-cols-1">
+                      {[
+                        [
+                          'interestLimit',
+                          'Interest limit'
+                        ],
+
+                        [
+                          'contactViewLimit',
+                          'Contact view limit'
+                        ],
+
+                        [
+                          'messageLimit',
+                          'Message limit'
+                        ]
+                      ].map(
+                        ([
+                          key,
+                          label
+                        ]) => (
+                          <label
+                            className={
+                              labelClass
+                            }
+                            key={
+                              key
+                            }
+                          >
+                            {
+                              label
+                            }
+
+                            <input
+                              type="number"
+                              min="0"
+                              className={
+                                inputClass
+                              }
+                              value={
+                                editing
+                                  .features[
+                                  key
+                                ]
+                              }
+                              onChange={(
+                                event
+                              ) =>
+                                feature(
+                                  key,
+                                  Number(
                                     event
                                       .target
                                       .value
                                   )
-                                : event
-                                    .target
-                                    .value
-                            )
-                          }
-                        />
-                      </label>
-                    )
-                  )}
+                                )
+                              }
+                            />
+                          </label>
+                        )
+                      )}
+                    </div>
+                  </div>
 
-                  {[
-                    'interestLimit',
-                    'contactViewLimit',
-                    'messageLimit'
-                  ].map(
-                    (
-                      key
-                    ) => (
-                      <label
-                        className={labelClass}
-                        key={
-                          key
-                        }
-                      >
-                        {key}
+                  <div className="border-t border-[#ddd0c1] pt-6">
+                    <h3 className="font-['Cormorant_Garamond'] text-[25px] font-medium">
+                      Included features
+                    </h3>
 
-                        <input
-                          type="number"
-                          min="0"
-                          className={inputClass}
-                          value={
-                            editing
-                              .features[
-                                key
-                              ]
-                          }
-                          onChange={(
-                            event
-                          ) =>
-                            feature(
-                              key,
+                    <div className="mt-4 grid grid-cols-2 gap-3 max-[767px]:grid-cols-1">
+                      {[
+                        [
+                          'advancedSearch',
+                          'Advanced search'
+                        ],
 
-                              Number(
+                        [
+                          'profileBoost',
+                          'Profile boost'
+                        ],
+
+                        [
+                          'prioritySupport',
+                          'Priority support'
+                        ],
+
+                        [
+                          'relationshipManager',
+                          'Relationship manager'
+                        ]
+                      ].map(
+                        ([
+                          key,
+                          label
+                        ]) => (
+                          <label
+                            className={
+                              checkboxLabelClass
+                            }
+                            key={
+                              key
+                            }
+                          >
+                            <input
+                              type="checkbox"
+                              className="w-auto"
+                              checked={
+                                editing
+                                  .features[
+                                  key
+                                ]
+                              }
+                              onChange={(
                                 event
-                                  .target
-                                  .value
-                              )
-                            )
-                          }
-                        />
-                      </label>
-                    )
-                  )}
+                              ) =>
+                                feature(
+                                  key,
+                                  event
+                                    .target
+                                    .checked
+                                )
+                              }
+                            />
 
-                  {[
-                    'advancedSearch',
-                    'profileBoost',
-                    'prioritySupport',
-                    'relationshipManager'
-                  ].map(
-                    (
-                      key
-                    ) => (
-                      <label
-                        className={checkboxLabelClass}
-                        key={
-                          key
-                        }
-                      >
-                        <input
-                          type="checkbox"
-                          className="w-auto"
-                          checked={
-                            editing
-                              .features[
-                                key
-                              ]
-                          }
-                          onChange={(
-                            event
-                          ) =>
-                            feature(
-                              key,
+                            {
+                              label
+                            }
+                          </label>
+                        )
+                      )}
+                    </div>
+                  </div>
 
-                              event
-                                .target
-                                .checked
-                            )
-                          }
-                        />
-
-                        {key}
-                      </label>
-                    )
-                  )}
-
-                  <label className={checkboxLabelClass}>
+                  <label
+                    className={
+                      checkboxLabelClass
+                    }
+                  >
                     <input
                       type="checkbox"
                       className="w-auto"
@@ -680,7 +1263,6 @@ export default function AdminOperationsPage({
                       ) =>
                         planField(
                           'active',
-
                           event
                             .target
                             .checked
@@ -688,80 +1270,120 @@ export default function AdminOperationsPage({
                       }
                     />
 
-                    Active
+                    Plan is active
                   </label>
 
-                  <div className="mt-7 flex gap-[10px] max-[767px]:flex-wrap">
-                    <button className={primaryButtonClass}>
-                      Save plan
+                  <div className="mt-4 flex flex-wrap gap-[10px]">
+                    <button
+                      type="submit"
+                      className={
+                        primaryButtonClass
+                      }
+                      disabled={
+                        saving
+                      }
+                    >
+                      {saving
+                        ? 'Saving…'
+                        : 'Save plan'}
                     </button>
 
                     {editing._id && (
                       <button
                         type="button"
-                        className={outlineButtonClass}
+                        className={
+                          outlineButtonClass
+                        }
+                        disabled={
+                          saving
+                        }
                         onClick={() =>
                           setEditing(
-                            emptyPlan
+                            createEmptyPlan()
                           )
                         }
                       >
-                        Cancel
+                        Cancel editing
                       </button>
                     )}
                   </div>
                 </form>
 
-                <section className={adminTableClass}>
-                  {data.plans.map(
-                    (
-                      plan
-                    ) => (
-                      <div
-                        className={adminRowClass}
-                        key={
-                          plan._id
-                        }
-                      >
-                        <div>
-                          <strong className="block text-[11px]">
-                            {plan.name}
-                          </strong>
+                <section
+                  className={
+                    adminTableClass
+                  }
+                >
+                  <div className="py-6">
+                    <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
+                      Available plans
+                    </h2>
+                  </div>
 
-                          <small className="block text-[9px] text-[#756a60]">
-                            {plan.durationDays}{' '}
-                            days ·{' '}
-                            {plan.active
-                              ? 'Active'
-                              : 'Inactive'}
-                          </small>
-                        </div>
-
-                        <time className="text-[9px] text-[#756a60] max-[767px]:hidden">
-                          {formatCurrency(
-                            plan.price
-                          )}
-                        </time>
-
-                        <button
-                          type="button"
-                          className={outlineButtonClass}
-                          onClick={() =>
-                            setEditing({
-                              ...plan,
-
-                              features: {
-                                ...emptyPlan.features,
-
-                                ...plan.features
-                              }
-                            })
+                  {data.plans
+                    ?.length ? (
+                    data.plans.map(
+                      (
+                        plan
+                      ) => (
+                        <div
+                          className="grid grid-cols-[1fr_auto_auto] items-center gap-[18px] border-t border-[#ddd0c1] py-4 max-[650px]:grid-cols-1"
+                          key={
+                            plan._id
                           }
                         >
-                          Edit
-                        </button>
-                      </div>
+                          <div>
+                            <strong className="block text-[12px]">
+                              {
+                                plan.name
+                              }
+                            </strong>
+
+                            <small className="mt-1 block text-[9px] text-[#756a60]">
+                              {
+                                plan.slug
+                              }
+                              {' · '}
+                              {
+                                plan.durationDays
+                              }{' '}
+                              days
+                              {' · '}
+                              {plan.active
+                                ? 'Active'
+                                : 'Inactive'}
+                            </small>
+                          </div>
+
+                          <div className="text-right max-[650px]:text-left">
+                            <strong className="font-['Cormorant_Garamond'] text-[24px] font-medium">
+                              {formatCurrency(
+                                plan.price
+                              )}
+                            </strong>
+                          </div>
+
+                          <button
+                            type="button"
+                            className={
+                              outlineButtonClass
+                            }
+                            onClick={() =>
+                              startEditingPlan(
+                                plan
+                              )
+                            }
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      )
                     )
+                  ) : (
+                    <EmptyState>
+                      No membership
+                      plans.
+                    </EmptyState>
                   )}
                 </section>
               </>
@@ -770,138 +1392,300 @@ export default function AdminOperationsPage({
             {type ===
               'payments' && (
               <>
-                <section className={adminTableClass}>
-                  {data.payments.map(
-                    (
-                      payment
-                    ) => {
-                      const refunded =
-                        Number(
-                          payment
-                            .refundedAmountPaise ||
-                            0
-                        ) /
-                        100;
+                <div className="grid grid-cols-4 gap-[15px] max-[900px]:grid-cols-2">
+                  {[
+                    [
+                      data
+                        .payments
+                        ?.length ||
+                        0,
 
-                      const pending =
-                        Number(
-                          payment
-                            .refundPendingPaise ||
-                            0
-                        ) /
-                        100;
+                      'Transactions'
+                    ],
 
-                      const canOpenRefund =
-                        payment.provider ===
-                          'razorpay' &&
-                        Boolean(
-                          payment
-                            .providerPaymentId
-                        ) &&
+                    [
+                      (
+                        data
+                          .payments ||
+                        []
+                      ).filter(
                         (
-                          payment.status ===
-                            'Paid' ||
-                          payment.status ===
-                            'Refunded'
-                        );
+                          item
+                        ) =>
+                          item.status ===
+                          'Paid'
+                      ).length,
 
-                      const canCreateRefund =
-                        payment.status ===
-                          'Paid' &&
-                        pending ===
-                          0 &&
-                        refunded <
+                      'Paid'
+                    ],
+
+                    [
+                      (
+                        data
+                          .payments ||
+                        []
+                      ).filter(
+                        (
+                          item
+                        ) =>
                           Number(
-                            payment.amount
-                          );
+                            item
+                              .refundedAmountPaise ||
+                              0
+                          ) >
+                          0
+                      ).length,
 
-                      return (
-                        <div
-                          className={adminRowClass}
-                          key={
-                            payment._id
+                      'Refund activity'
+                    ],
+
+                    [
+                      formatCurrency(
+                        (
+                          data
+                            .payments ||
+                          []
+                        )
+                          .filter(
+                            (
+                              item
+                            ) =>
+                              [
+                                'Paid',
+                                'Refunded'
+                              ].includes(
+                                item.status
+                              )
+                          )
+                          .reduce(
+                            (
+                              sum,
+                              item
+                            ) =>
+                              sum +
+                              Number(
+                                item.amount ||
+                                  0
+                              ),
+                            0
+                          )
+                      ),
+
+                      'Listed gross'
+                    ]
+                  ].map(
+                    ([
+                      value,
+                      label
+                    ]) => (
+                      <article
+                        className={
+                          metricClass
+                        }
+                        key={
+                          label
+                        }
+                      >
+                        <strong
+                          className={
+                            metricValueClass
                           }
                         >
-                          <div className="min-w-0">
-                            <strong className="block break-all text-[11px]">
-                              {payment
-                                .user
-                                ?.email ||
-                                'Member'}
-                            </strong>
+                          {
+                            value
+                          }
+                        </strong>
 
-                            <small className="block break-all text-[9px] leading-5 text-[#756a60]">
-                              {payment.providerOrderId ||
-                                'No order'}{' '}
-                              ·{' '}
-                              {payment
-                                .plan
-                                ?.name ||
-                                'Plan'}
-                            </small>
+                        <span
+                          className={
+                            metricLabelClass
+                          }
+                        >
+                          {
+                            label
+                          }
+                        </span>
+                      </article>
+                    )
+                  )}
+                </div>
 
-                            {refunded >
-                              0 && (
-                              <small className="block text-[9px] text-[#91683f]">
-                                Refunded{' '}
-                                {formatCurrency(
-                                  refunded
-                                )}
-                              </small>
-                            )}
+                <section
+                  className={
+                    adminTableClass
+                  }
+                >
+                  <div className="py-6">
+                    <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
+                      Payment history
+                    </h2>
+                  </div>
 
-                            {pending >
-                              0 && (
-                              <small className="block text-[9px] font-bold text-[#91683f]">
-                                Refund pending{' '}
-                                {formatCurrency(
-                                  pending
-                                )}
-                              </small>
-                            )}
-                          </div>
+                  {data.payments
+                    ?.length ? (
+                    data.payments.map(
+                      (
+                        payment
+                      ) => {
+                        const refunded =
+                          Number(
+                            payment
+                              .refundedAmountPaise ||
+                              0
+                          ) /
+                          100;
 
-                          <time className="text-[9px] text-[#756a60] max-[767px]:hidden">
-                            {payment.status}
-                          </time>
+                        const pending =
+                          Number(
+                            payment
+                              .refundPendingPaise ||
+                              0
+                          ) /
+                          100;
 
-                          <span className="text-[11px]">
-                            {formatCurrency(
-                              payment.amount
-                            )}
-                          </span>
+                        const remaining =
+                          Math.max(
+                            0,
 
-                          <button
-                            type="button"
-                            className={outlineButtonClass}
-                            disabled={
-                              !canOpenRefund
-                            }
-                            onClick={() =>
-                              setRefundingPayment(
-                                payment
-                              )
+                            Number(
+                              payment.amount ||
+                                0
+                            ) -
+                              refunded -
+                              pending
+                          );
+
+                        const canOpenRefund =
+                          payment.provider ===
+                            'razorpay' &&
+                          Boolean(
+                            payment
+                              .providerPaymentId
+                          ) &&
+                          [
+                            'Paid',
+                            'Refunded'
+                          ].includes(
+                            payment.status
+                          );
+
+                        const canCreateRefund =
+                          payment.status ===
+                            'Paid' &&
+                          pending ===
+                            0 &&
+                          remaining >
+                            0;
+
+                        return (
+                          <div
+                            className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-[18px] border-t border-[#ddd0c1] py-4 max-[850px]:grid-cols-[1fr_auto] max-[520px]:grid-cols-1"
+                            key={
+                              payment._id
                             }
                           >
-                            {payment.status ===
-                            'Refunded'
-                              ? 'View refund'
-                              : pending >
-                                  0
-                                ? 'Sync refund'
-                                : canCreateRefund
-                                  ? 'Refund'
-                                  : 'View'}
-                          </button>
-                        </div>
-                      );
-                    }
-                  )}
+                            <div className="min-w-0">
+                              <strong className="block break-all text-[11px]">
+                                {payment
+                                  .user
+                                  ?.email ||
+                                  'Member'}
+                              </strong>
 
-                  {!data.payments.length && (
-                    <p className="p-[25px] text-[12px] text-[#756a60]">
-                      No payments.
-                    </p>
+                              <small className="mt-1 block break-all text-[9px] leading-5 text-[#756a60]">
+                                {payment
+                                  .plan
+                                  ?.name ||
+                                  'Historical plan'}
+                                {' · '}
+                                {payment.provider ||
+                                  'Unknown provider'}
+                                {' · '}
+                                {payment.providerPaymentId ||
+                                  payment.providerOrderId ||
+                                  'No provider reference'}
+                              </small>
+
+                              {refunded >
+                                0 && (
+                                <small className="mt-1 block text-[9px] font-bold text-[#91683f]">
+                                  Refunded{' '}
+                                  {formatCurrency(
+                                    refunded
+                                  )}
+                                </small>
+                              )}
+
+                              {pending >
+                                0 && (
+                                <small className="mt-1 block text-[9px] font-bold text-[#91683f]">
+                                  Refund
+                                  pending{' '}
+                                  {formatCurrency(
+                                    pending
+                                  )}
+                                </small>
+                              )}
+                            </div>
+
+                            <StatusBadge
+                              status={
+                                payment.status
+                              }
+                            />
+
+                            <div className="text-right max-[520px]:text-left">
+                              <strong className="block font-['Cormorant_Garamond'] text-[21px] font-medium">
+                                {formatCurrency(
+                                  payment.amount
+                                )}
+                              </strong>
+
+                              {canCreateRefund && (
+                                <small className="text-[8px] text-[#756a60]">
+                                  Refundable{' '}
+                                  {formatCurrency(
+                                    remaining
+                                  )}
+                                </small>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              className={
+                                canCreateRefund
+                                  ? dangerButtonClass
+                                  : outlineButtonClass
+                              }
+                              disabled={
+                                !canOpenRefund
+                              }
+                              onClick={() =>
+                                setRefundingPayment(
+                                  payment
+                                )
+                              }
+                            >
+                              {payment.status ===
+                              'Refunded'
+                                ? 'View refund'
+                                : pending >
+                                    0
+                                  ? 'Sync refund'
+                                  : canCreateRefund
+                                    ? 'Refund'
+                                    : 'View'}
+                            </button>
+                          </div>
+                        );
+                      }
+                    )
+                  ) : (
+                    <EmptyState>
+                      No payments
+                      recorded.
+                    </EmptyState>
                   )}
                 </section>
 
@@ -917,7 +1701,11 @@ export default function AdminOperationsPage({
                     }
                     onSubmitted={
                       async () => {
-                        await load();
+                        setRefundingPayment(
+                          null
+                        );
+
+                        await reload();
                       }
                     }
                   />
@@ -927,49 +1715,76 @@ export default function AdminOperationsPage({
 
             {type ===
               'audit' && (
-              <section className={adminTableClass}>
-                {data.logs.map(
-                  (
-                    log
-                  ) => (
-                    <div
-                      className={adminRowClass}
-                      key={
-                        log._id
-                      }
-                    >
-                      <div>
-                        <strong className="block text-[11px]">
-                          {log.action}
-                        </strong>
+              <section
+                className={
+                  adminTableClass
+                }
+              >
+                <div className="py-6">
+                  <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
+                    Administrative
+                    history
+                  </h2>
+                </div>
 
-                        <small className="block text-[9px] text-[#756a60]">
-                          {log.actor
-                            ?.email ||
-                            'System'}{' '}
-                          ·{' '}
-                          {log.entityType}{' '}
-                          {log.entityId}
-                        </small>
+                {data.logs
+                  ?.length ? (
+                  data.logs.map(
+                    (
+                      log
+                    ) => (
+                      <div
+                        className="grid grid-cols-[1fr_auto] items-center gap-[18px] border-t border-[#ddd0c1] py-4 max-[600px]:grid-cols-1"
+                        key={
+                          log._id
+                        }
+                      >
+                        <div className="min-w-0">
+                          <strong className="block text-[11px]">
+                            {
+                              log.action
+                            }
+                          </strong>
+
+                          <small className="mt-1 block break-all text-[9px] leading-5 text-[#756a60]">
+                            {log.actor
+                              ?.email ||
+                              'System'}
+                            {' · '}
+                            {
+                              log.entityType
+                            }
+                            {log.entityId
+                              ? ` · ${log.entityId}`
+                              : ''}
+                          </small>
+
+                          {log.metadata &&
+                            Object.keys(
+                              log.metadata
+                            ).length >
+                              0 && (
+                              <small className="mt-1 block break-words text-[8px] text-[#91867d]">
+                                {JSON.stringify(
+                                  log.metadata
+                                )}
+                              </small>
+                            )}
+                        </div>
+
+                        <time className="text-[9px] text-[#756a60]">
+                          {formatDate(
+                            log.createdAt
+                          )}
+                        </time>
                       </div>
-
-                      <time className="text-[9px] text-[#756a60] max-[767px]:hidden">
-                        {formatDate(
-                          log.createdAt,
-
-                          undefined,
-
-                          {
-                            dateStyle:
-                              'medium',
-
-                            timeStyle:
-                              'short'
-                          }
-                        )}
-                      </time>
-                    </div>
+                    )
                   )
+                ) : (
+                  <EmptyState>
+                    No audit events
+                    found.
+                  </EmptyState>
                 )}
               </section>
             )}
@@ -978,127 +1793,230 @@ export default function AdminOperationsPage({
               'settings' && (
               <>
                 <form
-                  className="grid gap-[18px] border border-[#ddd0c1] bg-[#fffdf8] p-[35px]"
+                  className="grid gap-[18px] border border-[#ddd0c1] bg-[#fffdf8] p-[35px] max-[767px]:p-5"
                   onSubmit={
                     saveSettings
                   }
+                  noValidate
                 >
-                  {[
-                    [
-                      'platformName',
-                      'Platform name'
-                    ],
+                  <div>
+                    <h2 className="font-['Cormorant_Garamond'] text-[32px] font-medium">
+                      Platform
+                      configuration
+                    </h2>
 
-                    [
-                      'supportEmail',
-                      'Support email'
-                    ],
+                    <p className="mt-1 text-[11px] text-[#756a60]">
+                      Changes apply
+                      across the
+                      member portal.
+                    </p>
+                  </div>
 
-                    [
-                      'supportPhone',
-                      'Support phone'
-                    ],
+                  <div className="grid grid-cols-2 gap-[18px] max-[767px]:grid-cols-1">
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Platform name
 
-                    [
-                      'defaultCountry',
-                      'Default country'
-                    ],
-
-                    [
-                      'maxPhotos',
-                      'Maximum photos'
-                    ]
-                  ].map(
-                    ([
-                      key,
-                      label
-                    ]) => (
-                      <label
-                        className={labelClass}
-                        key={
-                          key
+                      <input
+                        className={
+                          inputClass
                         }
-                      >
-                        {label}
+                        name="platformName"
+                        defaultValue={
+                          data
+                            .settings
+                            ?.platformName ||
+                          ''
+                        }
+                      />
+                    </label>
 
-                        <input
-                          className={inputClass}
-                          name={
-                            key
-                          }
-                          type={
-                            key ===
-                            'maxPhotos'
-                              ? 'number'
-                              : 'text'
-                          }
-                          defaultValue={
-                            data
-                              .settings[
-                                key
-                              ] ||
-                            ''
-                          }
-                        />
-                      </label>
-                    )
-                  )}
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Support email
 
-                  {[
-                    [
-                      'maintenanceMode',
-                      'Maintenance mode'
-                    ],
+                      <input
+                        className={
+                          inputClass
+                        }
+                        type="email"
+                        name="supportEmail"
+                        defaultValue={
+                          data
+                            .settings
+                            ?.supportEmail ||
+                          ''
+                        }
+                      />
+                    </label>
 
-                    [
-                      'registrationEnabled',
-                      'Registration enabled'
-                    ],
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Support phone
 
-                    [
-                      'paymentsEnabled',
-                      'Payments enabled'
-                    ]
-                  ].map(
-                    ([
-                      key,
-                      label
-                    ]) => (
+                      <input
+                        className={
+                          inputClass
+                        }
+                        name="supportPhone"
+                        defaultValue={
+                          data
+                            .settings
+                            ?.supportPhone ||
+                          ''
+                        }
+                      />
+                    </label>
+
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Default country
+
+                      <input
+                        className={
+                          inputClass
+                        }
+                        name="defaultCountry"
+                        defaultValue={
+                          data
+                            .settings
+                            ?.defaultCountry ||
+                          ''
+                        }
+                      />
+                    </label>
+
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Maximum photos
+
+                      <input
+                        className={
+                          inputClass
+                        }
+                        name="maxPhotos"
+                        type="number"
+                        defaultValue={
+                          data
+                            .settings
+                            ?.maxPhotos ??
+                          5
+                        }
+                      />
+                    </label>
+                  </div>
+
+                  <div className="border-t border-[#ddd0c1] pt-6">
+                    <h3 className="font-['Cormorant_Garamond'] text-[25px] font-medium">
+                      Operational
+                      switches
+                    </h3>
+
+                    <div className="mt-4 grid gap-3">
                       <label
-                        className={checkboxLabelClass}
-                        key={
-                          key
+                        className={
+                          checkboxLabelClass
                         }
                       >
                         <input
                           className="w-auto"
-                          name={
-                            key
-                          }
+                          name="maintenanceMode"
                           type="checkbox"
                           defaultChecked={
-                            data
-                              .settings[
-                                key
-                              ]
+                            !!data
+                              .settings
+                              ?.maintenanceMode
                           }
                         />
 
-                        {label}
+                        Maintenance
+                        mode
                       </label>
-                    )
-                  )}
 
-                  <button className={primaryButtonClass}>
-                    Save settings
+                      <label
+                        className={
+                          checkboxLabelClass
+                        }
+                      >
+                        <input
+                          className="w-auto"
+                          name="registrationEnabled"
+                          type="checkbox"
+                          defaultChecked={
+                            !!data
+                              .settings
+                              ?.registrationEnabled
+                          }
+                        />
+
+                        Registration
+                        enabled
+                      </label>
+
+                      <label
+                        className={
+                          checkboxLabelClass
+                        }
+                      >
+                        <input
+                          className="w-auto"
+                          name="paymentsEnabled"
+                          type="checkbox"
+                          defaultChecked={
+                            !!data
+                              .settings
+                              ?.paymentsEnabled
+                          }
+                        />
+
+                        Payments
+                        enabled
+                      </label>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className={
+                      primaryButtonClass
+                    }
+                    disabled={
+                      saving
+                    }
+                  >
+                    {saving
+                      ? 'Saving…'
+                      : 'Save settings'}
                   </button>
                 </form>
 
                 {data.providers && (
-                  <section className={adminTableClass}>
-                    <h2 className="font-['Cormorant_Garamond'] text-[24px] font-medium">
-                      Provider readiness
-                    </h2>
+                  <section
+                    className={
+                      adminTableClass
+                    }
+                  >
+                    <div className="py-6">
+                      <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
+                        Provider
+                        readiness
+                      </h2>
+                    </div>
 
                     {Object.entries(
                       data.providers
@@ -1108,23 +2026,32 @@ export default function AdminOperationsPage({
                         provider
                       ]) => (
                         <div
-                          className={adminRowClass}
+                          className="grid grid-cols-[1fr_auto] items-center gap-[18px] border-t border-[#ddd0c1] py-4"
                           key={
                             key
                           }
                         >
-                          <strong className="block text-[11px]">
-                            {key}:{' '}
-                            {provider.name}
-                          </strong>
+                          <div>
+                            <strong className="block text-[11px]">
+                              {
+                                provider.name
+                              }
+                            </strong>
 
-                          <span>
-                            {provider.configured
-                              ? 'Configured'
-                              : `Missing ${provider.missing.join(
-                                  ', '
-                                )}`}
-                          </span>
+                            <small className="text-[9px] text-[#756a60]">
+                              {
+                                key
+                              }
+                            </small>
+                          </div>
+
+                          <StatusBadge
+                            status={
+                              provider.configured
+                                ? 'Configured'
+                                : 'Not configured'
+                            }
+                          />
                         </div>
                       )
                     )}
@@ -1136,88 +2063,175 @@ export default function AdminOperationsPage({
             {type ===
               'health' && (
               <>
-                <div className="grid grid-cols-3 gap-[15px] max-[767px]:grid-cols-2">
-                  <article className={metricClass}>
-                    <strong className={metricValueClass}>
-                      {data.api.status}
+                <div className="grid grid-cols-3 gap-[15px] max-[767px]:grid-cols-1">
+                  <article
+                    className={
+                      metricClass
+                    }
+                  >
+                    <Server
+                      size={18}
+                      className="mb-4 text-[#681d25]"
+                    />
+
+                    <strong
+                      className={
+                        metricValueClass
+                      }
+                    >
+                      {
+                        data.api
+                          ?.status
+                      }
                     </strong>
 
-                    <span className={metricLabelClass}>
+                    <span
+                      className={
+                        metricLabelClass
+                      }
+                    >
                       API ·{' '}
-                      {data.api.environment}
+                      {
+                        data.api
+                          ?.environment
+                      }
                     </span>
                   </article>
 
-                  <article className={metricClass}>
-                    <strong className={metricValueClass}>
-                      {data.database.status}
+                  <article
+                    className={
+                      metricClass
+                    }
+                  >
+                    <CheckCircle2
+                      size={18}
+                      className="mb-4 text-[#681d25]"
+                    />
+
+                    <strong
+                      className={
+                        metricValueClass
+                      }
+                    >
+                      {
+                        data
+                          .database
+                          ?.status
+                      }
                     </strong>
 
-                    <span className={metricLabelClass}>
+                    <span
+                      className={
+                        metricLabelClass
+                      }
+                    >
                       MongoDB
                     </span>
                   </article>
 
-                  <article className={metricClass}>
-                    <strong className={metricValueClass}>
+                  <article
+                    className={
+                      metricClass
+                    }
+                  >
+                    <Clock3
+                      size={18}
+                      className="mb-4 text-[#681d25]"
+                    />
+
+                    <strong
+                      className={
+                        metricValueClass
+                      }
+                    >
                       {Math.floor(
-                        data.api
-                          .uptimeSeconds /
+                        Number(
+                          data.api
+                            ?.uptimeSeconds ||
+                            0
+                        ) /
                           60
                       )}
                       m
                     </strong>
 
-                    <span className={metricLabelClass}>
+                    <span
+                      className={
+                        metricLabelClass
+                      }
+                    >
                       API uptime
                     </span>
                   </article>
                 </div>
 
-                <section className={adminTableClass}>
-                  <h2 className="font-['Cormorant_Garamond'] text-[24px] font-medium">
-                    Provider readiness
-                  </h2>
+                <section
+                  className={
+                    adminTableClass
+                  }
+                >
+                  <div className="py-6">
+                    <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
+                      Provider
+                      readiness
+                    </h2>
+                  </div>
 
                   {Object.entries(
-                    data.providers
+                    data.providers ||
+                      {}
                   ).map(
                     ([
                       key,
                       provider
                     ]) => (
                       <div
-                        className={adminRowClass}
+                        className="grid grid-cols-[1fr_auto] items-center gap-[18px] border-t border-[#ddd0c1] py-4"
                         key={
                           key
                         }
                       >
                         <div>
                           <strong className="block text-[11px]">
-                            {provider.name}
+                            {
+                              provider.name
+                            }
                           </strong>
 
-                          <small className="block text-[9px] text-[#756a60]">
-                            {key}
+                          <small className="text-[9px] text-[#756a60]">
+                            {
+                              key
+                            }
                           </small>
                         </div>
 
-                        <span className="rounded-[99px] border border-[#8d6e45] px-[9px] py-[5px] text-[9px] uppercase text-[#694c26]">
-                          {provider.status}
-                        </span>
+                        <StatusBadge
+                          status={
+                            provider.status
+                          }
+                        />
                       </div>
                     )
                   )}
                 </section>
 
-                <section className="mt-10 border border-[#ddd0c1] bg-[#fffdf8] p-6">
-                  <h2 className="font-['Cormorant_Garamond'] text-[24px] font-medium">
-                    Operational switches
-                  </h2>
+                <section className="mt-8 border border-[#ddd0c1] bg-[#fffdf8] p-6">
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck
+                      size={20}
+                      className="text-[#681d25]"
+                    />
 
-                  <div className="grid gap-3">
+                    <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
+                      Operational
+                      switches
+                    </h2>
+                  </div>
+
+                  <div className="mt-6 grid gap-3">
                     {Object.entries(
-                      data.platform
+                      data.platform ||
+                        {}
                     ).map(
                       ([
                         key,
@@ -1227,9 +2241,11 @@ export default function AdminOperationsPage({
                           key={
                             key
                           }
-                          className="flex justify-between gap-5 border-b border-[#ddd0c1] pb-2"
+                          className="flex justify-between gap-5 border-b border-[#ddd0c1] pb-3 text-[12px]"
                         >
-                          {key}
+                          {
+                            key
+                          }
 
                           <strong>
                             {value
