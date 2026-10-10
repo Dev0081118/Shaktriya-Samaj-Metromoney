@@ -44,8 +44,7 @@ import {
 const owned =
   async (
     user,
-    optional =
-      false
+    optional = false
   ) => {
     const profile =
       await MatrimonialProfile.findOne({
@@ -63,9 +62,7 @@ const owned =
       return null;
     }
 
-    if (
-      !profile
-    ) {
+    if (!profile) {
       throw new ApiError(
         404,
         'Create your profile first.'
@@ -83,16 +80,12 @@ const pick =
     Object.fromEntries(
       keys
         .filter(
-          (
-            key
-          ) =>
+          (key) =>
             source?.[key] !==
             undefined
         )
         .map(
-          (
-            key
-          ) => [
+          (key) => [
             key,
             source[key]
           ]
@@ -100,9 +93,7 @@ const pick =
     );
 
 const emptyToUndefined =
-  (
-    value
-  ) => {
+  (value) => {
     if (
       typeof value ===
         'string' &&
@@ -116,39 +107,30 @@ const emptyToUndefined =
   };
 
 const normalizeBoolean =
-  (
-    value
-  ) => {
+  (value) => {
     if (
-      value ===
-        true ||
-      value ===
-        false
+      value === true ||
+      value === false
     ) {
       return value;
     }
 
     if (
-      value ===
-        'true'
+      value === 'true'
     ) {
       return true;
     }
 
     if (
-      value ===
-        'false'
+      value === 'false'
     ) {
       return false;
     }
 
     if (
-      value ===
-        '' ||
-      value ===
-        null ||
-      value ===
-        undefined
+      value === '' ||
+      value === null ||
+      value === undefined
     ) {
       return undefined;
     }
@@ -157,12 +139,10 @@ const normalizeBoolean =
   };
 
 const cleanObject =
-  (
-    object
-  ) =>
+  (object) =>
     Object.fromEntries(
       Object.entries(
-        object
+        object || {}
       )
         .map(
           ([
@@ -185,10 +165,173 @@ const cleanObject =
         )
     );
 
-const profilePayload =
+const objectValue =
+  (value) => {
+    if (!value) {
+      return {};
+    }
+
+    if (
+      typeof value.toObject ===
+        'function'
+    ) {
+      return value.toObject();
+    }
+
+    if (
+      typeof value ===
+        'object' &&
+      !Array.isArray(
+        value
+      )
+    ) {
+      return {
+        ...value
+      };
+    }
+
+    return {};
+  };
+
+const deepMerge =
   (
-    body
+    existing,
+    incoming
   ) => {
+    const base =
+      objectValue(
+        existing
+      );
+
+    const source =
+      objectValue(
+        incoming
+      );
+
+    const result = {
+      ...base
+    };
+
+    for (
+      const [
+        key,
+        value
+      ]
+      of Object.entries(
+        source
+      )
+    ) {
+      if (
+        value ===
+        undefined
+      ) {
+        continue;
+      }
+
+      if (
+        value &&
+        typeof value ===
+          'object' &&
+        !Array.isArray(
+          value
+        ) &&
+        !(
+          value instanceof
+          Date
+        )
+      ) {
+        result[key] =
+          deepMerge(
+            base[key],
+            value
+          );
+
+        continue;
+      }
+
+      result[key] =
+        value;
+    }
+
+    return result;
+  };
+
+const setNestedIfPresent =
+  (
+    safe,
+    body,
+    key,
+    fields
+  ) => {
+    if (
+      !body?.[key] ||
+      typeof body[key] !==
+        'object' ||
+      Array.isArray(
+        body[key]
+      )
+    ) {
+      return;
+    }
+
+    const nested =
+      cleanObject(
+        pick(
+          body[key],
+          fields
+        )
+      );
+
+    if (
+      Object.keys(
+        nested
+      ).length
+    ) {
+      safe[key] =
+        nested;
+    }
+  };
+
+const mosalPayload =
+  (source) => {
+    if (
+      !source ||
+      typeof source !==
+        'object' ||
+      Array.isArray(
+        source
+      )
+    ) {
+      return undefined;
+    }
+
+    const value =
+      cleanObject(
+        pick(
+          source,
+          [
+            'mamaName',
+            'grandmotherName',
+            'familySurname',
+            'clanSurname',
+            'nativeVillage',
+            'taluka',
+            'district',
+            'state',
+            'notes'
+          ]
+        )
+      );
+
+    return Object.keys(
+      value
+    ).length
+      ? value
+      : undefined;
+  };
+
+const profilePayload =
+  (body) => {
     const safe =
       cleanObject(
         pick(
@@ -201,6 +344,8 @@ const profilePayload =
             'gender',
             'dateOfBirth',
             'height',
+            'bloodGroup',
+            'complexion',
             'maritalStatus',
             'marriageTimeline',
             'aboutMe',
@@ -209,131 +354,347 @@ const profilePayload =
         )
       );
 
-    for (
-      const [
-        key,
-        fields
+    setNestedIfPresent(
+      safe,
+      body,
+      'birthDetails',
+      [
+        'timeOfBirth',
+        'city',
+        'district',
+        'state',
+        'country'
       ]
-      of Object.entries({
-        location: [
-          'city',
-          'district',
-          'state',
-          'country',
-          'nativePlace'
-        ],
+    );
 
-        community: [
-          'name',
-          'subCommunity',
-          'clan',
-          'familyOrigin'
-        ],
+    setNestedIfPresent(
+      safe,
+      body,
+      'location',
+      [
+        'city',
+        'taluka',
+        'district',
+        'state',
+        'country',
+        'nativePlace',
+        'nativeTaluka',
+        'nativeDistrict',
+        'nativeState'
+      ]
+    );
 
-        education: [
-          'highestEducation',
-          'degree',
-          'specialization',
-          'college',
-          'educationDetails'
-        ],
+    setNestedIfPresent(
+      safe,
+      body,
+      'community',
+      [
+        'religion',
+        'caste',
+        'name',
+        'subCommunity',
+        'clan',
+        'gotra',
+        'vansh',
+        'kulaDevi',
+        'ishtaDevta',
+        'familyOrigin'
+      ]
+    );
 
-        career: [
-          'occupationType',
-          'occupation',
-          'designation',
-          'companyName',
-          'businessName',
-          'annualIncome'
-        ],
+    setNestedIfPresent(
+      safe,
+      body,
+      'education',
+      [
+        'highestEducation',
+        'degree',
+        'specialization',
+        'college',
+        'university',
+        'educationDetails'
+      ]
+    );
 
-        lifestyle: [
-          'diet',
-          'smoking',
-          'drinking',
-          'interests'
-        ],
+    setNestedIfPresent(
+      safe,
+      body,
+      'career',
+      [
+        'occupationType',
+        'occupation',
+        'designation',
+        'companyName',
+        'businessName',
+        'annualIncome',
+        'incomeVisibility'
+      ]
+    );
 
-        family: [
-          'fatherName',
-          'fatherOccupation',
-          'motherName',
-          'motherOccupation',
-          'siblings',
-          'siblingDetails',
-          'familyType',
-          'familyLocation',
-          'familyDescription'
-        ],
-
-        privacy: [
-          'photoVisibility',
-          'contactVisibility',
-          'incomeVisibility',
-          'familyVisibility',
-          'fullNameVisibility',
-          'familyOverviewVisibility',
-          'maternalFamilyVisibility',
-          'siblingDetailsVisibility',
-          'assetVisibility'
-        ],
-
-        maritalHistory: [
-          'status',
-          'isRemarriage',
-          'previousMarriageEndedAt',
-          'divorceFinalized',
-          'childrenFromPreviousMarriage',
-          'childrenCount',
-          'childrenLivingWith',
-          'notes'
-        ],
-
-        paternalFamily: [
-          'ancestralVillage',
-          'nativePlace',
-          'district',
-          'state',
-          'familySurname',
-          'clan',
-          'notes'
-        ],
-
-        maternalFamily: [
-          'maternalGrandfatherName',
-          'maternalFamilySurname',
-          'maternalNativePlace',
-          'maternalVillage',
-          'maternalDistrict',
-          'maternalState',
-          'maternalClan',
-          'notes'
-        ],
-
-        familyAssets: [
-          'agricultureLand',
-          'propertySummary',
-          'primaryResidenceType',
-          'businessAssetsSummary'
-        ],
-
-        biodataPrivacy: [
-          'includeSensitiveFamilyDetailsInBiodata'
-        ]
-      })
+    if (
+      body?.career
+        ?.workLocation &&
+      typeof body.career
+        .workLocation ===
+        'object'
     ) {
-      if (
-        body[key]
-      ) {
-        safe[key] =
+      safe.career = {
+        ...(safe.career ||
+          {}),
+
+        workLocation:
           cleanObject(
             pick(
-              body[key],
-              fields
+              body.career
+                .workLocation,
+              [
+                'city',
+                'state',
+                'country'
+              ]
             )
-          );
+          )
+      };
+    }
+
+    setNestedIfPresent(
+      safe,
+      body,
+      'lifestyle',
+      [
+        'diet',
+        'smoking',
+        'drinking',
+        'interests'
+      ]
+    );
+
+    setNestedIfPresent(
+      safe,
+      body,
+      'family',
+      [
+        'fatherName',
+        'fatherOccupation',
+        'motherName',
+        'motherOccupation',
+        'siblings',
+        'siblingDetails',
+        'familyType',
+        'familyLocation',
+        'familyDescription'
+      ]
+    );
+
+    setNestedIfPresent(
+      safe,
+      body,
+      'privacy',
+      [
+        'photoVisibility',
+        'contactVisibility',
+        'incomeVisibility',
+        'familyVisibility',
+        'fullNameVisibility',
+        'familyOverviewVisibility',
+        'maternalFamilyVisibility',
+        'siblingDetailsVisibility',
+        'assetVisibility',
+        'astrologyVisibility',
+        'contactAddressVisibility'
+      ]
+    );
+
+    setNestedIfPresent(
+      safe,
+      body,
+      'maritalHistory',
+      [
+        'status',
+        'isRemarriage',
+        'previousMarriageEndedAt',
+        'divorceFinalized',
+        'childrenFromPreviousMarriage',
+        'childrenCount',
+        'childrenLivingWith',
+        'notes'
+      ]
+    );
+
+    setNestedIfPresent(
+      safe,
+      body,
+      'paternalFamily',
+      [
+        'ancestralVillage',
+        'nativePlace',
+        'taluka',
+        'district',
+        'state',
+        'familySurname',
+        'clan',
+        'gotra',
+        'notes'
+      ]
+    );
+
+    setNestedIfPresent(
+      safe,
+      body,
+      'maternalFamily',
+      [
+        'maternalGrandfatherName',
+        'maternalFamilySurname',
+        'maternalNativePlace',
+        'maternalVillage',
+        'maternalTaluka',
+        'maternalDistrict',
+        'maternalState',
+        'maternalClan',
+        'notes'
+      ]
+    );
+
+    if (
+      body?.maternalLineage &&
+      typeof body
+        .maternalLineage ===
+        'object' &&
+      !Array.isArray(
+        body.maternalLineage
+      )
+    ) {
+      const selfMosal =
+        mosalPayload(
+          body
+            .maternalLineage
+            .selfMosal
+        );
+
+      const fathersMosal =
+        mosalPayload(
+          body
+            .maternalLineage
+            .fathersMosal
+        );
+
+      const mothersMosal =
+        mosalPayload(
+          body
+            .maternalLineage
+            .mothersMosal
+        );
+
+      const lineage = {
+        ...(selfMosal
+          ? {
+              selfMosal
+            }
+          : {}),
+
+        ...(fathersMosal
+          ? {
+              fathersMosal
+            }
+          : {}),
+
+        ...(mothersMosal
+          ? {
+              mothersMosal
+            }
+          : {})
+      };
+
+      if (
+        Object.keys(
+          lineage
+        ).length
+      ) {
+        safe.maternalLineage =
+          lineage;
       }
     }
+
+    setNestedIfPresent(
+      safe,
+      body,
+      'astrology',
+      [
+        'rashi',
+        'nakshatra',
+        'manglik'
+      ]
+    );
+
+    setNestedIfPresent(
+      safe,
+      body,
+      'contactDetails',
+      [
+        'guardianName',
+        'guardianRelation',
+        'guardianPhone',
+        'selfPhone',
+        'email'
+      ]
+    );
+
+    if (
+      body?.contactDetails
+        ?.currentAddress &&
+      typeof body
+        .contactDetails
+        .currentAddress ===
+        'object'
+    ) {
+      safe.contactDetails = {
+        ...(safe.contactDetails ||
+          {}),
+
+        currentAddress:
+          cleanObject(
+            pick(
+              body
+                .contactDetails
+                .currentAddress,
+              [
+                'addressLine1',
+                'addressLine2',
+                'city',
+                'taluka',
+                'district',
+                'state',
+                'pincode',
+                'country'
+              ]
+            )
+          )
+      };
+    }
+
+    setNestedIfPresent(
+      safe,
+      body,
+      'familyAssets',
+      [
+        'agricultureLand',
+        'propertySummary',
+        'primaryResidenceType',
+        'businessAssetsSummary'
+      ]
+    );
+
+    setNestedIfPresent(
+      safe,
+      body,
+      'biodataPrivacy',
+      [
+        'includeSensitiveFamilyDetailsInBiodata',
+        'includeContactDetailsInBiodata',
+        'includeAstrologyInBiodata',
+        'includeAssetsInBiodata'
+      ]
+    );
 
     if (
       safe.maritalHistory
@@ -366,14 +727,61 @@ const profilePayload =
     }
 
     if (
+      safe.familyAssets
+        ?.agricultureLand
+    ) {
+      safe.familyAssets
+        .agricultureLand = {
+        ...safe.familyAssets
+          .agricultureLand,
+
+        hasLand:
+          normalizeBoolean(
+            safe.familyAssets
+              .agricultureLand
+              .hasLand
+          )
+      };
+
+      safe.familyAssets
+        .agricultureLand =
+        cleanObject(
+          safe.familyAssets
+            .agricultureLand
+        );
+    }
+
+    if (
       safe.biodataPrivacy
     ) {
-      safe.biodataPrivacy
-        .includeSensitiveFamilyDetailsInBiodata =
-        normalizeBoolean(
-          safe.biodataPrivacy
-            .includeSensitiveFamilyDetailsInBiodata
-        );
+      for (
+        const key
+        of [
+          'includeSensitiveFamilyDetailsInBiodata',
+          'includeContactDetailsInBiodata',
+          'includeAstrologyInBiodata',
+          'includeAssetsInBiodata'
+        ]
+      ) {
+        if (
+          safe
+            .biodataPrivacy[
+            key
+          ] !==
+          undefined
+        ) {
+          safe
+            .biodataPrivacy[
+            key
+          ] =
+            normalizeBoolean(
+              safe
+                .biodataPrivacy[
+                key
+              ]
+            );
+        }
+      }
 
       safe.biodataPrivacy =
         cleanObject(
@@ -398,6 +806,7 @@ const profilePayload =
   };
 
 const nestedProfileSections = [
+  'birthDetails',
   'location',
   'community',
   'education',
@@ -408,41 +817,12 @@ const nestedProfileSections = [
   'maritalHistory',
   'paternalFamily',
   'maternalFamily',
+  'maternalLineage',
+  'astrology',
+  'contactDetails',
   'familyAssets',
   'biodataPrivacy'
 ];
-
-const plainObject =
-  (
-    value
-  ) => {
-    if (
-      !value
-    ) {
-      return {};
-    }
-
-    if (
-      typeof value.toObject ===
-        'function'
-    ) {
-      return value.toObject();
-    }
-
-    if (
-      typeof value ===
-        'object' &&
-      !Array.isArray(
-        value
-      )
-    ) {
-      return {
-        ...value
-      };
-    }
-
-    return {};
-  };
 
 const mergeProfileData =
   (
@@ -472,75 +852,22 @@ const mergeProfileData =
       of nestedProfileSections
     ) {
       if (
-        incoming[
-          key
-        ] ===
+        incoming[key] ===
         undefined
       ) {
         continue;
       }
 
-      const existing =
-        plainObject(
-          profile[
-            key
-          ]
+      profile[key] =
+        deepMerge(
+          profile[key],
+          incoming[key]
         );
-
-      if (
-        key ===
-        'familyAssets'
-      ) {
-        const incomingAssets =
-          incoming.familyAssets ||
-          {};
-
-        const existingLand =
-          plainObject(
-            existing.agricultureLand
-          );
-
-        const incomingLand =
-          incomingAssets.agricultureLand;
-
-        profile.familyAssets = {
-          ...existing,
-          ...incomingAssets,
-
-          ...(
-            incomingLand !==
-            undefined
-              ? {
-                  agricultureLand: {
-                    ...existingLand,
-                    ...incomingLand
-                  }
-                }
-              : {
-                  agricultureLand:
-                    existing.agricultureLand
-                }
-          )
-        };
-
-        continue;
-      }
-
-      profile[
-        key
-      ] = {
-        ...existing,
-        ...incoming[
-          key
-        ]
-      };
     }
   };
 
 const escapedRegex =
-  (
-    value
-  ) =>
+  (value) =>
     new RegExp(
       String(
         value
@@ -566,28 +893,26 @@ export const upsert =
         safe.dateOfBirth
       ) {
         const dob =
-            new Date(
-              safe.dateOfBirth
-            ),
+          new Date(
+            safe.dateOfBirth
+          );
 
-          age =
-            (
-              Date.now() -
-              dob
-            ) /
-            (
-              365.25 *
-              864e5
-            );
+        const age =
+          (
+            Date.now() -
+            dob.getTime()
+          ) /
+          (
+            365.25 *
+            864e5
+          );
 
         if (
           !Number.isFinite(
             age
           ) ||
-          age <
-            18 ||
-          age >
-            80
+          age < 18 ||
+          age > 80
         ) {
           throw new ApiError(
             400,
@@ -602,9 +927,7 @@ export const upsert =
             req.user.id
         });
 
-      if (
-        profile
-      ) {
+      if (profile) {
         mergeProfileData(
           profile,
           safe
@@ -664,6 +987,7 @@ export const upsert =
               req.user
             )
         },
+
         'Profile saved.',
         201
       );
@@ -710,9 +1034,7 @@ export const discover =
             req.user.id
         });
 
-      if (
-        !mine
-      ) {
+      if (!mine) {
         throw new ApiError(
           404,
           'Create your profile first.'
@@ -799,12 +1121,13 @@ export const discover =
           'lastName',
           'location.city',
           'location.state',
+          'location.nativePlace',
+          'community.clan',
+          'community.gotra',
           'education.highestEducation',
           'career.occupation'
         ].map(
-          (
-            key
-          ) => ({
+          (key) => ({
             [key]:
               escapedRegex(
                 req.query
@@ -843,25 +1166,26 @@ export const discover =
         })
       ) {
         if (
-          req.query[param]
+          req.query[
+            param
+          ]
         ) {
           query[fieldPath] =
             escapedRegex(
-              req.query[param]
+              req.query[
+                param
+              ]
             );
         }
       }
 
       if (
-        req.query
-          .heightMin ||
-        req.query
-          .heightMax
+        req.query.heightMin ||
+        req.query.heightMax
       ) {
         query.height = {
           ...(
-            req.query
-              .heightMin
+            req.query.heightMin
               ? {
                   $gte:
                     Number(
@@ -873,8 +1197,7 @@ export const discover =
           ),
 
           ...(
-            req.query
-              .heightMax
+            req.query.heightMax
               ? {
                   $lte:
                     Number(
@@ -937,8 +1260,7 @@ export const discover =
       }
 
       if (
-        req.query
-          .verified ===
+        req.query.verified ===
         'true'
       ) {
         query[
@@ -948,8 +1270,7 @@ export const discover =
       }
 
       if (
-        req.query
-          .withPhoto ===
+        req.query.withPhoto ===
         'true'
       ) {
         query.profilePhoto = {
@@ -964,26 +1285,25 @@ export const discover =
       }
 
       const page =
+        Math.max(
+          1,
+          Number(
+            req.query.page
+          ) ||
+            1
+        );
+
+      const limit =
+        Math.min(
+          30,
           Math.max(
             1,
             Number(
-              req.query.page
+              req.query.limit
             ) ||
-              1
-          ),
-
-        limit =
-          Math.min(
-            30,
-            Math.max(
-              1,
-              Number(
-                req.query
-                  .limit
-              ) ||
-                12
-            )
-          );
+              12
+          )
+        );
 
       const [
         found,
@@ -1020,23 +1340,23 @@ export const discover =
         ]);
 
       const shortlisted =
-          await Shortlist.find({
-            userProfile:
-              mine._id
-          }).distinct(
-            'shortlistedProfile'
-          ),
+        await Shortlist.find({
+          userProfile:
+            mine._id
+        }).distinct(
+          'shortlistedProfile'
+        );
 
-        pending =
-          await Interest.find({
-            senderProfile:
-              mine._id,
+      const pending =
+        await Interest.find({
+          senderProfile:
+            mine._id,
 
-            status:
-              'Pending'
-          }).distinct(
-            'receiverProfile'
-          );
+          status:
+            'Pending'
+        }).distinct(
+          'receiverProfile'
+        );
 
       const data =
         await Promise.all(
@@ -1063,9 +1383,7 @@ export const discover =
 
               shortlisted:
                 shortlisted.some(
-                  (
-                    id
-                  ) =>
+                  (id) =>
                     id.equals(
                       profile._id
                     )
@@ -1073,9 +1391,7 @@ export const discover =
 
               interestSent:
                 pending.some(
-                  (
-                    id
-                  ) =>
+                  (id) =>
                     id.equals(
                       profile._id
                     )
@@ -1122,9 +1438,7 @@ export const getOne =
           'email phone role'
         );
 
-      if (
-        !profile
-      ) {
+      if (!profile) {
         throw new ApiError(
           404,
           'Profile not found.'
@@ -1132,23 +1446,22 @@ export const getOne =
       }
 
       const owner =
-          String(
-            profile
-              .userId
-              ._id
-          ) ===
-          String(
-            req.user.id
-          ),
+        String(
+          profile.userId?._id ||
+            profile.userId
+        ) ===
+        String(
+          req.user.id
+        );
 
-        privileged =
-          [
-            'admin',
-            'moderator',
-            'super_admin'
-          ].includes(
-            req.user.role
-          );
+      const privileged =
+        [
+          'admin',
+          'moderator',
+          'super_admin'
+        ].includes(
+          req.user.role
+        );
 
       if (
         !owner &&
@@ -1180,22 +1493,21 @@ export const getOne =
               864e5
           );
 
-        if (
-          !(
-            await ProfileView.exists({
-              viewerProfile:
-                mine._id,
+        const viewed =
+          await ProfileView.exists({
+            viewerProfile:
+              mine._id,
 
-              viewedProfile:
-                profile._id,
+            viewedProfile:
+              profile._id,
 
-              viewDate: {
-                $gte:
-                  since
-              }
-            })
-          )
-        ) {
+            viewDate: {
+              $gte:
+                since
+            }
+          });
+
+        if (!viewed) {
           await ProfileView.create({
             viewerProfile:
               mine._id,
@@ -1363,9 +1675,7 @@ export const getPreferences =
             'true'
         );
 
-      if (
-        !profile
-      ) {
+      if (!profile) {
         return ok(
           res,
           {
@@ -1403,34 +1713,34 @@ export const savePreferences =
       res
     ) => {
       const profile =
-          await owned(
-            req.user.id
-          ),
+        await owned(
+          req.user.id
+        );
 
-        safe =
-          pick(
-            req.body,
-            [
-              'preferredGender',
-              'ageMin',
-              'ageMax',
-              'heightMin',
-              'heightMax',
-              'maritalStatus',
-              'acceptedMaritalStatuses',
-              'willingForRemarriage',
-              'locations',
-              'states',
-              'countries',
-              'educationPreferences',
-              'occupationPreferences',
-              'incomePreferences',
-              'dietPreferences',
-              'communityPreferences',
-              'marriageTimeline',
-              'additionalPreferences'
-            ]
-          );
+      const safe =
+        pick(
+          req.body,
+          [
+            'preferredGender',
+            'ageMin',
+            'ageMax',
+            'heightMin',
+            'heightMax',
+            'maritalStatus',
+            'acceptedMaritalStatuses',
+            'willingForRemarriage',
+            'locations',
+            'states',
+            'countries',
+            'educationPreferences',
+            'occupationPreferences',
+            'incomePreferences',
+            'dietPreferences',
+            'communityPreferences',
+            'marriageTimeline',
+            'additionalPreferences'
+          ]
+        );
 
       if (
         safe.ageMin &&
@@ -1495,6 +1805,7 @@ export const savePreferences =
         {
           preferences
         },
+
         'Preferences saved.'
       );
     }
@@ -1526,7 +1837,9 @@ export const updatePrivacy =
             'familyOverviewVisibility',
             'maternalFamilyVisibility',
             'siblingDetailsVisibility',
-            'assetVisibility'
+            'assetVisibility',
+            'astrologyVisibility',
+            'contactAddressVisibility'
           ]
         )
       };
@@ -1539,6 +1852,7 @@ export const updatePrivacy =
           privacy:
             profile.privacy
         },
+
         'Privacy updated.'
       );
     }
@@ -1599,6 +1913,7 @@ export const setPause =
           visibility:
             profile.visibility
         },
+
         req.body.paused
           ? 'Profile paused.'
           : 'Profile resumed.'
@@ -1612,9 +1927,7 @@ export const savePhoto =
       req,
       res
     ) => {
-      if (
-        !req.file
-      ) {
+      if (!req.file) {
         throw new ApiError(
           400,
           'Choose an image to upload.'
@@ -1691,9 +2004,7 @@ export const savePhoto =
               previous.url
           })
           .catch(
-            (
-              error
-            ) =>
+            (error) =>
               console.error(
                 'Previous profile photo cleanup failed:',
                 error.message
@@ -1719,6 +2030,7 @@ export const savePhoto =
           profilePhoto:
             temporaryUrl
         },
+
         'Photo uploaded.',
         201
       );
@@ -1731,9 +2043,7 @@ export const addGalleryPhoto =
       req,
       res
     ) => {
-      if (
-        !req.file
-      ) {
+      if (!req.file) {
         throw new ApiError(
           400,
           'Choose an image to upload.'
@@ -1797,9 +2107,7 @@ export const addGalleryPhoto =
 
       const gallery =
         profile.galleryAssets.map(
-          (
-            galleryAsset
-          ) => ({
+          (galleryAsset) => ({
             _id:
               galleryAsset._id,
 
@@ -1810,8 +2118,7 @@ export const addGalleryPhoto =
                     .publicId,
 
                 url:
-                  galleryAsset
-                    .url
+                  galleryAsset.url
               })
           })
         );
@@ -1824,6 +2131,7 @@ export const addGalleryPhoto =
           maxPhotos:
             settings.maxPhotos
         },
+
         'Gallery photo uploaded.',
         201
       );
@@ -1838,8 +2146,7 @@ export const removeGalleryPhoto =
     ) => {
       if (
         !mongoose.isValidObjectId(
-          req.params
-            .assetId
+          req.params.assetId
         )
       ) {
         throw new ApiError(
@@ -1849,19 +2156,16 @@ export const removeGalleryPhoto =
       }
 
       const profile =
-          await owned(
-            req.user.id
-          ),
+        await owned(
+          req.user.id
+        );
 
-        asset =
-          profile.galleryAssets.id(
-            req.params
-              .assetId
-          );
+      const asset =
+        profile.galleryAssets.id(
+          req.params.assetId
+        );
 
-      if (
-        !asset
-      ) {
+      if (!asset) {
         throw new ApiError(
           404,
           'Gallery photo not found.'
@@ -1886,9 +2190,7 @@ export const removeGalleryPhoto =
 
       const gallery =
         profile.galleryAssets.map(
-          (
-            galleryAsset
-          ) => ({
+          (galleryAsset) => ({
             _id:
               galleryAsset._id,
 
@@ -1899,8 +2201,7 @@ export const removeGalleryPhoto =
                     .publicId,
 
                 url:
-                  galleryAsset
-                    .url
+                  galleryAsset.url
               })
           })
         );
@@ -1910,6 +2211,7 @@ export const removeGalleryPhoto =
         {
           gallery
         },
+
         'Gallery photo removed.'
       );
     }
@@ -1944,8 +2246,7 @@ export const removeBlock =
     ) => {
       if (
         !mongoose.isValidObjectId(
-          req.params
-            .profileId
+          req.params.profileId
         )
       ) {
         throw new ApiError(
@@ -1959,8 +2260,7 @@ export const removeBlock =
           req.user.id,
 
         blockedProfile:
-          req.params
-            .profileId
+          req.params.profileId
       });
 
       ok(
