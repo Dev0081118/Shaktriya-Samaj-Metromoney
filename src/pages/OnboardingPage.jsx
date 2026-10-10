@@ -6,58 +6,75 @@ import {
   Save,
   Trash2
 } from 'lucide-react';
+
 import {
   useEffect,
   useState
 } from 'react';
-import { useNavigate } from 'react-router-dom';
 
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
+import {
+  useNavigate
+} from 'react-router-dom';
+
+import {
+  useAuth
+} from '../context/AuthContext';
+
+import {
+  useToast
+} from '../context/ToastContext';
+
 import {
   api,
   assetUrl
 } from '../services/api';
-
-/* eslint-disable react-hooks/exhaustive-deps */
 
 const steps = [
   [
     'Profile for',
     'Who are you creating this profile for?'
   ],
+
   [
     'Verification',
     'Verify the account mobile number'
   ],
+
   [
     'Basics',
     'Tell us the essential details'
   ],
+
   [
     'Community',
     'Share heritage and background'
   ],
+
   [
     'Education & career',
     'Study and professional journey'
   ],
+
   [
     'Family',
     'Introduce the family'
   ],
+
   [
     'About & lifestyle',
     'Add personality and preferences'
   ],
+
   [
     'Partner preferences',
     'Who would feel compatible?'
   ],
+
   [
     'Photographs',
     'Add a warm first impression'
   ],
+
   [
     'Review',
     'Review before moderation'
@@ -66,28 +83,62 @@ const steps = [
 
 const fields = {
   2: [
-    ['firstName', 'First name'],
-    ['middleName', 'Middle name'],
-    ['lastName', 'Last name'],
-    ['gender', 'Gender'],
+    [
+      'firstName',
+      'First name'
+    ],
+
+    [
+      'middleName',
+      'Middle name'
+    ],
+
+    [
+      'lastName',
+      'Last name'
+    ],
+
+    [
+      'gender',
+      'Gender'
+    ],
+
     [
       'dateOfBirth',
       'Date of birth',
       'date'
     ],
+
     [
       'height',
       'Height in cm',
       'number'
     ],
+
     [
       'maritalStatus',
       'Marital status'
     ],
-    ['city', 'City'],
-    ['district', 'District'],
-    ['state', 'State'],
-    ['country', 'Country']
+
+    [
+      'city',
+      'City'
+    ],
+
+    [
+      'district',
+      'District'
+    ],
+
+    [
+      'state',
+      'State'
+    ],
+
+    [
+      'country',
+      'Country'
+    ]
   ],
 
   3: [
@@ -95,18 +146,22 @@ const fields = {
       'communityName',
       'Community'
     ],
+
     [
       'subCommunity',
       'Sub-community'
     ],
+
     [
       'nativePlace',
       'Native place'
     ],
+
     [
       'clan',
       'Clan / Gotra'
     ],
+
     [
       'familyOrigin',
       'Family origin'
@@ -118,32 +173,52 @@ const fields = {
       'highestEducation',
       'Highest education'
     ],
-    ['degree', 'Degree'],
+
+    [
+      'degree',
+      'Degree'
+    ],
+
     [
       'specialization',
       'Specialization'
     ],
-    ['college', 'College'],
+
+    [
+      'college',
+      'College'
+    ],
+
+    [
+      'educationDetails',
+      'Education details'
+    ],
+
     [
       'occupationType',
       'Occupation type'
     ],
+
     [
       'occupation',
       'Occupation'
     ],
+
     [
       'designation',
       'Designation'
     ],
+
     [
       'companyName',
       'Company'
     ],
+
     [
       'businessName',
       'Business'
     ],
+
     [
       'annualIncome',
       'Annual income',
@@ -156,27 +231,37 @@ const fields = {
       'fatherName',
       'Father’s name'
     ],
+
     [
       'fatherOccupation',
       'Father’s occupation'
     ],
+
     [
       'motherName',
       'Mother’s name'
     ],
+
     [
       'motherOccupation',
       'Mother’s occupation'
     ],
-    ['siblings', 'Siblings'],
+
+    [
+      'siblings',
+      'Siblings'
+    ],
+
     [
       'familyType',
       'Family type'
     ],
+
     [
       'familyLocation',
       'Family location'
     ],
+
     [
       'familyDescription',
       'About the family'
@@ -184,11 +269,31 @@ const fields = {
   ],
 
   6: [
-    ['aboutMe', 'About me'],
-    ['diet', 'Diet'],
-    ['smoking', 'Smoking'],
-    ['drinking', 'Drinking'],
-    ['interests', 'Interests'],
+    [
+      'aboutMe',
+      'About me'
+    ],
+
+    [
+      'diet',
+      'Diet'
+    ],
+
+    [
+      'smoking',
+      'Smoking'
+    ],
+
+    [
+      'drinking',
+      'Drinking'
+    ],
+
+    [
+      'interests',
+      'Interests'
+    ],
+
     [
       'marriageTimeline',
       'Marriage timeline'
@@ -201,45 +306,55 @@ const fields = {
       'Minimum age',
       'number'
     ],
+
     [
       'ageMax',
       'Maximum age',
       'number'
     ],
+
     [
       'heightMin',
       'Minimum height',
       'number'
     ],
+
     [
       'heightMax',
       'Maximum height',
       'number'
     ],
+
     [
       'locations',
       'Preferred cities'
     ],
+
     [
       'states',
       'Preferred states'
     ],
+
     [
       'educationPreferences',
       'Education preferences'
     ],
+
     [
       'occupationPreferences',
       'Occupation preferences'
     ],
+
     [
       'dietPreferences',
       'Diet preferences'
     ],
+
     [
       'communityPreferences',
       'Community preferences'
     ],
+
     [
       'additionalPreferences',
       'Anything else?'
@@ -247,98 +362,528 @@ const fields = {
   ]
 };
 
-const flatten = (profile) => ({
+const readDraft = () => {
+  try {
+    const raw =
+      localStorage.getItem(
+        'ksm_onboarding'
+      );
+
+    if (!raw) {
+      return {};
+    }
+
+    const parsed =
+      JSON.parse(
+        raw
+      );
+
+    return parsed &&
+      typeof parsed ===
+        'object' &&
+      !Array.isArray(
+        parsed
+      )
+      ? parsed
+      : {};
+  } catch {
+    localStorage.removeItem(
+      'ksm_onboarding'
+    );
+
+    return {};
+  }
+};
+
+const readDraftStep = () => {
+  const value =
+    Number(
+      localStorage.getItem(
+        'ksm_onboarding_step'
+      )
+    );
+
+  if (
+    !Number.isInteger(
+      value
+    ) ||
+    value <
+      0 ||
+    value >
+      9
+  ) {
+    return 0;
+  }
+
+  return value;
+};
+
+const preferenceToForm = (
+  preferences
+) =>
+  Object.fromEntries(
+    Object.entries(
+      preferences ||
+        {}
+    ).map(
+      ([
+        key,
+        value
+      ]) => [
+        key,
+
+        Array.isArray(
+          value
+        )
+          ? value.join(
+              ', '
+            )
+          : value
+      ]
+    )
+  );
+
+const flatten = (
+  profile
+) => ({
+  /*
+   * Keep harmless top-level server
+   * fields such as profileId,
+   * visibility, profilePhoto, etc.
+   */
   ...profile,
 
+  /*
+   * IMPORTANT:
+   * Do not spread nested objects here.
+   *
+   * paternalFamily.nativePlace used
+   * to overwrite location.nativePlace,
+   * paternalFamily.clan used to overwrite
+   * community.clan, and district/state
+   * had the same collision.
+   */
   city:
-    profile.location?.city || '',
-  district:
-    profile.location?.district ||
+    profile.location
+      ?.city ||
     '',
+
+  district:
+    profile.location
+      ?.district ||
+    '',
+
   state:
-    profile.location?.state || '',
+    profile.location
+      ?.state ||
+    '',
+
   country:
-    profile.location?.country ||
+    profile.location
+      ?.country ||
     'India',
+
   nativePlace:
     profile.location
-      ?.nativePlace || '',
+      ?.nativePlace ||
+    '',
 
   communityName:
-    profile.community?.name || '',
+    profile.community
+      ?.name ||
+    '',
+
   subCommunity:
     profile.community
-      ?.subCommunity || '',
+      ?.subCommunity ||
+    '',
+
   clan:
-    profile.community?.clan || '',
+    profile.community
+      ?.clan ||
+    '',
+
   familyOrigin:
     profile.community
-      ?.familyOrigin || '',
+      ?.familyOrigin ||
+    '',
 
-  ...profile.education,
-  ...profile.career,
-  ...profile.lifestyle,
+  highestEducation:
+    profile.education
+      ?.highestEducation ||
+    '',
+
+  degree:
+    profile.education
+      ?.degree ||
+    '',
+
+  specialization:
+    profile.education
+      ?.specialization ||
+    '',
+
+  college:
+    profile.education
+      ?.college ||
+    '',
+
+  educationDetails:
+    profile.education
+      ?.educationDetails ||
+    '',
+
+  occupationType:
+    profile.career
+      ?.occupationType ||
+    '',
+
+  occupation:
+    profile.career
+      ?.occupation ||
+    '',
+
+  designation:
+    profile.career
+      ?.designation ||
+    '',
+
+  companyName:
+    profile.career
+      ?.companyName ||
+    '',
+
+  businessName:
+    profile.career
+      ?.businessName ||
+    '',
+
+  annualIncome:
+    profile.career
+      ?.annualIncome ??
+    '',
+
+  diet:
+    profile.lifestyle
+      ?.diet ||
+    '',
+
+  smoking:
+    profile.lifestyle
+      ?.smoking ||
+    '',
+
+  drinking:
+    profile.lifestyle
+      ?.drinking ||
+    '',
 
   interests: (
-    profile.lifestyle?.interests ||
+    profile.lifestyle
+      ?.interests ||
     []
-  ).join(', '),
+  ).join(
+    ', '
+  ),
 
-  ...profile.family,
+  fatherName:
+    profile.family
+      ?.fatherName ||
+    '',
+
+  fatherOccupation:
+    profile.family
+      ?.fatherOccupation ||
+    '',
+
+  motherName:
+    profile.family
+      ?.motherName ||
+    '',
+
+  motherOccupation:
+    profile.family
+      ?.motherOccupation ||
+    '',
+
+  siblings:
+    profile.family
+      ?.siblings ||
+    '',
 
   siblingDetails:
     profile.family
-      ?.siblingDetails || [],
+      ?.siblingDetails ||
+    [],
 
-  ...profile.maritalHistory,
-  ...profile.maternalFamily,
-  ...profile.paternalFamily,
+  familyType:
+    profile.family
+      ?.familyType ||
+    '',
+
+  familyLocation:
+    profile.family
+      ?.familyLocation ||
+    '',
+
+  familyDescription:
+    profile.family
+      ?.familyDescription ||
+    '',
+
+  previousMarriageEndedAt:
+    profile.maritalHistory
+      ?.previousMarriageEndedAt
+      ?.slice?.(
+        0,
+        10
+      ) ||
+    '',
+
+  divorceFinalized:
+    !!profile.maritalHistory
+      ?.divorceFinalized,
+
+  childrenFromPreviousMarriage:
+    !!profile.maritalHistory
+      ?.childrenFromPreviousMarriage,
+
+  childrenCount:
+    profile.maritalHistory
+      ?.childrenCount ??
+    '',
+
+  childrenLivingWith:
+    profile.maritalHistory
+      ?.childrenLivingWith ||
+    '',
+
+  maritalHistoryNotes:
+    profile.maritalHistory
+      ?.notes ||
+    '',
+
+  /*
+   * Paternal fields get their own
+   * names so they never overwrite
+   * location/community state.
+   */
+  ancestralVillage:
+    profile.paternalFamily
+      ?.ancestralVillage ||
+    '',
+
+  paternalNativePlace:
+    profile.paternalFamily
+      ?.nativePlace ||
+    '',
+
+  paternalDistrict:
+    profile.paternalFamily
+      ?.district ||
+    '',
+
+  paternalState:
+    profile.paternalFamily
+      ?.state ||
+    '',
+
+  paternalFamilySurname:
+    profile.paternalFamily
+      ?.familySurname ||
+    '',
+
+  paternalClan:
+    profile.paternalFamily
+      ?.clan ||
+    '',
+
+  paternalNotes:
+    profile.paternalFamily
+      ?.notes ||
+    '',
+
+  maternalGrandfatherName:
+    profile.maternalFamily
+      ?.maternalGrandfatherName ||
+    '',
+
+  maternalFamilySurname:
+    profile.maternalFamily
+      ?.maternalFamilySurname ||
+    '',
+
+  maternalNativePlace:
+    profile.maternalFamily
+      ?.maternalNativePlace ||
+    '',
+
+  maternalVillage:
+    profile.maternalFamily
+      ?.maternalVillage ||
+    '',
+
+  maternalDistrict:
+    profile.maternalFamily
+      ?.maternalDistrict ||
+    '',
+
+  maternalState:
+    profile.maternalFamily
+      ?.maternalState ||
+    '',
+
+  maternalClan:
+    profile.maternalFamily
+      ?.maternalClan ||
+    '',
+
+  maternalNotes:
+    profile.maternalFamily
+      ?.notes ||
+    '',
 
   hasLand:
-    profile.familyAssets
+    !!profile.familyAssets
       ?.agricultureLand
-      ?.hasLand || false,
+      ?.hasLand,
 
   approximateArea:
     profile.familyAssets
       ?.agricultureLand
-      ?.approximateArea || '',
+      ?.approximateArea ??
+    '',
 
   landUnit:
     profile.familyAssets
-      ?.agricultureLand?.unit ||
+      ?.agricultureLand
+      ?.unit ||
     'Vigha',
 
   propertySummary:
     profile.familyAssets
-      ?.propertySummary || '',
+      ?.propertySummary ||
+    '',
 
   primaryResidenceType:
     profile.familyAssets
-      ?.primaryResidenceType || '',
+      ?.primaryResidenceType ||
+    '',
 
   businessAssetsSummary:
     profile.familyAssets
-      ?.businessAssetsSummary || '',
+      ?.businessAssetsSummary ||
+    '',
+
+  familyOverviewVisibility:
+    profile.privacy
+      ?.familyOverviewVisibility ||
+    'AcceptedInterests',
+
+  maternalFamilyVisibility:
+    profile.privacy
+      ?.maternalFamilyVisibility ||
+    'AcceptedInterests',
+
+  siblingDetailsVisibility:
+    profile.privacy
+      ?.siblingDetailsVisibility ||
+    'AcceptedInterests',
+
+  assetVisibility:
+    profile.privacy
+      ?.assetVisibility ||
+    'Private',
+
+  /*
+   * Preserve all other privacy
+   * settings so editing this page
+   * cannot silently reset them.
+   */
+  photoVisibility:
+    profile.privacy
+      ?.photoVisibility ||
+    'RegisteredMembers',
+
+  contactVisibility:
+    profile.privacy
+      ?.contactVisibility ||
+    'MutualMatches',
+
+  incomeVisibility:
+    profile.privacy
+      ?.incomeVisibility ||
+    'Private',
+
+  familyVisibility:
+    profile.privacy
+      ?.familyVisibility ||
+    'RegisteredMembers',
+
+  fullNameVisibility:
+    profile.privacy
+      ?.fullNameVisibility ||
+    'RegisteredMembers',
+
+  includeSensitiveFamilyDetailsInBiodata:
+    !!profile.biodataPrivacy
+      ?.includeSensitiveFamilyDetailsInBiodata,
 
   dateOfBirth:
-    profile.dateOfBirth?.slice?.(
-      0,
-      10
-    ) || ''
+    profile.dateOfBirth
+      ?.slice?.(
+        0,
+        10
+      ) ||
+    ''
 });
 
-const list = (value) =>
-  String(value || '')
-    .split(',')
-    .map((item) =>
-      item.trim()
+const list = (
+  value
+) =>
+  String(
+    value ||
+      ''
+  )
+    .split(
+      ','
     )
-    .filter(Boolean);
+    .map(
+      (
+        item
+      ) =>
+        item.trim()
+    )
+    .filter(
+      Boolean
+    );
+
+const optionalNumber = (
+  value
+) => {
+  if (
+    value === '' ||
+    value === undefined ||
+    value === null
+  ) {
+    return undefined;
+  }
+
+  const number =
+    Number(
+      value
+    );
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : undefined;
+};
 
 const profilePayload = (
   data,
-  visibility = 'draft'
+  visibilityOverride
 ) => ({
   profileFor:
     data.profileFor,
@@ -359,8 +904,9 @@ const profilePayload = (
     data.dateOfBirth,
 
   height:
-    Number(data.height) ||
-    undefined,
+    optionalNumber(
+      data.height
+    ),
 
   maritalStatus:
     data.maritalStatus,
@@ -370,9 +916,11 @@ const profilePayload = (
       data.maritalStatus,
 
     isRemarriage:
-      data.maritalStatus &&
-      data.maritalStatus !==
-        'Never Married',
+      Boolean(
+        data.maritalStatus &&
+          data.maritalStatus !==
+            'Never Married'
+      ),
 
     previousMarriageEndedAt:
       data.previousMarriageEndedAt ||
@@ -389,9 +937,10 @@ const profilePayload = (
 
     childrenCount:
       data.childrenFromPreviousMarriage
-        ? Number(
+        ? optionalNumber(
             data.childrenCount
-          ) || 0
+          ) ??
+          0
         : 0,
 
     childrenLivingWith:
@@ -414,7 +963,8 @@ const profilePayload = (
       data.state,
 
     country:
-      data.country || 'India',
+      data.country ||
+      'India',
 
     nativePlace:
       data.nativePlace
@@ -468,9 +1018,9 @@ const profilePayload = (
       data.businessName,
 
     annualIncome:
-      Number(
+      optionalNumber(
         data.annualIncome
-      ) || undefined
+      )
   },
 
   lifestyle: {
@@ -484,7 +1034,9 @@ const profilePayload = (
       data.drinking,
 
     interests:
-      list(data.interests)
+      list(
+        data.interests
+      )
   },
 
   family: {
@@ -504,7 +1056,8 @@ const profilePayload = (
       data.siblings,
 
     siblingDetails:
-      data.siblingDetails || [],
+      data.siblingDetails ||
+      [],
 
     familyType:
       data.familyType,
@@ -572,9 +1125,9 @@ const profilePayload = (
 
       approximateArea:
         data.hasLand
-          ? Number(
+          ? optionalNumber(
               data.approximateArea
-            ) || undefined
+            )
           : undefined,
 
       unit:
@@ -595,6 +1148,22 @@ const profilePayload = (
   },
 
   privacy: {
+    photoVisibility:
+      data.photoVisibility ||
+      'RegisteredMembers',
+
+    contactVisibility:
+      data.contactVisibility ||
+      'MutualMatches',
+
+    incomeVisibility:
+      data.incomeVisibility ||
+      'Private',
+
+    familyVisibility:
+      data.familyVisibility ||
+      'RegisteredMembers',
+
     familyOverviewVisibility:
       data.familyOverviewVisibility ||
       'AcceptedInterests',
@@ -609,7 +1178,16 @@ const profilePayload = (
 
     assetVisibility:
       data.assetVisibility ||
-      'Private'
+      'Private',
+
+    fullNameVisibility:
+      data.fullNameVisibility ||
+      'RegisteredMembers'
+  },
+
+  biodataPrivacy: {
+    includeSensitiveFamilyDetailsInBiodata:
+      !!data.includeSensitiveFamilyDetailsInBiodata
   },
 
   marriageTimeline:
@@ -618,39 +1196,63 @@ const profilePayload = (
   aboutMe:
     data.aboutMe,
 
+  /*
+   * Existing profile photo is kept.
+   * Actual replacement still happens
+   * through /profiles/photo.
+   */
   profilePhoto:
     data.profilePhoto,
 
-  visibility
+  /*
+   * Critical fix:
+   * intermediate saves no longer
+   * reset active/pending profiles
+   * back to draft.
+   */
+  visibility:
+    visibilityOverride ??
+    data.visibility ??
+    'draft'
 });
 
 const preferencePayload = (
   data
 ) => ({
   ageMin:
-    Number(data.ageMin) ||
-    undefined,
+    optionalNumber(
+      data.ageMin
+    ),
 
   ageMax:
-    Number(data.ageMax) ||
-    undefined,
+    optionalNumber(
+      data.ageMax
+    ),
 
   heightMin:
-    Number(data.heightMin) ||
-    undefined,
+    optionalNumber(
+      data.heightMin
+    ),
 
   heightMax:
-    Number(data.heightMax) ||
-    undefined,
+    optionalNumber(
+      data.heightMax
+    ),
 
   locations:
-    list(data.locations),
+    list(
+      data.locations
+    ),
 
   states:
-    list(data.states),
+    list(
+      data.states
+    ),
 
   countries:
-    list(data.countries),
+    list(
+      data.countries
+    ),
 
   educationPreferences:
     list(
@@ -693,7 +1295,10 @@ const preferencePayload = (
 const profileBasicsError = (
   data
 ) => {
-  if (!data.firstName?.trim()) {
+  if (
+    !data.firstName
+      ?.trim()
+  ) {
     return 'Enter the first name before continuing.';
   }
 
@@ -701,27 +1306,41 @@ const profileBasicsError = (
     ![
       'Male',
       'Female'
-    ].includes(data.gender)
+    ].includes(
+      data.gender
+    )
   ) {
     return 'Select a gender before continuing.';
   }
 
-  if (!data.dateOfBirth) {
+  if (
+    !data.dateOfBirth
+  ) {
     return 'Enter the date of birth before continuing.';
   }
 
-  const birth = new Date(
-    data.dateOfBirth
-  );
+  const birth =
+    new Date(
+      data.dateOfBirth
+    );
 
   const age =
-    (Date.now() -
-      birth.getTime()) /
-    (365.25 * 864e5);
+    (
+      Date.now() -
+      birth.getTime()
+    ) /
+    (
+      365.25 *
+      864e5
+    );
 
-  return !Number.isFinite(age) ||
-    age < 18 ||
-    age > 80
+  return !Number.isFinite(
+    age
+  ) ||
+    age <
+      18 ||
+    age >
+      80
     ? 'Age must be between 18 and 80 years.'
     : '';
 };
@@ -733,10 +1352,10 @@ const fieldClass =
   'w-full border border-[#ddd0c1] bg-[#fffdf8] px-[15px] py-[14px] text-[14px] tracking-normal text-[#191614] normal-case outline-none focus:border-[#681d25] focus:shadow-[0_0_0_3px_#681d2510]';
 
 const primaryButtonClass =
-  'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318] disabled:opacity-55';
+  'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318] disabled:cursor-not-allowed disabled:opacity-55';
 
 const outlineButtonClass =
-  'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white disabled:opacity-55';
+  'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white disabled:cursor-not-allowed disabled:opacity-55';
 
 const fieldsGridClass =
   'grid grid-cols-2 gap-[18px] max-[767px]:grid-cols-1';
@@ -751,399 +1370,594 @@ export default function OnboardingPage() {
   const notify =
     useToast();
 
-  const { user } =
+  const {
+    user
+  } =
     useAuth();
 
-  const [step, setStep] =
+  /*
+   * Do NOT initialize editing state directly
+   * from localStorage.
+   *
+   * We first ask the server whether this
+   * user already has a profile.
+   */
+  const [
+    step,
+    setStep
+  ] =
     useState(
-      () =>
-        Number(
-          localStorage.getItem(
-            'ksm_onboarding_step'
-          )
-        ) || 0
+      0
     );
 
-  const [data, setData] =
-    useState(() =>
-      JSON.parse(
-        localStorage.getItem(
-          'ksm_onboarding'
-        ) || '{}'
-      )
+  const [
+    data,
+    setData
+  ] =
+    useState(
+      {}
     );
 
-  const [error, setError] =
+  const [
+    hasExistingProfile,
+    setHasExistingProfile
+  ] =
+    useState(
+      false
+    );
+
+  const [
+    hydrated,
+    setHydrated
+  ] =
+    useState(
+      false
+    );
+
+  const [
+    error,
+    setError
+  ] =
     useState('');
 
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    loading,
+    setLoading
+  ] =
+    useState(
+      true
+    );
 
-  const [otpSent, setOtpSent] =
-    useState(false);
+  const [
+    otpSent,
+    setOtpSent
+  ] =
+    useState(
+      false
+    );
 
-  const [otp, setOtp] =
+  const [
+    otp,
+    setOtp
+  ] =
     useState('');
 
   const [
     verified,
     setVerified
-  ] = useState(
-    !!user?.phoneVerified
-  );
+  ] =
+    useState(
+      !!user
+        ?.phoneVerified
+    );
 
-  const [busy, setBusy] =
-    useState(false);
+  const [
+    busy,
+    setBusy
+  ] =
+    useState(
+      false
+    );
 
   const [
     cooldown,
     setCooldown
-  ] = useState(0);
+  ] =
+    useState(
+      0
+    );
+
+  const update = (
+    key,
+    value
+  ) => {
+    setData(
+      (
+        current
+      ) => ({
+        ...current,
+
+        [
+          key
+        ]:
+          value
+      })
+    );
+  };
 
   const updateSibling = (
     index,
     key,
     value
   ) => {
-    setData((current) => ({
-      ...current,
-
-      siblingDetails:
-        (
-          current.siblingDetails ||
-          []
-        ).map(
-          (sibling, itemIndex) =>
-            itemIndex === index
-              ? {
-                  ...sibling,
-                  [key]: value
-                }
-              : sibling
-        )
-    }));
-  };
-
-  useEffect(() => {
-    Promise.allSettled([
-      api(
-        '/profiles/me?optional=true'
-      ),
-      api(
-        '/preferences?optional=true'
-      )
-    ])
-      .then(
-        ([
-          profileResult,
-          preferenceResult
-        ]) => {
-          if (
-            profileResult.status ===
-              'fulfilled' &&
-            profileResult.value.data
-              .profile
-          ) {
-            const loaded = flatten(
-              profileResult.value
-                .data.profile
-            );
-
-            const existing =
-              localStorage.getItem(
-                'ksm_onboarding'
-              );
-
-            setData(
-              existing
-                ? (current) => ({
-                    ...loaded,
-                    ...current,
-                    phone:
-                      current.phone ||
-                      user?.phone
-                  })
-                : {
-                    ...loaded,
-                    phone:
-                      user?.phone ||
-                      ''
-                  }
-            );
-          }
-
-          if (
-            preferenceResult.status ===
-              'fulfilled' &&
-            preferenceResult.value.data
-              .preferences
-          ) {
-            setData((current) => ({
-              ...current,
-
-              ...Object.fromEntries(
-                Object.entries(
-                  preferenceResult.value
-                    .data.preferences ||
-                    {}
-                ).map(
-                  ([key, value]) => [
-                    key,
-                    Array.isArray(
-                      value
-                    )
-                      ? value.join(
-                          ', '
-                        )
-                      : value
-                  ]
-                )
-              )
-            }));
-          }
-        }
-      )
-      .finally(() =>
-        setLoading(false)
-      );
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(
-      'ksm_onboarding',
-      JSON.stringify(data)
-    );
-
-    localStorage.setItem(
-      'ksm_onboarding_step',
-      step
-    );
-  }, [
-    data,
-    step
-  ]);
-
-  useEffect(() => {
-    if (!cooldown) {
-      return undefined;
-    }
-
-    const timer =
-      setInterval(
-        () =>
-          setCooldown(
-            (current) =>
-              Math.max(
-                0,
-                current - 1
-              )
-          ),
-        1000
-      );
-
-    return () =>
-      clearInterval(timer);
-  }, [cooldown]);
-
-  const sendOtp = async () => {
-    setBusy(true);
-
-    try {
-      await api(
-        '/auth/send-otp',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            phone: data.phone
-          })
-        }
-      );
-
-      setOtpSent(true);
-      setCooldown(30);
-
-      notify(
-        'Verification code sent.'
-      );
-    } catch (caught) {
-      setError(
-        caught.message
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const verify = async () => {
-    setBusy(true);
-
-    try {
-      await api(
-        '/auth/verify-otp',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            phone: data.phone,
-            code: otp
-          })
-        }
-      );
-
-      setVerified(true);
-
-      notify(
-        'Mobile number verified.'
-      );
-    } catch (caught) {
-      setError(
-        caught.message
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const upload = async (
-    file
-  ) => {
-    const basicsError =
-      profileBasicsError(data);
-
-    if (basicsError) {
-      setStep(2);
-      setError(basicsError);
-      return;
-    }
-
-    setBusy(true);
-
-    try {
-      await api('/profiles', {
-        method: 'POST',
-        body: JSON.stringify(
-          profilePayload(data)
-        )
-      });
-
-      const body =
-        new FormData();
-
-      body.append(
-        'photo',
-        file
-      );
-
-      const result = await api(
-        '/profiles/photo',
-        {
-          method: 'POST',
-          body
-        }
-      );
-
-      setData((current) => ({
+    setData(
+      (
+        current
+      ) => ({
         ...current,
-        profilePhoto:
-          result.data.path
-      }));
 
-      notify(
-        'Photo uploaded.'
-      );
-    } catch (caught) {
-      setError(
-        caught.message
-      );
-    } finally {
-      setBusy(false);
-    }
+        siblingDetails:
+          (
+            current.siblingDetails ||
+            []
+          ).map(
+            (
+              sibling,
+              itemIndex
+            ) =>
+              itemIndex ===
+              index
+                ? {
+                    ...sibling,
+
+                    [
+                      key
+                    ]:
+                      value
+                  }
+                : sibling
+          )
+      })
+    );
   };
 
-  const next = async () => {
-    if (
-      step === 0 &&
-      !data.profileFor
-    ) {
-      setError(
-        'Please choose who this profile is for.'
-      );
-      return;
-    }
+  /*
+   * Initial hydration.
+   *
+   * EXISTING PROFILE:
+   * server wins completely.
+   *
+   * NEW PROFILE:
+   * local draft is restored.
+   */
+  useEffect(
+    () => {
+      let active =
+        true;
 
-    if (
-      step === 1 &&
-      !verified
-    ) {
-      setError(
-        'Verify the mobile number before continuing.'
-      );
-      return;
-    }
+      const hydrate =
+        async () => {
+          const [
+            profileResult,
+            preferenceResult
+          ] =
+            await Promise.allSettled([
+              api(
+                '/profiles/me?optional=true'
+              ),
 
-    if (
-      step === 2 ||
-      step >= 7
-    ) {
-      const basicsError =
-        profileBasicsError(data);
+              api(
+                '/preferences?optional=true'
+              )
+            ]);
 
-      if (basicsError) {
-        if (step > 2) {
-          setStep(2);
+          if (!active) {
+            return;
+          }
+
+          const serverProfile =
+            profileResult.status ===
+              'fulfilled'
+              ? profileResult
+                  .value
+                  .data
+                  .profile
+              : null;
+
+          const serverPreferences =
+            preferenceResult.status ===
+              'fulfilled'
+              ? preferenceResult
+                  .value
+                  .data
+                  .preferences
+              : null;
+
+          const preferences =
+            preferenceToForm(
+              serverPreferences
+            );
+
+          if (
+            serverProfile
+          ) {
+            /*
+             * Existing profile = DB is source
+             * of truth.
+             *
+             * Any old onboarding draft is removed
+             * so blank/stale values cannot overwrite
+             * the server profile.
+             */
+            localStorage.removeItem(
+              'ksm_onboarding'
+            );
+
+            localStorage.removeItem(
+              'ksm_onboarding_step'
+            );
+
+            setHasExistingProfile(
+              true
+            );
+
+            setStep(
+              0
+            );
+
+            setData({
+              ...flatten(
+                serverProfile
+              ),
+
+              ...preferences,
+
+              phone:
+                user?.phone ||
+                ''
+            });
+          } else {
+            const draft =
+              readDraft();
+
+            setHasExistingProfile(
+              false
+            );
+
+            setStep(
+              readDraftStep()
+            );
+
+            setData({
+              ...preferences,
+
+              ...draft,
+
+              phone:
+                draft.phone ||
+                user?.phone ||
+                ''
+            });
+          }
+
+          setVerified(
+            !!user
+              ?.phoneVerified
+          );
+
+          setHydrated(
+            true
+          );
+
+          setLoading(
+            false
+          );
+        };
+
+      hydrate().catch(
+        (
+          caught
+        ) => {
+          if (!active) {
+            return;
+          }
+
+          setError(
+            caught.message ||
+            'Unable to prepare your profile.'
+          );
+
+          setHydrated(
+            true
+          );
+
+          setLoading(
+            false
+          );
         }
+      );
 
-        setError(
-          basicsError
-        );
+      return () => {
+        active =
+          false;
+      };
+    },
+    [
+      user?.phone,
+      user?.phoneVerified
+    ]
+  );
 
+  /*
+   * Only NEW onboarding profiles use
+   * localStorage draft persistence.
+   *
+   * Existing profiles are never merged
+   * with stale browser drafts anymore.
+   */
+  useEffect(
+    () => {
+      if (
+        !hydrated ||
+        hasExistingProfile
+      ) {
         return;
       }
-    }
 
-    setError('');
+      localStorage.setItem(
+        'ksm_onboarding',
+        JSON.stringify(
+          data
+        )
+      );
 
-    if (step === 7) {
+      localStorage.setItem(
+        'ksm_onboarding_step',
+        String(
+          step
+        )
+      );
+    },
+    [
+      data,
+      step,
+      hydrated,
+      hasExistingProfile
+    ]
+  );
+
+  useEffect(
+    () => {
+      if (
+        !cooldown
+      ) {
+        return undefined;
+      }
+
+      const timer =
+        setInterval(
+          () =>
+            setCooldown(
+              (
+                current
+              ) =>
+                Math.max(
+                  0,
+                  current -
+                    1
+                )
+            ),
+          1000
+        );
+
+      return () =>
+        clearInterval(
+          timer
+        );
+    },
+    [
+      cooldown
+    ]
+  );
+
+  const sendOtp =
+    async () => {
+      setBusy(
+        true
+      );
+
+      setError('');
+
       try {
-        await api('/profiles', {
-          method: 'POST',
-          body: JSON.stringify(
-            profilePayload(data)
-          )
-        });
-
         await api(
-          '/preferences',
+          '/auth/send-otp',
           {
-            method: 'PUT',
-            body: JSON.stringify(
-              preferencePayload(
-                data
-              )
-            )
+            method:
+              'POST',
+
+            body:
+              JSON.stringify({
+                phone:
+                  data.phone
+              })
           }
         );
-      } catch (caught) {
+
+        setOtpSent(
+          true
+        );
+
+        setCooldown(
+          30
+        );
+
+        notify(
+          'Verification code sent.'
+        );
+      } catch (
+        caught
+      ) {
         setError(
           caught.message
         );
+      } finally {
+        setBusy(
+          false
+        );
+      }
+    };
+
+  const verify =
+    async () => {
+      setBusy(
+        true
+      );
+
+      setError('');
+
+      try {
+        await api(
+          '/auth/verify-otp',
+          {
+            method:
+              'POST',
+
+            body:
+              JSON.stringify({
+                phone:
+                  data.phone,
+
+                code:
+                  otp
+              })
+          }
+        );
+
+        setVerified(
+          true
+        );
+
+        notify(
+          'Mobile number verified.'
+        );
+      } catch (
+        caught
+      ) {
+        setError(
+          caught.message
+        );
+      } finally {
+        setBusy(
+          false
+        );
+      }
+    };
+
+  const saveProfile =
+    async (
+      visibilityOverride
+    ) => {
+      const basicsError =
+        profileBasicsError(
+          data
+        );
+
+      if (
+        basicsError
+      ) {
+        setStep(
+          2
+        );
+
+        throw new Error(
+          basicsError
+        );
+      }
+
+      const endpoint =
+        hasExistingProfile
+          ? '/profiles/me'
+          : '/profiles';
+
+      const method =
+        hasExistingProfile
+          ? 'PATCH'
+          : 'POST';
+
+      const result =
+        await api(
+          endpoint,
+          {
+            method,
+
+            body:
+              JSON.stringify(
+                profilePayload(
+                  data,
+                  visibilityOverride
+                )
+              )
+          }
+        );
+
+      const savedProfile =
+        result.data
+          .profile;
+
+      if (
+        savedProfile
+      ) {
+        setHasExistingProfile(
+          true
+        );
+
+        setData(
+          (
+            current
+          ) => ({
+            ...current,
+
+            ...flatten(
+              savedProfile
+            ),
+
+            phone:
+              current.phone ||
+              user?.phone ||
+              ''
+          })
+        );
+      }
+
+      return savedProfile;
+    };
+
+  const saveAndExit =
+    async () => {
+      /*
+       * A brand-new profile can leave before
+       * basics are complete; its draft is already
+       * stored in localStorage.
+       */
+      if (
+        !hasExistingProfile &&
+        !data.firstName
+      ) {
+        navigate(
+          '/dashboard'
+        );
 
         return;
       }
-    }
 
-    if (step === 9) {
-      setBusy(true);
+      setBusy(
+        true
+      );
+
+      setError('');
 
       try {
-        await api('/profiles', {
-          method: 'POST',
-          body: JSON.stringify(
-            profilePayload(
-              data,
-              'pending_review'
-            )
-          )
-        });
+        await saveProfile();
 
         localStorage.removeItem(
           'ksm_onboarding'
@@ -1154,30 +1968,277 @@ export default function OnboardingPage() {
         );
 
         notify(
-          'Profile submitted for review.'
+          'Profile changes saved.'
         );
 
-        navigate('/dashboard');
-      } catch (caught) {
+        navigate(
+          '/dashboard'
+        );
+      } catch (
+        caught
+      ) {
         setError(
           caught.message
         );
       } finally {
-        setBusy(false);
+        setBusy(
+          false
+        );
+      }
+    };
+
+  const upload =
+    async (
+      file
+    ) => {
+      const basicsError =
+        profileBasicsError(
+          data
+        );
+
+      if (
+        basicsError
+      ) {
+        setStep(
+          2
+        );
+
+        setError(
+          basicsError
+        );
+
+        return;
       }
 
-      return;
-    }
+      setBusy(
+        true
+      );
 
-    setStep(
-      Math.min(
-        9,
-        step + 1
-      )
-    );
-  };
+      setError('');
 
-  if (loading) {
+      try {
+        /*
+         * Preserve current visibility while
+         * ensuring the profile exists.
+         */
+        await saveProfile();
+
+        const body =
+          new FormData();
+
+        body.append(
+          'photo',
+          file
+        );
+
+        const result =
+          await api(
+            '/profiles/photo',
+            {
+              method:
+                'POST',
+
+              body
+            }
+          );
+
+        setData(
+          (
+            current
+          ) => ({
+            ...current,
+
+            profilePhoto:
+              result.data.path
+          })
+        );
+
+        notify(
+          'Photo uploaded.'
+        );
+      } catch (
+        caught
+      ) {
+        setError(
+          caught.message
+        );
+      } finally {
+        setBusy(
+          false
+        );
+      }
+    };
+
+  const next =
+    async () => {
+      if (
+        step ===
+          0 &&
+        !data.profileFor
+      ) {
+        setError(
+          'Please choose who this profile is for.'
+        );
+
+        return;
+      }
+
+      if (
+        step ===
+          1 &&
+        !verified
+      ) {
+        setError(
+          'Verify the mobile number before continuing.'
+        );
+
+        return;
+      }
+
+      if (
+        step ===
+          2 ||
+        step >=
+          7
+      ) {
+        const basicsError =
+          profileBasicsError(
+            data
+          );
+
+        if (
+          basicsError
+        ) {
+          if (
+            step >
+            2
+          ) {
+            setStep(
+              2
+            );
+          }
+
+          setError(
+            basicsError
+          );
+
+          return;
+        }
+      }
+
+      setError('');
+
+      if (
+        step ===
+        7
+      ) {
+        setBusy(
+          true
+        );
+
+        try {
+          await saveProfile();
+
+          await api(
+            '/preferences',
+            {
+              method:
+                'PUT',
+
+              body:
+                JSON.stringify(
+                  preferencePayload(
+                    data
+                  )
+                )
+            }
+          );
+
+          /*
+           * Server now owns the profile,
+           * so stale draft should not survive.
+           */
+          localStorage.removeItem(
+            'ksm_onboarding'
+          );
+
+          localStorage.removeItem(
+            'ksm_onboarding_step'
+          );
+        } catch (
+          caught
+        ) {
+          setError(
+            caught.message
+          );
+
+          setBusy(
+            false
+          );
+
+          return;
+        } finally {
+          setBusy(
+            false
+          );
+        }
+      }
+
+      if (
+        step ===
+        9
+      ) {
+        setBusy(
+          true
+        );
+
+        try {
+          await saveProfile(
+            'pending_review'
+          );
+
+          localStorage.removeItem(
+            'ksm_onboarding'
+          );
+
+          localStorage.removeItem(
+            'ksm_onboarding_step'
+          );
+
+          notify(
+            'Profile submitted for review.'
+          );
+
+          navigate(
+            '/dashboard'
+          );
+        } catch (
+          caught
+        ) {
+          setError(
+            caught.message
+          );
+        } finally {
+          setBusy(
+            false
+          );
+        }
+
+        return;
+      }
+
+      setStep(
+        Math.min(
+          9,
+          step +
+            1
+        )
+      );
+    };
+
+  if (
+    loading
+  ) {
     return (
       <div className="grid min-h-screen place-items-center bg-[#f5f0e8] font-['Cormorant_Garamond'] text-[28px] text-[#681d25]">
         Preparing your profile…
@@ -1206,7 +2267,8 @@ export default function OnboardingPage() {
 
           <h1 className="mt-5 font-['Cormorant_Garamond'] text-[clamp(42px,4vw,65px)] font-medium leading-none">
             Every family story
-            deserves to be told with{' '}
+            deserves to be told
+            with{' '}
             <em className="text-[#dbaf79]">
               care.
             </em>
@@ -1214,67 +2276,96 @@ export default function OnboardingPage() {
         </div>
 
         <p className="text-[11px] text-white/50">
-          Saved privately as you
-          progress.
+          {hasExistingProfile
+            ? 'Your saved profile is loaded directly from the secure server.'
+            : 'Saved privately as you progress.'}
         </p>
       </aside>
 
       <main className="bg-[#fffdf8]">
         <header className="grid h-[82px] grid-cols-[1fr_2fr_1fr] items-center border-b border-[#ddd0c1] px-10 max-[767px]:grid-cols-[auto_1fr_auto] max-[767px]:gap-[14px] max-[767px]:px-[18px]">
           <button
+            type="button"
             className="justify-self-start"
             onClick={() =>
               step
-                ? setStep(step - 1)
+                ? setStep(
+                    step -
+                      1
+                  )
                 : navigate(
                     '/dashboard'
                   )
             }
+            aria-label="Go back"
           >
             <ArrowLeft />
           </button>
 
           <div>
             <span className="text-[9px] uppercase tracking-[0.14em]">
-              Step {step + 1} of 10
+              Step{' '}
+              {step +
+                1}{' '}
+              of 10
             </span>
 
             <div className="mt-[9px] h-[2px] bg-[#e8ddd1]">
               <i
                 className="block h-full bg-[#681d25] transition-[width] duration-300"
                 style={{
-                  width: `${
-                    (step + 1) * 10
-                  }%`
+                  width:
+                    `${
+                      (
+                        step +
+                        1
+                      ) *
+                      10
+                    }%`
                 }}
               />
             </div>
           </div>
 
           <button
-  className="flex items-center gap-2 justify-self-end text-[10px] max-[767px]:text-[0px]"
-  onClick={() =>
-    navigate('/dashboard')
-  }
->
+            type="button"
+            disabled={
+              busy
+            }
+            className="flex items-center gap-2 justify-self-end text-[10px] disabled:opacity-50 max-[767px]:text-[0px]"
+            onClick={
+              saveAndExit
+            }
+          >
             <Save />
 
             <span className="max-[767px]:hidden">
-              Save & exit
+              {busy
+                ? 'Saving…'
+                : 'Save & exit'}
             </span>
           </button>
         </header>
 
         <section className="mx-auto my-[clamp(40px,8vh,90px)] w-[min(650px,calc(100%_-_40px))]">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
-            {steps[step][0]}
+            {
+              steps[
+                step
+              ][0]
+            }
           </p>
 
           <h2 className="mb-[35px] mt-[13px] font-['Cormorant_Garamond'] text-[clamp(40px,5vw,58px)] font-medium leading-none">
-            {steps[step][1]}
+            {
+              steps[
+                step
+              ][1]
+            }
           </h2>
 
-          {step === 0 && (
+          {step ===
+            0 && (
             <div className="grid grid-cols-3 gap-3 max-[767px]:grid-cols-2">
               {[
                 'Self',
@@ -1283,30 +2374,39 @@ export default function OnboardingPage() {
                 'Brother',
                 'Sister',
                 'Relative'
-              ].map((item) => (
-                <button
-                  className={`border p-[22px] font-['Cormorant_Garamond'] text-[21px] font-medium ${
-                    data.profileFor ===
-                    item
-                      ? 'border-[#681d25] bg-[#681d2508] text-[#681d25]'
-                      : 'border-[#ddd0c1] bg-[#fffdf8]'
-                  }`}
-                  onClick={() =>
-                    setData({
-                      ...data,
-                      profileFor:
+              ].map(
+                (
+                  item
+                ) => (
+                  <button
+                    type="button"
+                    className={`border p-[22px] font-['Cormorant_Garamond'] text-[21px] font-medium ${
+                      data.profileFor ===
+                      item
+                        ? 'border-[#681d25] bg-[#681d2508] text-[#681d25]'
+                        : 'border-[#ddd0c1] bg-[#fffdf8]'
+                    }`}
+                    onClick={() =>
+                      update(
+                        'profileFor',
                         item
-                    })
-                  }
-                  key={item}
-                >
-                  {item}
-                </button>
-              ))}
+                      )
+                    }
+                    key={
+                      item
+                    }
+                  >
+                    {
+                      item
+                    }
+                  </button>
+                )
+              )}
             </div>
           )}
 
-          {step === 1 && (
+          {step ===
+            1 && (
             <>
               <label className={labelClass}>
                 Mobile number
@@ -1314,34 +2414,48 @@ export default function OnboardingPage() {
                 <input
                   className={fieldClass}
                   value={
-                    data.phone || ''
+                    data.phone ||
+                    ''
                   }
-                  onChange={(event) =>
-                    setData({
-                      ...data,
-                      phone:
-                        event.target
-                          .value
-                    })
+                  onChange={(
+                    event
+                  ) =>
+                    update(
+                      'phone',
+                      event
+                        .target
+                        .value
+                    )
                   }
                 />
               </label>
 
-              <button
-                disabled={
-                  busy ||
-                  cooldown > 0
-                }
-                onClick={sendOtp}
-                className={`${outlineButtonClass} mt-4`}
-                type="button"
-              >
-                {cooldown
-                  ? `Resend in ${cooldown}s`
-                  : 'Send verification code'}
-              </button>
+              {verified ? (
+                <p className="mt-4 border border-[#76946f] bg-[#76946f0d] px-4 py-3 text-[11px] font-bold text-[#45643f]">
+                  Mobile number
+                  verified.
+                </p>
+              ) : (
+                <button
+                  disabled={
+                    busy ||
+                    cooldown >
+                      0
+                  }
+                  onClick={
+                    sendOtp
+                  }
+                  className={`${outlineButtonClass} mt-4`}
+                  type="button"
+                >
+                  {cooldown
+                    ? `Resend in ${cooldown}s`
+                    : 'Send verification code'}
+                </button>
+              )}
 
-              {otpSent && (
+              {otpSent &&
+                !verified && (
                 <div className="mt-[15px] flex items-end gap-3">
                   <label className={`${labelClass} flex-1`}>
                     Six-digit code
@@ -1350,12 +2464,15 @@ export default function OnboardingPage() {
                       className={fieldClass}
                       inputMode="numeric"
                       maxLength="6"
-                      value={otp}
+                      value={
+                        otp
+                      }
                       onChange={(
                         event
                       ) =>
                         setOtp(
-                          event.target
+                          event
+                            .target
                             .value
                         )
                       }
@@ -1363,9 +2480,9 @@ export default function OnboardingPage() {
                   </label>
 
                   <button
+                    type="button"
                     disabled={
-                      busy ||
-                      verified
+                      busy
                     }
                     onClick={
                       verify
@@ -1374,208 +2491,219 @@ export default function OnboardingPage() {
                       primaryButtonClass
                     }
                   >
-                    {verified
-                      ? 'Verified'
-                      : 'Verify'}
+                    Verify
                   </button>
                 </div>
               )}
             </>
           )}
 
-          {fields[step] && (
+          {fields[
+            step
+          ] && (
             <div className={fieldsGridClass}>
-              {fields[step].map(
+              {fields[
+                step
+              ].map(
                 ([
                   key,
                   label,
                   type
-                ]) => (
-                  <label
-                    className={`${
-                      key.includes(
-                        'Description'
-                      ) ||
-                      key ===
-                        'aboutMe' ||
-                      key ===
-                        'additionalPreferences'
-                        ? 'col-span-full max-[767px]:col-span-1'
-                        : ''
-                    } ${labelClass}`}
-                    key={key}
-                  >
-                    {label}
-
-                    {key.includes(
+                ]) => {
+                  const multiline =
+                    key.includes(
                       'Description'
                     ) ||
                     key ===
                       'aboutMe' ||
                     key ===
-                      'additionalPreferences' ? (
-                      <textarea
-                        className={
-                          fieldClass
-                        }
-                        rows="3"
-                        value={
-                          data[
-                            key
-                          ] || ''
-                        }
-                        onChange={(
-                          event
-                        ) =>
-                          setData({
-                            ...data,
-                            [key]:
+                      'educationDetails' ||
+                    key ===
+                      'additionalPreferences';
+
+                  return (
+                    <label
+                      className={`${
+                        multiline
+                          ? 'col-span-full max-[767px]:col-span-1'
+                          : ''
+                      } ${labelClass}`}
+                      key={
+                        key
+                      }
+                    >
+                      {
+                        label
+                      }
+
+                      {multiline ? (
+                        <textarea
+                          className={
+                            fieldClass
+                          }
+                          rows="3"
+                          value={
+                            data[
+                              key
+                            ] ||
+                            ''
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            update(
+                              key,
                               event
                                 .target
                                 .value
-                          })
-                        }
-                      />
-                    ) : key ===
-                      'gender' ? (
-                      <select
-                        className={
-                          fieldClass
-                        }
-                        value={
-                          data[
-                            key
-                          ] || ''
-                        }
-                        onChange={(
-                          event
-                        ) =>
-                          setData({
-                            ...data,
-                            [key]:
+                            )
+                          }
+                        />
+                      ) : key ===
+                        'gender' ? (
+                        <select
+                          className={
+                            fieldClass
+                          }
+                          value={
+                            data[
+                              key
+                            ] ||
+                            ''
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            update(
+                              key,
                               event
                                 .target
                                 .value
-                          })
-                        }
-                      >
-                        <option value="">
-                          Select gender
-                        </option>
+                            )
+                          }
+                        >
+                          <option value="">
+                            Select gender
+                          </option>
 
-                        <option value="Male">
-                          Male
-                        </option>
+                          <option value="Male">
+                            Male
+                          </option>
 
-                        <option value="Female">
-                          Female
-                        </option>
-                      </select>
-                    ) : key ===
-                      'maritalStatus' ? (
-                      <select
-                        className={
-                          fieldClass
-                        }
-                        value={
-                          data[
-                            key
-                          ] || ''
-                        }
-                        onChange={(
-                          event
-                        ) =>
-                          setData({
-                            ...data,
-                            [key]:
+                          <option value="Female">
+                            Female
+                          </option>
+                        </select>
+                      ) : key ===
+                        'maritalStatus' ? (
+                        <select
+                          className={
+                            fieldClass
+                          }
+                          value={
+                            data[
+                              key
+                            ] ||
+                            ''
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            update(
+                              key,
                               event
                                 .target
                                 .value
-                          })
-                        }
-                      >
-                        <option value="">
-                          Select marital
-                          status
-                        </option>
-
-                        {[
-                          'Never Married',
-                          'Divorced',
-                          'Widowed',
-                          'Annulled',
-                          'Separated'
-                        ].map(
-                          (
+                            )
+                          }
+                        >
+                          <option value="">
+                            Select marital
                             status
-                          ) => (
-                            <option
-                              key={
-                                status
-                              }
-                            >
-                              {
-                                status
-                              }
-                            </option>
-                          )
-                        )}
-                      </select>
-                    ) : (
-                      <input
-                        className={
-                          fieldClass
-                        }
-                        type={
-                          type ||
-                          'text'
-                        }
-                        value={
-                          data[
-                            key
-                          ] || ''
-                        }
-                        onChange={(
-                          event
-                        ) =>
-                          setData({
-                            ...data,
-                            [key]:
+                          </option>
+
+                          {[
+                            'Never Married',
+                            'Divorced',
+                            'Widowed',
+                            'Annulled',
+                            'Separated'
+                          ].map(
+                            (
+                              status
+                            ) => (
+                              <option
+                                key={
+                                  status
+                                }
+                                value={
+                                  status
+                                }
+                              >
+                                {
+                                  status
+                                }
+                              </option>
+                            )
+                          )}
+                        </select>
+                      ) : (
+                        <input
+                          className={
+                            fieldClass
+                          }
+                          type={
+                            type ||
+                            'text'
+                          }
+                          value={
+                            data[
+                              key
+                            ] ??
+                            ''
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            update(
+                              key,
                               event
                                 .target
                                 .value
-                          })
-                        }
-                      />
-                    )}
-                  </label>
-                )
+                            )
+                          }
+                        />
+                      )}
+                    </label>
+                  );
+                }
               )}
             </div>
           )}
 
-          {step === 2 &&
+          {step ===
+            2 &&
             data.maritalStatus &&
             data.maritalStatus !==
               'Never Married' && (
-              <div
-                className={
-                  sensitivePanelClass
-                }
-              >
+              <div className={sensitivePanelClass}>
                 <p className="mb-4 flex items-center gap-2 text-[0.78rem] font-bold text-[#741f27]">
                   <LockKeyhole
-                    size={15}
+                    size={
+                      15
+                    }
                   />
 
                   Private context —
                   shown only after an
-                  accepted introduction.
+                  accepted
+                  introduction.
                 </p>
 
                 <div className={fieldsGridClass}>
                   <label className={labelClass}>
-                    Previous marriage ended on
+                    Previous marriage
+                    ended on
                     (optional)
 
                     <input
@@ -1585,14 +2713,15 @@ export default function OnboardingPage() {
                         data.previousMarriageEndedAt ||
                         ''
                       }
-                      onChange={(event) =>
-                        setData({
-                          ...data,
-                          previousMarriageEndedAt:
-                            event
-                              .target
-                              .value
-                        })
+                      onChange={(
+                        event
+                      ) =>
+                        update(
+                          'previousMarriageEndedAt',
+                          event
+                            .target
+                            .value
+                        )
                       }
                     />
                   </label>
@@ -1608,13 +2737,12 @@ export default function OnboardingPage() {
                         onChange={(
                           event
                         ) =>
-                          setData({
-                            ...data,
-                            divorceFinalized:
-                              event
-                                .target
-                                .checked
-                          })
+                          update(
+                            'divorceFinalized',
+                            event
+                              .target
+                              .checked
+                          )
                         }
                       />
 
@@ -1629,25 +2757,27 @@ export default function OnboardingPage() {
                       checked={
                         !!data.childrenFromPreviousMarriage
                       }
-                      onChange={(event) =>
-                        setData({
-                          ...data,
-                          childrenFromPreviousMarriage:
-                            event
-                              .target
-                              .checked
-                        })
+                      onChange={(
+                        event
+                      ) =>
+                        update(
+                          'childrenFromPreviousMarriage',
+                          event
+                            .target
+                            .checked
+                        )
                       }
                     />
 
-                    Children from previous
-                    marriage
+                    Children from
+                    previous marriage
                   </label>
 
                   {data.childrenFromPreviousMarriage && (
                     <>
                       <label className={labelClass}>
-                        Number of children
+                        Number of
+                        children
 
                         <input
                           className={fieldClass}
@@ -1655,23 +2785,25 @@ export default function OnboardingPage() {
                           min="0"
                           max="20"
                           value={
-                            data.childrenCount ||
+                            data.childrenCount ??
                             ''
                           }
-                          onChange={(event) =>
-                            setData({
-                              ...data,
-                              childrenCount:
-                                event
-                                  .target
-                                  .value
-                            })
+                          onChange={(
+                            event
+                          ) =>
+                            update(
+                              'childrenCount',
+                              event
+                                .target
+                                .value
+                            )
                           }
                         />
                       </label>
 
                       <label className={labelClass}>
-                        Children living with
+                        Children living
+                        with
 
                         <input
                           className={fieldClass}
@@ -1679,84 +2811,288 @@ export default function OnboardingPage() {
                             data.childrenLivingWith ||
                             ''
                           }
-                          onChange={(event) =>
-                            setData({
-                              ...data,
-                              childrenLivingWith:
-                                event
-                                  .target
-                                  .value
-                            })
+                          onChange={(
+                            event
+                          ) =>
+                            update(
+                              'childrenLivingWith',
+                              event
+                                .target
+                                .value
+                            )
                           }
                         />
                       </label>
                     </>
                   )}
+
+                  <label className={`${labelClass} col-span-full max-[767px]:col-span-1`}>
+                    Marital history
+                    notes
+
+                    <textarea
+                      rows="3"
+                      className={fieldClass}
+                      value={
+                        data.maritalHistoryNotes ||
+                        ''
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        update(
+                          'maritalHistoryNotes',
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                    />
+                  </label>
                 </div>
 
                 {data.maritalStatus ===
                   'Separated' && (
                   <p className="mt-4 text-[0.8rem] leading-[1.6] text-[#77675e]">
-                    Separated is distinct
-                    from legally divorced.
-                    This profile will retain
-                    that status clearly.
+                    Separated is
+                    distinct from
+                    legally divorced.
+                    This profile will
+                    retain that status
+                    clearly.
                   </p>
                 )}
               </div>
             )}
 
-          {step === 5 && (
+          {step ===
+            5 && (
             <div className="mt-6 grid gap-5">
               <div className={sensitivePanelClass}>
                 <p className="mb-4 flex items-center gap-2 text-[0.78rem] font-bold text-[#741f27]">
-                  <LockKeyhole size={15} />
-                  Maternal family — private
-                  by default
+                  <LockKeyhole
+                    size={
+                      15
+                    }
+                  />
+
+                  Paternal heritage
                 </p>
 
                 <div className={fieldsGridClass}>
                   {[
-                    'maternalGrandfatherName',
-                    'maternalFamilySurname',
-                    'maternalNativePlace',
-                    'maternalVillage',
-                    'maternalDistrict',
-                    'maternalState',
-                    'maternalClan'
-                  ].map((key) => (
-                    <label
-                      className={labelClass}
-                      key={key}
-                    >
-                      {key
-                        .replace(
-                          /([A-Z])/g,
-                          ' $1'
-                        )
-                        .replace(
-                          /^./,
-                          (value) =>
-                            value.toUpperCase()
-                        )}
+                    [
+                      'paternalFamilySurname',
+                      'Family surname'
+                    ],
 
-                      <input
-                        className={fieldClass}
-                        value={
-                          data[key] || ''
+                    [
+                      'paternalClan',
+                      'Clan'
+                    ],
+
+                    [
+                      'ancestralVillage',
+                      'Ancestral village'
+                    ],
+
+                    [
+                      'paternalNativePlace',
+                      'Native place'
+                    ],
+
+                    [
+                      'paternalDistrict',
+                      'District'
+                    ],
+
+                    [
+                      'paternalState',
+                      'State'
+                    ]
+                  ].map(
+                    ([
+                      key,
+                      label
+                    ]) => (
+                      <label
+                        className={
+                          labelClass
                         }
-                        onChange={(event) =>
-                          setData({
-                            ...data,
-                            [key]:
+                        key={
+                          key
+                        }
+                      >
+                        {
+                          label
+                        }
+
+                        <input
+                          className={
+                            fieldClass
+                          }
+                          value={
+                            data[
+                              key
+                            ] ||
+                            ''
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            update(
+                              key,
                               event
                                 .target
                                 .value
-                          })
+                            )
+                          }
+                        />
+                      </label>
+                    )
+                  )}
+
+                  <label className={`${labelClass} col-span-full max-[767px]:col-span-1`}>
+                    Paternal notes
+
+                    <textarea
+                      rows="2"
+                      className={
+                        fieldClass
+                      }
+                      value={
+                        data.paternalNotes ||
+                        ''
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        update(
+                          'paternalNotes',
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className={sensitivePanelClass}>
+                <p className="mb-4 flex items-center gap-2 text-[0.78rem] font-bold text-[#741f27]">
+                  <LockKeyhole
+                    size={
+                      15
+                    }
+                  />
+
+                  Maternal family —
+                  private by default
+                </p>
+
+                <div className={fieldsGridClass}>
+                  {[
+                    [
+                      'maternalGrandfatherName',
+                      'Maternal grandfather name'
+                    ],
+
+                    [
+                      'maternalFamilySurname',
+                      'Maternal family surname'
+                    ],
+
+                    [
+                      'maternalNativePlace',
+                      'Maternal native place'
+                    ],
+
+                    [
+                      'maternalVillage',
+                      'Maternal village'
+                    ],
+
+                    [
+                      'maternalDistrict',
+                      'Maternal district'
+                    ],
+
+                    [
+                      'maternalState',
+                      'Maternal state'
+                    ],
+
+                    [
+                      'maternalClan',
+                      'Maternal clan'
+                    ]
+                  ].map(
+                    ([
+                      key,
+                      label
+                    ]) => (
+                      <label
+                        className={
+                          labelClass
                         }
-                      />
-                    </label>
-                  ))}
+                        key={
+                          key
+                        }
+                      >
+                        {
+                          label
+                        }
+
+                        <input
+                          className={
+                            fieldClass
+                          }
+                          value={
+                            data[
+                              key
+                            ] ||
+                            ''
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            update(
+                              key,
+                              event
+                                .target
+                                .value
+                            )
+                          }
+                        />
+                      </label>
+                    )
+                  )}
+
+                  <label className={`${labelClass} col-span-full max-[767px]:col-span-1`}>
+                    Maternal notes
+
+                    <textarea
+                      rows="2"
+                      className={
+                        fieldClass
+                      }
+                      value={
+                        data.maternalNotes ||
+                        ''
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        update(
+                          'maternalNotes',
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                    />
+                  </label>
                 </div>
               </div>
 
@@ -1768,34 +3104,50 @@ export default function OnboardingPage() {
                     </h3>
 
                     <p className="text-[0.8rem] leading-[1.6] text-[#77675e]">
-                      Optional. Spouse-family
-                      details appear only for
-                      married siblings.
+                      Optional.
+                      Spouse-family
+                      details appear
+                      only for married
+                      siblings.
                     </p>
                   </div>
 
                   <button
                     type="button"
-                    className={outlineButtonClass}
+                    className={
+                      outlineButtonClass
+                    }
                     onClick={() =>
-                      setData({
-                        ...data,
-                        siblingDetails: [
-                          ...(
-                            data.siblingDetails ||
-                            []
-                          ),
-                          {
-                            relation:
-                              'Brother',
-                            maritalStatus:
-                              'Unmarried'
-                          }
-                        ]
-                      })
+                      setData(
+                        (
+                          current
+                        ) => ({
+                          ...current,
+
+                          siblingDetails: [
+                            ...(
+                              current.siblingDetails ||
+                              []
+                            ),
+
+                            {
+                              relation:
+                                'Brother',
+
+                              maritalStatus:
+                                'Unmarried'
+                            }
+                          ]
+                        })
+                      )
                     }
                   >
-                    <Plus size={15} />
+                    <Plus
+                      size={
+                        15
+                      }
+                    />
+
                     Add sibling
                   </button>
                 </div>
@@ -1808,7 +3160,7 @@ export default function OnboardingPage() {
                   ) => (
                     <div
                       className="relative border-t border-[#741f2721] py-4 pr-11"
-                      key={index}
+                      key={`${sibling.relation || 'sibling'}-${index}`}
                     >
                       <div className={fieldsGridClass}>
                         <label className={labelClass}>
@@ -1818,21 +3170,25 @@ export default function OnboardingPage() {
                             className={fieldClass}
                             value={
                               sibling.relation ||
-                              ''
+                              'Brother'
                             }
-                            onChange={(event) =>
+                            onChange={(
+                              event
+                            ) =>
                               updateSibling(
                                 index,
                                 'relation',
-                                event.target.value
+                                event
+                                  .target
+                                  .value
                               )
                             }
                           >
-                            <option>
+                            <option value="Brother">
                               Brother
                             </option>
 
-                            <option>
+                            <option value="Sister">
                               Sister
                             </option>
                           </select>
@@ -1847,11 +3203,61 @@ export default function OnboardingPage() {
                               sibling.name ||
                               ''
                             }
-                            onChange={(event) =>
+                            onChange={(
+                              event
+                            ) =>
                               updateSibling(
                                 index,
                                 'name',
-                                event.target.value
+                                event
+                                  .target
+                                  .value
+                              )
+                            }
+                          />
+                        </label>
+
+                        <label className={labelClass}>
+                          Education
+
+                          <input
+                            className={fieldClass}
+                            value={
+                              sibling.education ||
+                              ''
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              updateSibling(
+                                index,
+                                'education',
+                                event
+                                  .target
+                                  .value
+                              )
+                            }
+                          />
+                        </label>
+
+                        <label className={labelClass}>
+                          Occupation
+
+                          <input
+                            className={fieldClass}
+                            value={
+                              sibling.occupation ||
+                              ''
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              updateSibling(
+                                index,
+                                'occupation',
+                                event
+                                  .target
+                                  .value
                               )
                             }
                           />
@@ -1864,43 +3270,28 @@ export default function OnboardingPage() {
                             className={fieldClass}
                             value={
                               sibling.maritalStatus ||
-                              ''
+                              'Unmarried'
                             }
-                            onChange={(event) =>
+                            onChange={(
+                              event
+                            ) =>
                               updateSibling(
                                 index,
                                 'maritalStatus',
-                                event.target.value
+                                event
+                                  .target
+                                  .value
                               )
                             }
                           >
-                            <option>
+                            <option value="Unmarried">
                               Unmarried
                             </option>
 
-                            <option>
+                            <option value="Married">
                               Married
                             </option>
                           </select>
-                        </label>
-
-                        <label className={labelClass}>
-                          Occupation
-
-                          <input
-                            className={fieldClass}
-                            value={
-                              sibling.occupation ||
-                              ''
-                            }
-                            onChange={(event) =>
-                              updateSibling(
-                                index,
-                                'occupation',
-                                event.target.value
-                              )
-                            }
-                          />
                         </label>
 
                         {sibling.maritalStatus ===
@@ -1915,18 +3306,23 @@ export default function OnboardingPage() {
                                   sibling.spouseName ||
                                   ''
                                 }
-                                onChange={(event) =>
+                                onChange={(
+                                  event
+                                ) =>
                                   updateSibling(
                                     index,
                                     'spouseName',
-                                    event.target.value
+                                    event
+                                      .target
+                                      .value
                                   )
                                 }
                               />
                             </label>
 
                             <label className={labelClass}>
-                              Spouse family surname
+                              Spouse family
+                              surname
 
                               <input
                                 className={fieldClass}
@@ -1934,18 +3330,23 @@ export default function OnboardingPage() {
                                   sibling.spouseFamilySurname ||
                                   ''
                                 }
-                                onChange={(event) =>
+                                onChange={(
+                                  event
+                                ) =>
                                   updateSibling(
                                     index,
                                     'spouseFamilySurname',
-                                    event.target.value
+                                    event
+                                      .target
+                                      .value
                                   )
                                 }
                               />
                             </label>
 
                             <label className={labelClass}>
-                              Spouse native place
+                              Spouse native
+                              place
 
                               <input
                                 className={fieldClass}
@@ -1953,11 +3354,84 @@ export default function OnboardingPage() {
                                   sibling.spouseNativePlace ||
                                   ''
                                 }
-                                onChange={(event) =>
+                                onChange={(
+                                  event
+                                ) =>
                                   updateSibling(
                                     index,
                                     'spouseNativePlace',
-                                    event.target.value
+                                    event
+                                      .target
+                                      .value
+                                  )
+                                }
+                              />
+                            </label>
+
+                            <label className={labelClass}>
+                              Spouse village
+
+                              <input
+                                className={fieldClass}
+                                value={
+                                  sibling.spouseVillage ||
+                                  ''
+                                }
+                                onChange={(
+                                  event
+                                ) =>
+                                  updateSibling(
+                                    index,
+                                    'spouseVillage',
+                                    event
+                                      .target
+                                      .value
+                                  )
+                                }
+                              />
+                            </label>
+
+                            <label className={labelClass}>
+                              Spouse district
+
+                              <input
+                                className={fieldClass}
+                                value={
+                                  sibling.spouseDistrict ||
+                                  ''
+                                }
+                                onChange={(
+                                  event
+                                ) =>
+                                  updateSibling(
+                                    index,
+                                    'spouseDistrict',
+                                    event
+                                      .target
+                                      .value
+                                  )
+                                }
+                              />
+                            </label>
+
+                            <label className={labelClass}>
+                              Spouse state
+
+                              <input
+                                className={fieldClass}
+                                value={
+                                  sibling.spouseState ||
+                                  ''
+                                }
+                                onChange={(
+                                  event
+                                ) =>
+                                  updateSibling(
+                                    index,
+                                    'spouseState',
+                                    event
+                                      .target
+                                      .value
                                   )
                                 }
                               />
@@ -1971,21 +3445,33 @@ export default function OnboardingPage() {
                         className="absolute right-0 top-4 grid h-11 w-11 place-items-center rounded-full border border-[#ddd0c1] text-[#756a60]"
                         aria-label="Remove sibling"
                         onClick={() =>
-                          setData({
-                            ...data,
-                            siblingDetails:
-                              data.siblingDetails.filter(
+                          setData(
+                            (
+                              current
+                            ) => ({
+                              ...current,
+
+                              siblingDetails:
                                 (
-                                  _,
-                                  itemIndex
-                                ) =>
-                                  itemIndex !==
-                                  index
-                              )
-                          })
+                                  current.siblingDetails ||
+                                  []
+                                ).filter(
+                                  (
+                                    _,
+                                    itemIndex
+                                  ) =>
+                                    itemIndex !==
+                                    index
+                                )
+                            })
+                          )
                         }
                       >
-                        <Trash2 size={16} />
+                        <Trash2
+                          size={
+                            16
+                          }
+                        />
                       </button>
                     </div>
                   )
@@ -1994,9 +3480,15 @@ export default function OnboardingPage() {
 
               <div className={sensitivePanelClass}>
                 <p className="mb-4 flex items-center gap-2 text-[0.78rem] font-bold text-[#741f27]">
-                  <LockKeyhole size={15} />
-                  Family assets — optional
-                  and never public
+                  <LockKeyhole
+                    size={
+                      15
+                    }
+                  />
+
+                  Family assets —
+                  optional and never
+                  public
                 </p>
 
                 <label className="flex items-center gap-[0.65rem]">
@@ -2005,18 +3497,20 @@ export default function OnboardingPage() {
                     checked={
                       !!data.hasLand
                     }
-                    onChange={(event) =>
-                      setData({
-                        ...data,
-                        hasLand:
-                          event.target
-                            .checked
-                      })
+                    onChange={(
+                      event
+                    ) =>
+                      update(
+                        'hasLand',
+                        event
+                          .target
+                          .checked
+                      )
                     }
                   />
 
-                  Family has agricultural
-                  land
+                  Family has
+                  agricultural land
                 </label>
 
                 {data.hasLand && (
@@ -2029,17 +3523,18 @@ export default function OnboardingPage() {
                         type="number"
                         min="0"
                         value={
-                          data.approximateArea ||
+                          data.approximateArea ??
                           ''
                         }
-                        onChange={(event) =>
-                          setData({
-                            ...data,
-                            approximateArea:
-                              event
-                                .target
-                                .value
-                          })
+                        onChange={(
+                          event
+                        ) =>
+                          update(
+                            'approximateArea',
+                            event
+                              .target
+                              .value
+                          )
                         }
                       />
                     </label>
@@ -2053,25 +3548,26 @@ export default function OnboardingPage() {
                           data.landUnit ||
                           'Vigha'
                         }
-                        onChange={(event) =>
-                          setData({
-                            ...data,
-                            landUnit:
-                              event
-                                .target
-                                .value
-                          })
+                        onChange={(
+                          event
+                        ) =>
+                          update(
+                            'landUnit',
+                            event
+                              .target
+                              .value
+                          )
                         }
                       >
-                        <option>
+                        <option value="Vigha">
                           Vigha
                         </option>
 
-                        <option>
+                        <option value="Acre">
                           Acre
                         </option>
 
-                        <option>
+                        <option value="Hectare">
                           Hectare
                         </option>
                       </select>
@@ -2091,20 +3587,22 @@ export default function OnboardingPage() {
                         data.propertySummary ||
                         ''
                       }
-                      onChange={(event) =>
-                        setData({
-                          ...data,
-                          propertySummary:
-                            event
-                              .target
-                              .value
-                        })
+                      onChange={(
+                        event
+                      ) =>
+                        update(
+                          'propertySummary',
+                          event
+                            .target
+                            .value
+                        )
                       }
                     />
                   </label>
 
                   <label className={labelClass}>
-                    Primary residence type
+                    Primary residence
+                    type
 
                     <input
                       className={fieldClass}
@@ -2112,14 +3610,39 @@ export default function OnboardingPage() {
                         data.primaryResidenceType ||
                         ''
                       }
-                      onChange={(event) =>
-                        setData({
-                          ...data,
-                          primaryResidenceType:
-                            event
-                              .target
-                              .value
-                        })
+                      onChange={(
+                        event
+                      ) =>
+                        update(
+                          'primaryResidenceType',
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label className={`${labelClass} col-span-full max-[767px]:col-span-1`}>
+                    Business assets
+                    summary
+
+                    <textarea
+                      className={fieldClass}
+                      rows="2"
+                      value={
+                        data.businessAssetsSummary ||
+                        ''
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        update(
+                          'businessAssetsSummary',
+                          event
+                            .target
+                            .value
+                        )
                       }
                     />
                   </label>
@@ -2128,7 +3651,166 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {step === 8 && (
+          {step ===
+            6 && (
+            <div className={`${sensitivePanelClass} mt-6`}>
+              <p className="mb-4 flex items-center gap-2 text-[0.78rem] font-bold text-[#741f27]">
+                <LockKeyhole
+                  size={
+                    15
+                  }
+                />
+
+                Privacy for family
+                information
+              </p>
+
+              <div className={fieldsGridClass}>
+                <label className={labelClass}>
+                  Family overview
+
+                  <select
+                    className={fieldClass}
+                    value={
+                      data.familyOverviewVisibility ||
+                      'AcceptedInterests'
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      update(
+                        'familyOverviewVisibility',
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                  >
+                    <option value="RegisteredMembers">
+                      Registered members
+                    </option>
+
+                    <option value="AcceptedInterests">
+                      Accepted interests
+                    </option>
+
+                    <option value="MutualMatches">
+                      Mutual matches
+                    </option>
+
+                    <option value="Private">
+                      Private
+                    </option>
+                  </select>
+                </label>
+
+                <label className={labelClass}>
+                  Maternal family
+
+                  <select
+                    className={fieldClass}
+                    value={
+                      data.maternalFamilyVisibility ||
+                      'AcceptedInterests'
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      update(
+                        'maternalFamilyVisibility',
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                  >
+                    <option value="AcceptedInterests">
+                      Accepted interests
+                    </option>
+
+                    <option value="MutualMatches">
+                      Mutual matches
+                    </option>
+
+                    <option value="Private">
+                      Private
+                    </option>
+                  </select>
+                </label>
+
+                <label className={labelClass}>
+                  Sibling details
+
+                  <select
+                    className={fieldClass}
+                    value={
+                      data.siblingDetailsVisibility ||
+                      'AcceptedInterests'
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      update(
+                        'siblingDetailsVisibility',
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                  >
+                    <option value="AcceptedInterests">
+                      Accepted interests
+                    </option>
+
+                    <option value="MutualMatches">
+                      Mutual matches
+                    </option>
+
+                    <option value="Private">
+                      Private
+                    </option>
+                  </select>
+                </label>
+
+                <label className={labelClass}>
+                  Family assets
+
+                  <select
+                    className={fieldClass}
+                    value={
+                      data.assetVisibility ||
+                      'Private'
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      update(
+                        'assetVisibility',
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                  >
+                    <option value="AcceptedInterests">
+                      Accepted interests
+                    </option>
+
+                    <option value="MutualMatches">
+                      Mutual matches
+                    </option>
+
+                    <option value="Private">
+                      Private
+                    </option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {step ===
+            8 && (
             <div className="border border-dashed border-[#bfa98f] p-[45px] text-center">
               {data.profilePhoto && (
                 <img
@@ -2147,25 +3829,38 @@ export default function OnboardingPage() {
               </h3>
 
               <p className="m-[6px] text-[11px] text-[#756a60]">
-                JPG, PNG or WebP. Maximum
-                5 MB.
+                JPG, PNG or WebP.
+                Maximum 5 MB.
               </p>
 
               <input
-                disabled={busy}
-                onChange={(event) =>
-                  event.target.files[0] &&
-                  upload(
-                    event.target.files[0]
-                  )
+                disabled={
+                  busy
                 }
+                onChange={(
+                  event
+                ) => {
+                  const file =
+                    event
+                      .target
+                      .files?.[0];
+
+                  if (
+                    file
+                  ) {
+                    upload(
+                      file
+                    );
+                  }
+                }}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
               />
             </div>
           )}
 
-          {step === 9 && (
+          {step ===
+            9 && (
             <div className="bg-[#f1e8dc] p-[30px]">
               <h3 className="font-['Cormorant_Garamond'] text-[34px] font-medium">
                 {data.firstName ||
@@ -2176,8 +3871,8 @@ export default function OnboardingPage() {
 
               <p>
                 {data.city ||
-                  'Location'}{' '}
-                •{' '}
+                  'Location'}
+                {' • '}
                 {data.occupation ||
                   'Profession'}
               </p>
@@ -2188,14 +3883,37 @@ export default function OnboardingPage() {
                     'Profile for',
                     data.profileFor
                   ],
+
+                  [
+                    'Date of birth',
+                    data.dateOfBirth
+                  ],
+
+                  [
+                    'Marital status',
+                    data.maritalStatus
+                  ],
+
                   [
                     'Education',
                     data.highestEducation
                   ],
+
                   [
                     'Community',
                     data.communityName
                   ],
+
+                  [
+                    'Clan',
+                    data.clan
+                  ],
+
+                  [
+                    'Native place',
+                    data.nativePlace
+                  ],
+
                   [
                     'Family',
                     data.familyType
@@ -2205,9 +3923,15 @@ export default function OnboardingPage() {
                     label,
                     value
                   ]) => (
-                    <div key={label}>
+                    <div
+                      key={
+                        label
+                      }
+                    >
                       <dt className="text-[8px] uppercase text-[#756a60]">
-                        {label}
+                        {
+                          label
+                        }
                       </dt>
 
                       <dd className="text-[12px]">
@@ -2219,28 +3943,41 @@ export default function OnboardingPage() {
                 )}
               </dl>
 
-              <p>
-                Submitting sends this
-                profile to moderation. You
-                can edit it later.
+              <p className="text-[11px] leading-6 text-[#756a60]">
+                Submitting sends
+                this profile to
+                moderation. You can
+                edit it later without
+                losing the existing
+                saved details.
               </p>
             </div>
           )}
 
           {error && (
             <p className="mt-4 bg-[#f8e9e8] px-[14px] py-3 text-[12px] text-[#8b1e26]">
-              {error}
+              {
+                error
+              }
             </p>
           )}
 
           <button
-            disabled={busy}
+            type="button"
+            disabled={
+              busy
+            }
             className={`${primaryButtonClass} mt-[30px] min-w-[160px]`}
-            onClick={next}
+            onClick={
+              next
+            }
           >
-            {step === 9
-              ? 'Submit for review'
-              : 'Continue'}
+            {busy
+              ? 'Saving…'
+              : step ===
+                  9
+                ? 'Submit for review'
+                : 'Continue'}
 
             <ArrowRight />
           </button>
