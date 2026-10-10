@@ -3,13 +3,21 @@ import mongoose from 'mongoose';
 const notification = new mongoose.Schema(
   {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'User',
+
+      required:
+        true
     },
 
     type: {
-      type: String,
+      type:
+        String,
+
       enum: [
         'NEW_INTEREST',
         'INTEREST_ACCEPTED',
@@ -23,44 +31,72 @@ const notification = new mongoose.Schema(
       ]
     },
 
-    title: String,
-    message: String,
+    title:
+      String,
+
+    message:
+      String,
 
     relatedProfile: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'MatrimonialProfile'
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'MatrimonialProfile'
     },
 
     relatedRecord: {
-      type: mongoose.Schema.Types.ObjectId
+      type:
+        mongoose.Schema.Types
+          .ObjectId
     },
 
     read: {
-      type: Boolean,
-      default: false
+      type:
+        Boolean,
+
+      default:
+        false
     }
   },
+
   {
-    timestamps: true
+    timestamps:
+      true
   }
 );
 
 const report = new mongoose.Schema(
   {
     reporter: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'User',
+
+      required:
+        true
     },
 
     reportedProfile: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'MatrimonialProfile',
-      required: true
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'MatrimonialProfile',
+
+      required:
+        true
     },
 
     reason: {
-      type: String,
+      type:
+        String,
+
       enum: [
         'Fake Profile',
         'Inappropriate Content',
@@ -72,460 +108,86 @@ const report = new mongoose.Schema(
     },
 
     description: {
-      type: String,
-      maxLength: 1000
+      type:
+        String,
+
+      maxLength:
+        1000
     },
 
     status: {
-      type: String,
+      type:
+        String,
+
       enum: [
         'Open',
         'Reviewed',
         'Resolved',
         'Dismissed'
       ],
-      default: 'Open'
+
+      default:
+        'Open'
     }
   },
+
   {
-    timestamps: true
+    timestamps:
+      true
   }
 );
 
 const block = new mongoose.Schema(
   {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'User',
+
+      required:
+        true
     },
 
     blockedProfile: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'MatrimonialProfile',
-      required: true
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'MatrimonialProfile',
+
+      required:
+        true
     }
   },
+
   {
-    timestamps: true
+    timestamps:
+      true
   }
 );
 
 block.index(
   {
-    user: 1,
-    blockedProfile: 1
+    user:
+      1,
+
+    blockedProfile:
+      1
   },
+
   {
-    unique: true
+    unique:
+      true
   }
 );
 
 const plan = new mongoose.Schema(
   {
     name: {
-      type: String,
-      required: true,
-      trim: true,
-      maxLength: 100
-    },
-
-    slug: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      lowercase: true
-    },
-
-    price: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-
-    durationDays: {
-      type: Number,
-      required: true,
-      min: 1
-    },
-
-    features: {
-      interestLimit: {
-        type: Number,
-        default: 0,
-        min: 0
-      },
-
-      contactViewLimit: {
-        type: Number,
-        default: 0,
-        min: 0
-      },
-
-      messageLimit: {
-        type: Number,
-        default: 0,
-        min: 0
-      },
-
-      advancedSearch: {
-        type: Boolean,
-        default: false
-      },
-
-      profileBoost: {
-        type: Boolean,
-        default: false
-      },
-
-      prioritySupport: {
-        type: Boolean,
-        default: false
-      },
-
-      relationshipManager: {
-        type: Boolean,
-        default: false
-      }
-    },
-
-    active: {
-      type: Boolean,
-      default: true
-    }
-  },
-  {
-    timestamps: true
-  }
-);
-
-const subscription = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-
-    plan: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Plan'
-    },
-
-    planNameSnapshot: {
-      type: String,
-      trim: true,
-      default: 'Membership'
-    },
-
-    priceSnapshot: {
-      type: Number,
-      default: 0,
-      min: 0
-    },
-
-    entitlementSnapshot: {
-      interestLimit: {
-        type: Number,
-        default: 0
-      },
-
-      contactViewLimit: {
-        type: Number,
-        default: 0
-      },
-
-      messageLimit: {
-        type: Number,
-        default: 0
-      },
-
-      advancedSearch: {
-        type: Boolean,
-        default: false
-      },
-
-      profileBoost: {
-        type: Boolean,
-        default: false
-      },
-
-      prioritySupport: {
-        type: Boolean,
-        default: false
-      },
-
-      relationshipManager: {
-        type: Boolean,
-        default: false
-      }
-    },
-
-    status: {
-      type: String,
-      enum: [
-        'Active',
-        'Expired',
-        'Cancelled'
-      ],
-      default: 'Active',
-      index: true
-    },
-
-    startsAt: {
-      type: Date,
-      required: true
-    },
-
-    endsAt: {
-      type: Date,
-      required: true
-    },
-
-    expiryRemindersSent: [
-      Number
-    ]
-  },
-  {
-    timestamps: true
-  }
-);
-
-/*
- * Hard guarantee:
- * one Active membership per user.
- *
- * Historical Expired/Cancelled subscriptions
- * remain allowed.
- */
-subscription.index(
-  {
-    user: 1
-  },
-  {
-    unique: true,
-
-    partialFilterExpression: {
-      status: 'Active'
-    }
-  }
-);
-
-subscription.index({
-  user: 1,
-  status: 1,
-  endsAt: -1
-});
-
-const payment = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-
-    plan: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Plan',
-      required: true
-    },
-
-    subscription: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Subscription'
-    },
-
-    provider: {
-      type: String,
-      enum: [
-        'razorpay',
-        'mock'
-      ],
-      default: 'mock'
-    },
-
-    /*
-     * Provider IDs must be unique whenever present.
-     *
-     * They remain optional because development/mock
-     * payments may not have Razorpay identifiers.
-     */
-    providerOrderId: {
-      type: String,
-      trim: true
-    },
-
-    providerPaymentId: {
-      type: String,
-      trim: true
-    },
-
-    amount: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-
-    currency: {
-      type: String,
-      default: 'INR',
-      uppercase: true,
-      trim: true
-    },
-
-    status: {
-      type: String,
-      enum: [
-        'Created',
-        'Processing',
-        'Paid',
-        'Failed',
-        'Refunded'
-      ],
-      default: 'Created'
-    },
-
-    verifiedAt: Date,
-
-    /*
-     * Razorpay refund amounts are reported in paise.
-     * Keeping cumulative amount in paise avoids
-     * floating-point currency errors.
-     */
-    refundedAmountPaise: {
-      type: Number,
-      default: 0,
-      min: 0
-    },
-
-    refundPendingPaise: {
-      type: Number,
-      default: 0,
-      min: 0
-    },
-
-    processedEvents: {
-      type: [
-        String
-      ],
-      default: []
-    }
-  },
-  {
-    timestamps: true
-  }
-);
-
-/*
- * Razorpay order/payment identifiers are globally
- * unique provider references.
- *
- * sparse:true allows documents where the provider
- * identifier has not been assigned yet.
- */
-payment.index(
-  {
-    providerOrderId: 1
-  },
-  {
-    unique: true,
-    sparse: true
-  }
-);
-
-payment.index(
-  {
-    providerPaymentId: 1
-  },
-  {
-    unique: true,
-    sparse: true
-  }
-);
-
-payment.index({
-  user: 1,
-  status: 1,
-  createdAt: -1
-});
-
-const refundRequest = new mongoose.Schema(
-  {
-    payment: {
-      type:
-        mongoose.Schema.Types
-          .ObjectId,
-
-      ref:
-        'Payment',
-
-      required:
-        true,
-
-      index:
-        true
-    },
-
-    user: {
-      type:
-        mongoose.Schema.Types
-          .ObjectId,
-
-      ref:
-        'User',
-
-      required:
-        true,
-
-      index:
-        true
-    },
-
-    requestedBy: {
-      type:
-        mongoose.Schema.Types
-          .ObjectId,
-
-      ref:
-        'User',
-
-      required:
-        true
-    },
-
-    type: {
-      type:
-        String,
-
-      enum: [
-        'Full',
-        'Partial'
-      ],
-
-      required:
-        true
-    },
-
-    reasonCode: {
-      type:
-        String,
-
-      enum: [
-        'duplicate_payment',
-        'technical_failure',
-        'membership_activation_failure',
-        'incorrect_plan',
-        'admin_exception',
-        'other'
-      ],
-
-      required:
-        true
-    },
-
-    reason: {
       type:
         String,
 
@@ -535,14 +197,39 @@ const refundRequest = new mongoose.Schema(
       trim:
         true,
 
-      minLength:
-        10,
-
       maxLength:
-        1000
+        100
     },
 
-    amountPaise: {
+    slug: {
+      type:
+        String,
+
+      required:
+        true,
+
+      unique:
+        true,
+
+      trim:
+        true,
+
+      lowercase:
+        true
+    },
+
+    price: {
+      type:
+        Number,
+
+      required:
+        true,
+
+      min:
+        0
+    },
+
+    durationDays: {
       type:
         Number,
 
@@ -553,9 +240,352 @@ const refundRequest = new mongoose.Schema(
         1
     },
 
-    providerRefundId: {
+    features: {
+      interestLimit: {
+        type:
+          Number,
+
+        default:
+          0,
+
+        min:
+          0
+      },
+
+      contactViewLimit: {
+        type:
+          Number,
+
+        default:
+          0,
+
+        min:
+          0
+      },
+
+      messageLimit: {
+        type:
+          Number,
+
+        default:
+          0,
+
+        min:
+          0
+      },
+
+      advancedSearch: {
+        type:
+          Boolean,
+
+        default:
+          false
+      },
+
+      profileBoost: {
+        type:
+          Boolean,
+
+        default:
+          false
+      },
+
+      prioritySupport: {
+        type:
+          Boolean,
+
+        default:
+          false
+      },
+
+      relationshipManager: {
+        type:
+          Boolean,
+
+        default:
+          false
+      }
+    },
+
+    active: {
+      type:
+        Boolean,
+
+      default:
+        true
+    }
+  },
+
+  {
+    timestamps:
+      true
+  }
+);
+
+const subscription =
+  new mongoose.Schema(
+    {
+      user: {
+        type:
+          mongoose.Schema.Types
+            .ObjectId,
+
+        ref:
+          'User',
+
+        required:
+          true
+      },
+
+      plan: {
+        type:
+          mongoose.Schema.Types
+            .ObjectId,
+
+        ref:
+          'Plan'
+      },
+
+      planNameSnapshot: {
+        type:
+          String,
+
+        trim:
+          true,
+
+        default:
+          'Membership'
+      },
+
+      priceSnapshot: {
+        type:
+          Number,
+
+        default:
+          0,
+
+        min:
+          0
+      },
+
+      entitlementSnapshot: {
+        interestLimit: {
+          type:
+            Number,
+
+          default:
+            0
+        },
+
+        contactViewLimit: {
+          type:
+            Number,
+
+          default:
+            0
+        },
+
+        messageLimit: {
+          type:
+            Number,
+
+          default:
+            0
+        },
+
+        advancedSearch: {
+          type:
+            Boolean,
+
+          default:
+            false
+        },
+
+        profileBoost: {
+          type:
+            Boolean,
+
+          default:
+            false
+        },
+
+        prioritySupport: {
+          type:
+            Boolean,
+
+          default:
+            false
+        },
+
+        relationshipManager: {
+          type:
+            Boolean,
+
+          default:
+            false
+        }
+      },
+
+      status: {
+        type:
+          String,
+
+        enum: [
+          'Active',
+          'Expired',
+          'Cancelled'
+        ],
+
+        default:
+          'Active',
+
+        index:
+          true
+      },
+
+      startsAt: {
+        type:
+          Date,
+
+        required:
+          true
+      },
+
+      endsAt: {
+        type:
+          Date,
+
+        required:
+          true
+      },
+
+      expiryRemindersSent: [
+        Number
+      ]
+    },
+
+    {
+      timestamps:
+        true
+    }
+  );
+
+/*
+ * Hard guarantee:
+ * one Active membership per user.
+ */
+subscription.index(
+  {
+    user:
+      1
+  },
+
+  {
+    unique:
+      true,
+
+    partialFilterExpression: {
+      status:
+        'Active'
+    }
+  }
+);
+
+subscription.index({
+  user:
+    1,
+
+  status:
+    1,
+
+  endsAt:
+    -1
+});
+
+const payment = new mongoose.Schema(
+  {
+    user: {
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'User',
+
+      required:
+        true
+    },
+
+    plan: {
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'Plan',
+
+      required:
+        true
+    },
+
+    subscription: {
+      type:
+        mongoose.Schema.Types
+          .ObjectId,
+
+      ref:
+        'Subscription'
+    },
+
+    provider: {
       type:
         String,
+
+      enum: [
+        'razorpay',
+        'mock'
+      ],
+
+      default:
+        'mock'
+    },
+
+    providerOrderId: {
+      type:
+        String,
+
+      trim:
+        true
+    },
+
+    providerPaymentId: {
+      type:
+        String,
+
+      trim:
+        true
+    },
+
+    amount: {
+      type:
+        Number,
+
+      required:
+        true,
+
+      min:
+        0
+    },
+
+    currency: {
+      type:
+        String,
+
+      default:
+        'INR',
+
+      uppercase:
+        true,
 
       trim:
         true
@@ -566,29 +596,123 @@ const refundRequest = new mongoose.Schema(
         String,
 
       enum: [
-        'Requested',
-        'Submitted',
-        'Processed',
-        'Failed'
+        'Created',
+        'Processing',
+        'Paid',
+        'Failed',
+        'Refunded'
       ],
 
       default:
-        'Requested',
-
-      index:
-        true
+        'Created'
     },
 
-    failureMessage: {
+    verifiedAt:
+      Date,
+
+    /*
+     * Internal refund accounting.
+     *
+     * All values are stored in paise.
+     */
+    refundedAmountPaise: {
+      type:
+        Number,
+
+      default:
+        0,
+
+      min:
+        0
+    },
+
+    refundPendingPaise: {
+      type:
+        Number,
+
+      default:
+        0,
+
+      min:
+        0
+    },
+
+    /*
+     * Razorpay financial reconciliation snapshot.
+     *
+     * Razorpay `fee` includes GST.
+     * `tax` is the GST component inside `fee`.
+     *
+     * Therefore:
+     *
+     * providerFeePaise = total Razorpay charge
+     * providerTaxPaise = GST portion of that charge
+     *
+     * Never add both together when calculating
+     * deductions from gross revenue.
+     */
+    providerFeePaise: {
+      type:
+        Number,
+
+      default:
+        0,
+
+      min:
+        0
+    },
+
+    providerTaxPaise: {
+      type:
+        Number,
+
+      default:
+        0,
+
+      min:
+        0
+    },
+
+    providerRefundedAmountPaise: {
+      type:
+        Number,
+
+      default:
+        0,
+
+      min:
+        0
+    },
+
+    providerMethod: {
       type:
         String,
 
-      maxLength:
-        1000
+      trim:
+        true
     },
 
-    processedAt:
-      Date
+    providerRefundStatus: {
+      type:
+        String,
+
+      trim:
+        true
+    },
+
+    providerCapturedAt:
+      Date,
+
+    providerFinancialSyncedAt:
+      Date,
+
+    processedEvents: {
+      type: [
+        String
+      ],
+
+      default: []
+    }
   },
 
   {
@@ -597,11 +721,215 @@ const refundRequest = new mongoose.Schema(
   }
 );
 
+payment.index(
+  {
+    providerOrderId:
+      1
+  },
+
+  {
+    unique:
+      true,
+
+    sparse:
+      true
+  }
+);
+
+payment.index(
+  {
+    providerPaymentId:
+      1
+  },
+
+  {
+    unique:
+      true,
+
+    sparse:
+      true
+  }
+);
+
+payment.index({
+  user:
+    1,
+
+  status:
+    1,
+
+  createdAt:
+    -1
+});
+
+payment.index({
+  verifiedAt:
+    -1,
+
+  status:
+    1
+});
+
+const refundRequest =
+  new mongoose.Schema(
+    {
+      payment: {
+        type:
+          mongoose.Schema.Types
+            .ObjectId,
+
+        ref:
+          'Payment',
+
+        required:
+          true,
+
+        index:
+          true
+      },
+
+      user: {
+        type:
+          mongoose.Schema.Types
+            .ObjectId,
+
+        ref:
+          'User',
+
+        required:
+          true,
+
+        index:
+          true
+      },
+
+      requestedBy: {
+        type:
+          mongoose.Schema.Types
+            .ObjectId,
+
+        ref:
+          'User',
+
+        required:
+          true
+      },
+
+      type: {
+        type:
+          String,
+
+        enum: [
+          'Full',
+          'Partial'
+        ],
+
+        required:
+          true
+      },
+
+      reasonCode: {
+        type:
+          String,
+
+        enum: [
+          'duplicate_payment',
+          'technical_failure',
+          'membership_activation_failure',
+          'incorrect_plan',
+          'admin_exception',
+          'other'
+        ],
+
+        required:
+          true
+      },
+
+      reason: {
+        type:
+          String,
+
+        required:
+          true,
+
+        trim:
+          true,
+
+        minLength:
+          10,
+
+        maxLength:
+          1000
+      },
+
+      amountPaise: {
+        type:
+          Number,
+
+        required:
+          true,
+
+        min:
+          1
+      },
+
+      providerRefundId: {
+        type:
+          String,
+
+        trim:
+          true
+      },
+
+      status: {
+        type:
+          String,
+
+        enum: [
+          'Requested',
+          'Submitted',
+          'Processed',
+          'Failed'
+        ],
+
+        default:
+          'Requested',
+
+        index:
+          true
+      },
+
+      failureMessage: {
+        type:
+          String,
+
+        maxLength:
+          1000
+      },
+
+      processedAt:
+        Date
+    },
+
+    {
+      timestamps:
+        true
+    }
+  );
+
 refundRequest.index({
   payment:
     1,
 
   createdAt:
+    -1
+});
+
+refundRequest.index({
+  status:
+    1,
+
+  processedAt:
     -1
 });
 

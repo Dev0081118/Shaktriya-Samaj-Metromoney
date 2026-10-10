@@ -8,9 +8,13 @@ import * as interact from '../controllers/interactionController.js';
 import * as admin from '../controllers/adminController.js';
 import * as business from '../controllers/businessController.js';
 import * as refund from '../controllers/refundController.js';
+import * as revenue from '../controllers/revenueController.js';
+import * as relationshipManager from '../controllers/relationshipManagerController.js';
+
 import {
   clearSessionCookie
 } from '../utils/sessionCookie.js';
+
 import {
   dashboard
 } from '../controllers/dashboardController.js';
@@ -456,12 +460,27 @@ router.get(
   admin.dashboard
 );
 
+/* -------------------------------------------------------------------------- */
+/* Revenue                                                                    */
+/* -------------------------------------------------------------------------- */
+
 router.get(
   '/admin/analytics/revenue',
   protect,
   superAdmin,
-  admin.revenue
+  revenue.revenue
 );
+
+router.post(
+  '/admin/analytics/revenue/sync',
+  protect,
+  superAdmin,
+  revenue.syncRazorpayRevenue
+);
+
+/* -------------------------------------------------------------------------- */
+/* Customer administration                                                    */
+/* -------------------------------------------------------------------------- */
 
 router.get(
   '/admin/customers',
@@ -600,12 +619,6 @@ router.post(
   business.refundPayment
 );
 
-/*
- * Manual reconciliation fallback.
- *
- * Works locally without ngrok because our own backend
- * calls Razorpay directly to fetch the refund.
- */
 router.post(
   '/admin/payments/:id/refund/sync',
   protect,
@@ -667,14 +680,21 @@ router.get(
   '/admin/relationship-managers',
   protect,
   adminOnly,
-  business.managers
+  relationshipManager.list
 );
 
 router.put(
   '/admin/relationship-managers/assignment',
   protect,
   adminOnly,
-  business.assignManager
+  relationshipManager.assign
+);
+
+router.patch(
+  '/admin/relationship-managers/assignment/:id',
+  protect,
+  adminOnly,
+  relationshipManager.update
 );
 
 router.get(
