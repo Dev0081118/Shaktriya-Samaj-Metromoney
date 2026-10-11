@@ -66,9 +66,6 @@ const profile = {
   bloodGroup:
     'B+',
 
-  complexion:
-    'Wheatish',
-
   maritalStatus:
     'Never Married',
 
@@ -113,14 +110,11 @@ const profile = {
   },
 
   community: {
-    religion:
-      'Hinduism',
-
-    caste:
-      'Rajput',
-
     name:
-      'Kshatriya',
+      'Rajput / Kshatriya',
+
+    subCommunity:
+      'Rajput',
 
     clan:
       'Rana',
@@ -153,6 +147,9 @@ const profile = {
   },
 
   career: {
+    occupationType:
+      'Private Job',
+
     occupation:
       'Software Developer',
 
@@ -198,7 +195,7 @@ const profile = {
       'Homemaker',
 
     familyType:
-      'Joint',
+      'Joint Family',
 
     familyLocation:
       'Rajkot',
@@ -272,7 +269,10 @@ const profile = {
       'Gujarat',
 
     maternalClan:
-      'Jadeja'
+      'Jadeja',
+
+    notes:
+      'Vashishtha'
   },
 
   maternalLineage: {
@@ -423,7 +423,7 @@ describe(
   'BiodataPage',
   () => {
     test(
-      'renders the core master biodata fields from the owner profile',
+      'renders the core Rajput matrimonial biodata fields from the owner profile',
       async () => {
         render(
           <MemoryRouter>
@@ -431,12 +431,6 @@ describe(
           </MemoryRouter>
         );
 
-        /*
-         * Full name appears both in the
-         * document heading and Personal
-         * Details. Target the semantic h1
-         * so the assertion stays unambiguous.
-         */
         expect(
           await screen.findByRole(
             'heading',
@@ -496,15 +490,39 @@ describe(
 
         expect(
           screen.getByText(
+            'Mahadev'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
             'GTU'
           )
         ).toBeInTheDocument();
 
         /*
-         * "Astrology" also exists as a
-         * toolbar checkbox label, so verify
-         * the actual biodata section heading.
+         * Dedicated-community biodata
+         * should not render generic
+         * religion/caste/complexion fields.
          */
+        expect(
+          screen.queryByText(
+            'Complexion'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Religion'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Caste'
+          )
+        ).not.toBeInTheDocument();
+
         expect(
           screen.getByRole(
             'heading',
@@ -549,20 +567,22 @@ describe(
           }
         );
 
-        /*
-         * Stored biodata privacy defaults:
-         *
-         * family lineage = OFF
-         * contact details = OFF
-         * assets = OFF
-         * astrology = ON
-         */
         expect(
           screen.queryByRole(
             'heading',
             {
               name:
                 'Paternal Lineage'
+            }
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByRole(
+            'heading',
+            {
+              name:
+                'Mosal Details'
             }
           )
         ).not.toBeInTheDocument();
@@ -607,9 +627,6 @@ describe(
           )
         ).toBeInTheDocument();
 
-        /*
-         * Enable sensitive family lineage.
-         */
         fireEvent.click(
           screen.getByRole(
             'checkbox',
@@ -635,8 +652,14 @@ describe(
             'heading',
             {
               name:
-                'Maternal Family'
+                'Mosal Details'
             }
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Vashishtha'
           )
         ).toBeInTheDocument();
 
@@ -690,9 +713,6 @@ describe(
           )
         ).toBeInTheDocument();
 
-        /*
-         * Enable contact details.
-         */
         fireEvent.click(
           screen.getByRole(
             'checkbox',
@@ -731,9 +751,6 @@ describe(
           )
         ).toBeInTheDocument();
 
-        /*
-         * Enable asset information.
-         */
         fireEvent.click(
           screen.getByRole(
             'checkbox',
@@ -766,11 +783,6 @@ describe(
           )
         ).toBeInTheDocument();
 
-        /*
-         * Toggle astrology OFF and ensure
-         * the printed section disappears,
-         * while the checkbox itself remains.
-         */
         fireEvent.click(
           screen.getByRole(
             'checkbox',

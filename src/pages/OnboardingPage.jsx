@@ -9,6 +9,7 @@ import {
 
 import {
   useEffect,
+  useMemo,
   useState
 } from 'react';
 
@@ -29,55 +30,63 @@ import {
   assetUrl
 } from '../services/api';
 
+import {
+  BLOOD_GROUP_OPTIONS,
+  DIET_OPTIONS,
+  DRINKING_OPTIONS,
+  EMPLOYMENT_TYPES,
+  FAMILY_TYPES,
+  FAMILY_VALUES,
+  INDIA_STATES,
+  MANGLIK_OPTIONS,
+  MARITAL_STATUS_OPTIONS,
+  NAKSHATRA_OPTIONS,
+  RAJPUT_SHAKHS,
+  RASHI_OPTIONS,
+  SMOKING_OPTIONS,
+  VANSH_OPTIONS
+} from '../data/profileOptions';
+
 const steps = [
   [
-    'Profile for',
-    'Who are you creating this profile for?'
+    'Basic details',
+    'Let us begin with the essentials'
   ],
-
   [
-    'Verification',
-    'Verify the account mobile number'
+    'Community details',
+    'Your Rajput heritage and lineage'
   ],
-
   [
     'Personal details',
-    'Tell us the essential details'
+    'Lifestyle and personal introduction'
   ],
-
   [
-    'Rajput heritage',
-    'Share lineage, Vatan and community'
+    'Education',
+    'Academic background'
   ],
-
   [
-    'Education & career',
-    'Study and professional journey'
+    'Career',
+    'Professional journey'
   ],
-
   [
     'Family',
-    'Introduce the family and lineage'
+    'Your family background'
   ],
-
   [
-    'Lifestyle & contact',
-    'Complete lifestyle, astrology and contact details'
+    'Mosal details',
+    'Maternal family and lineage'
   ],
-
   [
-    'Partner preferences',
-    'Who would feel compatible?'
+    'Horoscope',
+    'Traditional matching information'
   ],
-
   [
-    'Photographs',
-    'Add a warm first impression'
+    'Photos & biodata',
+    'Complete your matrimonial presentation'
   ],
-
   [
-    'Review',
-    'Review before moderation'
+    'Partner preference',
+    'Tell us what you are looking for'
   ]
 ];
 
@@ -93,49 +102,14 @@ const primaryButtonClass =
 const outlineButtonClass =
   'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white disabled:cursor-not-allowed disabled:opacity-55';
 
-const fieldsGridClass =
+const gridClass =
   'grid grid-cols-2 gap-[18px] max-[767px]:grid-cols-1';
 
 const sectionClass =
   'mt-7 border border-[#ddd0c1] bg-[#fffdf8] p-5';
 
-const sensitivePanelClass =
+const sensitiveClass =
   'mt-5 border border-[#741f272e] bg-[#741f2709] p-5';
-
-const sectionTitleClass =
-  "font-['Cormorant_Garamond'] text-[28px] font-medium text-[#291a17]";
-
-const sectionDescriptionClass =
-  'mt-1 text-[11px] leading-6 text-[#756a60]';
-
-const emptyMosal = () => ({
-  mamaName:
-    '',
-
-  grandmotherName:
-    '',
-
-  familySurname:
-    '',
-
-  clanSurname:
-    '',
-
-  nativeVillage:
-    '',
-
-  taluka:
-    '',
-
-  district:
-    '',
-
-  state:
-    '',
-
-  notes:
-    ''
-});
 
 const readDraft = () => {
   try {
@@ -162,50 +136,26 @@ const readDraft = () => {
       ? parsed
       : {};
   } catch {
-    localStorage.removeItem(
-      'ksm_onboarding'
-    );
-
     return {};
   }
 };
 
-const readDraftStep = () => {
-  const value =
+const readStep = () => {
+  const step =
     Number(
       localStorage.getItem(
         'ksm_onboarding_step'
       )
     );
 
-  if (
-    !Number.isInteger(
-      value
-    ) ||
-    value < 0 ||
-    value > 9
-  ) {
-    return 0;
-  }
-
-  return value;
+  return Number.isInteger(
+    step
+  ) &&
+    step >= 0 &&
+    step <= 9
+    ? step
+    : 0;
 };
-
-const list = (
-  value
-) =>
-  String(
-    value ||
-      ''
-  )
-    .split(',')
-    .map(
-      (item) =>
-        item.trim()
-    )
-    .filter(
-      Boolean
-    );
 
 const optionalNumber = (
   value
@@ -230,6 +180,61 @@ const optionalNumber = (
     : undefined;
 };
 
+const list = (
+  value
+) =>
+  String(
+    value ||
+      ''
+  )
+    .split(',')
+    .map(
+      (item) =>
+        item.trim()
+    )
+    .filter(
+      Boolean
+    );
+
+const knownShakh = (
+  value
+) =>
+  RAJPUT_SHAKHS.includes(
+    value
+  ) &&
+  value !==
+    'Other';
+
+const shakhForm = (
+  value
+) => ({
+  selection:
+    knownShakh(
+      value
+    )
+      ? value
+      : value
+        ? 'Other'
+        : '',
+
+  custom:
+    knownShakh(
+      value
+    )
+      ? ''
+      : value ||
+        ''
+});
+
+const selectedShakh = (
+  selection,
+  custom
+) =>
+  selection ===
+  'Other'
+    ? custom
+    : selection;
+
 const preferenceToForm = (
   preferences
 ) =>
@@ -243,7 +248,6 @@ const preferenceToForm = (
         value
       ]) => [
         key,
-
         Array.isArray(
           value
         )
@@ -255,41 +259,54 @@ const preferenceToForm = (
     )
   );
 
+const emptyMosal = () => ({
+  mamaName:
+    '',
+  grandmotherName:
+    '',
+  familySurname:
+    '',
+  clanSurname:
+    '',
+  nativeVillage:
+    '',
+  taluka:
+    '',
+  district:
+    '',
+  state:
+    '',
+  notes:
+    ''
+});
+
 const flattenMosal = (
   branch = {}
 ) => ({
   mamaName:
     branch.mamaName ||
     '',
-
   grandmotherName:
     branch.grandmotherName ||
     '',
-
   familySurname:
     branch.familySurname ||
     '',
-
   clanSurname:
     branch.clanSurname ||
     '',
-
   nativeVillage:
     branch.nativeVillage ||
     '',
-
   taluka:
     branch.taluka ||
     '',
-
   district:
     branch.district ||
     '',
-
   state:
     branch.state ||
     '',
-
   notes:
     branch.notes ||
     ''
@@ -297,1116 +314,798 @@ const flattenMosal = (
 
 const flatten = (
   profile
-) => ({
-  ...profile,
-
-  city:
-    profile.location
-      ?.city ||
-    '',
-
-  taluka:
-    profile.location
-      ?.taluka ||
-    '',
-
-  district:
-    profile.location
-      ?.district ||
-    '',
-
-  state:
-    profile.location
-      ?.state ||
-    '',
-
-  country:
-    profile.location
-      ?.country ||
-    'India',
-
-  nativePlace:
-    profile.location
-      ?.nativePlace ||
-    '',
-
-  nativeTaluka:
-    profile.location
-      ?.nativeTaluka ||
-    '',
-
-  nativeDistrict:
-    profile.location
-      ?.nativeDistrict ||
-    '',
-
-  nativeState:
-    profile.location
-      ?.nativeState ||
-    '',
-
-  timeOfBirth:
-    profile.birthDetails
-      ?.timeOfBirth ||
-    '',
-
-  birthCity:
-    profile.birthDetails
-      ?.city ||
-    '',
-
-  birthDistrict:
-    profile.birthDetails
-      ?.district ||
-    '',
-
-  birthState:
-    profile.birthDetails
-      ?.state ||
-    '',
-
-  birthCountry:
-    profile.birthDetails
-      ?.country ||
-    'India',
-
-  bloodGroup:
-    profile.bloodGroup ||
-    '',
-
-  complexion:
-    profile.complexion ||
-    '',
-
-  religion:
-    profile.community
-      ?.religion ||
-    'Hinduism',
-
-  caste:
-    profile.community
-      ?.caste ||
-    '',
-
-  communityName:
-    profile.community
-      ?.name ||
-    '',
-
-  subCommunity:
-    profile.community
-      ?.subCommunity ||
-    '',
-
-  clan:
-    profile.community
-      ?.clan ||
-    '',
-
-  gotra:
-    profile.community
-      ?.gotra ||
-    '',
-
-  vansh:
-    profile.community
-      ?.vansh ||
-    '',
-
-  kulaDevi:
-    profile.community
-      ?.kulaDevi ||
-    '',
-
-  ishtaDevta:
-    profile.community
-      ?.ishtaDevta ||
-    '',
-
-  familyOrigin:
-    profile.community
-      ?.familyOrigin ||
-    '',
-
-  highestEducation:
-    profile.education
-      ?.highestEducation ||
-    '',
-
-  degree:
-    profile.education
-      ?.degree ||
-    '',
-
-  specialization:
-    profile.education
-      ?.specialization ||
-    '',
-
-  college:
-    profile.education
-      ?.college ||
-    '',
-
-  university:
-    profile.education
-      ?.university ||
-    '',
-
-  educationDetails:
-    profile.education
-      ?.educationDetails ||
-    '',
-
-  occupationType:
-    profile.career
-      ?.occupationType ||
-    '',
-
-  occupation:
-    profile.career
-      ?.occupation ||
-    '',
-
-  designation:
-    profile.career
-      ?.designation ||
-    '',
-
-  companyName:
-    profile.career
-      ?.companyName ||
-    '',
-
-  businessName:
-    profile.career
-      ?.businessName ||
-    '',
-
-  workCity:
-    profile.career
-      ?.workLocation
-      ?.city ||
-    '',
-
-  workState:
-    profile.career
-      ?.workLocation
-      ?.state ||
-    '',
-
-  workCountry:
-    profile.career
-      ?.workLocation
-      ?.country ||
-    'India',
-
-  annualIncome:
-    profile.career
-      ?.annualIncome ??
-    '',
-
-  diet:
-    profile.lifestyle
-      ?.diet ||
-    '',
-
-  smoking:
-    profile.lifestyle
-      ?.smoking ||
-    '',
-
-  drinking:
-    profile.lifestyle
-      ?.drinking ||
-    '',
-
-  interests: (
-    profile.lifestyle
-      ?.interests ||
-    []
-  ).join(
-    ', '
-  ),
-
-  fatherName:
-    profile.family
-      ?.fatherName ||
-    '',
-
-  fatherOccupation:
-    profile.family
-      ?.fatherOccupation ||
-    '',
-
-  motherName:
-    profile.family
-      ?.motherName ||
-    '',
-
-  motherOccupation:
-    profile.family
-      ?.motherOccupation ||
-    '',
-
-  siblings:
-    profile.family
-      ?.siblings ||
-    '',
-
-  siblingDetails:
-    profile.family
-      ?.siblingDetails ||
-    [],
-
-  familyType:
-    profile.family
-      ?.familyType ||
-    '',
-
-  familyLocation:
-    profile.family
-      ?.familyLocation ||
-    '',
-
-  familyDescription:
-    profile.family
-      ?.familyDescription ||
-    '',
-
-  previousMarriageEndedAt:
-    profile.maritalHistory
-      ?.previousMarriageEndedAt
-      ?.slice?.(
-        0,
-        10
-      ) ||
-    '',
-
-  divorceFinalized:
-    !!profile.maritalHistory
-      ?.divorceFinalized,
-
-  childrenFromPreviousMarriage:
-    !!profile.maritalHistory
-      ?.childrenFromPreviousMarriage,
-
-  childrenCount:
-    profile.maritalHistory
-      ?.childrenCount ??
-    '',
-
-  childrenLivingWith:
-    profile.maritalHistory
-      ?.childrenLivingWith ||
-    '',
-
-  maritalHistoryNotes:
-    profile.maritalHistory
-      ?.notes ||
-    '',
-
-  ancestralVillage:
-    profile.paternalFamily
-      ?.ancestralVillage ||
-    '',
-
-  paternalNativePlace:
-    profile.paternalFamily
-      ?.nativePlace ||
-    '',
-
-  paternalTaluka:
-    profile.paternalFamily
-      ?.taluka ||
-    '',
-
-  paternalDistrict:
-    profile.paternalFamily
-      ?.district ||
-    '',
-
-  paternalState:
-    profile.paternalFamily
-      ?.state ||
-    '',
-
-  paternalFamilySurname:
-    profile.paternalFamily
-      ?.familySurname ||
-    '',
-
-  paternalClan:
-    profile.paternalFamily
-      ?.clan ||
-    '',
-
-  paternalGotra:
-    profile.paternalFamily
-      ?.gotra ||
-    '',
-
-  paternalNotes:
-    profile.paternalFamily
-      ?.notes ||
-    '',
-
-  maternalGrandfatherName:
-    profile.maternalFamily
-      ?.maternalGrandfatherName ||
-    '',
-
-  maternalFamilySurname:
-    profile.maternalFamily
-      ?.maternalFamilySurname ||
-    '',
-
-  maternalNativePlace:
-    profile.maternalFamily
-      ?.maternalNativePlace ||
-    '',
-
-  maternalVillage:
-    profile.maternalFamily
-      ?.maternalVillage ||
-    '',
-
-  maternalTaluka:
-    profile.maternalFamily
-      ?.maternalTaluka ||
-    '',
-
-  maternalDistrict:
-    profile.maternalFamily
-      ?.maternalDistrict ||
-    '',
-
-  maternalState:
-    profile.maternalFamily
-      ?.maternalState ||
-    '',
-
-  maternalClan:
-    profile.maternalFamily
-      ?.maternalClan ||
-    '',
-
-  maternalNotes:
-    profile.maternalFamily
-      ?.notes ||
-    '',
-
-  selfMosal:
-    flattenMosal(
-      profile.maternalLineage
-        ?.selfMosal
-    ),
-
-  fathersMosal:
-    flattenMosal(
-      profile.maternalLineage
-        ?.fathersMosal
-    ),
-
-  mothersMosal:
-    flattenMosal(
-      profile.maternalLineage
-        ?.mothersMosal
-    ),
-
-  rashi:
-    profile.astrology
-      ?.rashi ||
-    '',
-
-  nakshatra:
-    profile.astrology
-      ?.nakshatra ||
-    '',
-
-  manglik:
-    profile.astrology
-      ?.manglik ||
-    'Unknown',
-
-  currentAddressLine1:
-    profile.contactDetails
-      ?.currentAddress
-      ?.addressLine1 ||
-    '',
-
-  currentAddressLine2:
-    profile.contactDetails
-      ?.currentAddress
-      ?.addressLine2 ||
-    '',
-
-  currentAddressCity:
-    profile.contactDetails
-      ?.currentAddress
-      ?.city ||
-    '',
-
-  currentAddressTaluka:
-    profile.contactDetails
-      ?.currentAddress
-      ?.taluka ||
-    '',
-
-  currentAddressDistrict:
-    profile.contactDetails
-      ?.currentAddress
-      ?.district ||
-    '',
-
-  currentAddressState:
-    profile.contactDetails
-      ?.currentAddress
-      ?.state ||
-    '',
-
-  currentAddressPincode:
-    profile.contactDetails
-      ?.currentAddress
-      ?.pincode ||
-    '',
-
-  currentAddressCountry:
-    profile.contactDetails
-      ?.currentAddress
-      ?.country ||
-    'India',
-
-  guardianName:
-    profile.contactDetails
-      ?.guardianName ||
-    '',
-
-  guardianRelation:
-    profile.contactDetails
-      ?.guardianRelation ||
-    '',
-
-  guardianPhone:
-    profile.contactDetails
-      ?.guardianPhone ||
-    '',
-
-  selfPhone:
-    profile.contactDetails
-      ?.selfPhone ||
-    '',
-
-  contactEmail:
-    profile.contactDetails
-      ?.email ||
-    '',
-
-  hasLand:
-    !!profile.familyAssets
-      ?.agricultureLand
-      ?.hasLand,
-
-  approximateArea:
-    profile.familyAssets
-      ?.agricultureLand
-      ?.approximateArea ??
-    '',
-
-  landUnit:
-    profile.familyAssets
-      ?.agricultureLand
-      ?.unit ||
-    'Vigha',
-
-  propertySummary:
-    profile.familyAssets
-      ?.propertySummary ||
-    '',
-
-  primaryResidenceType:
-    profile.familyAssets
-      ?.primaryResidenceType ||
-    '',
-
-  businessAssetsSummary:
-    profile.familyAssets
-      ?.businessAssetsSummary ||
-    '',
-
-  familyOverviewVisibility:
-    profile.privacy
-      ?.familyOverviewVisibility ||
-    'AcceptedInterests',
-
-  maternalFamilyVisibility:
-    profile.privacy
-      ?.maternalFamilyVisibility ||
-    'AcceptedInterests',
-
-  siblingDetailsVisibility:
-    profile.privacy
-      ?.siblingDetailsVisibility ||
-    'AcceptedInterests',
-
-  assetVisibility:
-    profile.privacy
-      ?.assetVisibility ||
-    'Private',
-
-  astrologyVisibility:
-    profile.privacy
-      ?.astrologyVisibility ||
-    'RegisteredMembers',
-
-  contactAddressVisibility:
-    profile.privacy
-      ?.contactAddressVisibility ||
-    'Private',
-
-  photoVisibility:
-    profile.privacy
-      ?.photoVisibility ||
-    'RegisteredMembers',
-
-  contactVisibility:
-    profile.privacy
-      ?.contactVisibility ||
-    'MutualMatches',
-
-  incomeVisibility:
-    profile.privacy
-      ?.incomeVisibility ||
-    'Private',
-
-  familyVisibility:
-    profile.privacy
-      ?.familyVisibility ||
-    'RegisteredMembers',
-
-  fullNameVisibility:
-    profile.privacy
-      ?.fullNameVisibility ||
-    'RegisteredMembers',
-
-  includeSensitiveFamilyDetailsInBiodata:
-    !!profile.biodataPrivacy
-      ?.includeSensitiveFamilyDetailsInBiodata,
-
-  includeContactDetailsInBiodata:
-    !!profile.biodataPrivacy
-      ?.includeContactDetailsInBiodata,
-
-  includeAstrologyInBiodata:
-    profile.biodataPrivacy
-      ?.includeAstrologyInBiodata ??
-    true,
-
-  includeAssetsInBiodata:
-    !!profile.biodataPrivacy
-      ?.includeAssetsInBiodata,
-
-  dateOfBirth:
-    profile.dateOfBirth
-      ?.slice?.(
-        0,
-        10
-      ) ||
-    ''
-});
+) => {
+  const shakh =
+    shakhForm(
+      profile.community
+        ?.clan
+    );
+
+  const maternalShakh =
+    shakhForm(
+      profile.maternalFamily
+        ?.maternalClan
+    );
+
+  return {
+    ...profile,
+
+    dateOfBirth:
+      profile.dateOfBirth
+        ?.slice?.(
+          0,
+          10
+        ) ||
+      '',
+
+    /*
+     * maritalStatus is canonical.
+     * Legacy maritalHistory.status is only
+     * used as fallback for older records.
+     */
+    maritalStatus:
+      profile.maritalStatus ||
+      profile.maritalHistory
+        ?.status ||
+      '',
+
+    timeOfBirth:
+      profile.birthDetails
+        ?.timeOfBirth ||
+      '',
+
+    birthCity:
+      profile.birthDetails
+        ?.city ||
+      '',
+
+    birthDistrict:
+      profile.birthDetails
+        ?.district ||
+      '',
+
+    birthState:
+      profile.birthDetails
+        ?.state ||
+      '',
+
+    bloodGroup:
+      profile.bloodGroup ||
+      '',
+
+    city:
+      profile.location
+        ?.city ||
+      '',
+
+    district:
+      profile.location
+        ?.district ||
+      '',
+
+    state:
+      profile.location
+        ?.state ||
+      '',
+
+    nativePlace:
+      profile.location
+        ?.nativePlace ||
+      '',
+
+    nativeTaluka:
+      profile.location
+        ?.nativeTaluka ||
+      '',
+
+    nativeDistrict:
+      profile.location
+        ?.nativeDistrict ||
+      '',
+
+    nativeState:
+      profile.location
+        ?.nativeState ||
+      '',
+
+    subCommunity:
+      profile.community
+        ?.subCommunity ||
+      '',
+
+    shakhSelection:
+      shakh.selection,
+
+    customShakh:
+      shakh.custom,
+
+    gotra:
+      profile.community
+        ?.gotra ||
+      '',
+
+    vansh:
+      profile.community
+        ?.vansh ||
+      '',
+
+    kulaDevi:
+      profile.community
+        ?.kulaDevi ||
+      '',
+
+    kulDevta:
+      profile.community
+        ?.ishtaDevta ||
+      '',
+
+    familyOrigin:
+      profile.community
+        ?.familyOrigin ||
+      '',
+
+    highestEducation:
+      profile.education
+        ?.highestEducation ||
+      '',
+
+    degree:
+      profile.education
+        ?.degree ||
+      '',
+
+    specialization:
+      profile.education
+        ?.specialization ||
+      '',
+
+    college:
+      profile.education
+        ?.college ||
+      '',
+
+    university:
+      profile.education
+        ?.university ||
+      '',
+
+    educationDetails:
+      profile.education
+        ?.educationDetails ||
+      '',
+
+    occupationType:
+      profile.career
+        ?.occupationType ||
+      '',
+
+    occupation:
+      profile.career
+        ?.occupation ||
+      '',
+
+    designation:
+      profile.career
+        ?.designation ||
+      '',
+
+    companyName:
+      profile.career
+        ?.companyName ||
+      '',
+
+    businessName:
+      profile.career
+        ?.businessName ||
+      '',
+
+    annualIncome:
+      profile.career
+        ?.annualIncome ??
+      '',
+
+    workCity:
+      profile.career
+        ?.workLocation
+        ?.city ||
+      '',
+
+    workState:
+      profile.career
+        ?.workLocation
+        ?.state ||
+      '',
+
+    workCountry:
+      profile.career
+        ?.workLocation
+        ?.country ||
+      'India',
+
+    diet:
+      profile.lifestyle
+        ?.diet ||
+      '',
+
+    smoking:
+      profile.lifestyle
+        ?.smoking ||
+      '',
+
+    drinking:
+      profile.lifestyle
+        ?.drinking ||
+      '',
+
+    interests:
+      (
+        profile.lifestyle
+          ?.interests ||
+        []
+      ).join(
+        ', '
+      ),
+
+    fatherName:
+      profile.family
+        ?.fatherName ||
+      '',
+
+    fatherOccupation:
+      profile.family
+        ?.fatherOccupation ||
+      '',
+
+    motherName:
+      profile.family
+        ?.motherName ||
+      '',
+
+    motherOccupation:
+      profile.family
+        ?.motherOccupation ||
+      '',
+
+    familyType:
+      profile.family
+        ?.familyType ||
+      '',
+
+    familyLocation:
+      profile.family
+        ?.familyLocation ||
+      '',
+
+    familyDescription:
+      profile.family
+        ?.familyDescription ||
+      '',
+
+    siblingDetails:
+      profile.family
+        ?.siblingDetails ||
+      [],
+
+    previousMarriageEndedAt:
+      profile.maritalHistory
+        ?.previousMarriageEndedAt
+        ?.slice?.(
+          0,
+          10
+        ) ||
+      '',
+
+    divorceFinalized:
+      !!profile.maritalHistory
+        ?.divorceFinalized,
+
+    childrenFromPreviousMarriage:
+      !!profile.maritalHistory
+        ?.childrenFromPreviousMarriage,
+
+    childrenCount:
+      profile.maritalHistory
+        ?.childrenCount ??
+      '',
+
+    childrenLivingWith:
+      profile.maritalHistory
+        ?.childrenLivingWith ||
+      '',
+
+    maritalHistoryNotes:
+      profile.maritalHistory
+        ?.notes ||
+      '',
+
+    maternalGrandfatherName:
+      profile.maternalFamily
+        ?.maternalGrandfatherName ||
+      '',
+
+    maternalFamilySurname:
+      profile.maternalFamily
+        ?.maternalFamilySurname ||
+      '',
+
+    maternalVillage:
+      profile.maternalFamily
+        ?.maternalVillage ||
+      profile.maternalFamily
+        ?.maternalNativePlace ||
+      '',
+
+    maternalTaluka:
+      profile.maternalFamily
+        ?.maternalTaluka ||
+      '',
+
+    maternalDistrict:
+      profile.maternalFamily
+        ?.maternalDistrict ||
+      '',
+
+    maternalState:
+      profile.maternalFamily
+        ?.maternalState ||
+      '',
+
+    maternalShakhSelection:
+      maternalShakh.selection,
+
+    maternalCustomShakh:
+      maternalShakh.custom,
+
+    maternalGotra:
+      profile.maternalFamily
+        ?.notes ||
+      '',
+
+    selfMosal:
+      flattenMosal(
+        profile.maternalLineage
+          ?.selfMosal
+      ),
+
+    fathersMosal:
+      flattenMosal(
+        profile.maternalLineage
+          ?.fathersMosal
+      ),
+
+    mothersMosal:
+      flattenMosal(
+        profile.maternalLineage
+          ?.mothersMosal
+      ),
+
+    rashi:
+      profile.astrology
+        ?.rashi ||
+      '',
+
+    nakshatra:
+      profile.astrology
+        ?.nakshatra ||
+      '',
+
+    manglik:
+      profile.astrology
+        ?.manglik ||
+      'Unknown',
+
+    profilePhoto:
+      profile.profilePhoto ||
+      '',
+
+    galleryAssets:
+      profile.galleryAssets ||
+      [],
+
+    aboutMe:
+      profile.aboutMe ||
+      '',
+
+    photoVisibility:
+      profile.privacy
+        ?.photoVisibility ||
+      'RegisteredMembers',
+
+    contactVisibility:
+      profile.privacy
+        ?.contactVisibility ||
+      'MutualMatches',
+
+    incomeVisibility:
+      profile.privacy
+        ?.incomeVisibility ||
+      'Private',
+
+    includeSensitiveFamilyDetailsInBiodata:
+      !!profile
+        .biodataPrivacy
+        ?.includeSensitiveFamilyDetailsInBiodata,
+
+    includeContactDetailsInBiodata:
+      !!profile
+        .biodataPrivacy
+        ?.includeContactDetailsInBiodata,
+
+    includeAstrologyInBiodata:
+      profile
+        .biodataPrivacy
+        ?.includeAstrologyInBiodata ??
+      true,
+
+    includeAssetsInBiodata:
+      !!profile
+        .biodataPrivacy
+        ?.includeAssetsInBiodata
+  };
+};
 
 const profilePayload = (
   data,
   visibilityOverride
-) => ({
-  profileFor:
-    data.profileFor,
+) => {
+  const maritalStatus =
+    data.maritalStatus ||
+    undefined;
 
-  firstName:
-    data.firstName,
+  return {
+    profileFor:
+      data.profileFor,
 
-  middleName:
-    data.middleName,
+    firstName:
+      data.firstName,
 
-  lastName:
-    data.lastName,
+    middleName:
+      data.middleName,
 
-  gender:
-    data.gender,
+    lastName:
+      data.lastName,
 
-  dateOfBirth:
-    data.dateOfBirth,
+    gender:
+      data.gender,
 
-  height:
-    optionalNumber(
-      data.height
-    ),
+    dateOfBirth:
+      data.dateOfBirth,
 
-  bloodGroup:
-    data.bloodGroup,
-
-  complexion:
-    data.complexion,
-
-  maritalStatus:
-    data.maritalStatus,
-
-  birthDetails: {
-    timeOfBirth:
-      data.timeOfBirth,
-
-    city:
-      data.birthCity,
-
-    district:
-      data.birthDistrict,
-
-    state:
-      data.birthState,
-
-    country:
-      data.birthCountry ||
-      'India'
-  },
-
-  maritalHistory: {
-    status:
-      data.maritalStatus,
-
-    isRemarriage:
-      Boolean(
-        data.maritalStatus &&
-          data.maritalStatus !==
-            'Never Married'
+    height:
+      optionalNumber(
+        data.height
       ),
 
-    previousMarriageEndedAt:
-      data.previousMarriageEndedAt ||
-      undefined,
-
-    divorceFinalized:
-      data.maritalStatus ===
-      'Divorced'
-        ? !!data.divorceFinalized
-        : undefined,
-
-    childrenFromPreviousMarriage:
-      !!data.childrenFromPreviousMarriage,
-
-    childrenCount:
-      data.childrenFromPreviousMarriage
-        ? optionalNumber(
-            data.childrenCount
-          ) ??
-          0
-        : 0,
-
-    childrenLivingWith:
-      data.childrenFromPreviousMarriage
-        ? data.childrenLivingWith
-        : undefined,
-
-    notes:
-      data.maritalHistoryNotes
-  },
-
-  location: {
-    city:
-      data.city,
-
-    taluka:
-      data.taluka,
-
-    district:
-      data.district,
-
-    state:
-      data.state,
-
-    country:
-      data.country ||
-      'India',
-
-    nativePlace:
-      data.nativePlace,
-
-    nativeTaluka:
-      data.nativeTaluka,
-
-    nativeDistrict:
-      data.nativeDistrict,
-
-    nativeState:
-      data.nativeState
-  },
-
-  community: {
-    religion:
-      data.religion ||
-      'Hinduism',
-
-    caste:
-      data.caste,
-
-    name:
-      data.communityName,
-
-    subCommunity:
-      data.subCommunity,
-
-    clan:
-      data.clan,
-
-    gotra:
-      data.gotra,
-
-    vansh:
-      data.vansh,
-
-    kulaDevi:
-      data.kulaDevi,
-
-    ishtaDevta:
-      data.ishtaDevta,
-
-    familyOrigin:
-      data.familyOrigin
-  },
-
-  education: {
-    highestEducation:
-      data.highestEducation,
-
-    degree:
-      data.degree,
-
-    specialization:
-      data.specialization,
-
-    college:
-      data.college,
-
-    university:
-      data.university,
-
-    educationDetails:
-      data.educationDetails
-  },
-
-  career: {
-    occupationType:
-      data.occupationType,
-
-    occupation:
-      data.occupation,
-
-    designation:
-      data.designation,
-
-    companyName:
-      data.companyName,
-
-    businessName:
-      data.businessName,
-
-    workLocation: {
-      city:
-        data.workCity,
-
-      state:
-        data.workState,
-
-      country:
-        data.workCountry ||
-        'India'
-    },
-
-    annualIncome:
-      optionalNumber(
-        data.annualIncome
-      )
-  },
-
-  lifestyle: {
-    diet:
-      data.diet,
-
-    smoking:
-      data.smoking,
-
-    drinking:
-      data.drinking,
-
-    interests:
-      list(
-        data.interests
-      )
-  },
-
-  family: {
-    fatherName:
-      data.fatherName,
-
-    fatherOccupation:
-      data.fatherOccupation,
-
-    motherName:
-      data.motherName,
-
-    motherOccupation:
-      data.motherOccupation,
-
-    siblings:
-      data.siblings,
-
-    siblingDetails:
-      data.siblingDetails ||
-      [],
-
-    familyType:
-      data.familyType,
-
-    familyLocation:
-      data.familyLocation,
-
-    familyDescription:
-      data.familyDescription
-  },
-
-  paternalFamily: {
-    ancestralVillage:
-      data.ancestralVillage,
-
-    nativePlace:
-      data.paternalNativePlace,
-
-    taluka:
-      data.paternalTaluka,
-
-    district:
-      data.paternalDistrict,
-
-    state:
-      data.paternalState,
-
-    familySurname:
-      data.paternalFamilySurname,
-
-    clan:
-      data.paternalClan,
-
-    gotra:
-      data.paternalGotra,
-
-    notes:
-      data.paternalNotes
-  },
-
-  maternalFamily: {
-    maternalGrandfatherName:
-      data.maternalGrandfatherName,
-
-    maternalFamilySurname:
-      data.maternalFamilySurname,
-
-    maternalNativePlace:
-      data.maternalNativePlace,
-
-    maternalVillage:
-      data.maternalVillage,
-
-    maternalTaluka:
-      data.maternalTaluka,
-
-    maternalDistrict:
-      data.maternalDistrict,
-
-    maternalState:
-      data.maternalState,
-
-    maternalClan:
-      data.maternalClan,
-
-    notes:
-      data.maternalNotes
-  },
-
-  maternalLineage: {
-    selfMosal: {
-      ...(data.selfMosal ||
-        emptyMosal())
-    },
-
-    fathersMosal: {
-      ...(data.fathersMosal ||
-        emptyMosal())
-    },
-
-    mothersMosal: {
-      ...(data.mothersMosal ||
-        emptyMosal())
-    }
-  },
-
-  astrology: {
-    rashi:
-      data.rashi,
-
-    nakshatra:
-      data.nakshatra,
-
-    manglik:
-      data.manglik ||
-      'Unknown'
-  },
-
-  contactDetails: {
-    currentAddress: {
-      addressLine1:
-        data.currentAddressLine1,
-
-      addressLine2:
-        data.currentAddressLine2,
+    bloodGroup:
+      data.bloodGroup,
+
+    /*
+     * Dedicated Rajput/Kshatriya platform:
+     * religion, caste and complexion are
+     * intentionally not collected.
+     */
+
+    maritalStatus,
+
+    birthDetails: {
+      timeOfBirth:
+        data.timeOfBirth,
 
       city:
-        data.currentAddressCity,
-
-      taluka:
-        data.currentAddressTaluka,
+        data.birthCity,
 
       district:
-        data.currentAddressDistrict,
+        data.birthDistrict,
 
       state:
-        data.currentAddressState,
-
-      pincode:
-        data.currentAddressPincode,
+        data.birthState,
 
       country:
-        data.currentAddressCountry ||
         'India'
     },
 
-    guardianName:
-      data.guardianName,
+    maritalHistory: {
+      status:
+        maritalStatus,
 
-    guardianRelation:
-      data.guardianRelation,
-
-    guardianPhone:
-      data.guardianPhone,
-
-    selfPhone:
-      data.selfPhone,
-
-    email:
-      data.contactEmail
-  },
-
-  familyAssets: {
-    agricultureLand: {
-      hasLand:
-        !!data.hasLand,
-
-      approximateArea:
-        data.hasLand
-          ? optionalNumber(
-              data.approximateArea
-            )
+      isRemarriage:
+        maritalStatus
+          ? maritalStatus !==
+            'Never Married'
           : undefined,
 
-      unit:
-        data.hasLand
-          ? data.landUnit ||
-            'Vigha'
-          : undefined
+      previousMarriageEndedAt:
+        data.previousMarriageEndedAt ||
+        undefined,
+
+      divorceFinalized:
+        maritalStatus ===
+        'Divorced'
+          ? !!data.divorceFinalized
+          : undefined,
+
+      childrenFromPreviousMarriage:
+        !!data.childrenFromPreviousMarriage,
+
+      childrenCount:
+        data.childrenFromPreviousMarriage
+          ? optionalNumber(
+              data.childrenCount
+            ) ??
+            0
+          : 0,
+
+      childrenLivingWith:
+        data.childrenFromPreviousMarriage
+          ? data.childrenLivingWith
+          : undefined,
+
+      notes:
+        data.maritalHistoryNotes
     },
 
-    propertySummary:
-      data.propertySummary,
+    location: {
+      city:
+        data.city,
 
-    primaryResidenceType:
-      data.primaryResidenceType,
+      district:
+        data.district,
 
-    businessAssetsSummary:
-      data.businessAssetsSummary
-  },
+      state:
+        data.state,
 
-  privacy: {
-    photoVisibility:
-      data.photoVisibility ||
-      'RegisteredMembers',
+      country:
+        'India',
 
-    contactVisibility:
-      data.contactVisibility ||
-      'MutualMatches',
+      nativePlace:
+        data.nativePlace,
 
-    incomeVisibility:
-      data.incomeVisibility ||
-      'Private',
+      nativeTaluka:
+        data.nativeTaluka,
 
-    familyVisibility:
-      data.familyVisibility ||
-      'RegisteredMembers',
+      nativeDistrict:
+        data.nativeDistrict,
 
-    familyOverviewVisibility:
-      data.familyOverviewVisibility ||
-      'AcceptedInterests',
+      nativeState:
+        data.nativeState
+    },
 
-    maternalFamilyVisibility:
-      data.maternalFamilyVisibility ||
-      'AcceptedInterests',
+    community: {
+      /*
+       * Rajput/Kshatriya is implicit
+       * platform context, not user input.
+       */
+      name:
+        'Rajput / Kshatriya',
 
-    siblingDetailsVisibility:
-      data.siblingDetailsVisibility ||
-      'AcceptedInterests',
+      subCommunity:
+        data.subCommunity,
 
-    assetVisibility:
-      data.assetVisibility ||
-      'Private',
+      clan:
+        selectedShakh(
+          data.shakhSelection,
+          data.customShakh
+        ),
 
-    astrologyVisibility:
-      data.astrologyVisibility ||
-      'RegisteredMembers',
+      gotra:
+        data.gotra,
 
-    contactAddressVisibility:
-      data.contactAddressVisibility ||
-      'Private',
+      vansh:
+        data.vansh,
 
-    fullNameVisibility:
-      data.fullNameVisibility ||
-      'RegisteredMembers'
-  },
+      kulaDevi:
+        data.kulaDevi,
 
-  biodataPrivacy: {
-    includeSensitiveFamilyDetailsInBiodata:
-      !!data.includeSensitiveFamilyDetailsInBiodata,
+      /*
+       * Existing backend field retained
+       * for compatibility, displayed as
+       * Kuldevta in the UI.
+       */
+      ishtaDevta:
+        data.kulDevta,
 
-    includeContactDetailsInBiodata:
-      !!data.includeContactDetailsInBiodata,
+      familyOrigin:
+        data.familyOrigin
+    },
 
-    includeAstrologyInBiodata:
-      !!data.includeAstrologyInBiodata,
+    education: {
+      highestEducation:
+        data.highestEducation,
 
-    includeAssetsInBiodata:
-      !!data.includeAssetsInBiodata
-  },
+      degree:
+        data.degree,
 
-  marriageTimeline:
-    data.marriageTimeline,
+      specialization:
+        data.specialization,
 
-  aboutMe:
-    data.aboutMe,
+      college:
+        data.college,
 
-  profilePhoto:
-    data.profilePhoto,
+      university:
+        data.university,
 
-  visibility:
-    visibilityOverride ??
-    data.visibility ??
-    'draft'
-});
+      educationDetails:
+        data.educationDetails
+    },
+
+    career: {
+      occupationType:
+        data.occupationType,
+
+      occupation:
+        data.occupation,
+
+      designation:
+        data.designation,
+
+      companyName:
+        data.companyName,
+
+      businessName:
+        data.businessName,
+
+      annualIncome:
+        optionalNumber(
+          data.annualIncome
+        ),
+
+      workLocation: {
+        city:
+          data.workCity,
+
+        state:
+          data.workState,
+
+        country:
+          data.workCountry ||
+          'India'
+      }
+    },
+
+    lifestyle: {
+      diet:
+        data.diet,
+
+      smoking:
+        data.smoking,
+
+      drinking:
+        data.drinking,
+
+      interests:
+        list(
+          data.interests
+        )
+    },
+
+    family: {
+      fatherName:
+        data.fatherName,
+
+      fatherOccupation:
+        data.fatherOccupation,
+
+      motherName:
+        data.motherName,
+
+      motherOccupation:
+        data.motherOccupation,
+
+      siblingDetails:
+        data.siblingDetails ||
+        [],
+
+      familyType:
+        data.familyType,
+
+      familyLocation:
+        data.familyLocation,
+
+      familyDescription:
+        data.familyDescription
+    },
+
+    maternalFamily: {
+      maternalGrandfatherName:
+        data.maternalGrandfatherName,
+
+      maternalFamilySurname:
+        data.maternalFamilySurname,
+
+      maternalNativePlace:
+        data.maternalVillage,
+
+      maternalVillage:
+        data.maternalVillage,
+
+      maternalTaluka:
+        data.maternalTaluka,
+
+      maternalDistrict:
+        data.maternalDistrict,
+
+      maternalState:
+        data.maternalState,
+
+      maternalClan:
+        selectedShakh(
+          data.maternalShakhSelection,
+          data.maternalCustomShakh
+        ),
+
+      /*
+       * Existing notes field temporarily
+       * stores free-form maternal Gotra.
+       * We will give it its own DB field
+       * in the master-data backend phase.
+       */
+      notes:
+        data.maternalGotra
+    },
+
+    maternalLineage: {
+      selfMosal:
+        data.selfMosal ||
+        emptyMosal(),
+
+      fathersMosal:
+        data.fathersMosal ||
+        emptyMosal(),
+
+      mothersMosal:
+        data.mothersMosal ||
+        emptyMosal()
+    },
+
+    astrology: {
+      rashi:
+        data.rashi,
+
+      nakshatra:
+        data.nakshatra,
+
+      manglik:
+        data.manglik ||
+        'Unknown'
+    },
+
+    privacy: {
+      photoVisibility:
+        data.photoVisibility ||
+        'RegisteredMembers',
+
+      contactVisibility:
+        data.contactVisibility ||
+        'MutualMatches',
+
+      incomeVisibility:
+        data.incomeVisibility ||
+        'Private'
+    },
+
+    biodataPrivacy: {
+      includeSensitiveFamilyDetailsInBiodata:
+        !!data.includeSensitiveFamilyDetailsInBiodata,
+
+      includeContactDetailsInBiodata:
+        !!data.includeContactDetailsInBiodata,
+
+      includeAstrologyInBiodata:
+        !!data.includeAstrologyInBiodata,
+
+      includeAssetsInBiodata:
+        !!data.includeAssetsInBiodata
+    },
+
+    aboutMe:
+      data.aboutMe,
+
+    visibility:
+      visibilityOverride ??
+      data.visibility ??
+      'draft'
+  };
+};
 
 const preferencePayload = (
   data
@@ -1461,14 +1160,13 @@ const preferencePayload = (
       data.dietPreferences
     ),
 
+  /*
+   * Existing field reused as preferred
+   * Shakh until admin master-data API lands.
+   */
   communityPreferences:
     list(
       data.communityPreferences
-    ),
-
-  marriageTimeline:
-    list(
-      data.preferredMarriageTimeline
     ),
 
   acceptedMaritalStatuses:
@@ -1484,14 +1182,22 @@ const preferencePayload = (
     data.additionalPreferences
 });
 
-const profileBasicsError = (
+const validateBasics = (
   data
 ) => {
   if (
+    !data.profileFor
+  ) {
+    return 'Select who this profile is for.';
+  }
+
+  if (
     !data.firstName
+      ?.trim() ||
+    !data.lastName
       ?.trim()
   ) {
-    return 'Enter the first name before continuing.';
+    return 'First name and surname are required.';
   }
 
   if (
@@ -1502,37 +1208,96 @@ const profileBasicsError = (
       data.gender
     )
   ) {
-    return 'Select a gender before continuing.';
+    return 'Select gender.';
   }
 
   if (
     !data.dateOfBirth
   ) {
-    return 'Enter the date of birth before continuing.';
+    return 'Date of birth is required.';
   }
-
-  const birth =
-    new Date(
-      data.dateOfBirth
-    );
 
   const age =
     (
       Date.now() -
-      birth.getTime()
+      new Date(
+        data.dateOfBirth
+      ).getTime()
     ) /
     (
       365.25 *
       864e5
     );
 
-  return !Number.isFinite(
-    age
-  ) ||
+  if (
+    !Number.isFinite(
+      age
+    ) ||
     age < 18 ||
     age > 80
-    ? 'Age must be between 18 and 80 years.'
-    : '';
+  ) {
+    return 'Age must be between 18 and 80 years.';
+  }
+
+  if (
+    !optionalNumber(
+      data.height
+    )
+  ) {
+    return 'Height is required.';
+  }
+
+  if (
+    !data.maritalStatus
+  ) {
+    return 'Marital status is required.';
+  }
+
+  return '';
+};
+
+const localCompletion = (
+  data
+) => {
+  const fields = [
+    data.profileFor,
+    data.firstName,
+    data.lastName,
+    data.gender,
+    data.dateOfBirth,
+    data.height,
+    data.maritalStatus,
+    data.profilePhoto,
+    data.aboutMe,
+    selectedShakh(
+      data.shakhSelection,
+      data.customShakh
+    ),
+    data.gotra,
+    data.nativePlace,
+    data.nativeDistrict,
+    data.highestEducation,
+    data.occupation,
+    data.fatherName,
+    data.motherName,
+    data.maternalFamilySurname,
+    data.maternalVillage,
+    data.ageMin,
+    data.ageMax
+  ];
+
+  const complete =
+    fields.filter(
+      Boolean
+    ).length;
+
+  return Math.round(
+    (
+      complete /
+      fields.length
+    ) *
+      100
+  );
 };
 
 function TextField({
@@ -1549,7 +1314,7 @@ function TextField({
     <label
       className={
         multiline
-          ? `${labelClass} col-span-full max-[767px]:col-span-1`
+          ? `${labelClass} col-span-full`
           : labelClass
       }
     >
@@ -1557,7 +1322,9 @@ function TextField({
 
       {multiline ? (
         <textarea
-          className={fieldClass}
+          className={
+            fieldClass
+          }
           rows="3"
           value={
             value ??
@@ -1576,10 +1343,10 @@ function TextField({
         />
       ) : (
         <input
-          className={fieldClass}
+          className={
+            fieldClass
+          }
           type={type}
-          min={min}
-          max={max}
           value={
             value ??
             ''
@@ -1587,6 +1354,8 @@ function TextField({
           placeholder={
             placeholder
           }
+          min={min}
+          max={max}
           onChange={(
             event
           ) =>
@@ -1616,7 +1385,9 @@ function SelectField({
       {label}
 
       <select
-        className={fieldClass}
+        className={
+          fieldClass
+        }
         value={
           value ||
           ''
@@ -1634,7 +1405,9 @@ function SelectField({
         </option>
 
         {options.map(
-          (option) => (
+          (
+            option
+          ) => (
             <option
               key={
                 option
@@ -1652,216 +1425,42 @@ function SelectField({
   );
 }
 
-function SectionHeader({
-  title,
-  description
+function ShakhField({
+  label,
+  selection,
+  custom,
+  onSelection,
+  onCustom
 }) {
   return (
-    <div className="mb-5">
-      <h3
-        className={
-          sectionTitleClass
+    <>
+      <SelectField
+        label={label}
+        value={
+          selection
         }
-      >
-        {title}
-      </h3>
-
-      {description && (
-        <p
-          className={
-            sectionDescriptionClass
-          }
-        >
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function MosalSection({
-  title,
-  description,
-  value,
-  onChange,
-  showMama = false,
-  showGrandmother = false
-}) {
-  const update =
-    (
-      key,
-      fieldValue
-    ) => {
-      onChange({
-        ...(value ||
-          emptyMosal()),
-
-        [
-          key
-        ]:
-          fieldValue
-      });
-    };
-
-  return (
-    <div
-      className={
-        sensitivePanelClass
-      }
-    >
-      <SectionHeader
-        title={title}
-        description={
-          description
+        onChange={
+          onSelection
+        }
+        options={
+          RAJPUT_SHAKHS
         }
       />
 
-      <div
-        className={
-          fieldsGridClass
-        }
-      >
-        {showMama && (
-          <TextField
-            label="Mama name"
-            value={
-              value?.mamaName
-            }
-            onChange={(
-              fieldValue
-            ) =>
-              update(
-                'mamaName',
-                fieldValue
-              )
-            }
-          />
-        )}
-
-        {showGrandmother && (
-          <TextField
-            label="Grandmother name"
-            value={
-              value?.grandmotherName
-            }
-            onChange={(
-              fieldValue
-            ) =>
-              update(
-                'grandmotherName',
-                fieldValue
-              )
-            }
-          />
-        )}
-
+      {selection ===
+        'Other' && (
         <TextField
-          label="Family surname"
+          label={`${label} - Other`}
           value={
-            value?.familySurname
+            custom
           }
-          onChange={(
-            fieldValue
-          ) =>
-            update(
-              'familySurname',
-              fieldValue
-            )
+          onChange={
+            onCustom
           }
+          placeholder="Enter Shakh"
         />
-
-        <TextField
-          label="Clan / surname"
-          value={
-            value?.clanSurname
-          }
-          onChange={(
-            fieldValue
-          ) =>
-            update(
-              'clanSurname',
-              fieldValue
-            )
-          }
-        />
-
-        <TextField
-          label="Native village"
-          value={
-            value?.nativeVillage
-          }
-          onChange={(
-            fieldValue
-          ) =>
-            update(
-              'nativeVillage',
-              fieldValue
-            )
-          }
-        />
-
-        <TextField
-          label="Taluka"
-          value={
-            value?.taluka
-          }
-          onChange={(
-            fieldValue
-          ) =>
-            update(
-              'taluka',
-              fieldValue
-            )
-          }
-        />
-
-        <TextField
-          label="District"
-          value={
-            value?.district
-          }
-          onChange={(
-            fieldValue
-          ) =>
-            update(
-              'district',
-              fieldValue
-            )
-          }
-        />
-
-        <TextField
-          label="State"
-          value={
-            value?.state
-          }
-          onChange={(
-            fieldValue
-          ) =>
-            update(
-              'state',
-              fieldValue
-            )
-          }
-        />
-
-        <TextField
-          label="Notes"
-          multiline
-          value={
-            value?.notes
-          }
-          onChange={(
-            fieldValue
-          ) =>
-            update(
-              'notes',
-              fieldValue
-            )
-          }
-        />
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 
@@ -1894,26 +1493,12 @@ export default function OnboardingPage() {
     );
 
   const [
-    hasExistingProfile,
-    setHasExistingProfile
+    existing,
+    setExisting
   ] =
     useState(
       false
     );
-
-  const [
-    hydrated,
-    setHydrated
-  ] =
-    useState(
-      false
-    );
-
-  const [
-    error,
-    setError
-  ] =
-    useState('');
 
   const [
     loading,
@@ -1924,16 +1509,16 @@ export default function OnboardingPage() {
     );
 
   const [
-    otpSent,
-    setOtpSent
+    busy,
+    setBusy
   ] =
     useState(
       false
     );
 
   const [
-    otp,
-    setOtp
+    error,
+    setError
   ] =
     useState('');
 
@@ -1947,101 +1532,70 @@ export default function OnboardingPage() {
     );
 
   const [
-    busy,
-    setBusy
+    otp,
+    setOtp
+  ] =
+    useState('');
+
+  const [
+    otpSent,
+    setOtpSent
   ] =
     useState(
       false
     );
 
-  const [
-    cooldown,
-    setCooldown
-  ] =
-    useState(
-      0
+  const completion =
+    useMemo(
+      () =>
+        localCompletion(
+          data
+        ),
+      [
+        data
+      ]
     );
 
   const update = (
     key,
     value
-  ) => {
+  ) =>
     setData(
       (
         current
       ) => ({
         ...current,
-
         [
           key
         ]:
           value
       })
     );
-  };
-
-  const updateSibling = (
-    index,
-    key,
-    value
-  ) => {
-    setData(
-      (
-        current
-      ) => ({
-        ...current,
-
-        siblingDetails:
-          (
-            current.siblingDetails ||
-            []
-          ).map(
-            (
-              sibling,
-              itemIndex
-            ) =>
-              itemIndex ===
-              index
-                ? {
-                    ...sibling,
-
-                    [
-                      key
-                    ]:
-                      value
-                  }
-                : sibling
-          )
-      })
-    );
-  };
 
   useEffect(
     () => {
       let active =
         true;
 
-      const hydrate =
-        async () => {
-          const [
-            profileResult,
-            preferenceResult
-          ] =
-            await Promise.allSettled([
-              api(
-                '/profiles/me?optional=true'
-              ),
-
-              api(
-                '/preferences?optional=true'
-              )
-            ]);
-
-          if (!active) {
+      Promise.allSettled([
+        api(
+          '/profiles/me?optional=true'
+        ),
+        api(
+          '/preferences?optional=true'
+        )
+      ]).then(
+        ([
+          profileResult,
+          preferenceResult
+        ]) => {
+          if (
+            !active
+          ) {
             return;
           }
 
-          const serverProfile =
+          const profile =
             profileResult.status ===
               'fulfilled'
               ? profileResult
@@ -2050,22 +1604,19 @@ export default function OnboardingPage() {
                   .profile
               : null;
 
-          const serverPreferences =
+          const preferences =
             preferenceResult.status ===
               'fulfilled'
-              ? preferenceResult
-                  .value
-                  .data
-                  .preferences
-              : null;
-
-          const preferences =
-            preferenceToForm(
-              serverPreferences
-            );
+              ? preferenceToForm(
+                  preferenceResult
+                    .value
+                    .data
+                    .preferences
+                )
+              : {};
 
           if (
-            serverProfile
+            profile
           ) {
             localStorage.removeItem(
               'ksm_onboarding'
@@ -2075,132 +1626,50 @@ export default function OnboardingPage() {
               'ksm_onboarding_step'
             );
 
-            setHasExistingProfile(
+            setExisting(
               true
-            );
-
-            setStep(
-              0
             );
 
             setData({
               ...flatten(
-                serverProfile
+                profile
               ),
-
               ...preferences,
-
               phone:
                 user?.phone ||
-                '',
-
-              selfPhone:
-                serverProfile
-                  .contactDetails
-                  ?.selfPhone ||
-                user?.phone ||
-                '',
-
-              contactEmail:
-                serverProfile
-                  .contactDetails
-                  ?.email ||
-                user?.email ||
                 ''
             });
+
+            setStep(
+              0
+            );
           } else {
             const draft =
               readDraft();
 
-            setHasExistingProfile(
-              false
-            );
-
-            setStep(
-              readDraftStep()
-            );
-
             setData({
-              religion:
-                'Hinduism',
-
-              birthCountry:
-                'India',
-
-              country:
-                'India',
-
               workCountry:
                 'India',
-
-              currentAddressCountry:
-                'India',
-
               manglik:
                 'Unknown',
-
               includeAstrologyInBiodata:
                 true,
-
-              selfMosal:
-                emptyMosal(),
-
-              fathersMosal:
-                emptyMosal(),
-
-              mothersMosal:
-                emptyMosal(),
-
               ...preferences,
-
               ...draft,
-
               phone:
                 draft.phone ||
                 user?.phone ||
-                '',
-
-              selfPhone:
-                draft.selfPhone ||
-                user?.phone ||
-                '',
-
-              contactEmail:
-                draft.contactEmail ||
-                user?.email ||
                 ''
             });
+
+            setStep(
+              readStep()
+            );
           }
 
           setVerified(
             !!user
               ?.phoneVerified
-          );
-
-          setHydrated(
-            true
-          );
-
-          setLoading(
-            false
-          );
-        };
-
-      hydrate().catch(
-        (
-          caught
-        ) => {
-          if (!active) {
-            return;
-          }
-
-          setError(
-            caught.message ||
-            'Unable to prepare your profile.'
-          );
-
-          setHydrated(
-            true
           );
 
           setLoading(
@@ -2216,7 +1685,6 @@ export default function OnboardingPage() {
     },
     [
       user?.phone,
-      user?.email,
       user?.phoneVerified
     ]
   );
@@ -2224,8 +1692,8 @@ export default function OnboardingPage() {
   useEffect(
     () => {
       if (
-        !hydrated ||
-        hasExistingProfile
+        loading ||
+        existing
       ) {
         return;
       }
@@ -2247,42 +1715,8 @@ export default function OnboardingPage() {
     [
       data,
       step,
-      hydrated,
-      hasExistingProfile
-    ]
-  );
-
-  useEffect(
-    () => {
-      if (
-        !cooldown
-      ) {
-        return undefined;
-      }
-
-      const timer =
-        setInterval(
-          () =>
-            setCooldown(
-              (
-                current
-              ) =>
-                Math.max(
-                  0,
-                  current -
-                    1
-                )
-            ),
-          1000
-        );
-
-      return () =>
-        clearInterval(
-          timer
-        );
-    },
-    [
-      cooldown
+      loading,
+      existing
     ]
   );
 
@@ -2300,7 +1734,6 @@ export default function OnboardingPage() {
           {
             method:
               'POST',
-
             body:
               JSON.stringify({
                 phone:
@@ -2311,10 +1744,6 @@ export default function OnboardingPage() {
 
         setOtpSent(
           true
-        );
-
-        setCooldown(
-          30
         );
 
         notify(
@@ -2333,7 +1762,7 @@ export default function OnboardingPage() {
       }
     };
 
-  const verify =
+  const verifyOtp =
     async () => {
       setBusy(
         true
@@ -2347,12 +1776,10 @@ export default function OnboardingPage() {
           {
             method:
               'POST',
-
             body:
               JSON.stringify({
                 phone:
                   data.phone,
-
                 code:
                   otp
               })
@@ -2364,7 +1791,7 @@ export default function OnboardingPage() {
         );
 
         notify(
-          'Mobile number verified.'
+          'Mobile verified.'
         );
       } catch (
         caught
@@ -2383,38 +1810,29 @@ export default function OnboardingPage() {
     async (
       visibilityOverride
     ) => {
-      const basicsError =
-        profileBasicsError(
+      const validation =
+        validateBasics(
           data
         );
 
       if (
-        basicsError
+        validation
       ) {
-        setStep(
-          2
-        );
-
         throw new Error(
-          basicsError
+          validation
         );
       }
 
-      const endpoint =
-        hasExistingProfile
-          ? '/profiles/me'
-          : '/profiles';
-
-      const method =
-        hasExistingProfile
-          ? 'PATCH'
-          : 'POST';
-
       const result =
         await api(
-          endpoint,
+          existing
+            ? '/profiles/me'
+            : '/profiles',
           {
-            method,
+            method:
+              existing
+                ? 'PATCH'
+                : 'POST',
 
             body:
               JSON.stringify(
@@ -2426,61 +1844,46 @@ export default function OnboardingPage() {
           }
         );
 
-      const savedProfile =
+      const saved =
         result.data
           .profile;
 
-      if (
-        savedProfile
-      ) {
-        setHasExistingProfile(
-          true
-        );
+      setExisting(
+        true
+      );
 
+      if (
+        saved
+      ) {
         setData(
           (
             current
           ) => ({
             ...current,
-
             ...flatten(
-              savedProfile
+              saved
             ),
-
             phone:
               current.phone ||
               user?.phone ||
-              '',
-
-            selfPhone:
-              current.selfPhone ||
-              user?.phone ||
-              '',
-
-            contactEmail:
-              current.contactEmail ||
-              user?.email ||
               ''
           })
         );
       }
 
-      return savedProfile;
+      localStorage.removeItem(
+        'ksm_onboarding'
+      );
+
+      localStorage.removeItem(
+        'ksm_onboarding_step'
+      );
+
+      return saved;
     };
 
   const saveAndExit =
     async () => {
-      if (
-        !hasExistingProfile &&
-        !data.firstName
-      ) {
-        navigate(
-          '/dashboard'
-        );
-
-        return;
-      }
-
       setBusy(
         true
       );
@@ -2490,98 +1893,12 @@ export default function OnboardingPage() {
       try {
         await saveProfile();
 
-        localStorage.removeItem(
-          'ksm_onboarding'
-        );
-
-        localStorage.removeItem(
-          'ksm_onboarding_step'
-        );
-
         notify(
-          'Profile changes saved.'
+          'Profile saved.'
         );
 
         navigate(
           '/dashboard'
-        );
-      } catch (
-        caught
-      ) {
-        setError(
-          caught.message
-        );
-      } finally {
-        setBusy(
-          false
-        );
-      }
-    };
-
-  const upload =
-    async (
-      file
-    ) => {
-      const basicsError =
-        profileBasicsError(
-          data
-        );
-
-      if (
-        basicsError
-      ) {
-        setStep(
-          2
-        );
-
-        setError(
-          basicsError
-        );
-
-        return;
-      }
-
-      setBusy(
-        true
-      );
-
-      setError('');
-
-      try {
-        await saveProfile();
-
-        const body =
-          new FormData();
-
-        body.append(
-          'photo',
-          file
-        );
-
-        const result =
-          await api(
-            '/profiles/photo',
-            {
-              method:
-                'POST',
-
-              body
-            }
-          );
-
-        setData(
-          (
-            current
-          ) => ({
-            ...current,
-
-            profilePhoto:
-              result.data.path
-          })
-        );
-
-        notify(
-          'Photo uploaded.'
         );
       } catch (
         caught
@@ -2598,50 +1915,31 @@ export default function OnboardingPage() {
 
   const next =
     async () => {
-      if (
-        step === 0 &&
-        !data.profileFor
-      ) {
-        setError(
-          'Please choose who this profile is for.'
-        );
-
-        return;
-      }
+      setError('');
 
       if (
-        step === 1 &&
-        !verified
+        step === 0
       ) {
-        setError(
-          'Verify the mobile number before continuing.'
-        );
-
-        return;
-      }
-
-      if (
-        step === 2 ||
-        step >= 7
-      ) {
-        const basicsError =
-          profileBasicsError(
+        const validation =
+          validateBasics(
             data
           );
 
         if (
-          basicsError
+          validation
         ) {
-          if (
-            step > 2
-          ) {
-            setStep(
-              2
-            );
-          }
-
           setError(
-            basicsError
+            validation
+          );
+
+          return;
+        }
+
+        if (
+          !verified
+        ) {
+          setError(
+            'Verify mobile number before continuing.'
           );
 
           return;
@@ -2649,34 +1947,62 @@ export default function OnboardingPage() {
       }
 
       if (
-        data.currentAddressPincode &&
-        !/^[0-9]{6}$/.test(
-          data.currentAddressPincode
-        )
+        step === 1
+      ) {
+        const shakh =
+          selectedShakh(
+            data.shakhSelection,
+            data.customShakh
+          );
+
+        if (
+          !shakh ||
+          !data.gotra ||
+          !data.nativePlace ||
+          !data.nativeDistrict
+        ) {
+          setError(
+            'Shakh, Gotra, native village and native district are required.'
+          );
+
+          return;
+        }
+      }
+
+      if (
+        step === 2 &&
+        !data.aboutMe
+          ?.trim()
+      ) {
+        setError(
+          'About Me is required.'
+        );
+
+        return;
+      }
+
+      if (
+        step === 9
       ) {
         if (
-          step === 6
+          !data.profilePhoto
         ) {
+          setStep(
+            8
+          );
+
           setError(
-            'Current address pincode must contain exactly 6 digits.'
+            'Profile photo is required before submission.'
           );
 
           return;
         }
-      }
 
-      setError('');
-
-      if (
-        step === 7
-      ) {
         setBusy(
           true
         );
 
         try {
-          await saveProfile();
-
           await api(
             '/preferences',
             {
@@ -2692,46 +2018,8 @@ export default function OnboardingPage() {
             }
           );
 
-          localStorage.removeItem(
-            'ksm_onboarding'
-          );
-
-          localStorage.removeItem(
-            'ksm_onboarding_step'
-          );
-        } catch (
-          caught
-        ) {
-          setError(
-            caught.message
-          );
-
-          return;
-        } finally {
-          setBusy(
-            false
-          );
-        }
-      }
-
-      if (
-        step === 9
-      ) {
-        setBusy(
-          true
-        );
-
-        try {
           await saveProfile(
             'pending_review'
-          );
-
-          localStorage.removeItem(
-            'ksm_onboarding'
-          );
-
-          localStorage.removeItem(
-            'ksm_onboarding_step'
           );
 
           notify(
@@ -2756,12 +2044,177 @@ export default function OnboardingPage() {
         return;
       }
 
-      setStep(
-        Math.min(
-          9,
-          step + 1
-        )
+      /*
+       * IMPORTANT:
+       * Save every completed step.
+       * This fixes edits such as marital
+       * status appearing to revert later.
+       */
+      setBusy(
+        true
       );
+
+      try {
+        await saveProfile();
+
+        setStep(
+          (
+            current
+          ) =>
+            Math.min(
+              9,
+              current +
+                1
+            )
+        );
+      } catch (
+        caught
+      ) {
+        setError(
+          caught.message
+        );
+      } finally {
+        setBusy(
+          false
+        );
+      }
+    };
+
+  const uploadProfilePhoto =
+    async (
+      file
+    ) => {
+      setBusy(
+        true
+      );
+
+      try {
+        await saveProfile();
+
+        const form =
+          new FormData();
+
+        form.append(
+          'photo',
+          file
+        );
+
+        const result =
+          await api(
+            '/profiles/photo',
+            {
+              method:
+                'POST',
+              body:
+                form
+            }
+          );
+
+        update(
+          'profilePhoto',
+          result.data.path
+        );
+
+        notify(
+          'Profile photo uploaded.'
+        );
+      } catch (
+        caught
+      ) {
+        setError(
+          caught.message
+        );
+      } finally {
+        setBusy(
+          false
+        );
+      }
+    };
+
+  const uploadGalleryPhoto =
+    async (
+      file
+    ) => {
+      setBusy(
+        true
+      );
+
+      try {
+        const form =
+          new FormData();
+
+        form.append(
+          'photo',
+          file
+        );
+
+        const result =
+          await api(
+            '/profiles/gallery',
+            {
+              method:
+                'POST',
+              body:
+                form
+            }
+          );
+
+        update(
+          'galleryAssets',
+          result.data.gallery ||
+          []
+        );
+
+        notify(
+          'Additional photo uploaded.'
+        );
+      } catch (
+        caught
+      ) {
+        setError(
+          caught.message
+        );
+      } finally {
+        setBusy(
+          false
+        );
+      }
+    };
+
+  const removeGallery =
+    async (
+      assetId
+    ) => {
+      setBusy(
+        true
+      );
+
+      try {
+        const result =
+          await api(
+            `/profiles/gallery/${assetId}`,
+            {
+              method:
+                'DELETE'
+            }
+          );
+
+        update(
+          'galleryAssets',
+          result.data.gallery ||
+          []
+        );
+      } catch (
+        caught
+      ) {
+        setError(
+          caught.message
+        );
+      } finally {
+        setBusy(
+          false
+        );
+      }
     };
 
   if (
@@ -2775,78 +2228,60 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="grid min-h-screen grid-cols-[minmax(320px,38%)_1fr] max-[1024px]:grid-cols-[300px_1fr] max-[767px]:grid-cols-1">
-      <aside className="flex flex-col justify-between bg-[linear-gradient(0deg,#281213dc,#28121380),url('/assets/member/onboarding.webp')] bg-cover bg-center p-[45px] text-white max-[767px]:hidden">
-        <a
-          href="/"
-          className="font-['Cormorant_Garamond'] text-[21px] font-semibold text-white"
-        >
-          KSHATRIYA
-
-          <small className="block font-['Manrope'] text-[7px] font-bold tracking-[0.25em]">
-            Matrimonial Society
-          </small>
-        </a>
-
-        <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
-            A thoughtful introduction
-          </p>
-
-          <h1 className="mt-5 font-['Cormorant_Garamond'] text-[clamp(42px,4vw,65px)] font-medium leading-none">
-            Every family story
-            deserves to be told
-            with{' '}
-            <em className="text-[#dbaf79]">
-              care.
-            </em>
-          </h1>
-        </div>
-
-        <p className="text-[11px] text-white/50">
-          {hasExistingProfile
-            ? 'Your saved profile is loaded directly from the secure server.'
-            : 'Saved privately as you progress.'}
-        </p>
-      </aside>
-
-      <main className="bg-[#fffdf8]">
-        <header className="grid h-[82px] grid-cols-[1fr_2fr_1fr] items-center border-b border-[#ddd0c1] px-10 max-[767px]:grid-cols-[auto_1fr_auto] max-[767px]:gap-[14px] max-[767px]:px-[18px]">
+    <div className="min-h-screen bg-[#fffdf8]">
+      <header className="sticky top-0 z-30 border-b border-[#ddd0c1] bg-[#fffdf8]/95 px-5 py-4 backdrop-blur">
+        <div className="mx-auto flex max-w-[920px] items-center justify-between gap-5">
           <button
-            type="button"
-            className="justify-self-start"
-            onClick={() =>
-              step
-                ? setStep(
-                    step - 1
-                  )
-                : navigate(
-                    '/dashboard'
-                  )
-            }
-            aria-label="Go back"
-          >
-            <ArrowLeft />
-          </button>
+                type="button"
+                aria-label="Go back"
+                className="grid h-11 w-11 place-items-center rounded-full border border-[#ddd0c1]"
+                onClick={() =>
+                  step > 0
+                    ? setStep(
+                        (
+                          current
+                        ) =>
+                          current - 1
+                      )
+                    : navigate(
+                        '/dashboard'
+                      )
+                }
+              >
+                <ArrowLeft
+                  size={
+                    17
+                  }
+                />
+              </button>
 
-          <div>
-            <span className="text-[9px] uppercase tracking-[0.14em]">
-              Step{' '}
-              {step + 1}{' '}
-              of 10
-            </span>
+          <div className="flex-1">
+            <div className="flex justify-between text-[9px] font-bold uppercase tracking-[0.12em] text-[#756a60]">
+              <span>
+                Step{' '}
+                {step + 1}{' '}
+                of 10
+              </span>
 
-            <div className="mt-[9px] h-[2px] bg-[#e8ddd1]">
-              <i
-                className="block h-full bg-[#681d25] transition-[width] duration-300"
+              <span>
+                {completion}% complete
+              </span>
+            </div>
+
+            <div className="mt-2 h-[3px] overflow-hidden rounded-full bg-[#e9dfd3]">
+              <div
+                className="h-full bg-[#681d25] transition-all"
                 style={{
                   width:
                     `${
-                      (
-                        step +
-                        1
-                      ) *
-                      10
+                      Math.max(
+                        (
+                          step +
+                          1
+                        ) *
+                          10,
+                        completion
+                      )
                     }%`
                 }}
               />
@@ -2855,158 +2290,98 @@ export default function OnboardingPage() {
 
           <button
             type="button"
+            className={
+              outlineButtonClass
+            }
             disabled={
               busy
             }
-            className="flex items-center gap-2 justify-self-end text-[10px] disabled:opacity-50 max-[767px]:text-[0px]"
             onClick={
               saveAndExit
             }
           >
-            <Save />
+            <Save
+              size={
+                15
+              }
+            />
 
-            <span className="max-[767px]:hidden">
-              {busy
-                ? 'Saving…'
-                : 'Save & exit'}
-            </span>
+            Save
           </button>
-        </header>
+        </div>
+      </header>
 
-        <section className="mx-auto my-[clamp(40px,8vh,90px)] w-[min(700px,calc(100%_-_40px))]">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
-            {
-              steps[
-                step
-              ][0]
-            }
-          </p>
+      <main className="mx-auto w-[min(780px,calc(100%_-_32px))] py-12">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[#aa7a42]">
+          {
+            steps[
+              step
+            ][0]
+          }
+        </p>
 
-          <h2 className="mb-[35px] mt-[13px] font-['Cormorant_Garamond'] text-[clamp(40px,5vw,58px)] font-medium leading-none">
-            {
-              steps[
-                step
-              ][1]
-            }
-          </h2>
+        <h1 className="mt-3 font-['Cormorant_Garamond'] text-[clamp(40px,6vw,58px)] font-medium leading-none text-[#291a17]">
+          {
+            steps[
+              step
+            ][1]
+          }
+        </h1>
 
-          {step === 0 && (
-            <div className="grid grid-cols-3 gap-3 max-[767px]:grid-cols-2">
-              {[
-                'Self',
-                'Son',
-                'Daughter',
-                'Brother',
-                'Sister',
-                'Relative'
-              ].map(
-                (
-                  item
-                ) => (
-                  <button
-                    type="button"
-                    className={`border p-[22px] font-['Cormorant_Garamond'] text-[21px] font-medium ${
-                      data.profileFor ===
-                      item
-                        ? 'border-[#681d25] bg-[#681d2508] text-[#681d25]'
-                        : 'border-[#ddd0c1] bg-[#fffdf8]'
-                    }`}
-                    onClick={() =>
-                      update(
-                        'profileFor',
-                        item
-                      )
-                    }
-                    key={
-                      item
-                    }
-                  >
-                    {item}
-                  </button>
-                )
-              )}
-            </div>
-          )}
-
-          {step === 1 && (
-            <>
-              <TextField
-                label="Mobile number"
-                value={
-                  data.phone
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'phone',
-                    value
-                  )
-                }
-              />
-
-              {verified ? (
-                <p className="mt-4 border border-[#76946f] bg-[#76946f0d] px-4 py-3 text-[11px] font-bold text-[#45643f]">
-                  Mobile number
-                  verified.
-                </p>
-              ) : (
-                <button
-                  disabled={
-                    busy ||
-                    cooldown > 0
-                  }
-                  onClick={
-                    sendOtp
-                  }
-                  className={`${outlineButtonClass} mt-4`}
-                  type="button"
-                >
-                  {cooldown
-                    ? `Resend in ${cooldown}s`
-                    : 'Send verification code'}
-                </button>
-              )}
-
-              {otpSent &&
-                !verified && (
-                <div className="mt-[15px] flex items-end gap-3">
-                  <TextField
-                    label="Six-digit code"
-                    value={
-                      otp
-                    }
-                    onChange={
-                      setOtp
-                    }
-                  />
-
-                  <button
-                    type="button"
-                    disabled={
-                      busy
-                    }
-                    onClick={
-                      verify
-                    }
-                    className={
-                      primaryButtonClass
-                    }
-                  >
-                    Verify
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-
-          {step === 2 && (
-            <>
+        {step === 0 && (
+          <>
+            <div
+              className={
+                sectionClass
+              }
+            >
               <div
                 className={
-                  fieldsGridClass
+                  gridClass
                 }
               >
+                <SelectField
+                  label="Profile created for"
+                  value={
+                    data.profileFor
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'profileFor',
+                      value
+                    )
+                  }
+                  options={[
+                    'Self',
+                    'Son',
+                    'Daughter',
+                    'Brother',
+                    'Sister',
+                    'Relative'
+                  ]}
+                />
+
+                <SelectField
+                  label="Gender"
+                  value={
+                    data.gender
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'gender',
+                      value
+                    )
+                  }
+                  options={[
+                    'Male',
+                    'Female'
+                  ]}
+                />
+
                 <TextField
                   label="First name"
                   value={
@@ -3052,25 +2427,6 @@ export default function OnboardingPage() {
                   }
                 />
 
-                <SelectField
-                  label="Gender"
-                  value={
-                    data.gender
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'gender',
-                      value
-                    )
-                  }
-                  options={[
-                    'Male',
-                    'Female'
-                  ]}
-                />
-
                 <TextField
                   label="Date of birth"
                   type="date"
@@ -3082,67 +2438,6 @@ export default function OnboardingPage() {
                   ) =>
                     update(
                       'dateOfBirth',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Time of birth"
-                  type="time"
-                  value={
-                    data.timeOfBirth
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'timeOfBirth',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Birth city / town"
-                  value={
-                    data.birthCity
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'birthCity',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Birth district"
-                  value={
-                    data.birthDistrict
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'birthDistrict',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Birth state"
-                  value={
-                    data.birthState
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'birthState',
                       value
                     )
                   }
@@ -3167,47 +2462,6 @@ export default function OnboardingPage() {
                 />
 
                 <SelectField
-                  label="Blood group"
-                  value={
-                    data.bloodGroup
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'bloodGroup',
-                      value
-                    )
-                  }
-                  options={[
-                    'A+',
-                    'A-',
-                    'B+',
-                    'B-',
-                    'AB+',
-                    'AB-',
-                    'O+',
-                    'O-',
-                    'Unknown'
-                  ]}
-                />
-
-                <TextField
-                  label="Complexion"
-                  value={
-                    data.complexion
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'complexion',
-                      value
-                    )
-                  }
-                />
-
-                <SelectField
                   label="Marital status"
                   value={
                     data.maritalStatus
@@ -3220,1542 +2474,1645 @@ export default function OnboardingPage() {
                       value
                     )
                   }
-                  options={[
-                    'Never Married',
-                    'Divorced',
-                    'Widowed',
-                    'Annulled',
-                    'Separated'
-                  ]}
+                  options={
+                    MARITAL_STATUS_OPTIONS
+                  }
                 />
               </div>
+            </div>
 
-              {data.maritalStatus &&
-                data.maritalStatus !==
-                  'Never Married' && (
-                  <div
-                    className={
-                      sensitivePanelClass
-                    }
-                  >
-                    <p className="mb-4 flex items-center gap-2 text-[0.78rem] font-bold text-[#741f27]">
-                      <LockKeyhole
-                        size={
-                          15
-                        }
-                      />
-
-                      Private marital
-                      context
-                    </p>
-
-                    <div
-                      className={
-                        fieldsGridClass
-                      }
-                    >
-                      <TextField
-                        label="Previous marriage ended"
-                        type="date"
-                        value={
-                          data.previousMarriageEndedAt
-                        }
-                        onChange={(
-                          value
-                        ) =>
-                          update(
-                            'previousMarriageEndedAt',
-                            value
-                          )
-                        }
-                      />
-
-                      {data.maritalStatus ===
-                        'Divorced' && (
-                        <label className="flex items-center gap-[0.65rem]">
-                          <input
-                            type="checkbox"
-                            checked={
-                              !!data.divorceFinalized
-                            }
-                            onChange={(
-                              event
-                            ) =>
-                              update(
-                                'divorceFinalized',
-                                event
-                                  .target
-                                  .checked
-                              )
-                            }
-                          />
-
-                          Divorce legally
-                          finalized
-                        </label>
-                      )}
-
-                      <label className="flex items-center gap-[0.65rem]">
-                        <input
-                          type="checkbox"
-                          checked={
-                            !!data.childrenFromPreviousMarriage
-                          }
-                          onChange={(
-                            event
-                          ) =>
-                            update(
-                              'childrenFromPreviousMarriage',
-                              event
-                                .target
-                                .checked
-                            )
-                          }
-                        />
-
-                        Children from
-                        previous marriage
-                      </label>
-
-                      {data.childrenFromPreviousMarriage && (
-                        <>
-                          <TextField
-                            label="Number of children"
-                            type="number"
-                            min="0"
-                            max="20"
-                            value={
-                              data.childrenCount
-                            }
-                            onChange={(
-                              value
-                            ) =>
-                              update(
-                                'childrenCount',
-                                value
-                              )
-                            }
-                          />
-
-                          <TextField
-                            label="Children living with"
-                            value={
-                              data.childrenLivingWith
-                            }
-                            onChange={(
-                              value
-                            ) =>
-                              update(
-                                'childrenLivingWith',
-                                value
-                              )
-                            }
-                          />
-                        </>
-                      )}
-
-                      <TextField
-                        label="Marital history notes"
-                        multiline
-                        value={
-                          data.maritalHistoryNotes
-                        }
-                        onChange={(
-                          value
-                        ) =>
-                          update(
-                            'maritalHistoryNotes',
-                            value
-                          )
-                        }
-                      />
-                    </div>
-                  </div>
-                )}
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <div
-                className={
-                  sectionClass
-                }
-              >
-                <SectionHeader
-                  title="Rajput heritage"
-                  description="Core community and lineage information used in the matrimonial biodata."
-                />
-
+            {data.maritalStatus &&
+              data.maritalStatus !==
+                'Never Married' && (
                 <div
                   className={
-                    fieldsGridClass
+                    sensitiveClass
                   }
                 >
-                  <TextField
-                    label="Religion"
-                    value={
-                      data.religion
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'religion',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Caste"
-                    placeholder="Rajput / Kshatriya / Darbar"
-                    value={
-                      data.caste
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'caste',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Community"
-                    value={
-                      data.communityName
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'communityName',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Sub-community"
-                    value={
-                      data.subCommunity
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'subCommunity',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Clan / Shakh"
-                    value={
-                      data.clan
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'clan',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Gotra"
-                    value={
-                      data.gotra
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'gotra',
-                        value
-                      )
-                    }
-                  />
-
-                  <SelectField
-                    label="Vansh"
-                    value={
-                      data.vansh
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'vansh',
-                        value
-                      )
-                    }
-                    options={[
-                      'Suryavanshi',
-                      'Chandravanshi',
-                      'Agnivanshi',
-                      'Other'
-                    ]}
-                  />
-
-                  <TextField
-                    label="Kula Devi"
-                    value={
-                      data.kulaDevi
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'kulaDevi',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Ishta Devta"
-                    value={
-                      data.ishtaDevta
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'ishtaDevta',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Family origin"
-                    multiline
-                    value={
-                      data.familyOrigin
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'familyOrigin',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div
-                className={
-                  sectionClass
-                }
-              >
-                <SectionHeader
-                  title="Current location"
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <TextField
-                    label="City"
-                    value={
-                      data.city
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'city',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Taluka"
-                    value={
-                      data.taluka
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'taluka',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="District"
-                    value={
-                      data.district
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'district',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="State"
-                    value={
-                      data.state
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'state',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div
-                className={
-                  sectionClass
-                }
-              >
-                <SectionHeader
-                  title="Vatan / Native place"
-                  description="Traditional native village and district information."
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <TextField
-                    label="Native village / Vatan"
-                    value={
-                      data.nativePlace
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'nativePlace',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Native taluka"
-                    value={
-                      data.nativeTaluka
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'nativeTaluka',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Native district"
-                    value={
-                      data.nativeDistrict
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'nativeDistrict',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Native state"
-                    value={
-                      data.nativeState
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'nativeState',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {step === 4 && (
-            <>
-              <div
-                className={
-                  sectionClass
-                }
-              >
-                <SectionHeader
-                  title="Education"
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <TextField
-                    label="Highest qualification"
-                    value={
-                      data.highestEducation
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'highestEducation',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Degree"
-                    value={
-                      data.degree
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'degree',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Specialization"
-                    value={
-                      data.specialization
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'specialization',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="College"
-                    value={
-                      data.college
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'college',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="University"
-                    value={
-                      data.university
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'university',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Education details"
-                    multiline
-                    value={
-                      data.educationDetails
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'educationDetails',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div
-                className={
-                  sectionClass
-                }
-              >
-                <SectionHeader
-                  title="Career"
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <TextField
-                    label="Occupation type"
-                    value={
-                      data.occupationType
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'occupationType',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Occupation"
-                    value={
-                      data.occupation
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'occupation',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Designation"
-                    value={
-                      data.designation
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'designation',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Company / Organization"
-                    value={
-                      data.companyName
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'companyName',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Business name"
-                    value={
-                      data.businessName
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'businessName',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Annual income"
-                    type="number"
-                    min="0"
-                    value={
-                      data.annualIncome
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'annualIncome',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Work city"
-                    value={
-                      data.workCity
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'workCity',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Work state"
-                    value={
-                      data.workState
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'workState',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {step === 5 && (
-            <>
-              <div
-                className={
-                  sectionClass
-                }
-              >
-                <SectionHeader
-                  title="Immediate family"
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <TextField
-                    label="Father name"
-                    value={
-                      data.fatherName
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'fatherName',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Father profession"
-                    value={
-                      data.fatherOccupation
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'fatherOccupation',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Mother name"
-                    value={
-                      data.motherName
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'motherName',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Mother profession"
-                    value={
-                      data.motherOccupation
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'motherOccupation',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Family type"
-                    value={
-                      data.familyType
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'familyType',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Family location"
-                    value={
-                      data.familyLocation
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'familyLocation',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Family description"
-                    multiline
-                    value={
-                      data.familyDescription
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'familyDescription',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div
-                className={
-                  sensitivePanelClass
-                }
-              >
-                <SectionHeader
-                  title="Paternal lineage"
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <TextField
-                    label="Family surname"
-                    value={
-                      data.paternalFamilySurname
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'paternalFamilySurname',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Clan"
-                    value={
-                      data.paternalClan
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'paternalClan',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Gotra"
-                    value={
-                      data.paternalGotra
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'paternalGotra',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Ancestral village"
-                    value={
-                      data.ancestralVillage
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'ancestralVillage',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Native place"
-                    value={
-                      data.paternalNativePlace
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'paternalNativePlace',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Taluka"
-                    value={
-                      data.paternalTaluka
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'paternalTaluka',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="District"
-                    value={
-                      data.paternalDistrict
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'paternalDistrict',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="State"
-                    value={
-                      data.paternalState
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'paternalState',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Paternal notes"
-                    multiline
-                    value={
-                      data.paternalNotes
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'paternalNotes',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div
-                className={
-                  sensitivePanelClass
-                }
-              >
-                <SectionHeader
-                  title="Maternal family"
-                  description="Basic Mosal information."
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <TextField
-                    label="Maternal grandfather"
-                    value={
-                      data.maternalGrandfatherName
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'maternalGrandfatherName',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Family surname"
-                    value={
-                      data.maternalFamilySurname
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'maternalFamilySurname',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Native place"
-                    value={
-                      data.maternalNativePlace
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'maternalNativePlace',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Village"
-                    value={
-                      data.maternalVillage
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'maternalVillage',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Taluka"
-                    value={
-                      data.maternalTaluka
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'maternalTaluka',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="District"
-                    value={
-                      data.maternalDistrict
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'maternalDistrict',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="State"
-                    value={
-                      data.maternalState
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'maternalState',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Clan"
-                    value={
-                      data.maternalClan
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'maternalClan',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Maternal notes"
-                    multiline
-                    value={
-                      data.maternalNotes
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'maternalNotes',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <MosalSection
-                title="Self Mosal"
-                description="Mother's parental family."
-                showMama
-                value={
-                  data.selfMosal
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'selfMosal',
-                    value
-                  )
-                }
-              />
-
-              <MosalSection
-                title="Father's Mosal"
-                description="Paternal grandmother's parental family."
-                showGrandmother
-                value={
-                  data.fathersMosal
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'fathersMosal',
-                    value
-                  )
-                }
-              />
-
-              <MosalSection
-                title="Mother's Mosal"
-                description="Maternal grandmother's parental family."
-                showGrandmother
-                value={
-                  data.mothersMosal
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'mothersMosal',
-                    value
-                  )
-                }
-              />
-
-              <div
-                className={
-                  sensitivePanelClass
-                }
-              >
-                <div className="mb-4 flex items-start justify-between gap-4 max-[640px]:flex-col">
-                  <SectionHeader
-                    title="Siblings & marriage relations"
-                    description="For married siblings, include sasariyu / spouse-family information where appropriate."
-                  />
-
-                  <button
-                    type="button"
-                    className={
-                      outlineButtonClass
-                    }
-                    onClick={() =>
-                      setData(
-                        (
-                          current
-                        ) => ({
-                          ...current,
-
-                          siblingDetails: [
-                            ...(
-                              current.siblingDetails ||
-                              []
-                            ),
-
-                            {
-                              relation:
-                                'Brother',
-
-                              maritalStatus:
-                                'Unmarried'
-                            }
-                          ]
-                        })
-                      )
-                    }
-                  >
-                    <Plus
+                  <p className="mb-5 flex items-center gap-2 text-[11px] font-bold text-[#681d25]">
+                    <LockKeyhole
                       size={
                         15
                       }
                     />
 
-                    Add sibling
-                  </button>
-                </div>
+                    Private marital context
+                  </p>
 
-                {(data.siblingDetails ||
-                  []).map(
-                  (
-                    sibling,
-                    index
-                  ) => (
-                    <div
-                      className="relative border-t border-[#741f2721] py-5 pr-11"
-                      key={`${sibling.relation || 'sibling'}-${index}`}
-                    >
-                      <div
-                        className={
-                          fieldsGridClass
+                  <div
+                    className={
+                      gridClass
+                    }
+                  >
+                    <TextField
+                      label="Previous marriage ended"
+                      type="date"
+                      value={
+                        data.previousMarriageEndedAt
+                      }
+                      onChange={(
+                        value
+                      ) =>
+                        update(
+                          'previousMarriageEndedAt',
+                          value
+                        )
+                      }
+                    />
+
+                    {data.maritalStatus ===
+                      'Divorced' && (
+                      <label className="flex items-center gap-3 text-[12px]">
+                        <input
+                          type="checkbox"
+                          checked={
+                            !!data.divorceFinalized
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            update(
+                              'divorceFinalized',
+                              event.target
+                                .checked
+                            )
+                          }
+                        />
+
+                        Divorce finalized
+                      </label>
+                    )}
+
+                    <label className="flex items-center gap-3 text-[12px]">
+                      <input
+                        type="checkbox"
+                        checked={
+                          !!data.childrenFromPreviousMarriage
                         }
-                      >
-                        <SelectField
-                          label="Relation"
-                          value={
-                            sibling.relation ||
-                            'Brother'
-                          }
-                          onChange={(
-                            value
-                          ) =>
-                            updateSibling(
-                              index,
-                              'relation',
-                              value
-                            )
-                          }
-                          options={[
-                            'Brother',
-                            'Sister'
-                          ]}
-                        />
+                        onChange={(
+                          event
+                        ) =>
+                          update(
+                            'childrenFromPreviousMarriage',
+                            event.target
+                              .checked
+                          )
+                        }
+                      />
 
+                      Children from previous marriage
+                    </label>
+
+                    {data.childrenFromPreviousMarriage && (
+                      <>
                         <TextField
-                          label="Name"
+                          label="Number of children"
+                          type="number"
+                          min="0"
+                          max="20"
                           value={
-                            sibling.name
+                            data.childrenCount
                           }
                           onChange={(
                             value
                           ) =>
-                            updateSibling(
-                              index,
-                              'name',
+                            update(
+                              'childrenCount',
                               value
                             )
                           }
                         />
 
                         <TextField
-                          label="Education"
+                          label="Children living with"
                           value={
-                            sibling.education
+                            data.childrenLivingWith
                           }
                           onChange={(
                             value
                           ) =>
-                            updateSibling(
-                              index,
-                              'education',
+                            update(
+                              'childrenLivingWith',
                               value
                             )
                           }
                         />
+                      </>
+                    )}
 
-                        <TextField
-                          label="Occupation"
-                          value={
-                            sibling.occupation
-                          }
-                          onChange={(
-                            value
-                          ) =>
-                            updateSibling(
-                              index,
-                              'occupation',
-                              value
-                            )
-                          }
-                        />
+                    <TextField
+                      label="Additional notes"
+                      multiline
+                      value={
+                        data.maritalHistoryNotes
+                      }
+                      onChange={(
+                        value
+                      ) =>
+                        update(
+                          'maritalHistoryNotes',
+                          value
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+              )}
 
-                        <SelectField
-                          label="Marital status"
-                          value={
-                            sibling.maritalStatus ||
-                            'Unmarried'
-                          }
-                          onChange={(
-                            value
-                          ) =>
-                            updateSibling(
-                              index,
-                              'maritalStatus',
-                              value
-                            )
-                          }
-                          options={[
-                            'Unmarried',
-                            'Married'
-                          ]}
-                        />
+            <div
+              className={
+                sectionClass
+              }
+            >
+              <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#681d25]">
+                Mobile verification
+              </p>
 
-                        {sibling.maritalStatus ===
-                          'Married' && (
-                          <>
-                            <TextField
-                              label="Spouse name"
-                              value={
-                                sibling.spouseName
-                              }
-                              onChange={(
-                                value
-                              ) =>
-                                updateSibling(
-                                  index,
-                                  'spouseName',
-                                  value
-                                )
-                              }
-                            />
+              <TextField
+                label="Mobile number"
+                value={
+                  data.phone
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'phone',
+                    value
+                  )
+                }
+              />
 
-                            <TextField
-                              label="Spouse clan"
-                              value={
-                                sibling.spouseClan
-                              }
-                              onChange={(
-                                value
-                              ) =>
-                                updateSibling(
-                                  index,
-                                  'spouseClan',
-                                  value
-                                )
-                              }
-                            />
+              {verified ? (
+                <p className="mt-4 text-[11px] font-bold text-[#45643f]">
+                  ✓ Mobile verified
+                </p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled={
+                      busy
+                    }
+                    className={`${outlineButtonClass} mt-4`}
+                    onClick={
+                      sendOtp
+                    }
+                  >
+                    Send verification code
+                  </button>
 
-                            <TextField
-                              label="Spouse family surname"
-                              value={
-                                sibling.spouseFamilySurname
-                              }
-                              onChange={(
-                                value
-                              ) =>
-                                updateSibling(
-                                  index,
-                                  'spouseFamilySurname',
-                                  value
-                                )
-                              }
-                            />
-
-                            <TextField
-                              label="Sasariyu native place"
-                              value={
-                                sibling.spouseNativePlace
-                              }
-                              onChange={(
-                                value
-                              ) =>
-                                updateSibling(
-                                  index,
-                                  'spouseNativePlace',
-                                  value
-                                )
-                              }
-                            />
-
-                            <TextField
-                              label="Sasariyu village"
-                              value={
-                                sibling.spouseVillage
-                              }
-                              onChange={(
-                                value
-                              ) =>
-                                updateSibling(
-                                  index,
-                                  'spouseVillage',
-                                  value
-                                )
-                              }
-                            />
-
-                            <TextField
-                              label="Sasariyu taluka"
-                              value={
-                                sibling.spouseTaluka
-                              }
-                              onChange={(
-                                value
-                              ) =>
-                                updateSibling(
-                                  index,
-                                  'spouseTaluka',
-                                  value
-                                )
-                              }
-                            />
-
-                            <TextField
-                              label="Sasariyu district"
-                              value={
-                                sibling.spouseDistrict
-                              }
-                              onChange={(
-                                value
-                              ) =>
-                                updateSibling(
-                                  index,
-                                  'spouseDistrict',
-                                  value
-                                )
-                              }
-                            />
-
-                            <TextField
-                              label="Sasariyu state"
-                              value={
-                                sibling.spouseState
-                              }
-                              onChange={(
-                                value
-                              ) =>
-                                updateSibling(
-                                  index,
-                                  'spouseState',
-                                  value
-                                )
-                              }
-                            />
-                          </>
-                        )}
-                      </div>
+                  {otpSent && (
+                    <div className="mt-4 flex items-end gap-3">
+                      <TextField
+                        label="OTP"
+                        value={
+                          otp
+                        }
+                        onChange={
+                          setOtp
+                        }
+                      />
 
                       <button
                         type="button"
-                        className="absolute right-0 top-5 grid h-11 w-11 place-items-center rounded-full border border-[#ddd0c1] text-[#756a60]"
-                        aria-label="Remove sibling"
-                        onClick={() =>
-                          setData(
-                            (
-                              current
-                            ) => ({
-                              ...current,
+                        className={
+                          primaryButtonClass
+                        }
+                        onClick={
+                          verifyOtp
+                        }
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </>
+        )}
 
-                              siblingDetails:
-                                (
-                                  current.siblingDetails ||
-                                  []
-                                ).filter(
-                                  (
-                                    _,
-                                    itemIndex
-                                  ) =>
-                                    itemIndex !==
-                                    index
-                                )
-                            })
+        {step === 1 && (
+          <>
+            <div className="mt-7 border border-[#c49b70] bg-[#c49b7010] p-5">
+              <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#91683f]">
+                Dedicated Community
+              </p>
+
+              <h2 className="mt-2 font-['Cormorant_Garamond'] text-[28px] font-medium text-[#431318]">
+                Rajput / Darbar / Kshatriya Samaj
+              </h2>
+
+              <p className="mt-2 text-[11px] leading-6 text-[#756a60]">
+                Religion and caste are not asked because this platform is built exclusively for the community.
+              </p>
+            </div>
+
+            <div
+              className={
+                sectionClass
+              }
+            >
+              <div
+                className={
+                  gridClass
+                }
+              >
+                <TextField
+                  label="Sub-Samaj"
+                  value={
+                    data.subCommunity
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'subCommunity',
+                      value
+                    )
+                  }
+                />
+
+                <ShakhField
+                  label="Shakh"
+                  selection={
+                    data.shakhSelection
+                  }
+                  custom={
+                    data.customShakh
+                  }
+                  onSelection={(
+                    value
+                  ) =>
+                    update(
+                      'shakhSelection',
+                      value
+                    )
+                  }
+                  onCustom={(
+                    value
+                  ) =>
+                    update(
+                      'customShakh',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Gotra"
+                  value={
+                    data.gotra
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'gotra',
+                      value
+                    )
+                  }
+                />
+
+                <SelectField
+                  label="Kul / Vansh"
+                  value={
+                    data.vansh
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'vansh',
+                      value
+                    )
+                  }
+                  options={
+                    VANSH_OPTIONS
+                  }
+                />
+
+                <TextField
+                  label="Kuldevi"
+                  value={
+                    data.kulaDevi
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'kulaDevi',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Kuldevta"
+                  value={
+                    data.kulDevta
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'kulDevta',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Native village / Vatan"
+                  value={
+                    data.nativePlace
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'nativePlace',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Native Taluka"
+                  value={
+                    data.nativeTaluka
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'nativeTaluka',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Native District"
+                  value={
+                    data.nativeDistrict
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'nativeDistrict',
+                      value
+                    )
+                  }
+                />
+
+                <SelectField
+                  label="Native State"
+                  value={
+                    data.nativeState
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'nativeState',
+                      value
+                    )
+                  }
+                  options={
+                    INDIA_STATES
+                  }
+                />
+
+                <TextField
+                  label="Family / Samaj background"
+                  multiline
+                  value={
+                    data.familyOrigin
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'familyOrigin',
+                      value
+                    )
+                  }
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <div
+              className={
+                sectionClass
+              }
+            >
+              <div
+                className={
+                  gridClass
+                }
+              >
+                <TextField
+                  label="Birth Time"
+                  type="time"
+                  value={
+                    data.timeOfBirth
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'timeOfBirth',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Birth Place"
+                  value={
+                    data.birthCity
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'birthCity',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Birth District"
+                  value={
+                    data.birthDistrict
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'birthDistrict',
+                      value
+                    )
+                  }
+                />
+
+                <SelectField
+                  label="Birth State"
+                  value={
+                    data.birthState
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'birthState',
+                      value
+                    )
+                  }
+                  options={
+                    INDIA_STATES
+                  }
+                />
+
+                <SelectField
+                  label="Blood Group"
+                  value={
+                    data.bloodGroup
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'bloodGroup',
+                      value
+                    )
+                  }
+                  options={
+                    BLOOD_GROUP_OPTIONS
+                  }
+                />
+
+                <SelectField
+                  label="Diet"
+                  value={
+                    data.diet
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'diet',
+                      value
+                    )
+                  }
+                  options={
+                    DIET_OPTIONS
+                  }
+                />
+
+                <SelectField
+                  label="Smoking"
+                  value={
+                    data.smoking
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'smoking',
+                      value
+                    )
+                  }
+                  options={
+                    SMOKING_OPTIONS
+                  }
+                />
+
+                <SelectField
+                  label="Drinking"
+                  value={
+                    data.drinking
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'drinking',
+                      value
+                    )
+                  }
+                  options={
+                    DRINKING_OPTIONS
+                  }
+                />
+
+                <TextField
+                  label="Hobbies / Interests"
+                  value={
+                    data.interests
+                  }
+                  placeholder="Travel, reading, sports..."
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'interests',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="About Me"
+                  multiline
+                  value={
+                    data.aboutMe
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'aboutMe',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Current City"
+                  value={
+                    data.city
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'city',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Current District"
+                  value={
+                    data.district
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'district',
+                      value
+                    )
+                  }
+                />
+
+                <SelectField
+                  label="Current State"
+                  value={
+                    data.state
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'state',
+                      value
+                    )
+                  }
+                  options={
+                    INDIA_STATES
+                  }
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
+          <div
+            className={
+              sectionClass
+            }
+          >
+            <div
+              className={
+                gridClass
+              }
+            >
+              <TextField
+                label="Highest Education"
+                value={
+                  data.highestEducation
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'highestEducation',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Degree"
+                value={
+                  data.degree
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'degree',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Specialization"
+                value={
+                  data.specialization
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'specialization',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="College"
+                value={
+                  data.college
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'college',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="University"
+                value={
+                  data.university
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'university',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Education Details"
+                multiline
+                value={
+                  data.educationDetails
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'educationDetails',
+                    value
+                  )
+                }
+              />
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div
+            className={
+              sectionClass
+            }
+          >
+            <div
+              className={
+                gridClass
+              }
+            >
+              <SelectField
+                label="Employment Type"
+                value={
+                  data.occupationType
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'occupationType',
+                    value
+                  )
+                }
+                options={
+                  EMPLOYMENT_TYPES
+                }
+              />
+
+              <TextField
+                label="Profession / Occupation"
+                value={
+                  data.occupation
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'occupation',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Company / Organization"
+                value={
+                  data.companyName
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'companyName',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Designation"
+                value={
+                  data.designation
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'designation',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Business Name"
+                value={
+                  data.businessName
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'businessName',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Annual Income"
+                type="number"
+                min="0"
+                value={
+                  data.annualIncome
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'annualIncome',
+                    value
+                  )
+                }
+              />
+
+              <SelectField
+                label="Income visibility"
+                value={
+                  data.incomeVisibility ||
+                  'Private'
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'incomeVisibility',
+                    value
+                  )
+                }
+                options={[
+                  'Everyone',
+                  'RegisteredMembers',
+                  'AcceptedInterests',
+                  'Private'
+                ]}
+              />
+
+              <TextField
+                label="Work City"
+                value={
+                  data.workCity
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'workCity',
+                    value
+                  )
+                }
+              />
+
+              <SelectField
+                label="Work State"
+                value={
+                  data.workState
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'workState',
+                    value
+                  )
+                }
+                options={
+                  INDIA_STATES
+                }
+              />
+
+              <TextField
+                label="Work Country"
+                value={
+                  data.workCountry
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'workCountry',
+                    value
+                  )
+                }
+              />
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div
+            className={
+              sectionClass
+            }
+          >
+            <div
+              className={
+                gridClass
+              }
+            >
+              <TextField
+                label="Father's Name"
+                value={
+                  data.fatherName
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'fatherName',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Father's Occupation"
+                value={
+                  data.fatherOccupation
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'fatherOccupation',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Mother's Name"
+                value={
+                  data.motherName
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'motherName',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Mother's Occupation"
+                value={
+                  data.motherOccupation
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'motherOccupation',
+                    value
+                  )
+                }
+              />
+
+              <SelectField
+                label="Family Type"
+                value={
+                  data.familyType
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'familyType',
+                    value
+                  )
+                }
+                options={
+                  FAMILY_TYPES
+                }
+              />
+
+              <SelectField
+                label="Family Values"
+                value={
+                  data.familyValues
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'familyValues',
+                    value
+                  )
+                }
+                options={
+                  FAMILY_VALUES
+                }
+              />
+
+              <TextField
+                label="Family Residence"
+                value={
+                  data.familyLocation
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'familyLocation',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Family Details"
+                multiline
+                value={
+                  data.familyDescription
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'familyDescription',
+                    value
+                  )
+                }
+              />
+            </div>
+
+            <div className="mt-6 border-t border-[#ddd0c1] pt-5">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-['Cormorant_Garamond'] text-[27px] font-medium">
+                  Brothers & Sisters
+                </h3>
+
+                <button
+                  type="button"
+                  className={
+                    outlineButtonClass
+                  }
+                  onClick={() =>
+                    update(
+                      'siblingDetails',
+                      [
+                        ...(
+                          data.siblingDetails ||
+                          []
+                        ),
+                        {
+                          relation:
+                            'Brother',
+                          maritalStatus:
+                            'Unmarried'
+                        }
+                      ]
+                    )
+                  }
+                >
+                  <Plus
+                    size={
+                      15
+                    }
+                  />
+
+                  Add sibling
+                </button>
+              </div>
+
+              {(data.siblingDetails ||
+                []).map(
+                (
+                  sibling,
+                  index
+                ) => (
+                  <div
+                    className="relative mt-4 border border-[#ddd0c1] p-4"
+                    key={
+                      index
+                    }
+                  >
+                    <div
+                      className={
+                        gridClass
+                      }
+                    >
+                      <SelectField
+                        label="Relation"
+                        value={
+                          sibling.relation
+                        }
+                        options={[
+                          'Brother',
+                          'Sister'
+                        ]}
+                        onChange={(
+                          value
+                        ) => {
+                          const next =
+                            [
+                              ...data.siblingDetails
+                            ];
+
+                          next[
+                            index
+                          ] = {
+                            ...next[
+                              index
+                            ],
+                            relation:
+                              value
+                          };
+
+                          update(
+                            'siblingDetails',
+                            next
+                          );
+                        }}
+                      />
+
+                      <TextField
+                        label="Name"
+                        value={
+                          sibling.name
+                        }
+                        onChange={(
+                          value
+                        ) => {
+                          const next =
+                            [
+                              ...data.siblingDetails
+                            ];
+
+                          next[
+                            index
+                          ] = {
+                            ...next[
+                              index
+                            ],
+                            name:
+                              value
+                          };
+
+                          update(
+                            'siblingDetails',
+                            next
+                          );
+                        }}
+                      />
+
+                      <TextField
+                        label="Education"
+                        value={
+                          sibling.education
+                        }
+                        onChange={(
+                          value
+                        ) => {
+                          const next =
+                            [
+                              ...data.siblingDetails
+                            ];
+
+                          next[
+                            index
+                          ] = {
+                            ...next[
+                              index
+                            ],
+                            education:
+                              value
+                          };
+
+                          update(
+                            'siblingDetails',
+                            next
+                          );
+                        }}
+                      />
+
+                      <TextField
+                        label="Occupation"
+                        value={
+                          sibling.occupation
+                        }
+                        onChange={(
+                          value
+                        ) => {
+                          const next =
+                            [
+                              ...data.siblingDetails
+                            ];
+
+                          next[
+                            index
+                          ] = {
+                            ...next[
+                              index
+                            ],
+                            occupation:
+                              value
+                          };
+
+                          update(
+                            'siblingDetails',
+                            next
+                          );
+                        }}
+                      />
+
+                      <SelectField
+                        label="Marital Status"
+                        value={
+                          sibling.maritalStatus
+                        }
+                        options={[
+                          'Unmarried',
+                          'Married'
+                        ]}
+                        onChange={(
+                          value
+                        ) => {
+                          const next =
+                            [
+                              ...data.siblingDetails
+                            ];
+
+                          next[
+                            index
+                          ] = {
+                            ...next[
+                              index
+                            ],
+                            maritalStatus:
+                              value
+                          };
+
+                          update(
+                            'siblingDetails',
+                            next
+                          );
+                        }}
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full border border-[#ddd0c1]"
+                      onClick={() =>
+                        update(
+                          'siblingDetails',
+                          data.siblingDetails.filter(
+                            (
+                              _,
+                              itemIndex
+                            ) =>
+                              itemIndex !==
+                              index
+                          )
+                        )
+                      }
+                    >
+                      <Trash2
+                        size={
+                          14
+                        }
+                      />
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        {step === 6 && (
+          <div
+            className={
+              sectionClass
+            }
+          >
+            <div
+              className={
+                gridClass
+              }
+            >
+              <TextField
+                label="Maternal Grandfather's Name"
+                value={
+                  data.maternalGrandfatherName
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'maternalGrandfatherName',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Maternal Surname"
+                value={
+                  data.maternalFamilySurname
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'maternalFamilySurname',
+                    value
+                  )
+                }
+              />
+
+              <ShakhField
+                label="Maternal Shakh"
+                selection={
+                  data.maternalShakhSelection
+                }
+                custom={
+                  data.maternalCustomShakh
+                }
+                onSelection={(
+                  value
+                ) =>
+                  update(
+                    'maternalShakhSelection',
+                    value
+                  )
+                }
+                onCustom={(
+                  value
+                ) =>
+                  update(
+                    'maternalCustomShakh',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Maternal Gotra"
+                value={
+                  data.maternalGotra
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'maternalGotra',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Maternal Native Village"
+                value={
+                  data.maternalVillage
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'maternalVillage',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Maternal Taluka"
+                value={
+                  data.maternalTaluka
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'maternalTaluka',
+                    value
+                  )
+                }
+              />
+
+              <TextField
+                label="Maternal District"
+                value={
+                  data.maternalDistrict
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'maternalDistrict',
+                    value
+                  )
+                }
+              />
+
+              <SelectField
+                label="Maternal State"
+                value={
+                  data.maternalState
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'maternalState',
+                    value
+                  )
+                }
+                options={
+                  INDIA_STATES
+                }
+              />
+            </div>
+          </div>
+        )}
+
+        {step === 7 && (
+          <div
+            className={
+              sectionClass
+            }
+          >
+            <p className="mb-5 text-[11px] leading-6 text-[#756a60]">
+              Horoscope details are optional.
+            </p>
+
+            <div
+              className={
+                gridClass
+              }
+            >
+              <SelectField
+                label="Rashi"
+                value={
+                  data.rashi
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'rashi',
+                    value
+                  )
+                }
+                options={
+                  RASHI_OPTIONS
+                }
+              />
+
+              <SelectField
+                label="Nakshatra"
+                value={
+                  data.nakshatra
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'nakshatra',
+                    value
+                  )
+                }
+                options={
+                  NAKSHATRA_OPTIONS
+                }
+              />
+
+              <SelectField
+                label="Manglik"
+                value={
+                  data.manglik ||
+                  'Unknown'
+                }
+                onChange={(
+                  value
+                ) =>
+                  update(
+                    'manglik',
+                    value
+                  )
+                }
+                options={
+                  MANGLIK_OPTIONS
+                }
+              />
+            </div>
+          </div>
+        )}
+
+        {step === 8 && (
+          <>
+            <div
+              className={
+                sectionClass
+              }
+            >
+              <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
+                Profile Photo
+              </h2>
+
+              {data.profilePhoto && (
+                <img
+                  className="my-5 h-[190px] w-[150px] rounded-t-[75px] object-cover"
+                  src={assetUrl(
+                    data.profilePhoto
+                  )}
+                  alt="Profile"
+                />
+              )}
+
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={
+                  busy
+                }
+                onChange={(
+                  event
+                ) => {
+                  const file =
+                    event.target
+                      .files?.[0];
+
+                  if (
+                    file
+                  ) {
+                    uploadProfilePhoto(
+                      file
+                    );
+                  }
+                }}
+              />
+            </div>
+
+            <div
+              className={
+                sectionClass
+              }
+            >
+              <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
+                Additional Photos
+              </h2>
+
+              <div className="mt-5 grid grid-cols-3 gap-3 max-[600px]:grid-cols-2">
+                {(data.galleryAssets ||
+                  []).map(
+                  (
+                    asset
+                  ) => (
+                    <div
+                      className="relative"
+                      key={
+                        asset._id
+                      }
+                    >
+                      <img
+                        src={assetUrl(
+                          asset.url
+                        )}
+                        className="h-[150px] w-full object-cover"
+                        alt=""
+                      />
+
+                      <button
+                        type="button"
+                        className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white"
+                        onClick={() =>
+                          removeGallery(
+                            asset._id
                           )
                         }
                       >
                         <Trash2
                           size={
-                            16
+                            13
                           }
                         />
                       </button>
@@ -4764,968 +4121,10 @@ export default function OnboardingPage() {
                 )}
               </div>
 
-              <div
-                className={
-                  sensitivePanelClass
-                }
-              >
-                <SectionHeader
-                  title="Family assets"
-                  description="Optional. Exact property addresses should never be entered here."
-                />
-
-                <label className="flex items-center gap-[0.65rem]">
-                  <input
-                    type="checkbox"
-                    checked={
-                      !!data.hasLand
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      update(
-                        'hasLand',
-                        event
-                          .target
-                          .checked
-                      )
-                    }
-                  />
-
-                  Family has
-                  agricultural land
-                </label>
-
-                {data.hasLand && (
-                  <div className={`${fieldsGridClass} mt-4`}>
-                    <TextField
-                      label="Approximate area"
-                      type="number"
-                      min="0"
-                      value={
-                        data.approximateArea
-                      }
-                      onChange={(
-                        value
-                      ) =>
-                        update(
-                          'approximateArea',
-                          value
-                        )
-                      }
-                    />
-
-                    <SelectField
-                      label="Unit"
-                      value={
-                        data.landUnit ||
-                        'Vigha'
-                      }
-                      onChange={(
-                        value
-                      ) =>
-                        update(
-                          'landUnit',
-                          value
-                        )
-                      }
-                      options={[
-                        'Vigha',
-                        'Acre',
-                        'Hectare'
-                      ]}
-                    />
-                  </div>
-                )}
-
-                <div className={`${fieldsGridClass} mt-4`}>
-                  <TextField
-                    label="Property summary"
-                    multiline
-                    value={
-                      data.propertySummary
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'propertySummary',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Primary residence type"
-                    value={
-                      data.primaryResidenceType
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'primaryResidenceType',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Business assets summary"
-                    multiline
-                    value={
-                      data.businessAssetsSummary
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'businessAssetsSummary',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {step === 6 && (
-            <>
-              <div
-                className={
-                  sectionClass
-                }
-              >
-                <SectionHeader
-                  title="About & lifestyle"
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <TextField
-                    label="About me"
-                    multiline
-                    value={
-                      data.aboutMe
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'aboutMe',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Diet"
-                    value={
-                      data.diet
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'diet',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Smoking"
-                    value={
-                      data.smoking
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'smoking',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Drinking"
-                    value={
-                      data.drinking
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'drinking',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Interests"
-                    placeholder="Travel, reading, sports..."
-                    value={
-                      data.interests
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'interests',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Marriage timeline"
-                    value={
-                      data.marriageTimeline
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'marriageTimeline',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div
-                className={
-                  sectionClass
-                }
-              >
-                <SectionHeader
-                  title="Astrology"
-                  description="Optional traditional matching information."
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <TextField
-                    label="Rashi"
-                    value={
-                      data.rashi
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'rashi',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Nakshatra"
-                    value={
-                      data.nakshatra
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'nakshatra',
-                        value
-                      )
-                    }
-                  />
-
-                  <SelectField
-                    label="Manglik"
-                    value={
-                      data.manglik ||
-                      'Unknown'
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'manglik',
-                        value
-                      )
-                    }
-                    options={[
-                      'Yes',
-                      'No',
-                      'Anshik',
-                      'Unknown'
-                    ]}
-                  />
-                </div>
-              </div>
-
-              <div
-                className={
-                  sensitivePanelClass
-                }
-              >
-                <SectionHeader
-                  title="Current address & contact"
-                  description="Private by default. These details are controlled by contact privacy and contact-unlock rules."
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <TextField
-                    label="Address line 1"
-                    value={
-                      data.currentAddressLine1
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'currentAddressLine1',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Address line 2"
-                    value={
-                      data.currentAddressLine2
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'currentAddressLine2',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="City"
-                    value={
-                      data.currentAddressCity
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'currentAddressCity',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Taluka"
-                    value={
-                      data.currentAddressTaluka
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'currentAddressTaluka',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="District"
-                    value={
-                      data.currentAddressDistrict
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'currentAddressDistrict',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="State"
-                    value={
-                      data.currentAddressState
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'currentAddressState',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Pincode"
-                    value={
-                      data.currentAddressPincode
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'currentAddressPincode',
-                        value.replace(
-                          /\D/g,
-                          ''
-                        ).slice(
-                          0,
-                          6
-                        )
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Guardian name"
-                    value={
-                      data.guardianName
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'guardianName',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Guardian relation"
-                    value={
-                      data.guardianRelation
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'guardianRelation',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Guardian phone"
-                    value={
-                      data.guardianPhone
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'guardianPhone',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Self phone"
-                    value={
-                      data.selfPhone
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'selfPhone',
-                        value
-                      )
-                    }
-                  />
-
-                  <TextField
-                    label="Email"
-                    type="email"
-                    value={
-                      data.contactEmail
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'contactEmail',
-                        value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div
-                className={
-                  sensitivePanelClass
-                }
-              >
-                <SectionHeader
-                  title="Privacy controls"
-                  description="Control how sensitive matrimonial information is revealed."
-                />
-
-                <div
-                  className={
-                    fieldsGridClass
-                  }
-                >
-                  <SelectField
-                    label="Family overview"
-                    value={
-                      data.familyOverviewVisibility ||
-                      'AcceptedInterests'
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'familyOverviewVisibility',
-                        value
-                      )
-                    }
-                    options={[
-                      'RegisteredMembers',
-                      'AcceptedInterests',
-                      'MutualMatches',
-                      'Private'
-                    ]}
-                  />
-
-                  <SelectField
-                    label="Maternal / Mosal details"
-                    value={
-                      data.maternalFamilyVisibility ||
-                      'AcceptedInterests'
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'maternalFamilyVisibility',
-                        value
-                      )
-                    }
-                    options={[
-                      'AcceptedInterests',
-                      'MutualMatches',
-                      'Private'
-                    ]}
-                  />
-
-                  <SelectField
-                    label="Sibling details"
-                    value={
-                      data.siblingDetailsVisibility ||
-                      'AcceptedInterests'
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'siblingDetailsVisibility',
-                        value
-                      )
-                    }
-                    options={[
-                      'AcceptedInterests',
-                      'MutualMatches',
-                      'Private'
-                    ]}
-                  />
-
-                  <SelectField
-                    label="Family assets"
-                    value={
-                      data.assetVisibility ||
-                      'Private'
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'assetVisibility',
-                        value
-                      )
-                    }
-                    options={[
-                      'AcceptedInterests',
-                      'MutualMatches',
-                      'Private'
-                    ]}
-                  />
-
-                  <SelectField
-                    label="Astrology"
-                    value={
-                      data.astrologyVisibility ||
-                      'RegisteredMembers'
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'astrologyVisibility',
-                        value
-                      )
-                    }
-                    options={[
-                      'RegisteredMembers',
-                      'AcceptedInterests',
-                      'MutualMatches',
-                      'Private'
-                    ]}
-                  />
-
-                  <SelectField
-                    label="Structured address"
-                    value={
-                      data.contactAddressVisibility ||
-                      'Private'
-                    }
-                    onChange={(
-                      value
-                    ) =>
-                      update(
-                        'contactAddressVisibility',
-                        value
-                      )
-                    }
-                    options={[
-                      'AcceptedInterests',
-                      'MutualMatches',
-                      'Private'
-                    ]}
-                  />
-                </div>
-              </div>
-
-              <div
-                className={
-                  sensitivePanelClass
-                }
-              >
-                <SectionHeader
-                  title="Printed biodata"
-                  description="Choose which optional sections may appear when you print your own biodata."
-                />
-
-                <div className="grid gap-4">
-                  {[
-                    [
-                      'includeSensitiveFamilyDetailsInBiodata',
-                      'Include sensitive family / Mosal details'
-                    ],
-
-                    [
-                      'includeAstrologyInBiodata',
-                      'Include astrology information'
-                    ],
-
-                    [
-                      'includeContactDetailsInBiodata',
-                      'Include current contact details'
-                    ],
-
-                    [
-                      'includeAssetsInBiodata',
-                      'Include family assets'
-                    ]
-                  ].map(
-                    ([
-                      key,
-                      label
-                    ]) => (
-                      <label
-                        key={
-                          key
-                        }
-                        className="flex items-center gap-3 text-[12px] text-[#5e4e46]"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={
-                            !!data[
-                              key
-                            ]
-                          }
-                          onChange={(
-                            event
-                          ) =>
-                            update(
-                              key,
-                              event
-                                .target
-                                .checked
-                            )
-                          }
-                        />
-
-                        {label}
-                      </label>
-                    )
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          {step === 7 && (
-            <div
-              className={
-                fieldsGridClass
-              }
-            >
-              <TextField
-                label="Minimum age"
-                type="number"
-                value={
-                  data.ageMin
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'ageMin',
-                    value
-                  )
-                }
-              />
-
-              <TextField
-                label="Maximum age"
-                type="number"
-                value={
-                  data.ageMax
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'ageMax',
-                    value
-                  )
-                }
-              />
-
-              <TextField
-                label="Minimum height"
-                type="number"
-                value={
-                  data.heightMin
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'heightMin',
-                    value
-                  )
-                }
-              />
-
-              <TextField
-                label="Maximum height"
-                type="number"
-                value={
-                  data.heightMax
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'heightMax',
-                    value
-                  )
-                }
-              />
-
-              <TextField
-                label="Preferred cities"
-                value={
-                  data.locations
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'locations',
-                    value
-                  )
-                }
-              />
-
-              <TextField
-                label="Preferred states"
-                value={
-                  data.states
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'states',
-                    value
-                  )
-                }
-              />
-
-              <TextField
-                label="Education preferences"
-                value={
-                  data.educationPreferences
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'educationPreferences',
-                    value
-                  )
-                }
-              />
-
-              <TextField
-                label="Occupation preferences"
-                value={
-                  data.occupationPreferences
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'occupationPreferences',
-                    value
-                  )
-                }
-              />
-
-              <TextField
-                label="Diet preferences"
-                value={
-                  data.dietPreferences
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'dietPreferences',
-                    value
-                  )
-                }
-              />
-
-              <TextField
-                label="Community preferences"
-                value={
-                  data.communityPreferences
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'communityPreferences',
-                    value
-                  )
-                }
-              />
-
-              <TextField
-                label="Accepted marital statuses"
-                value={
-                  data.acceptedMaritalStatuses
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'acceptedMaritalStatuses',
-                    value
-                  )
-                }
-              />
-
-              <SelectField
-                label="Open to remarriage"
-                value={
-                  data.willingForRemarriage ||
-                  'Open to Discuss'
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'willingForRemarriage',
-                    value
-                  )
-                }
-                options={[
-                  'Yes',
-                  'No',
-                  'Open to Discuss'
-                ]}
-              />
-
-              <TextField
-                label="Additional preferences"
-                multiline
-                value={
-                  data.additionalPreferences
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'additionalPreferences',
-                    value
-                  )
-                }
-              />
-            </div>
-          )}
-
-          {step === 8 && (
-            <div className="border border-dashed border-[#bfa98f] p-[45px] text-center">
-              {data.profilePhoto && (
-                <img
-                  className="mx-auto mb-[15px] h-[160px] w-[130px] rounded-t-[70px] object-cover"
-                  src={assetUrl(
-                    data.profilePhoto
-                  )}
-                  alt="Preview"
-                />
-              )}
-
-              <h3 className="font-['Cormorant_Garamond'] text-[25px] font-medium">
-                {data.profilePhoto
-                  ? 'Replace profile photograph'
-                  : 'Add profile photograph'}
-              </h3>
-
-              <p className="m-[6px] text-[11px] text-[#756a60]">
-                JPG, PNG or WebP.
-                Maximum 5 MB.
-              </p>
-
               <input
+                className="mt-4"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
                 disabled={
                   busy
                 }
@@ -5733,226 +4132,345 @@ export default function OnboardingPage() {
                   event
                 ) => {
                   const file =
-                    event
-                      .target
+                    event.target
                       .files?.[0];
 
                   if (
                     file
                   ) {
-                    upload(
+                    uploadGalleryPhoto(
                       file
                     );
                   }
                 }}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
               />
             </div>
-          )}
 
-          {step === 9 && (
-            <div className="bg-[#f1e8dc] p-[30px]">
-              <h3 className="font-['Cormorant_Garamond'] text-[34px] font-medium">
-                {data.firstName ||
-                  'Your'}{' '}
-                {data.middleName ||
-                  ''}{' '}
-                {data.lastName ||
-                  'profile'}
-              </h3>
+            <div
+              className={
+                sectionClass
+              }
+            >
+              <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
+                Biodata Privacy
+              </h2>
 
-              <p>
-                {data.city ||
-                  'Location'}
-                {' • '}
-                {data.occupation ||
-                  'Profession'}
-              </p>
-
-              <dl className="my-[25px] grid grid-cols-2 gap-[14px] max-[600px]:grid-cols-1">
+              <div className="mt-5 grid gap-4 text-[12px]">
                 {[
                   [
-                    'Profile for',
-                    data.profileFor
+                    'includeSensitiveFamilyDetailsInBiodata',
+                    'Include detailed family / Mosal information'
                   ],
-
                   [
-                    'Date of birth',
-                    data.dateOfBirth
+                    'includeAstrologyInBiodata',
+                    'Include horoscope information'
                   ],
-
                   [
-                    'Marital status',
-                    data.maritalStatus
+                    'includeContactDetailsInBiodata',
+                    'Include contact details'
                   ],
-
                   [
-                    'Height',
-                    data.height
-                      ? `${data.height} cm`
-                      : ''
-                  ],
-
-                  [
-                    'Blood group',
-                    data.bloodGroup
-                  ],
-
-                  [
-                    'Education',
-                    data.highestEducation
-                  ],
-
-                  [
-                    'Profession',
-                    data.occupation
-                  ],
-
-                  [
-                    'Religion / Caste',
-                    [
-                      data.religion,
-                      data.caste
-                    ]
-                      .filter(
-                        Boolean
-                      )
-                      .join(
-                        ' • '
-                      )
-                  ],
-
-                  [
-                    'Clan / Shakh',
-                    data.clan
-                  ],
-
-                  [
-                    'Gotra',
-                    data.gotra
-                  ],
-
-                  [
-                    'Vansh',
-                    data.vansh
-                  ],
-
-                  [
-                    'Kula Devi',
-                    data.kulaDevi
-                  ],
-
-                  [
-                    'Vatan',
-                    [
-                      data.nativePlace,
-                      data.nativeDistrict,
-                      data.nativeState
-                    ]
-                      .filter(
-                        Boolean
-                      )
-                      .join(
-                        ', '
-                      )
-                  ],
-
-                  [
-                    'Mosal',
-                    [
-                      data.selfMosal
-                        ?.familySurname,
-                      data.selfMosal
-                        ?.nativeVillage,
-                      data.selfMosal
-                        ?.district
-                    ]
-                      .filter(
-                        Boolean
-                      )
-                      .join(
-                        ', '
-                      )
-                  ],
-
-                  [
-                    'Astrology',
-                    [
-                      data.rashi,
-                      data.nakshatra,
-                      data.manglik &&
-                      data.manglik !==
-                        'Unknown'
-                        ? data.manglik
-                        : ''
-                    ]
-                      .filter(
-                        Boolean
-                      )
-                      .join(
-                        ' • '
-                      )
+                    'includeAssetsInBiodata',
+                    'Include family assets'
                   ]
                 ].map(
                   ([
-                    label,
-                    value
+                    key,
+                    label
                   ]) => (
-                    <div
+                    <label
                       key={
-                        label
+                        key
                       }
+                      className="flex items-center gap-3"
                     >
-                      <dt className="text-[8px] uppercase text-[#756a60]">
-                        {label}
-                      </dt>
+                      <input
+                        type="checkbox"
+                        checked={
+                          !!data[
+                            key
+                          ]
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          update(
+                            key,
+                            event.target
+                              .checked
+                          )
+                        }
+                      />
 
-                      <dd className="text-[12px]">
-                        {value ||
-                          'Not shared'}
-                      </dd>
-                    </div>
+                      {label}
+                    </label>
                   )
                 )}
-              </dl>
+              </div>
+            </div>
+          </>
+        )}
 
-              <p className="text-[11px] leading-6 text-[#756a60]">
-                Submitting sends
-                this profile to
-                moderation. You can
-                edit it later without
-                losing the existing
-                saved details.
+        {step === 9 && (
+          <>
+            <div
+              className={
+                sectionClass
+              }
+            >
+              <div
+                className={
+                  gridClass
+                }
+              >
+                <TextField
+                  label="Minimum Age"
+                  type="number"
+                  value={
+                    data.ageMin
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'ageMin',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Maximum Age"
+                  type="number"
+                  value={
+                    data.ageMax
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'ageMax',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Minimum Height"
+                  type="number"
+                  value={
+                    data.heightMin
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'heightMin',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Maximum Height"
+                  type="number"
+                  value={
+                    data.heightMax
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'heightMax',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Preferred Shakh"
+                  value={
+                    data.communityPreferences
+                  }
+                  placeholder="Jadeja, Gohil, Rathod..."
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'communityPreferences',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Preferred Education"
+                  value={
+                    data.educationPreferences
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'educationPreferences',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Preferred Profession"
+                  value={
+                    data.occupationPreferences
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'occupationPreferences',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Preferred Location"
+                  value={
+                    data.locations
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'locations',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Preferred States"
+                  value={
+                    data.states
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'states',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Preferred Country"
+                  value={
+                    data.countries
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'countries',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Preferred Marital Status"
+                  value={
+                    data.acceptedMaritalStatuses
+                  }
+                  placeholder="Never Married, Divorced..."
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'acceptedMaritalStatuses',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Diet Preference"
+                  value={
+                    data.dietPreferences
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'dietPreferences',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Other Expectations"
+                  multiline
+                  value={
+                    data.additionalPreferences
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'additionalPreferences',
+                      value
+                    )
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 border border-[#c49b70] bg-[#c49b7010] p-6">
+              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#91683f]">
+                Profile completion
+              </p>
+
+              <p className="mt-2 font-['Cormorant_Garamond'] text-[40px] font-medium text-[#681d25]">
+                {completion}% Complete
+              </p>
+
+              <p className="mt-2 text-[11px] leading-6 text-[#756a60]">
+                You can update optional details later from Edit Profile.
               </p>
             </div>
-          )}
+          </>
+        )}
 
-          {error && (
-            <p className="mt-4 bg-[#f8e9e8] px-[14px] py-3 text-[12px] text-[#8b1e26]">
-              {error}
-            </p>
-          )}
+        {error && (
+          <p className="mt-5 border border-[#d6a0a5] bg-[#f8e9e8] px-4 py-3 text-[12px] text-[#8b1e26]">
+            {error}
+          </p>
+        )}
 
-          <button
-            type="button"
-            disabled={
-              busy
+        <button
+          type="button"
+          disabled={
+            busy
+          }
+          onClick={
+            next
+          }
+          className={`${primaryButtonClass} mt-8 min-w-[190px]`}
+        >
+          {busy
+            ? 'Saving…'
+            : step === 9
+              ? 'Submit for review'
+              : 'Save & continue'}
+
+          <ArrowRight
+            size={
+              15
             }
-            className={`${primaryButtonClass} mt-[30px] min-w-[160px]`}
-            onClick={
-              next
-            }
-          >
-            {busy
-              ? 'Saving…'
-              : step === 9
-                ? 'Submit for review'
-                : 'Continue'}
-
-            <ArrowRight />
-          </button>
-        </section>
+          />
+        </button>
       </main>
     </div>
   );

@@ -29,7 +29,7 @@ const valueClass =
   "mt-1 font-['Cormorant_Garamond'] text-[19px] font-medium leading-[1.25] text-[#2b1b19]";
 
 const sectionClass =
-  'mt-8 border-t border-[#d9c9b8] pt-6 break-inside-avoid';
+  'mt-8 break-inside-avoid border-t border-[#d9c9b8] pt-6';
 
 const sectionTitleClass =
   "font-['Cormorant_Garamond'] text-[28px] font-medium text-[#681d25]";
@@ -228,7 +228,7 @@ function MosalBlock({
   }
 
   return (
-    <article className="border border-[#ded0c1] bg-[#fffdfa] p-4 break-inside-avoid">
+    <article className="break-inside-avoid border border-[#ded0c1] bg-[#fffdfa] p-4">
       <h3 className="font-['Cormorant_Garamond'] text-[22px] font-medium text-[#431318]">
         {title}
       </h3>
@@ -426,9 +426,7 @@ export default function BiodataPage() {
               profile.birthDetails
                 ?.district,
               profile.birthDetails
-                ?.state,
-              profile.birthDetails
-                ?.country
+                ?.state
             ]),
 
           workLocation:
@@ -550,25 +548,23 @@ export default function BiodataPage() {
           My Profile
         </Link>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            className={
-              toolbarButtonClass
+        <button
+          type="button"
+          className={
+            toolbarButtonClass
+          }
+          onClick={() =>
+            window.print()
+          }
+        >
+          <Printer
+            size={
+              15
             }
-            onClick={() =>
-              window.print()
-            }
-          >
-            <Printer
-              size={
-                15
-              }
-            />
+          />
 
-            Print biodata
-          </button>
-        </div>
+          Print biodata
+        </button>
       </div>
 
       <div className="mx-auto mb-5 grid max-w-[850px] grid-cols-4 gap-2 print:hidden max-[850px]:grid-cols-2 max-[480px]:grid-cols-1">
@@ -750,13 +746,6 @@ export default function BiodataPage() {
             />
 
             <Field
-              label="Complexion"
-              value={
-                profile.complexion
-              }
-            />
-
-            <Field
               label="Marital Status"
               value={
                 profile.maritalStatus
@@ -770,6 +759,22 @@ export default function BiodataPage() {
                   ?.diet
               }
             />
+
+            <Field
+              label="Smoking"
+              value={
+                profile.lifestyle
+                  ?.smoking
+              }
+            />
+
+            <Field
+              label="Drinking"
+              value={
+                profile.lifestyle
+                  ?.drinking
+              }
+            />
           </dl>
         </Section>
 
@@ -778,31 +783,7 @@ export default function BiodataPage() {
         >
           <dl className="grid grid-cols-2 gap-x-8 gap-y-5 max-[600px]:grid-cols-1">
             <Field
-              label="Religion"
-              value={
-                profile.community
-                  ?.religion
-              }
-            />
-
-            <Field
-              label="Caste"
-              value={
-                profile.community
-                  ?.caste
-              }
-            />
-
-            <Field
-              label="Community"
-              value={
-                profile.community
-                  ?.name
-              }
-            />
-
-            <Field
-              label="Sub-Community"
+              label="Sub-Samaj"
               value={
                 profile.community
                   ?.subCommunity
@@ -810,7 +791,7 @@ export default function BiodataPage() {
             />
 
             <Field
-              label="Clan / Shakh"
+              label="Shakh"
               value={
                 profile.community
                   ?.clan
@@ -826,7 +807,7 @@ export default function BiodataPage() {
             />
 
             <Field
-              label="Vansh"
+              label="Kul / Vansh"
               value={
                 profile.community
                   ?.vansh
@@ -834,7 +815,7 @@ export default function BiodataPage() {
             />
 
             <Field
-              label="Kula Devi"
+              label="Kuldevi"
               value={
                 profile.community
                   ?.kulaDevi
@@ -842,7 +823,7 @@ export default function BiodataPage() {
             />
 
             <Field
-              label="Ishta Devta"
+              label="Kuldevta"
               value={
                 profile.community
                   ?.ishtaDevta
@@ -861,7 +842,7 @@ export default function BiodataPage() {
             ?.familyOrigin && (
             <p className={`${smallTextClass} mt-5`}>
               <strong className="text-[#431318]">
-                Family origin:
+                Family / Samaj background:
               </strong>{' '}
               {
                 profile.community
@@ -916,7 +897,15 @@ export default function BiodataPage() {
             />
 
             <Field
-              label="Occupation"
+              label="Employment Type"
+              value={
+                profile.career
+                  ?.occupationType
+              }
+            />
+
+            <Field
+              label="Profession / Occupation"
               value={
                 profile.career
                   ?.occupation
@@ -932,17 +921,23 @@ export default function BiodataPage() {
             />
 
             <Field
-              label="Organization / Business"
+              label="Company / Organization"
               value={
                 profile.career
-                  ?.companyName ||
+                  ?.companyName
+              }
+            />
+
+            <Field
+              label="Business Name"
+              value={
                 profile.career
                   ?.businessName
               }
             />
 
             <Field
-              label="Job / Business Location"
+              label="Work Location"
               value={
                 derived.workLocation
               }
@@ -972,7 +967,7 @@ export default function BiodataPage() {
 
         {profile.family && (
           <Section
-            title="Immediate Family"
+            title="Family Details"
           >
             <dl className="grid grid-cols-2 gap-x-8 gap-y-5 max-[600px]:grid-cols-1">
               <Field
@@ -1014,7 +1009,7 @@ export default function BiodataPage() {
               />
 
               <Field
-                label="Family Location"
+                label="Family Residence"
                 value={
                   profile.family
                     .familyLocation
@@ -1050,7 +1045,7 @@ export default function BiodataPage() {
                 />
 
                 <Field
-                  label="Clan"
+                  label="Shakh"
                   value={
                     profile
                       .paternalFamily
@@ -1074,25 +1069,13 @@ export default function BiodataPage() {
                   }
                 />
               </dl>
-
-              {profile
-                .paternalFamily
-                .notes && (
-                <p className={`${smallTextClass} mt-5`}>
-                  {
-                    profile
-                      .paternalFamily
-                      .notes
-                  }
-                </p>
-              )}
             </Section>
           )}
 
         {includeSensitive &&
           profile.maternalFamily && (
             <Section
-              title="Maternal Family"
+              title="Mosal Details"
             >
               <dl className="grid grid-cols-2 gap-x-8 gap-y-5 max-[600px]:grid-cols-1">
                 <Field
@@ -1105,7 +1088,7 @@ export default function BiodataPage() {
                 />
 
                 <Field
-                  label="Family Surname"
+                  label="Maternal Surname"
                   value={
                     profile
                       .maternalFamily
@@ -1114,7 +1097,7 @@ export default function BiodataPage() {
                 />
 
                 <Field
-                  label="Clan"
+                  label="Maternal Shakh"
                   value={
                     profile
                       .maternalFamily
@@ -1123,7 +1106,16 @@ export default function BiodataPage() {
                 />
 
                 <Field
-                  label="Mosal / Native Place"
+                  label="Maternal Gotra"
+                  value={
+                    profile
+                      .maternalFamily
+                      .notes
+                  }
+                />
+
+                <Field
+                  label="Maternal Native Place"
                   value={
                     derived.maternalPlace
                   }
@@ -1203,7 +1195,7 @@ export default function BiodataPage() {
                     return (
                       <article
                         key={`${sibling.relation || 'sibling'}-${index}`}
-                        className="border border-[#ded0c1] p-4 break-inside-avoid"
+                        className="break-inside-avoid border border-[#ded0c1] p-4"
                       >
                         <div className="grid grid-cols-2 gap-4 max-[600px]:grid-cols-1">
                           <Field
@@ -1290,9 +1282,6 @@ export default function BiodataPage() {
                   <Field
                     label="Status"
                     value={
-                      profile
-                        .maritalHistory
-                        .status ||
                       profile.maritalStatus
                     }
                   />

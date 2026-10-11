@@ -104,9 +104,6 @@ const profile = {
   bloodGroup:
     'B+',
 
-  complexion:
-    'Wheatish',
-
   maritalStatus:
     'Never Married',
 
@@ -134,9 +131,6 @@ const profile = {
     city:
       'Rajkot',
 
-    taluka:
-      'Rajkot',
-
     district:
       'Rajkot',
 
@@ -160,14 +154,8 @@ const profile = {
   },
 
   community: {
-    religion:
-      'Hinduism',
-
-    caste:
-      'Rajput',
-
     name:
-      'Kshatriya',
+      'Rajput / Kshatriya',
 
     subCommunity:
       'Rajput',
@@ -213,7 +201,7 @@ const profile = {
 
   career: {
     occupationType:
-      'Job',
+      'Private Job',
 
     occupation:
       'Software Developer',
@@ -269,7 +257,7 @@ const profile = {
       'Homemaker',
 
     familyType:
-      'Joint',
+      'Joint Family',
 
     familyLocation:
       'Rajkot',
@@ -278,32 +266,6 @@ const profile = {
       'Traditional family.',
 
     siblingDetails: []
-  },
-
-  paternalFamily: {
-    ancestralVillage:
-      'Khirasara',
-
-    nativePlace:
-      'Khirasara',
-
-    taluka:
-      'Lodhika',
-
-    district:
-      'Rajkot',
-
-    state:
-      'Gujarat',
-
-    familySurname:
-      'Rana',
-
-    clan:
-      'Rana',
-
-    gotra:
-      'Kashyap'
   },
 
   maternalFamily: {
@@ -399,62 +361,6 @@ const profile = {
       'No'
   },
 
-  contactDetails: {
-    currentAddress: {
-      addressLine1:
-        'Kalawad Road',
-
-      city:
-        'Rajkot',
-
-      district:
-        'Rajkot',
-
-      state:
-        'Gujarat',
-
-      pincode:
-        '360005',
-
-      country:
-        'India'
-    },
-
-    guardianName:
-      'Father Rana',
-
-    guardianRelation:
-      'Father',
-
-    guardianPhone:
-      '+919999999999',
-
-    selfPhone:
-      '+919876543210',
-
-    email:
-      'raj@example.com'
-  },
-
-  familyAssets: {
-    agricultureLand: {
-      hasLand:
-        true,
-
-      approximateArea:
-        12,
-
-      unit:
-        'Vigha'
-    },
-
-    propertySummary:
-      'Family property.',
-
-    primaryResidenceType:
-      'Owned House'
-  },
-
   privacy: {
     photoVisibility:
       'RegisteredMembers',
@@ -463,31 +369,7 @@ const profile = {
       'MutualMatches',
 
     incomeVisibility:
-      'Private',
-
-    familyVisibility:
-      'RegisteredMembers',
-
-    familyOverviewVisibility:
-      'AcceptedInterests',
-
-    maternalFamilyVisibility:
-      'AcceptedInterests',
-
-    siblingDetailsVisibility:
-      'AcceptedInterests',
-
-    assetVisibility:
-      'Private',
-
-    astrologyVisibility:
-      'RegisteredMembers',
-
-    contactAddressVisibility:
-      'Private',
-
-    fullNameVisibility:
-      'RegisteredMembers'
+      'Private'
   },
 
   biodataPrivacy: {
@@ -502,7 +384,10 @@ const profile = {
 
     includeAssetsInBiodata:
       false
-  }
+  },
+
+  aboutMe:
+    'Family-oriented software professional.'
 };
 
 const preferences = {
@@ -517,6 +402,14 @@ const preferences = {
   ]
 };
 
+const renderPage =
+  () =>
+    render(
+      <MemoryRouter>
+        <OnboardingPage />
+      </MemoryRouter>
+    );
+
 beforeEach(
   () => {
     apiMock.mockReset();
@@ -527,11 +420,12 @@ beforeEach(
 
     apiMock.mockImplementation(
       (
-        path
+        path,
+        options = {}
       ) => {
         if (
           path ===
-          '/profiles/me?optional=true'
+            '/profiles/me?optional=true'
         ) {
           return Promise.resolve({
             data: {
@@ -542,11 +436,104 @@ beforeEach(
 
         if (
           path ===
-          '/preferences?optional=true'
+            '/preferences?optional=true'
         ) {
           return Promise.resolve({
             data: {
               preferences
+            }
+          });
+        }
+
+        /*
+         * PATCH saves return the profile,
+         * matching the real API contract.
+         */
+        if (
+          path ===
+            '/profiles/me' &&
+          options.method ===
+            'PATCH'
+        ) {
+          const submitted =
+            JSON.parse(
+              options.body
+            );
+
+          return Promise.resolve({
+            data: {
+              profile: {
+                ...profile,
+
+                ...submitted,
+
+                community: {
+                  ...profile.community,
+                  ...submitted.community
+                },
+
+                birthDetails: {
+                  ...profile.birthDetails,
+                  ...submitted.birthDetails
+                },
+
+                location: {
+                  ...profile.location,
+                  ...submitted.location
+                },
+
+                education: {
+                  ...profile.education,
+                  ...submitted.education
+                },
+
+                career: {
+                  ...profile.career,
+                  ...submitted.career,
+
+                  workLocation: {
+                    ...profile.career
+                      .workLocation,
+                    ...submitted.career
+                      ?.workLocation
+                  }
+                },
+
+                lifestyle: {
+                  ...profile.lifestyle,
+                  ...submitted.lifestyle
+                },
+
+                family: {
+                  ...profile.family,
+                  ...submitted.family
+                },
+
+                maternalFamily: {
+                  ...profile.maternalFamily,
+                  ...submitted.maternalFamily
+                },
+
+                maternalLineage: {
+                  ...profile.maternalLineage,
+                  ...submitted.maternalLineage
+                },
+
+                astrology: {
+                  ...profile.astrology,
+                  ...submitted.astrology
+                },
+
+                privacy: {
+                  ...profile.privacy,
+                  ...submitted.privacy
+                },
+
+                biodataPrivacy: {
+                  ...profile.biodataPrivacy,
+                  ...submitted.biodataPrivacy
+                }
+              }
             }
           });
         }
@@ -580,9 +567,6 @@ describe(
             city:
               'Wrong City',
 
-            clan:
-              'Wrong Clan',
-
             occupation:
               'Wrong Job'
           })
@@ -593,96 +577,24 @@ describe(
           '7'
         );
 
-        render(
-          <MemoryRouter>
-            <OnboardingPage />
-          </MemoryRouter>
-        );
+        renderPage();
 
         expect(
-          await screen.findByText(
-            /who are you creating this profile for/i
+          await screen.findByRole(
+            'heading',
+            {
+              level:
+                1,
+
+              name:
+                /let us begin with the essentials/i
+            }
           )
         ).toBeInTheDocument();
 
-        /*
-         * Existing server profile forces
-         * the editor back to step 1 rather
-         * than restoring stale step 8.
-         */
         expect(
           screen.getByText(
-            /step 1 of 10/i
-          )
-        ).toBeInTheDocument();
-
-        /*
-         * Existing profile mode removes the
-         * stale browser onboarding draft.
-         */
-        expect(
-          localStorage.getItem(
-            'ksm_onboarding'
-          )
-        ).toBeNull();
-
-        expect(
-          localStorage.getItem(
-            'ksm_onboarding_step'
-          )
-        ).toBeNull();
-      }
-    );
-
-    test(
-      'existing DOB and nested biodata fields are restored into the edit form',
-      async () => {
-        render(
-          <MemoryRouter>
-            <OnboardingPage />
-          </MemoryRouter>
-        );
-
-        await screen.findByText(
-          /who are you creating this profile for/i
-        );
-
-        /*
-         * Step 1 -> verification.
-         */
-        fireEvent.click(
-          screen.getByRole(
-            'button',
-            {
-              name:
-                /continue/i
-            }
-          )
-        );
-
-        expect(
-          await screen.findByText(
-            /verify the account mobile number/i
-          )
-        ).toBeInTheDocument();
-
-        /*
-         * phoneVerified=true, so step 2
-         * can continue without OTP work.
-         */
-        fireEvent.click(
-          screen.getByRole(
-            'button',
-            {
-              name:
-                /continue/i
-            }
-          )
-        );
-
-        expect(
-          await screen.findByText(
-            /tell us the essential details/i
+            /step\s+1\s+of 10/i
           )
         ).toBeInTheDocument();
 
@@ -702,52 +614,106 @@ describe(
           '1998-05-14'
         );
 
+        /*
+         * Existing profile must ignore
+         * and remove the stale browser draft.
+         */
         expect(
-          screen.getByLabelText(
-            /time of birth/i
+          localStorage.getItem(
+            'ksm_onboarding'
           )
-        ).toHaveValue(
-          '10:45'
+        ).toBeNull();
+
+        expect(
+          localStorage.getItem(
+            'ksm_onboarding_step'
+          )
+        ).toBeNull();
+      }
+    );
+
+    test(
+      'existing profile restores dedicated Samaj and personal fields correctly',
+      async () => {
+        renderPage();
+
+        await screen.findByRole(
+          'heading',
+          {
+            name:
+              /let us begin with the essentials/i
+          }
         );
 
         expect(
           screen.getByLabelText(
-            /birth city/i
+            /marital status/i
           )
         ).toHaveValue(
-          'Rajkot'
+          'Never Married'
         );
 
         expect(
-          screen.getByLabelText(
-            /blood group/i
+          screen.queryByLabelText(
+            /complexion/i
           )
-        ).toHaveValue(
-          'B+'
-        );
+        ).not.toBeInTheDocument();
 
         /*
-         * Continue to Rajput heritage.
+         * Save step 1 and move to
+         * Community Details.
          */
         fireEvent.click(
           screen.getByRole(
             'button',
             {
               name:
-                /continue/i
+                /save & continue/i
             }
           )
         );
 
         expect(
-          await screen.findByText(
-            /share lineage, vatan and community/i
+          await screen.findByRole(
+            'heading',
+            {
+              name:
+                /your rajput heritage and lineage/i
+            }
           )
         ).toBeInTheDocument();
 
         expect(
+          screen.queryByLabelText(
+            /^religion$/i
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByLabelText(
+            /^caste$/i
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
           screen.getByLabelText(
-            /gotra/i
+            /^shakh$/i
+          )
+        ).toHaveValue(
+          'Other'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /shakh - other/i
+          )
+        ).toHaveValue(
+          'Rana'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /^gotra$/i
           )
         ).toHaveValue(
           'Kashyap'
@@ -755,7 +721,7 @@ describe(
 
         expect(
           screen.getByLabelText(
-            /vansh/i
+            /kul \/ vansh/i
           )
         ).toHaveValue(
           'Suryavanshi'
@@ -763,7 +729,7 @@ describe(
 
         expect(
           screen.getByLabelText(
-            /kula devi/i
+            /kuldevi/i
           )
         ).toHaveValue(
           'Ashapura Mata'
@@ -776,20 +742,239 @@ describe(
         ).toHaveValue(
           'Khirasara'
         );
+
+        expect(
+          screen.getByLabelText(
+            /native state/i
+          )
+        ).toHaveValue(
+          'Gujarat'
+        );
+
+        /*
+         * Save Community Details and
+         * move to Personal Details.
+         */
+        fireEvent.click(
+          screen.getByRole(
+            'button',
+            {
+              name:
+                /save & continue/i
+            }
+          )
+        );
+
+        expect(
+          await screen.findByRole(
+            'heading',
+            {
+              name:
+                /lifestyle and personal introduction/i
+            }
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByLabelText(
+            /birth time/i
+          )
+        ).toHaveValue(
+          '10:45'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /birth place/i
+          )
+        ).toHaveValue(
+          'Rajkot'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /birth district/i
+          )
+        ).toHaveValue(
+          'Rajkot'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /birth state/i
+          )
+        ).toHaveValue(
+          'Gujarat'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /blood group/i
+          )
+        ).toHaveValue(
+          'B+'
+        );
+
+        /*
+         * Birth State is now structured
+         * dropdown data instead of free text.
+         */
+        expect(
+          screen.getByLabelText(
+            /birth state/i
+          ).tagName
+        ).toBe(
+          'SELECT'
+        );
       }
     );
 
     test(
-      'editing an existing profile sends PATCH instead of creating another profile',
+      'changing marital status is included in the PATCH payload and does not revert to default',
       async () => {
-        render(
-          <MemoryRouter>
-            <OnboardingPage />
-          </MemoryRouter>
+        renderPage();
+
+        await screen.findByRole(
+          'heading',
+          {
+            name:
+              /let us begin with the essentials/i
+          }
         );
 
-        await screen.findByText(
-          /who are you creating this profile for/i
+        const maritalStatus =
+          screen.getByLabelText(
+            /marital status/i
+          );
+
+        expect(
+          maritalStatus
+        ).toHaveValue(
+          'Never Married'
+        );
+
+        fireEvent.change(
+          maritalStatus,
+          {
+            target: {
+              value:
+                'Divorced'
+            }
+          }
+        );
+
+        expect(
+          maritalStatus
+        ).toHaveValue(
+          'Divorced'
+        );
+
+        expect(
+          screen.getByText(
+            /private marital context/i
+          )
+        ).toBeInTheDocument();
+
+        fireEvent.click(
+          screen.getByRole(
+            'button',
+            {
+              name:
+                /save & continue/i
+            }
+          )
+        );
+
+        await waitFor(
+          () => {
+            const saveCall =
+              apiMock.mock.calls.find(
+                (
+                  call
+                ) =>
+                  call[0] ===
+                    '/profiles/me' &&
+                  call[1]
+                    ?.method ===
+                    'PATCH'
+              );
+
+            expect(
+              saveCall
+            ).toBeTruthy();
+
+            const payload =
+              JSON.parse(
+                saveCall[1].body
+              );
+
+            expect(
+              payload.maritalStatus
+            ).toBe(
+              'Divorced'
+            );
+
+            expect(
+              payload.maritalHistory
+                .status
+            ).toBe(
+              'Divorced'
+            );
+
+            expect(
+              payload.maritalHistory
+                .isRemarriage
+            ).toBe(
+              true
+            );
+          }
+        );
+
+        /*
+         * API response hydration must keep
+         * the newly selected status.
+         */
+        expect(
+          await screen.findByRole(
+            'heading',
+            {
+              name:
+                /your rajput heritage and lineage/i
+            }
+          )
+        ).toBeInTheDocument();
+
+        fireEvent.click(
+          screen.getByRole(
+            'button',
+            {
+              name:
+                /go back/i
+            }
+          )
+        );
+
+        expect(
+          await screen.findByLabelText(
+            /marital status/i
+          )
+        ).toHaveValue(
+          'Divorced'
+        );
+      }
+    );
+
+    test(
+      'existing profile uses PATCH and preserves active visibility when manually saved',
+      async () => {
+        renderPage();
+
+        await screen.findByRole(
+          'heading',
+          {
+            name:
+              /let us begin with the essentials/i
+          }
         );
 
         fireEvent.click(
@@ -797,7 +982,7 @@ describe(
             'button',
             {
               name:
-                /save & exit/i
+                /^save$/i
             }
           )
         );
@@ -822,7 +1007,10 @@ describe(
               call
             ) =>
               call[0] ===
-              '/profiles/me'
+                '/profiles/me' &&
+              call[1]
+                ?.method ===
+                'PATCH'
           );
 
         const payload =
@@ -837,10 +1025,23 @@ describe(
         );
 
         expect(
+          payload.maritalStatus
+        ).toBe(
+          'Never Married'
+        );
+
+        expect(
           payload.community
             .gotra
         ).toBe(
           'Kashyap'
+        );
+
+        expect(
+          payload.community
+            .name
+        ).toBe(
+          'Rajput / Kshatriya'
         );
 
         expect(
@@ -851,18 +1052,31 @@ describe(
         );
 
         expect(
-          payload
-            .maternalLineage
-            .selfMosal
-            .familySurname
-        ).toBe(
-          'Jadeja'
-        );
-
-        expect(
           payload.visibility
         ).toBe(
           'active'
+        );
+
+        /*
+         * Generic-only fields are no longer
+         * submitted from the redesigned form.
+         */
+        expect(
+          payload
+        ).not.toHaveProperty(
+          'complexion'
+        );
+
+        expect(
+          payload.community
+        ).not.toHaveProperty(
+          'religion'
+        );
+
+        expect(
+          payload.community
+        ).not.toHaveProperty(
+          'caste'
         );
       }
     );

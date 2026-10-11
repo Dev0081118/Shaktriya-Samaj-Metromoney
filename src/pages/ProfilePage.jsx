@@ -10,6 +10,7 @@ import {
   Flag,
   Heart,
   MapPin,
+  MessageCircle,
   Phone,
   Printer,
   ShieldCheck,
@@ -123,10 +124,8 @@ const formatDate = (
     {
       day:
         '2-digit',
-
       month:
         'short',
-
       year:
         'numeric'
     }
@@ -147,8 +146,7 @@ const formatIncome = (
     !Number.isFinite(
       amount
     ) ||
-    amount <=
-      0
+    amount <= 0
   ) {
     return '';
   }
@@ -158,16 +156,34 @@ const formatIncome = (
     {
       style:
         'currency',
-
       currency:
         'INR',
-
       maximumFractionDigits:
         0
     }
   ).format(
     amount
   );
+};
+
+const whatsappUrl = (
+  value
+) => {
+  if (!value) {
+    return '';
+  }
+
+  const digits =
+    String(
+      value
+    ).replace(
+      /\D/g,
+      ''
+    );
+
+  return digits
+    ? `https://wa.me/${digits}`
+    : '';
 };
 
 function Detail({
@@ -272,10 +288,13 @@ function MosalCard({
     branch.grandmotherName;
 
   const lineage =
-    joinValues([
-      branch.familySurname,
-      branch.clanSurname
-    ]);
+    joinValues(
+      [
+        branch.familySurname,
+        branch.clanSurname
+      ],
+      ' • '
+    );
 
   if (
     !name &&
@@ -873,6 +892,22 @@ export default function ProfilePage({
       ' '
     );
 
+  const unlockedPhone =
+    profile.contact
+      ?.phone ||
+    profile.contactDetails
+      ?.selfPhone;
+
+  const unlockedWhatsApp =
+    profile.contact
+      ?.whatsappPhone ||
+    unlockedPhone;
+
+  const unlockedWhatsAppUrl =
+    whatsappUrl(
+      unlockedWhatsApp
+    );
+
   return (
     <article className="mx-auto max-w-[1120px]">
       <div className="grid grid-cols-[350px_minmax(0,1fr)] items-center gap-[55px] max-[850px]:grid-cols-1 max-[850px]:gap-8">
@@ -995,6 +1030,23 @@ export default function ProfilePage({
               'Education and profession not shared'}
           </p>
 
+          {profile.community
+            ?.clan && (
+            <p className="mt-2 text-[11px] font-bold text-[#681d25]">
+              {joinValues(
+                [
+                  profile.community
+                    ?.clan,
+                  profile.community
+                    ?.gotra,
+                  profile.location
+                    ?.nativePlace
+                ],
+                ' • '
+              )}
+            </p>
+          )}
+
           {data.compatibility && (
             <div className="mt-6 max-w-[500px] border border-[#c49b70] bg-[#c49b7010] px-4 py-3">
               <strong className="text-[12px] text-[#681d25]">
@@ -1112,21 +1164,43 @@ export default function ProfilePage({
                 </button>
 
                 {profile.contact ? (
-                  <a
-                    className={`${outlineButtonClass} no-underline`}
-                    href={`tel:${profile.contact.phone}`}
-                  >
-                    <Phone
-                      size={
-                        16
-                      }
-                    />
+                  <>
+                    {unlockedPhone && (
+                      <a
+                        className={`${outlineButtonClass} no-underline`}
+                        href={`tel:${unlockedPhone}`}
+                      >
+                        <Phone
+                          size={
+                            16
+                          }
+                        />
 
-                    {
-                      profile.contact
-                        .phone
-                    }
-                  </a>
+                        {
+                          unlockedPhone
+                        }
+                      </a>
+                    )}
+
+                    {unlockedWhatsAppUrl && (
+                      <a
+                        className={`${outlineButtonClass} no-underline`}
+                        href={
+                          unlockedWhatsAppUrl
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <MessageCircle
+                          size={
+                            16
+                          }
+                        />
+
+                        WhatsApp
+                      </a>
+                    )}
+                  </>
                 ) : contact
                     ?.status ===
                     'Accepted' &&
@@ -1349,13 +1423,6 @@ export default function ProfilePage({
             />
 
             <Detail
-              label="Complexion"
-              value={
-                profile.complexion
-              }
-            />
-
-            <Detail
               label="Marital status"
               value={
                 profile.maritalStatus
@@ -1382,7 +1449,7 @@ export default function ProfilePage({
           profile.astrology) && (
           <Section
             eyebrow="Traditional details"
-            title="Birth & astrology"
+            title="Birth & horoscope"
           >
             <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1">
               <Detail
@@ -1428,36 +1495,12 @@ export default function ProfilePage({
         )}
 
         <Section
-          eyebrow="Heritage"
+          eyebrow="Samaj & heritage"
           title="Rajput lineage"
         >
           <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1">
             <Detail
-              label="Religion"
-              value={
-                profile.community
-                  ?.religion
-              }
-            />
-
-            <Detail
-              label="Caste"
-              value={
-                profile.community
-                  ?.caste
-              }
-            />
-
-            <Detail
-              label="Community"
-              value={
-                profile.community
-                  ?.name
-              }
-            />
-
-            <Detail
-              label="Sub-community"
+              label="Sub-Samaj"
               value={
                 profile.community
                   ?.subCommunity
@@ -1465,7 +1508,7 @@ export default function ProfilePage({
             />
 
             <Detail
-              label="Clan / Shakh"
+              label="Shakh"
               value={
                 profile.community
                   ?.clan
@@ -1481,7 +1524,7 @@ export default function ProfilePage({
             />
 
             <Detail
-              label="Vansh"
+              label="Kul / Vansh"
               value={
                 profile.community
                   ?.vansh
@@ -1489,7 +1532,7 @@ export default function ProfilePage({
             />
 
             <Detail
-              label="Kula Devi"
+              label="Kuldevi"
               value={
                 profile.community
                   ?.kulaDevi
@@ -1497,7 +1540,7 @@ export default function ProfilePage({
             />
 
             <Detail
-              label="Ishta Devta"
+              label="Kuldevta"
               value={
                 profile.community
                   ?.ishtaDevta
@@ -1514,12 +1557,22 @@ export default function ProfilePage({
 
           {profile.community
             ?.familyOrigin && (
-            <p className={`${bodyClass} mt-5`}>
-              {
-                profile.community
-                  .familyOrigin
-              }
-            </p>
+            <div className="mt-5 border border-[#ddd0c1] bg-[#fffdf8] p-5">
+              <p
+                className={
+                  labelClass
+                }
+              >
+                Family / Samaj background
+              </p>
+
+              <p className={`${bodyClass} mt-2`}>
+                {
+                  profile.community
+                    .familyOrigin
+                }
+              </p>
+            </div>
           )}
         </Section>
 
@@ -1569,7 +1622,15 @@ export default function ProfilePage({
             />
 
             <Detail
-              label="Occupation"
+              label="Employment type"
+              value={
+                profile.career
+                  ?.occupationType
+              }
+            />
+
+            <Detail
+              label="Profession / Occupation"
               value={
                 profile.career
                   ?.occupation
@@ -1585,10 +1646,16 @@ export default function ProfilePage({
             />
 
             <Detail
-              label="Organization"
+              label="Company / Organization"
               value={
                 profile.career
-                  ?.companyName ||
+                  ?.companyName
+              }
+            />
+
+            <Detail
+              label="Business name"
+              value={
                 profile.career
                   ?.businessName
               }
@@ -1626,7 +1693,7 @@ export default function ProfilePage({
         {profile.family && (
           <Section
             eyebrow="Family"
-            title="Immediate family"
+            title="Family details"
           >
             <div className="grid grid-cols-2 gap-4 max-[560px]:grid-cols-1">
               <Detail
@@ -1668,7 +1735,7 @@ export default function ProfilePage({
               />
 
               <Detail
-                label="Family location"
+                label="Family residence"
                 value={
                   profile.family
                     .familyLocation
@@ -1704,7 +1771,7 @@ export default function ProfilePage({
               />
 
               <Detail
-                label="Clan"
+                label="Shakh"
                 value={
                   profile
                     .paternalFamily
@@ -1722,7 +1789,7 @@ export default function ProfilePage({
               />
 
               <Detail
-                label="Ancestral place"
+                label="Ancestral / Native place"
                 value={
                   paternalPlace
                 }
@@ -1746,7 +1813,7 @@ export default function ProfilePage({
         {profile.maternalFamily && (
           <Section
             eyebrow="Maternal lineage"
-            title="Mosal family"
+            title="Mosal details"
           >
             <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1">
               <Detail
@@ -1759,7 +1826,7 @@ export default function ProfilePage({
               />
 
               <Detail
-                label="Family surname"
+                label="Maternal surname"
                 value={
                   profile
                     .maternalFamily
@@ -1768,7 +1835,7 @@ export default function ProfilePage({
               />
 
               <Detail
-                label="Clan"
+                label="Maternal Shakh"
                 value={
                   profile
                     .maternalFamily
@@ -1777,24 +1844,21 @@ export default function ProfilePage({
               />
 
               <Detail
-                label="Native place"
+                label="Maternal Gotra"
+                value={
+                  profile
+                    .maternalFamily
+                    .notes
+                }
+              />
+
+              <Detail
+                label="Maternal native place"
                 value={
                   maternalPlace
                 }
               />
             </div>
-
-            {profile
-              .maternalFamily
-              .notes && (
-              <p className={`${bodyClass} mt-5`}>
-                {
-                  profile
-                    .maternalFamily
-                    .notes
-                }
-              </p>
-            )}
           </Section>
         )}
 
@@ -1866,7 +1930,11 @@ export default function ProfilePage({
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                          <p className={labelClass}>
+                          <p
+                            className={
+                              labelClass
+                            }
+                          >
                             {sibling.relation ||
                               'Sibling'}
                           </p>
@@ -1917,7 +1985,7 @@ export default function ProfilePage({
                             ' • '
                           ) && (
                             <p>
-                              Spouse family:{' '}
+                              Spouse Shakh / family:{' '}
                               {joinValues(
                                 [
                                   sibling.spouseClan,
@@ -1957,9 +2025,6 @@ export default function ProfilePage({
                 <Detail
                   label="Status"
                   value={
-                    profile
-                      .maritalHistory
-                      .status ||
                     profile.maritalStatus
                   }
                 />
@@ -2178,10 +2243,7 @@ export default function ProfilePage({
               <Detail
                 label="Self phone"
                 value={
-                  profile.contactDetails
-                    ?.selfPhone ||
-                  profile.contact
-                    ?.phone
+                  unlockedPhone
                 }
               />
 
@@ -2195,6 +2257,29 @@ export default function ProfilePage({
                 }
               />
             </div>
+
+            {!own &&
+              profile.contact &&
+              unlockedWhatsAppUrl && (
+                <div className="mt-5">
+                  <a
+                    href={
+                      unlockedWhatsAppUrl
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`${outlineButtonClass} no-underline`}
+                  >
+                    <MessageCircle
+                      size={
+                        16
+                      }
+                    />
+
+                    Open WhatsApp
+                  </a>
+                </div>
+              )}
           </Section>
         )}
       </div>
