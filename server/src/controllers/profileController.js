@@ -384,6 +384,11 @@ const profilePayload =
       ]
     );
 
+    /*
+     * subCommunity intentionally excluded.
+     * Old DB data stays untouched, but new
+     * writes cannot re-introduce it.
+     */
     setNestedIfPresent(
       safe,
       body,
@@ -392,7 +397,6 @@ const profilePayload =
         'religion',
         'caste',
         'name',
-        'subCommunity',
         'clan',
         'gotra',
         'vansh',
@@ -481,6 +485,7 @@ const profilePayload =
         'siblings',
         'siblingDetails',
         'familyType',
+        'familyValues',
         'familyLocation',
         'familyDescription'
       ]
@@ -538,6 +543,15 @@ const profilePayload =
       ]
     );
 
+    /*
+     * Important:
+     * notes is deliberately excluded here.
+     *
+     * Existing legacy notes survive because
+     * nested profile updates are deep-merged.
+     *
+     * New clients must write maternalGotra.
+     */
     setNestedIfPresent(
       safe,
       body,
@@ -551,7 +565,7 @@ const profilePayload =
         'maternalDistrict',
         'maternalState',
         'maternalClan',
-        'notes'
+        'maternalGotra'
       ]
     );
 
@@ -1764,6 +1778,44 @@ export const savePreferences =
           400,
           'Minimum height cannot exceed maximum height.'
         );
+      }
+
+      /*
+       * Always persist Preferred States as an
+       * array. This also safely handles any
+       * older client that sends CSV text.
+       */
+      if (
+        safe.states !==
+        undefined
+      ) {
+        safe.states =
+          Array.isArray(
+            safe.states
+          )
+            ? safe.states
+                .map(
+                  (state) =>
+                    typeof state ===
+                      'string'
+                      ? state.trim()
+                      : state
+                )
+                .filter(
+                  Boolean
+                )
+            : typeof safe.states ===
+                'string'
+              ? safe.states
+                  .split(',')
+                  .map(
+                    (state) =>
+                      state.trim()
+                  )
+                  .filter(
+                    Boolean
+                  )
+              : [];
       }
 
       const preferences =

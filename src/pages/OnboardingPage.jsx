@@ -250,13 +250,41 @@ const selectedSurname = (
     ? custom
     : selection;
 
+/*
+ * IMPORTANT:
+ *
+ * Do NOT spread the raw PartnerPreference object here.
+ *
+ * PartnerPreference also contains a `maritalStatus`
+ * field in older/other flows. Spreading that object
+ * after flatten(profile) could overwrite the actual
+ * candidate marital status on Edit Profile.
+ *
+ * Only partner-preference-specific form fields are
+ * mapped below.
+ */
 const preferenceToForm = (
   preferences
 ) => ({
-  ...(
-    preferences ||
-    {}
-  ),
+  ageMin:
+    preferences
+      ?.ageMin ??
+    '',
+
+  ageMax:
+    preferences
+      ?.ageMax ??
+    '',
+
+  heightMin:
+    preferences
+      ?.heightMin ??
+    '',
+
+  heightMax:
+    preferences
+      ?.heightMax ??
+    '',
 
   states:
     Array.isArray(
@@ -286,6 +314,11 @@ const preferenceToForm = (
       ?.acceptedMaritalStatuses?.[0] ||
     '',
 
+  willingForRemarriage:
+    preferences
+      ?.willingForRemarriage ||
+    'Open to Discuss',
+
   locations:
     (
       preferences
@@ -311,7 +344,12 @@ const preferenceToForm = (
       []
     ).join(
       ', '
-    )
+    ),
+
+  additionalPreferences:
+    preferences
+      ?.additionalPreferences ||
+    ''
 });
 
 const emptyMosal = () => ({
@@ -409,6 +447,11 @@ const flatten = (
         ) ||
       '',
 
+    /*
+     * Candidate's own marital status.
+     * Partner preferences never participate
+     * in this value.
+     */
     maritalStatus:
       profile.maritalStatus ||
       profile.maritalHistory
@@ -632,6 +675,11 @@ const flatten = (
         ?.familyType ||
       '',
 
+    familyValues:
+      profile.family
+        ?.familyValues ||
+      '',
+
     familyLocation:
       profile.family
         ?.familyLocation ||
@@ -717,7 +765,13 @@ const flatten = (
     maternalCustomSurname:
       maternalSurname.custom,
 
+    /*
+     * New records use maternalGotra.
+     * notes is read only as legacy fallback.
+     */
     maternalGotra:
+      profile.maternalFamily
+        ?.maternalGotra ||
       profile.maternalFamily
         ?.notes ||
       '',
@@ -1041,6 +1095,9 @@ const profilePayload = (
       familyType:
         data.familyType,
 
+      familyValues:
+        data.familyValues,
+
       familyLocation:
         data.familyLocation,
 
@@ -1076,7 +1133,11 @@ const profilePayload = (
           data.maternalCustomSurname
         ),
 
-      notes:
+      /*
+       * New canonical DB field.
+       * Do not write this into notes.
+       */
+      maternalGotra:
         data.maternalGotra
     },
 
@@ -1172,6 +1233,10 @@ const preferencePayload = (
       data.locations
     ),
 
+  /*
+   * Preferred states must always be sent
+   * as an array.
+   */
   states:
     Array.isArray(
       data.states
@@ -1891,6 +1956,12 @@ export default function OnboardingPage() {
               true
             );
 
+            /*
+             * preferenceToForm() contains only
+             * partner-preference fields now, so
+             * candidate maritalStatus from flatten()
+             * cannot be overwritten here.
+             */
             setData({
               ...flatten(
                 profile
@@ -3798,7 +3869,7 @@ export default function OnboardingPage() {
               />
 
               <SelectField
-                label="Family Residence"
+                label="Family Residence State"
                 value={
                   data.familyLocation
                 }
@@ -4095,6 +4166,10 @@ export default function OnboardingPage() {
                                   spouseVillage:
                                     value,
 
+                                  /*
+                                   * Keep legacy place value
+                                   * synchronized for old consumers.
+                                   */
                                   spouseNativePlace:
                                     value
                                 };

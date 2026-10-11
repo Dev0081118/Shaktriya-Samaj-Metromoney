@@ -654,6 +654,13 @@ const schema =
             100
         },
 
+        /*
+         * Legacy field retained only so old
+         * records do not break.
+         *
+         * New profile writes no longer accept
+         * subCommunity.
+         */
         subCommunity: {
           type:
             String,
@@ -665,6 +672,11 @@ const schema =
             100
         },
 
+        /*
+         * DB key retained for compatibility.
+         * Main profile UI displays this value
+         * as "Surname".
+         */
         clan: {
           type:
             String,
@@ -1215,6 +1227,28 @@ const schema =
             100
         },
 
+        /*
+         * Newly persisted field.
+         */
+        familyValues: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          enum: [
+            'Traditional',
+            'Moderate',
+            'Liberal'
+          ]
+        },
+
+        /*
+         * Existing DB key retained.
+         * UI displays it as:
+         * "Family Residence State".
+         */
         familyLocation: {
           type:
             String,
@@ -1317,7 +1351,7 @@ const schema =
       },
 
       /* ------------------------------------------------------------------ */
-      /* Existing maternal family summary                                   */
+      /* Maternal family summary                                            */
       /* ------------------------------------------------------------------ */
 
       maternalFamily: {
@@ -1385,6 +1419,26 @@ const schema =
             100
         },
 
+        /*
+         * Canonical maternal Gotra storage.
+         */
+        maternalGotra: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            120
+        },
+
+        /*
+         * Legacy field retained because older
+         * records stored maternal Gotra here.
+         *
+         * New saves do NOT use notes for Gotra.
+         */
         notes: {
           type:
             String,
@@ -1399,10 +1453,6 @@ const schema =
       /* ------------------------------------------------------------------ */
 
       maternalLineage: {
-        /*
-         * Candidate's Mosal:
-         * mother's parental family.
-         */
         selfMosal: {
           mamaName: {
             type:
@@ -1418,10 +1468,6 @@ const schema =
           ...mosalBranch
         },
 
-        /*
-         * Father's Mosal:
-         * paternal grandmother's parental family.
-         */
         fathersMosal: {
           grandmotherName: {
             type:
@@ -1437,10 +1483,6 @@ const schema =
           ...mosalBranch
         },
 
-        /*
-         * Mother's Mosal:
-         * maternal grandmother's parental family.
-         */
         mothersMosal: {
           grandmotherName: {
             type:
@@ -1784,10 +1826,6 @@ const schema =
       profilePhotoPublicId:
         String,
 
-      /*
-       * Legacy gallery URLs retained
-       * for compatibility.
-       */
       gallery: [
         String
       ],
