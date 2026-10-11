@@ -156,9 +156,17 @@ const publicProfile = {
     name:
       'Rajput / Kshatriya',
 
+    /*
+     * Legacy field intentionally retained.
+     * New profile UI must not render it.
+     */
     subCommunity:
       'Rajput',
 
+    /*
+     * Existing backend key.
+     * Profile UI now presents this as Surname.
+     */
     clan:
       'Rana',
 
@@ -255,8 +263,11 @@ const publicProfile = {
     familyType:
       'Joint Family',
 
+    familyValues:
+      'Traditional',
+
     familyLocation:
-      'Rajkot',
+      'Gujarat',
 
     familyDescription:
       'Traditional family.',
@@ -286,7 +297,10 @@ const publicProfile = {
     maternalClan:
       'Jadeja',
 
-    notes:
+    /*
+     * Canonical maternal Gotra field.
+     */
+    maternalGotra:
       'Vashishtha'
   },
 
@@ -306,6 +320,40 @@ const publicProfile = {
 
       district:
         'Rajkot',
+
+      state:
+        'Gujarat'
+    },
+
+    fathersMosal: {
+      grandmotherName:
+        'Paternal Grandmother',
+
+      familySurname:
+        'Gohil',
+
+      nativeVillage:
+        'Bhavnagar',
+
+      district:
+        'Bhavnagar',
+
+      state:
+        'Gujarat'
+    },
+
+    mothersMosal: {
+      grandmotherName:
+        'Maternal Grandmother',
+
+      familySurname:
+        'Chudasama',
+
+      nativeVillage:
+        'Junagadh',
+
+      district:
+        'Junagadh',
 
       state:
         'Gujarat'
@@ -415,9 +463,13 @@ describe(
           )
         ).toBeInTheDocument();
 
+        /*
+         * community.clan remains the backend
+         * key, but UI terminology is Surname.
+         */
         expect(
           screen.getByText(
-            'Shakh'
+            'Surname'
           )
         ).toBeInTheDocument();
 
@@ -476,6 +528,58 @@ describe(
         ).toBeInTheDocument();
 
         /*
+         * Family information added in the
+         * updated profile model.
+         */
+        expect(
+          screen.getByText(
+            'Family values'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Traditional'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Family Residence State'
+          )
+        ).toBeInTheDocument();
+
+        /*
+         * Canonical maternalGotra should render.
+         */
+        expect(
+          screen.getByText(
+            'Maternal Gotra'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Vashishtha'
+          )
+        ).toBeInTheDocument();
+
+        /*
+         * Existing Mosal branches remain visible.
+         */
+        expect(
+          screen.getByText(
+            "Father's Mosal"
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            "Mother's Mosal"
+          )
+        ).toBeInTheDocument();
+
+        /*
          * Generic matrimony fields are
          * intentionally absent from the
          * dedicated-community UI.
@@ -501,6 +605,12 @@ describe(
         expect(
           screen.queryByText(
             'Community'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Sub-Samaj'
           )
         ).not.toBeInTheDocument();
 

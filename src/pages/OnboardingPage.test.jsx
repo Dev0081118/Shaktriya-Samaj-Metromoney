@@ -104,6 +104,9 @@ const profile = {
   bloodGroup:
     'B+',
 
+  /*
+   * Candidate's real marital status.
+   */
   maritalStatus:
     'Never Married',
 
@@ -158,8 +161,8 @@ const profile = {
       'Rajput / Kshatriya',
 
     /*
-     * Legacy backend key retained.
-     * Frontend now displays this as Surname.
+     * Existing DB key remains clan.
+     * UI presents this as Surname.
      */
     clan:
       'Rana',
@@ -261,16 +264,45 @@ const profile = {
       'Joint Family',
 
     /*
-     * Family Residence is now a state
-     * dropdown in the onboarding UI.
+     * Regression coverage for newly
+     * supported family values.
      */
+    familyValues:
+      'Traditional',
+
     familyLocation:
       'Gujarat',
 
     familyDescription:
       'Traditional family.',
 
-    siblingDetails: []
+    siblingDetails: [
+      {
+        relation:
+          'Sister',
+
+        name:
+          'Sister Rana',
+
+        education:
+          'MBA',
+
+        occupation:
+          'Manager',
+
+        maritalStatus:
+          'Married',
+
+        spouseName:
+          'Jay Jadeja',
+
+        spouseFamilySurname:
+          'Jadeja',
+
+        spouseVillage:
+          'Gondal'
+      }
+    ]
   },
 
   maternalFamily: {
@@ -296,7 +328,13 @@ const profile = {
       'Gujarat',
 
     maternalClan:
-      'Jadeja'
+      'Jadeja',
+
+    /*
+     * Canonical field.
+     */
+    maternalGotra:
+      'Vashishtha'
   },
 
   maternalLineage: {
@@ -419,9 +457,22 @@ const preferences = {
     'Jadeja'
   ],
 
-  acceptedMaritalStatuses: [
-    'Never Married'
+  /*
+   * Intentional legacy field.
+   *
+   * This MUST NOT overwrite the
+   * candidate's own maritalStatus.
+   */
+  maritalStatus: [
+    'Divorced'
   ],
+
+  acceptedMaritalStatuses: [
+    'Divorced'
+  ],
+
+  willingForRemarriage:
+    'Open to Discuss',
 
   locations: [
     'Rajkot'
@@ -433,7 +484,10 @@ const preferences = {
 
   occupationPreferences: [
     'Professional'
-  ]
+  ],
+
+  additionalPreferences:
+    'Family oriented'
 };
 
 const renderPage =
@@ -459,7 +513,7 @@ beforeEach(
       ) => {
         if (
           path ===
-            '/profiles/me?optional=true'
+          '/profiles/me?optional=true'
         ) {
           return Promise.resolve({
             data: {
@@ -470,7 +524,7 @@ beforeEach(
 
         if (
           path ===
-            '/preferences?optional=true'
+          '/preferences?optional=true'
         ) {
           return Promise.resolve({
             data: {
@@ -659,6 +713,41 @@ describe(
     );
 
     test(
+      'legacy partner preference maritalStatus never overwrites candidate marital status',
+      async () => {
+        renderPage();
+
+        await screen.findByRole(
+          'heading',
+          {
+            name:
+              /let us begin with the essentials/i
+          }
+        );
+
+        /*
+         * Candidate = Never Married.
+         * Legacy preference = Divorced.
+         *
+         * Candidate value must win.
+         */
+        expect(
+          screen.getByLabelText(
+            /marital status/i
+          )
+        ).toHaveValue(
+          'Never Married'
+        );
+
+        expect(
+          screen.queryByText(
+            /private marital context/i
+          )
+        ).not.toBeInTheDocument();
+      }
+    );
+
+    test(
       'existing profile restores surname based Samaj and personal fields correctly',
       async () => {
         renderPage();
@@ -705,10 +794,6 @@ describe(
           )
         ).toBeInTheDocument();
 
-        /*
-         * Dedicated platform:
-         * no Religion / Caste / Sub-Samaj input.
-         */
         expect(
           screen.queryByLabelText(
             /^religion$/i
@@ -727,12 +812,6 @@ describe(
           )
         ).not.toBeInTheDocument();
 
-        /*
-         * Old backend community.clan value
-         * is now restored into Surname UI.
-         * "Rana" is not in the predefined list,
-         * so it correctly loads as Other.
-         */
         expect(
           screen.getByLabelText(
             /^surname$/i
@@ -1002,6 +1081,133 @@ describe(
           )
         ).toHaveValue(
           'Divorced'
+        );
+      }
+    );
+
+    test(
+      'existing profile save includes family values and canonical maternal Gotra without Sub-Samaj',
+      async () => {
+        renderPage();
+
+        await screen.findByRole(
+          'heading',
+          {
+            name:
+              /let us begin with the essentials/i
+          }
+        );
+
+        fireEvent.click(
+          screen.getByRole(
+            'button',
+            {
+              name:
+                /^save$/i
+            }
+          )
+        );
+
+        await waitFor(
+          () => {
+            expect(
+              apiMock
+            ).toHaveBeenCalledWith(
+              '/profiles/me',
+              expect.objectContaining({
+                method:
+                  'PATCH'
+              })
+            );
+          }
+        );
+
+        const saveCall =
+          apiMock.mock.calls.find(
+            (
+              call
+            ) =>
+              call[0] ===
+                '/profiles/me' &&
+              call[1]
+                ?.method ===
+                'PATCH'
+          );
+
+        const payload =
+          JSON.parse(
+            saveCall[1].body
+          );
+
+        expect(
+          payload.maritalStatus
+        ).toBe(
+          'Never Married'
+        );
+
+        expect(
+          payload.family
+            .familyValues
+        ).toBe(
+          'Traditional'
+        );
+
+        expect(
+          payload.family
+            .familyLocation
+        ).toBe(
+          'Gujarat'
+        );
+
+        expect(
+          payload.maternalFamily
+            .maternalGotra
+        ).toBe(
+          'Vashishtha'
+        );
+
+        expect(
+          payload.maternalFamily
+        ).not.toHaveProperty(
+          'notes'
+        );
+
+        expect(
+          payload.community
+        ).not.toHaveProperty(
+          'subCommunity'
+        );
+
+        expect(
+          payload.maternalLineage
+            .fathersMosal
+            .familySurname
+        ).toBe(
+          'Gohil'
+        );
+
+        expect(
+          payload.maternalLineage
+            .mothersMosal
+            .familySurname
+        ).toBe(
+          'Chudasama'
+        );
+
+        expect(
+          payload.family
+            .siblingDetails[0]
+            .spouseName
+        ).toBe(
+          'Jay Jadeja'
+        );
+
+        expect(
+          payload.family
+            .siblingDetails[0]
+            .spouseFamilySurname
+        ).toBe(
+          'Jadeja'
         );
       }
     );

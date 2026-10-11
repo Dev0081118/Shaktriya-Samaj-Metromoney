@@ -124,8 +124,10 @@ const formatDate = (
     {
       day:
         '2-digit',
+
       month:
         'short',
+
       year:
         'numeric'
     }
@@ -156,8 +158,10 @@ const formatIncome = (
     {
       style:
         'currency',
+
       currency:
         'INR',
+
       maximumFractionDigits:
         0
     }
@@ -1500,15 +1504,7 @@ export default function ProfilePage({
         >
           <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1">
             <Detail
-              label="Sub-Samaj"
-              value={
-                profile.community
-                  ?.subCommunity
-              }
-            />
-
-            <Detail
-              label="Shakh"
+              label="Surname"
               value={
                 profile.community
                   ?.clan
@@ -1735,7 +1731,15 @@ export default function ProfilePage({
               />
 
               <Detail
-                label="Family residence"
+                label="Family values"
+                value={
+                  profile.family
+                    .familyValues
+                }
+              />
+
+              <Detail
+                label="Family Residence State"
                 value={
                   profile.family
                     .familyLocation
@@ -1846,6 +1850,9 @@ export default function ProfilePage({
               <Detail
                 label="Maternal Gotra"
                 value={
+                  profile
+                    .maternalFamily
+                    .maternalGotra ||
                   profile
                     .maternalFamily
                     .notes
@@ -1970,7 +1977,7 @@ export default function ProfilePage({
                         <div className="mt-4 border-t border-[#ddd0c1] pt-4 text-[10px] leading-6 text-[#756a60]">
                           {sibling.spouseName && (
                             <p>
-                              Spouse:{' '}
+                              Life Partner:{' '}
                               {
                                 sibling.spouseName
                               }
@@ -1985,7 +1992,7 @@ export default function ProfilePage({
                             ' • '
                           ) && (
                             <p>
-                              Spouse Shakh / family:{' '}
+                              Life Partner Surname:{' '}
                               {joinValues(
                                 [
                                   sibling.spouseClan,
@@ -1998,7 +2005,7 @@ export default function ProfilePage({
 
                           {spousePlace && (
                             <p>
-                              Sasariyu:{' '}
+                              Sasariyu / Village:{' '}
                               {
                                 spousePlace
                               }

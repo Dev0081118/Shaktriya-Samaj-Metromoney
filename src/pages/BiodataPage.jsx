@@ -783,15 +783,7 @@ export default function BiodataPage() {
         >
           <dl className="grid grid-cols-2 gap-x-8 gap-y-5 max-[600px]:grid-cols-1">
             <Field
-              label="Sub-Samaj"
-              value={
-                profile.community
-                  ?.subCommunity
-              }
-            />
-
-            <Field
-              label="Shakh"
+              label="Surname"
               value={
                 profile.community
                   ?.clan
@@ -1009,7 +1001,15 @@ export default function BiodataPage() {
               />
 
               <Field
-                label="Family Residence"
+                label="Family Values"
+                value={
+                  profile.family
+                    .familyValues
+                }
+              />
+
+              <Field
+                label="Family Residence State"
                 value={
                   profile.family
                     .familyLocation
@@ -1108,6 +1108,9 @@ export default function BiodataPage() {
                 <Field
                   label="Maternal Gotra"
                   value={
+                    profile
+                      .maternalFamily
+                      .maternalGotra ||
                     profile
                       .maternalFamily
                       .notes
@@ -1233,21 +1236,21 @@ export default function BiodataPage() {
                             'Married' && (
                             <>
                               <Field
-                                label="Spouse"
+                                label="Life Partner Name"
                                 value={
                                   sibling.spouseName
                                 }
                               />
 
                               <Field
-                                label="Spouse Family"
+                                label="Life Partner Surname"
                                 value={
                                   spouseFamily
                                 }
                               />
 
                               <Field
-                                label="Sasariyu"
+                                label="Sasariyu / Village"
                                 value={
                                   sasariyu
                                 }

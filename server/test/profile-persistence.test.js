@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
+
 import {
   MongoMemoryServer
 } from 'mongodb-memory-server';
@@ -129,6 +130,10 @@ const createMemberWithProfile =
         bloodGroup:
           'B+',
 
+        /*
+         * Legacy generic field retained
+         * in an existing database record.
+         */
         complexion:
           'Wheatish',
 
@@ -191,6 +196,10 @@ const createMemberWithProfile =
           name:
             'Kshatriya',
 
+          /*
+           * Legacy field intentionally remains
+           * in old records.
+           */
           subCommunity:
             'Rajput',
 
@@ -293,8 +302,11 @@ const createMemberWithProfile =
           familyType:
             'Joint',
 
+          familyValues:
+            'Traditional',
+
           familyLocation:
-            'Rajkot',
+            'Gujarat',
 
           familyDescription:
             'Traditional family.',
@@ -317,7 +329,7 @@ const createMemberWithProfile =
                 'Married',
 
               spouseName:
-                'Brother-in-law',
+                'Jay Jadeja',
 
               spouseClan:
                 'Jadeja',
@@ -389,7 +401,10 @@ const createMemberWithProfile =
             'Gujarat',
 
           maternalClan:
-            'Jadeja'
+            'Jadeja',
+
+          maternalGotra:
+            'Vashishtha'
         },
 
         maternalLineage: {
@@ -595,6 +610,7 @@ const createMemberWithProfile =
     return {
       user,
       profile,
+
       token:
         authToken(
           user
@@ -603,7 +619,7 @@ const createMemberWithProfile =
   };
 
 test(
-  'owner profile response retains exact DOB and master biodata fields',
+  'owner profile response retains exact DOB and current Rajput biodata fields',
   async () => {
     const {
       token
@@ -642,9 +658,20 @@ test(
     );
 
     assert.equal(
+      profile.maritalStatus,
+      'Never Married'
+    );
+
+    assert.equal(
       profile.birthDetails
         .timeOfBirth,
       '10:45'
+    );
+
+    assert.equal(
+      profile.community
+        .clan,
+      'Rana'
     );
 
     assert.equal(
@@ -657,6 +684,24 @@ test(
       profile.community
         .vansh,
       'Suryavanshi'
+    );
+
+    assert.equal(
+      profile.family
+        .familyValues,
+      'Traditional'
+    );
+
+    assert.equal(
+      profile.family
+        .familyLocation,
+      'Gujarat'
+    );
+
+    assert.equal(
+      profile.maternalFamily
+        .maternalGotra,
+      'Vashishtha'
     );
 
     assert.equal(
@@ -680,6 +725,36 @@ test(
     );
 
     assert.equal(
+      profile
+        .maternalLineage
+        .fathersMosal
+        .familySurname,
+      'Gohil'
+    );
+
+    assert.equal(
+      profile
+        .maternalLineage
+        .mothersMosal
+        .familySurname,
+      'Chudasama'
+    );
+
+    assert.equal(
+      profile.family
+        .siblingDetails[0]
+        .spouseName,
+      'Jay Jadeja'
+    );
+
+    assert.equal(
+      profile.family
+        .siblingDetails[0]
+        .spouseFamilySurname,
+      'Jadeja'
+    );
+
+    assert.equal(
       profile.astrology
         .rashi,
       'Mesh'
@@ -698,6 +773,243 @@ test(
         .biodataPrivacy
         .includeSensitiveFamilyDetailsInBiodata,
       true
+    );
+  }
+);
+
+test(
+  'profile edit persists family values maternal Gotra siblings and Mosal',
+  async () => {
+    const {
+      user,
+      token
+    } =
+      await createMemberWithProfile();
+
+    const response =
+      await request(app)
+        .patch(
+          '/api/profiles/me'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        )
+        .send({
+          family: {
+            familyValues:
+              'Moderate',
+
+            familyLocation:
+              'Rajasthan',
+
+            siblingDetails: [
+              {
+                relation:
+                  'Brother',
+
+                name:
+                  'Brother Rana',
+
+                occupation:
+                  'Business',
+
+                maritalStatus:
+                  'Married',
+
+                spouseName:
+                  'Priya Rathore',
+
+                spouseFamilySurname:
+                  'Rathore',
+
+                spouseVillage:
+                  'Udaipur'
+              }
+            ]
+          },
+
+          maternalFamily: {
+            maternalGotra:
+              'Bharadwaj'
+          },
+
+          maternalLineage: {
+            fathersMosal: {
+              familySurname:
+                'Solanki',
+
+              nativeVillage:
+                'Bhavnagar',
+
+              state:
+                'Gujarat'
+            },
+
+            mothersMosal: {
+              familySurname:
+                'Parmar',
+
+              nativeVillage:
+                'Junagadh',
+
+              state:
+                'Gujarat'
+            }
+          }
+        });
+
+    assert.equal(
+      response.status,
+      201
+    );
+
+    const saved =
+      await MatrimonialProfile.findOne({
+        userId:
+          user._id
+      }).lean();
+
+    assert.equal(
+      saved.family
+        .familyValues,
+      'Moderate'
+    );
+
+    assert.equal(
+      saved.family
+        .familyLocation,
+      'Rajasthan'
+    );
+
+    assert.equal(
+      saved.maternalFamily
+        .maternalGotra,
+      'Bharadwaj'
+    );
+
+    assert.equal(
+      saved.family
+        .siblingDetails[0]
+        .relation,
+      'Brother'
+    );
+
+    assert.equal(
+      saved.family
+        .siblingDetails[0]
+        .spouseName,
+      'Priya Rathore'
+    );
+
+    assert.equal(
+      saved.family
+        .siblingDetails[0]
+        .spouseFamilySurname,
+      'Rathore'
+    );
+
+    assert.equal(
+      saved.family
+        .siblingDetails[0]
+        .spouseVillage,
+      'Udaipur'
+    );
+
+    assert.equal(
+      saved
+        .maternalLineage
+        .fathersMosal
+        .familySurname,
+      'Solanki'
+    );
+
+    assert.equal(
+      saved
+        .maternalLineage
+        .mothersMosal
+        .familySurname,
+      'Parmar'
+    );
+
+    /*
+     * Main candidate marital status must not
+     * be affected by unrelated family edits.
+     */
+    assert.equal(
+      saved.maritalStatus,
+      'Never Married'
+    );
+  }
+);
+
+test(
+  'new profile updates ignore legacy Sub-Samaj input while preserving an existing legacy record',
+  async () => {
+    const {
+      user,
+      token
+    } =
+      await createMemberWithProfile();
+
+    const response =
+      await request(app)
+        .patch(
+          '/api/profiles/me'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        )
+        .send({
+          community: {
+            clan:
+              'Jadeja',
+
+            gotra:
+              'Vashishtha',
+
+            /*
+             * Controller should ignore
+             * this for new writes.
+             */
+            subCommunity:
+              'Should Not Replace Legacy'
+          }
+        });
+
+    assert.equal(
+      response.status,
+      201
+    );
+
+    const saved =
+      await MatrimonialProfile.findOne({
+        userId:
+          user._id
+      }).lean();
+
+    assert.equal(
+      saved.community
+        .clan,
+      'Jadeja'
+    );
+
+    assert.equal(
+      saved.community
+        .gotra,
+      'Vashishtha'
+    );
+
+    /*
+     * Existing old value may remain for
+     * backward compatibility, but the PATCH
+     * request is not allowed to overwrite it.
+     */
+    assert.equal(
+      saved.community
+        .subCommunity,
+      'Rajput'
     );
   }
 );
@@ -752,9 +1064,6 @@ test(
           user._id
       }).lean();
 
-    /*
-     * Requested changes are applied.
-     */
     assert.equal(
       saved.career
         .workLocation.city,
@@ -774,8 +1083,7 @@ test(
     );
 
     /*
-     * Sibling fields inside the same
-     * nested objects remain intact.
+     * Nested siblings remain intact.
      */
     assert.equal(
       saved.career
@@ -832,8 +1140,8 @@ test(
     );
 
     /*
-     * Completely unrelated profile
-     * sections must never disappear.
+     * Unrelated profile sections must
+     * survive partial PATCH requests.
      */
     assert.equal(
       saved.location
@@ -854,9 +1162,21 @@ test(
     );
 
     assert.equal(
+      saved.family
+        .familyValues,
+      'Traditional'
+    );
+
+    assert.equal(
       saved.paternalFamily
         .gotra,
       'Kashyap'
+    );
+
+    assert.equal(
+      saved.maternalFamily
+        .maternalGotra,
+      'Vashishtha'
     );
 
     assert.equal(
@@ -865,6 +1185,14 @@ test(
         .fathersMosal
         .familySurname,
       'Gohil'
+    );
+
+    assert.equal(
+      saved
+        .maternalLineage
+        .mothersMosal
+        .familySurname,
+      'Chudasama'
     );
 
     assert.equal(
@@ -885,8 +1213,8 @@ test(
     );
 
     /*
-     * A normal edit must also preserve
-     * the moderation/visibility state.
+     * A normal edit must preserve
+     * moderation/visibility state.
      */
     assert.equal(
       saved.visibility,
@@ -975,11 +1303,6 @@ test(
       )
     );
 
-    /*
-     * Astrology is intentionally available
-     * because this profile allows it for
-     * registered members.
-     */
     assert.equal(
       visible.astrology
         .rashi,
@@ -993,8 +1316,7 @@ test(
     );
 
     /*
-     * Assets remain hidden because their
-     * privacy rule is Private.
+     * Assets stay private.
      */
     assert.equal(
       visible.familyAssets,
@@ -1002,9 +1324,8 @@ test(
     );
 
     /*
-     * Maternal lineage is also hidden until
-     * the configured relationship threshold
-     * is met.
+     * Detailed Mosal remains hidden until
+     * relationship/privacy rules allow it.
      */
     assert.equal(
       visible.maternalLineage,

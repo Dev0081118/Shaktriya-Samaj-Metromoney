@@ -113,6 +113,10 @@ const profile = {
     name:
       'Rajput / Kshatriya',
 
+    /*
+     * Legacy field intentionally exists in
+     * fixture but must not be rendered.
+     */
     subCommunity:
       'Rajput',
 
@@ -197,8 +201,11 @@ const profile = {
     familyType:
       'Joint Family',
 
+    familyValues:
+      'Traditional',
+
     familyLocation:
-      'Rajkot',
+      'Gujarat',
 
     siblingDetails: [
       {
@@ -216,6 +223,9 @@ const profile = {
 
         maritalStatus:
           'Married',
+
+        spouseName:
+          'Jay Jadeja',
 
         spouseFamilySurname:
           'Jadeja',
@@ -271,7 +281,7 @@ const profile = {
     maternalClan:
       'Jadeja',
 
-    notes:
+    maternalGotra:
       'Vashishtha'
   },
 
@@ -423,7 +433,7 @@ describe(
   'BiodataPage',
   () => {
     test(
-      'renders the core Rajput matrimonial biodata fields from the owner profile',
+      'renders the core Rajput matrimonial biodata fields using current terminology',
       async () => {
         render(
           <MemoryRouter>
@@ -461,14 +471,22 @@ describe(
         ).toBeInTheDocument();
 
         expect(
-          screen.getByRole(
-            'heading',
-            {
-              name:
-                'Education & Career'
-            }
+          screen.getByText(
+            'Surname'
           )
         ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Rana'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Sub-Samaj'
+          )
+        ).not.toBeInTheDocument();
 
         expect(
           screen.getByText(
@@ -495,16 +513,42 @@ describe(
         ).toBeInTheDocument();
 
         expect(
+          screen.getByRole(
+            'heading',
+            {
+              name:
+                'Education & Career'
+            }
+          )
+        ).toBeInTheDocument();
+
+        expect(
           screen.getByText(
             'GTU'
           )
         ).toBeInTheDocument();
 
         /*
-         * Dedicated-community biodata
-         * should not render generic
-         * religion/caste/complexion fields.
+         * New family fields.
          */
+        expect(
+          screen.getByText(
+            'Family Values'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Traditional'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Family Residence State'
+          )
+        ).toBeInTheDocument();
+
         expect(
           screen.queryByText(
             'Complexion'
@@ -548,7 +592,7 @@ describe(
     );
 
     test(
-      'sensitive lineage contact and assets only appear when explicitly enabled',
+      'sensitive lineage uses canonical maternal Gotra and updated sibling terminology',
       async () => {
         render(
           <MemoryRouter>
@@ -587,46 +631,6 @@ describe(
           )
         ).not.toBeInTheDocument();
 
-        expect(
-          screen.queryByRole(
-            'heading',
-            {
-              name:
-                'Three-Generation Mosal'
-            }
-          )
-        ).not.toBeInTheDocument();
-
-        expect(
-          screen.queryByRole(
-            'heading',
-            {
-              name:
-                'Contact Details'
-            }
-          )
-        ).not.toBeInTheDocument();
-
-        expect(
-          screen.queryByRole(
-            'heading',
-            {
-              name:
-                'Family Assets'
-            }
-          )
-        ).not.toBeInTheDocument();
-
-        expect(
-          screen.getByRole(
-            'heading',
-            {
-              name:
-                'Astrology'
-            }
-          )
-        ).toBeInTheDocument();
-
         fireEvent.click(
           screen.getByRole(
             'checkbox',
@@ -659,6 +663,12 @@ describe(
 
         expect(
           screen.getByText(
+            'Maternal Gotra'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
             'Vashishtha'
           )
         ).toBeInTheDocument();
@@ -669,26 +679,6 @@ describe(
             {
               name:
                 'Three-Generation Mosal'
-            }
-          )
-        ).toBeInTheDocument();
-
-        expect(
-          screen.getByRole(
-            'heading',
-            {
-              name:
-                'Siblings & Marriage Relations'
-            }
-          )
-        ).toBeInTheDocument();
-
-        expect(
-          screen.getByRole(
-            'heading',
-            {
-              name:
-                'Self Mosal'
             }
           )
         ).toBeInTheDocument();
@@ -709,6 +699,165 @@ describe(
             {
               name:
                 "Mother's Mosal"
+            }
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByRole(
+            'heading',
+            {
+              name:
+                'Siblings & Marriage Relations'
+            }
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Life Partner Name'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Jay Jadeja'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Life Partner Surname'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Sasariyu / Village'
+          )
+        ).toBeInTheDocument();
+
+        const gondalLocations =
+        screen.getAllByText(
+            /Gondal.*Rajkot.*Gujarat/
+        );
+
+        expect(
+        gondalLocations.length
+        ).toBeGreaterThanOrEqual(
+        1
+        );
+      }
+    );
+
+    test(
+      'legacy maternal notes remain readable as a maternal Gotra fallback',
+      async () => {
+        apiMock.mockResolvedValue({
+          data: {
+            profile: {
+              ...profile,
+
+              maternalFamily: {
+                ...profile.maternalFamily,
+
+                maternalGotra:
+                  undefined,
+
+                notes:
+                  'Legacy Gotra'
+              }
+            }
+          }
+        });
+
+        render(
+          <MemoryRouter>
+            <BiodataPage />
+          </MemoryRouter>
+        );
+
+        await screen.findByRole(
+          'heading',
+          {
+            level:
+              1,
+
+            name:
+              'Raj V Rana'
+          }
+        );
+
+        fireEvent.click(
+          screen.getByRole(
+            'checkbox',
+            {
+              name:
+                /family lineage/i
+            }
+          )
+        );
+
+        expect(
+          screen.getByText(
+            'Maternal Gotra'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Legacy Gotra'
+          )
+        ).toBeInTheDocument();
+      }
+    );
+
+    test(
+      'contact assets and astrology sections respect biodata privacy toggles',
+      async () => {
+        render(
+          <MemoryRouter>
+            <BiodataPage />
+          </MemoryRouter>
+        );
+
+        await screen.findByRole(
+          'heading',
+          {
+            level:
+              1,
+
+            name:
+              'Raj V Rana'
+          }
+        );
+
+        expect(
+          screen.queryByRole(
+            'heading',
+            {
+              name:
+                'Contact Details'
+            }
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByRole(
+            'heading',
+            {
+              name:
+                'Family Assets'
+            }
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.getByRole(
+            'heading',
+            {
+              name:
+                'Astrology'
             }
           )
         ).toBeInTheDocument();
