@@ -37,7 +37,7 @@ export const INDIA_STATES = [
   'West Bengal'
 ];
 
-export const RAJPUT_SHAKHS = [
+export const RAJPUT_SURNAMES = [
   'Chauhan',
   'Chudasama',
   'Gohil',
@@ -47,6 +47,30 @@ export const RAJPUT_SHAKHS = [
   'Rathod',
   'Solanki',
   'Vaghela',
+  'Other'
+];
+
+export const PREFERRED_SHAKHS = [
+  'Chauhan',
+  'Chudasama',
+  'Gohil',
+  'Jadeja',
+  'Jhala',
+  'Parmar',
+  'Rathod',
+  'Solanki',
+  'Vaghela',
+  'Any'
+];
+
+export const COUNTRY_OPTIONS = [
+  'India',
+  'Australia',
+  'Canada',
+  'New Zealand',
+  'United Arab Emirates',
+  'United Kingdom',
+  'United States',
   'Other'
 ];
 

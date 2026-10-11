@@ -157,9 +157,10 @@ const profile = {
     name:
       'Rajput / Kshatriya',
 
-    subCommunity:
-      'Rajput',
-
+    /*
+     * Legacy backend key retained.
+     * Frontend now displays this as Surname.
+     */
     clan:
       'Rana',
 
@@ -259,8 +260,12 @@ const profile = {
     familyType:
       'Joint Family',
 
+    /*
+     * Family Residence is now a state
+     * dropdown in the onboarding UI.
+     */
     familyLocation:
-      'Rajkot',
+      'Gujarat',
 
     familyDescription:
       'Traditional family.',
@@ -398,7 +403,36 @@ const preferences = {
     28,
 
   states: [
-    'Gujarat'
+    'Gujarat',
+    'Rajasthan'
+  ],
+
+  countries: [
+    'India'
+  ],
+
+  dietPreferences: [
+    'Vegetarian'
+  ],
+
+  communityPreferences: [
+    'Jadeja'
+  ],
+
+  acceptedMaritalStatuses: [
+    'Never Married'
+  ],
+
+  locations: [
+    'Rajkot'
+  ],
+
+  educationPreferences: [
+    'Graduate'
+  ],
+
+  occupationPreferences: [
+    'Professional'
   ]
 };
 
@@ -445,10 +479,6 @@ beforeEach(
           });
         }
 
-        /*
-         * PATCH saves return the profile,
-         * matching the real API contract.
-         */
         if (
           path ===
             '/profiles/me' &&
@@ -614,10 +644,6 @@ describe(
           '1998-05-14'
         );
 
-        /*
-         * Existing profile must ignore
-         * and remove the stale browser draft.
-         */
         expect(
           localStorage.getItem(
             'ksm_onboarding'
@@ -633,7 +659,7 @@ describe(
     );
 
     test(
-      'existing profile restores dedicated Samaj and personal fields correctly',
+      'existing profile restores surname based Samaj and personal fields correctly',
       async () => {
         renderPage();
 
@@ -659,10 +685,6 @@ describe(
           )
         ).not.toBeInTheDocument();
 
-        /*
-         * Save step 1 and move to
-         * Community Details.
-         */
         fireEvent.click(
           screen.getByRole(
             'button',
@@ -683,6 +705,10 @@ describe(
           )
         ).toBeInTheDocument();
 
+        /*
+         * Dedicated platform:
+         * no Religion / Caste / Sub-Samaj input.
+         */
         expect(
           screen.queryByLabelText(
             /^religion$/i
@@ -696,8 +722,20 @@ describe(
         ).not.toBeInTheDocument();
 
         expect(
+          screen.queryByLabelText(
+            /sub-samaj/i
+          )
+        ).not.toBeInTheDocument();
+
+        /*
+         * Old backend community.clan value
+         * is now restored into Surname UI.
+         * "Rana" is not in the predefined list,
+         * so it correctly loads as Other.
+         */
+        expect(
           screen.getByLabelText(
-            /^shakh$/i
+            /^surname$/i
           )
         ).toHaveValue(
           'Other'
@@ -705,7 +743,7 @@ describe(
 
         expect(
           screen.getByLabelText(
-            /shakh - other/i
+            /surname - other/i
           )
         ).toHaveValue(
           'Rana'
@@ -737,6 +775,14 @@ describe(
 
         expect(
           screen.getByLabelText(
+            /kuldevta/i
+          )
+        ).toHaveValue(
+          'Mahadev'
+        );
+
+        expect(
+          screen.getByLabelText(
             /native village \/ vatan/i
           )
         ).toHaveValue(
@@ -751,10 +797,14 @@ describe(
           'Gujarat'
         );
 
-        /*
-         * Save Community Details and
-         * move to Personal Details.
-         */
+        expect(
+          screen.getByLabelText(
+            /family introduction/i
+          )
+        ).toHaveValue(
+          'Traditional Rajput family.'
+        );
+
         fireEvent.click(
           screen.getByRole(
             'button',
@@ -815,10 +865,6 @@ describe(
           'B+'
         );
 
-        /*
-         * Birth State is now structured
-         * dropdown data instead of free text.
-         */
         expect(
           screen.getByLabelText(
             /birth state/i
@@ -930,10 +976,6 @@ describe(
           }
         );
 
-        /*
-         * API response hydration must keep
-         * the newly selected status.
-         */
         expect(
           await screen.findByRole(
             'heading',
@@ -1045,6 +1087,13 @@ describe(
         );
 
         expect(
+          payload.community
+            .clan
+        ).toBe(
+          'Rana'
+        );
+
+        expect(
           payload.education
             .university
         ).toBe(
@@ -1057,10 +1106,6 @@ describe(
           'active'
         );
 
-        /*
-         * Generic-only fields are no longer
-         * submitted from the redesigned form.
-         */
         expect(
           payload
         ).not.toHaveProperty(
@@ -1077,6 +1122,12 @@ describe(
           payload.community
         ).not.toHaveProperty(
           'caste'
+        );
+
+        expect(
+          payload.community
+        ).not.toHaveProperty(
+          'subCommunity'
         );
       }
     );
