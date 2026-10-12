@@ -516,6 +516,11 @@ const flatten =
         EMPLOYMENT_TYPES
       );
 
+    const currentAddress =
+      profile.contactDetails
+        ?.currentAddress ||
+      {};
+
     return {
       ...profile,
 
@@ -567,6 +572,44 @@ const flatten =
         profile.location
           ?.state ||
         '',
+
+      currentAddressLine1:
+        currentAddress.addressLine1 ||
+        '',
+
+      currentAddressLine2:
+        currentAddress.addressLine2 ||
+        '',
+
+      currentAddressCity:
+        currentAddress.city ||
+        profile.location
+          ?.city ||
+        '',
+
+      currentAddressTaluka:
+        currentAddress.taluka ||
+        '',
+
+      currentAddressDistrict:
+        currentAddress.district ||
+        profile.location
+          ?.district ||
+        '',
+
+      currentAddressState:
+        currentAddress.state ||
+        profile.location
+          ?.state ||
+        '',
+
+      currentAddressPincode:
+        currentAddress.pincode ||
+        '',
+
+      currentAddressCountry:
+        currentAddress.country ||
+        'India',
 
       nativePlace:
         profile.location
@@ -1051,6 +1094,38 @@ const profilePayload =
           data.nativeState
       },
 
+      contactDetails: {
+        currentAddress: {
+          addressLine1:
+            data.currentAddressLine1,
+
+          addressLine2:
+            data.currentAddressLine2,
+
+          city:
+            data.currentAddressCity ||
+            data.city,
+
+          taluka:
+            data.currentAddressTaluka,
+
+          district:
+            data.currentAddressDistrict ||
+            data.district,
+
+          state:
+            data.currentAddressState ||
+            data.state,
+
+          pincode:
+            data.currentAddressPincode,
+
+          country:
+            data.currentAddressCountry ||
+            'India'
+        }
+      },
+
       community: {
         name:
           'Rajput / Kshatriya',
@@ -1264,7 +1339,7 @@ const profilePayload =
 
         contactAddressVisibility:
           data.contactAddressVisibility ||
-          'Private'
+          'MutualMatches'
       },
 
       biodataPrivacy: {
@@ -2123,6 +2198,9 @@ export default function OnboardingPage() {
               workCountry:
                 'India',
 
+              currentAddressCountry:
+                'India',
+
               preferredCountry:
                 'India',
 
@@ -2157,7 +2235,7 @@ export default function OnboardingPage() {
                 'RegisteredMembers',
 
               contactAddressVisibility:
-                'Private',
+                'MutualMatches',
 
               states:
                 [],
@@ -2519,6 +2597,21 @@ export default function OnboardingPage() {
         ) {
           setError(
             'Enter your diet when selecting Other.'
+          );
+
+          return;
+        }
+
+        if (
+          data.currentAddressPincode &&
+          !/^[0-9]{6}$/.test(
+            String(
+              data.currentAddressPincode
+            ).trim()
+          )
+        ) {
+          setError(
+            'Current address pincode must contain exactly 6 digits.'
           );
 
           return;
@@ -3396,226 +3489,397 @@ export default function OnboardingPage() {
 
         {step ===
           2 && (
-          <div className={sectionClass}>
-            <div className={gridClass}>
-              <TextField
-                label="Birth Time"
-                type="time"
-                value={
-                  data.timeOfBirth
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'timeOfBirth',
+          <>
+            <div className={sectionClass}>
+              <div className={gridClass}>
+                <TextField
+                  label="Birth Time"
+                  type="time"
+                  value={
+                    data.timeOfBirth
+                  }
+                  onChange={(
                     value
-                  )
-                }
-              />
+                  ) =>
+                    update(
+                      'timeOfBirth',
+                      value
+                    )
+                  }
+                />
 
-              <TextField
-                label="Birth Place"
-                value={
-                  data.birthCity
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'birthCity',
+                <TextField
+                  label="Birth Place"
+                  value={
+                    data.birthCity
+                  }
+                  onChange={(
                     value
-                  )
-                }
-              />
+                  ) =>
+                    update(
+                      'birthCity',
+                      value
+                    )
+                  }
+                />
 
-              <TextField
-                label="Birth District"
-                value={
-                  data.birthDistrict
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'birthDistrict',
+                <TextField
+                  label="Birth District"
+                  value={
+                    data.birthDistrict
+                  }
+                  onChange={(
                     value
-                  )
-                }
-              />
+                  ) =>
+                    update(
+                      'birthDistrict',
+                      value
+                    )
+                  }
+                />
 
-              <SelectField
-                label="Birth State"
-                value={
-                  data.birthState
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'birthState',
+                <SelectField
+                  label="Birth State"
+                  value={
+                    data.birthState
+                  }
+                  onChange={(
                     value
-                  )
-                }
-                options={INDIA_STATES}
-              />
+                  ) =>
+                    update(
+                      'birthState',
+                      value
+                    )
+                  }
+                  options={INDIA_STATES}
+                />
 
-              <SelectField
-                label="Blood Group"
-                value={
-                  data.bloodGroup
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'bloodGroup',
+                <SelectField
+                  label="Blood Group"
+                  value={
+                    data.bloodGroup
+                  }
+                  onChange={(
                     value
-                  )
-                }
-                options={BLOOD_GROUP_OPTIONS}
-              />
+                  ) =>
+                    update(
+                      'bloodGroup',
+                      value
+                    )
+                  }
+                  options={BLOOD_GROUP_OPTIONS}
+                />
 
-              <OtherSelectField
-                label="Diet"
-                selection={
-                  data.dietSelection
-                }
-                custom={
-                  data.customDiet
-                }
-                options={DIET_OPTIONS}
-                otherLabel="Other Diet"
-                otherPlaceholder="Enter diet preference"
-                onSelection={(
-                  value
-                ) =>
-                  update(
-                    'dietSelection',
+                <OtherSelectField
+                  label="Diet"
+                  selection={
+                    data.dietSelection
+                  }
+                  custom={
+                    data.customDiet
+                  }
+                  options={DIET_OPTIONS}
+                  otherLabel="Other Diet"
+                  otherPlaceholder="Enter diet preference"
+                  onSelection={(
                     value
-                  )
-                }
-                onCustom={(
-                  value
-                ) =>
-                  update(
-                    'customDiet',
+                  ) =>
+                    update(
+                      'dietSelection',
+                      value
+                    )
+                  }
+                  onCustom={(
                     value
-                  )
-                }
-              />
+                  ) =>
+                    update(
+                      'customDiet',
+                      value
+                    )
+                  }
+                />
 
-              <SelectField
-                label="Smoking"
-                value={
-                  data.smoking
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'smoking',
+                <SelectField
+                  label="Smoking"
+                  value={
+                    data.smoking
+                  }
+                  onChange={(
                     value
-                  )
-                }
-                options={SMOKING_OPTIONS}
-              />
+                  ) =>
+                    update(
+                      'smoking',
+                      value
+                    )
+                  }
+                  options={SMOKING_OPTIONS}
+                />
 
-              <SelectField
-                label="Drinking"
-                value={
-                  data.drinking
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'drinking',
+                <SelectField
+                  label="Drinking"
+                  value={
+                    data.drinking
+                  }
+                  onChange={(
                     value
-                  )
-                }
-                options={DRINKING_OPTIONS}
-              />
+                  ) =>
+                    update(
+                      'drinking',
+                      value
+                    )
+                  }
+                  options={DRINKING_OPTIONS}
+                />
 
-              <TextField
-                label="Hobbies / Interests"
-                value={
-                  data.interests
-                }
-                placeholder="Travel, reading, sports..."
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'interests',
+                <TextField
+                  label="Hobbies / Interests"
+                  value={
+                    data.interests
+                  }
+                  placeholder="Travel, reading, sports..."
+                  onChange={(
                     value
-                  )
-                }
-              />
+                  ) =>
+                    update(
+                      'interests',
+                      value
+                    )
+                  }
+                />
 
-              <TextField
-                label="About Me"
-                multiline
-                value={
-                  data.aboutMe
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'aboutMe',
+                <TextField
+                  label="About Me"
+                  multiline
+                  value={
+                    data.aboutMe
+                  }
+                  onChange={(
                     value
-                  )
-                }
-              />
+                  ) =>
+                    update(
+                      'aboutMe',
+                      value
+                    )
+                  }
+                />
 
-              <TextField
-                label="Current City"
-                value={
-                  data.city
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'city',
+                <TextField
+                  label="Current City"
+                  value={
+                    data.city
+                  }
+                  onChange={(
                     value
-                  )
-                }
-              />
+                  ) =>
+                    update(
+                      'city',
+                      value
+                    )
+                  }
+                />
 
-              <TextField
-                label="Current District"
-                value={
-                  data.district
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'district',
+                <TextField
+                  label="Current District"
+                  value={
+                    data.district
+                  }
+                  onChange={(
                     value
-                  )
-                }
-              />
+                  ) =>
+                    update(
+                      'district',
+                      value
+                    )
+                  }
+                />
 
-              <SelectField
-                label="Current State"
-                value={
-                  data.state
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'state',
+                <SelectField
+                  label="Current State"
+                  value={
+                    data.state
+                  }
+                  onChange={(
                     value
-                  )
-                }
-                options={INDIA_STATES}
-              />
+                  ) =>
+                    update(
+                      'state',
+                      value
+                    )
+                  }
+                  options={INDIA_STATES}
+                />
+              </div>
             </div>
-          </div>
+
+            <div className={sensitiveClass}>
+              <div className="mb-5 flex items-start gap-3">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#681d2510] text-[#681d25]">
+                  <LockKeyhole
+                    size={
+                      16
+                    }
+                  />
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#681d25]">
+                    Current Address
+                  </p>
+
+                  <p className="mt-1 max-w-[600px] text-[10px] leading-5 text-[#756a60]">
+                    Your exact residential address is
+                    protected information. By default it
+                    can be viewed only after a mutual
+                    match. An explicit contact unlock can
+                    also grant access. Your phone number
+                    continues to use the existing secure
+                    contact-unlock flow.
+                  </p>
+                </div>
+              </div>
+
+              <div className={gridClass}>
+                <TextField
+                  label="Current Address Line 1"
+                  value={
+                    data.currentAddressLine1
+                  }
+                  placeholder="House / Flat / Street"
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'currentAddressLine1',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Current Address Line 2"
+                  value={
+                    data.currentAddressLine2
+                  }
+                  placeholder="Area / Landmark"
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'currentAddressLine2',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Address City"
+                  value={
+                    data.currentAddressCity
+                  }
+                  placeholder={
+                    data.city ||
+                    'City'
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'currentAddressCity',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Address Taluka"
+                  value={
+                    data.currentAddressTaluka
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'currentAddressTaluka',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Address District"
+                  value={
+                    data.currentAddressDistrict
+                  }
+                  placeholder={
+                    data.district ||
+                    'District'
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'currentAddressDistrict',
+                      value
+                    )
+                  }
+                />
+
+                <SelectField
+                  label="Address State"
+                  value={
+                    data.currentAddressState
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'currentAddressState',
+                      value
+                    )
+                  }
+                  options={INDIA_STATES}
+                />
+
+                <TextField
+                  label="Pincode"
+                  value={
+                    data.currentAddressPincode
+                  }
+                  placeholder="6 digit pincode"
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'currentAddressPincode',
+                      value.replace(
+                        /\D/g,
+                        ''
+                      ).slice(
+                        0,
+                        6
+                      )
+                    )
+                  }
+                />
+
+                <SelectField
+                  label="Address Country"
+                  value={
+                    data.currentAddressCountry
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'currentAddressCountry',
+                      value
+                    )
+                  }
+                  options={COUNTRY_OPTIONS}
+                />
+              </div>
+            </div>
+          </>
         )}
 
         {step ===
@@ -5079,6 +5343,25 @@ export default function OnboardingPage() {
                     'Private'
                   ]}
                 />
+
+                <PrivacySelect
+                  label="Current Address"
+                  value={
+                    data.contactAddressVisibility
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'contactAddressVisibility',
+                      value
+                    )
+                  }
+                  options={[
+                    'MutualMatches',
+                    'Private'
+                  ]}
+                />
               </div>
 
               <div className="mt-5 border border-[#d8c6b3] bg-[#f8f3ec] p-4 text-[10px] leading-5 text-[#756a60]">
@@ -5087,9 +5370,11 @@ export default function OnboardingPage() {
                 </strong>{' '}
                 exact date of birth is hidden from other
                 members; previous-marriage details are
-                restricted by relationship context; phone
-                and email require the contact-request /
-                unlock flow.
+                restricted by relationship context;
+                current residential address is protected
+                by the address privacy rule; phone and
+                email continue to require the secure
+                contact-request / unlock flow.
               </div>
             </div>
 

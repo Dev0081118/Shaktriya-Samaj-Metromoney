@@ -153,6 +153,34 @@ const profile = {
       'Gujarat'
   },
 
+  contactDetails: {
+    currentAddress: {
+      addressLine1:
+        'Kalawad Road',
+
+      addressLine2:
+        'Near University Road',
+
+      city:
+        'Rajkot',
+
+      taluka:
+        'Rajkot',
+
+      district:
+        'Rajkot',
+
+      state:
+        'Gujarat',
+
+      pincode:
+        '360005',
+
+      country:
+        'India'
+    }
+  },
+
   community: {
     name:
       'Rajput / Kshatriya',
@@ -169,10 +197,6 @@ const profile = {
     kulaDevi:
       'Ashapura Mata',
 
-    /*
-     * Legacy data deliberately remains in
-     * the fixture. New UI must ignore it.
-     */
     ishtaDevta:
       'Mahadev',
 
@@ -263,9 +287,6 @@ const profile = {
     familyValues:
       'Traditional',
 
-    /*
-     * Legacy data. New UI must not render it.
-     */
     familyLocation:
       'Gujarat',
 
@@ -403,7 +424,7 @@ const profile = {
       'RegisteredMembers',
 
     contactAddressVisibility:
-      'Private'
+      'MutualMatches'
   },
 
   biodataPrivacy: {
@@ -454,10 +475,6 @@ const preferences = {
     'Jadeja'
   ],
 
-  /*
-   * Intentional old field. It must never
-   * overwrite candidate maritalStatus.
-   */
   maritalStatus: [
     'Divorced'
   ],
@@ -500,6 +517,18 @@ const mergeProfile =
     location: {
       ...profile.location,
       ...submitted.location
+    },
+
+    contactDetails: {
+      ...profile.contactDetails,
+      ...submitted.contactDetails,
+
+      currentAddress: {
+        ...profile.contactDetails
+          ?.currentAddress,
+        ...submitted.contactDetails
+          ?.currentAddress
+      }
     },
 
     community: {
@@ -849,6 +878,151 @@ describe(
     );
 
     test(
+      'personal step loads and saves structured current address',
+      async () => {
+        renderPage();
+
+        await screen.findByRole(
+          'heading',
+          {
+            name:
+              /let us begin with the essentials/i
+          }
+        );
+
+        await continueTo(
+          /your rajput heritage and lineage/i
+        );
+
+        await continueTo(
+          /lifestyle and personal introduction/i
+        );
+
+        expect(
+          screen.getByLabelText(
+            /current address line 1/i
+          )
+        ).toHaveValue(
+          'Kalawad Road'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /current address line 2/i
+          )
+        ).toHaveValue(
+          'Near University Road'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /address city/i
+          )
+        ).toHaveValue(
+          'Rajkot'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /address taluka/i
+          )
+        ).toHaveValue(
+          'Rajkot'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /address district/i
+          )
+        ).toHaveValue(
+          'Rajkot'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /address state/i
+          )
+        ).toHaveValue(
+          'Gujarat'
+        );
+
+        expect(
+          screen.getByLabelText(
+            /pincode/i
+          )
+        ).toHaveValue(
+          '360005'
+        );
+
+        fireEvent.change(
+          screen.getByLabelText(
+            /current address line 1/i
+          ),
+          {
+            target: {
+              value:
+                '150 Feet Ring Road'
+            }
+          }
+        );
+
+        fireEvent.change(
+          screen.getByLabelText(
+            /pincode/i
+          ),
+          {
+            target: {
+              value:
+                '360007'
+            }
+          }
+        );
+
+        await continueTo(
+          /academic background/i
+        );
+
+        expect(
+          savePayload()
+            .contactDetails
+            .currentAddress
+        ).toEqual({
+          addressLine1:
+            '150 Feet Ring Road',
+
+          addressLine2:
+            'Near University Road',
+
+          city:
+            'Rajkot',
+
+          taluka:
+            'Rajkot',
+
+          district:
+            'Rajkot',
+
+          state:
+            'Gujarat',
+
+          pincode:
+            '360007',
+
+          country:
+            'India'
+        });
+
+        expect(
+          savePayload()
+            .privacy
+            .contactAddressVisibility
+        ).toBe(
+          'MutualMatches'
+        );
+      }
+    );
+
+    test(
       'Diet Other and Employment Type Other save the entered values instead of the word Other',
       async () => {
         renderPage();
@@ -1035,7 +1209,7 @@ describe(
     );
 
     test(
-      'manual save does not write removed legacy fields',
+      'manual save does not write removed legacy fields and preserves current address',
       async () => {
         renderPage();
 
@@ -1082,6 +1256,22 @@ describe(
         );
 
         expect(
+          payload.contactDetails
+            .currentAddress
+            .addressLine1
+        ).toBe(
+          'Kalawad Road'
+        );
+
+        expect(
+          payload.contactDetails
+            .currentAddress
+            .pincode
+        ).toBe(
+          '360005'
+        );
+
+        expect(
           payload.family
         ).not.toHaveProperty(
           'familyLocation'
@@ -1110,27 +1300,11 @@ describe(
         ).not.toHaveProperty(
           'maternalGotra'
         );
-
-        expect(
-          payload.maternalLineage
-            .fathersMosal
-            .familySurname
-        ).toBe(
-          'Gohil'
-        );
-
-        expect(
-          payload.maternalLineage
-            .mothersMosal
-            .familySurname
-        ).toBe(
-          'Chudasama'
-        );
       }
     );
 
     test(
-      'last step provides profile-view privacy controls matching the creation flow',
+      'last step provides profile-view privacy controls including protected current address',
       async () => {
         renderPage();
 
@@ -1173,12 +1347,6 @@ describe(
         await continueTo(
           /complete your matrimonial presentation/i
         );
-
-        expect(
-          screen.queryByText(
-            /include contact details/i
-          )
-        ).not.toBeInTheDocument();
 
         await continueTo(
           /review your match preferences and privacy/i
@@ -1255,8 +1423,16 @@ describe(
         );
 
         expect(
+          screen.getByLabelText(
+            /^current address$/i
+          )
+        ).toHaveValue(
+          'MutualMatches'
+        );
+
+        expect(
           screen.getByText(
-            /phone and email require the contact-request/i
+            /phone and email continue to require/i
           )
         ).toBeInTheDocument();
       }

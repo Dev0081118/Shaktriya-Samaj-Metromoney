@@ -319,9 +319,6 @@ const secureProfileMedia =
           );
     }
 
-    /*
-     * Storage IDs are never client-facing.
-     */
     delete profileObject
       .profilePhotoPublicId;
 
@@ -361,20 +358,33 @@ const sanitizeContactDetails =
       'Private';
 
     /*
-     * Structured contact/address data
-     * requires BOTH:
+     * Exact address is sensitive.
      *
-     * 1. contact unlock
-     * 2. privacy rule permission
+     * It may become visible when:
      *
-     * Owner/admins bypass these checks.
+     * 1. the configured relationship rule allows it,
+     *    for example MutualMatches, OR
+     *
+     * 2. this specific viewer has explicitly completed
+     *    the accepted contact unlock flow.
+     *
+     * This means an explicit per-person unlock can
+     * override a global "Private" address setting,
+     * while the address still remains invisible to
+     * everybody else.
      */
-    if (
-      !context.contactUnlocked ||
-      !allowed(
+    const relationshipAllowed =
+      allowed(
         contactRule,
         context
-      )
+      );
+
+    const explicitlyUnlocked =
+      !!context.contactUnlocked;
+
+    if (
+      !relationshipAllowed &&
+      !explicitlyUnlocked
     ) {
       delete profileObject
         .contactDetails;
@@ -382,11 +392,6 @@ const sanitizeContactDetails =
       return;
     }
 
-    /*
-     * Even after contact unlock,
-     * only expose fields the member
-     * intentionally stored.
-     */
     profileObject.contactDetails = {
       ...profileObject
         .contactDetails
@@ -420,10 +425,6 @@ export async function serializeProfileForViewer(
     p.privacy ||
     {};
 
-  /*
-   * Age is safe to expose according to
-   * the existing product behavior.
-   */
   p.age =
     calculateAge(
       p.dateOfBirth
@@ -431,18 +432,6 @@ export async function serializeProfileForViewer(
 
   delete p.moderatedBy;
 
-  /*
-   * CRITICAL:
-   *
-   * Existing behavior removed dateOfBirth
-   * for EVERYONE, including the owner.
-   *
-   * That broke Edit Profile because
-   * /profiles/me could never return DOB.
-   *
-   * Owner and privileged staff retain the
-   * real date so forms/admin tools can work.
-   */
   if (
     !context.owner &&
     !context.privileged
@@ -496,10 +485,6 @@ export async function serializeProfileForViewer(
         .annualIncome;
     }
 
-    /*
-     * Family overview controls:
-     * immediate family + paternal family.
-     */
     const familyRule =
       privacy
         .familyOverviewVisibility ||
@@ -528,11 +513,6 @@ export async function serializeProfileForViewer(
         .siblingDetails;
     }
 
-    /*
-     * Maternal family and all three Mosal
-     * lineage branches use the same
-     * dedicated maternal privacy rule.
-     */
     if (
       !allowed(
         privacy
@@ -545,10 +525,6 @@ export async function serializeProfileForViewer(
       delete p.maternalLineage;
     }
 
-    /*
-     * Family/property assets remain
-     * private unless specifically enabled.
-     */
     if (
       !allowed(
         privacy.assetVisibility ||
@@ -559,10 +535,6 @@ export async function serializeProfileForViewer(
       delete p.familyAssets;
     }
 
-    /*
-     * Birth-time/place and astrology
-     * are controlled together.
-     */
     if (
       !allowed(
         privacy.astrologyVisibility ||
@@ -574,17 +546,8 @@ export async function serializeProfileForViewer(
       delete p.astrology;
     }
 
-    /*
-     * Exact DOB itself is not exposed to
-     * other members. They receive age.
-     */
     delete p.dateOfBirth;
 
-    /*
-     * Previous-marriage legal/children
-     * details require an accepted interest
-     * or mutual match.
-     */
     if (
       !context.accepted &&
       !context.matched
@@ -593,8 +556,12 @@ export async function serializeProfileForViewer(
     }
 
     /*
-     * Contact details use their own
-     * privacy gate + contact unlock.
+     * Exact residential address:
+     *
+     * - obeys contactAddressVisibility
+     * - MutualMatches reveals it to an actual match
+     * - explicit contact unlock can reveal it to the
+     *   specific approved viewer
      */
     sanitizeContactDetails(
       p,
@@ -602,16 +569,16 @@ export async function serializeProfileForViewer(
       privacy
     );
 
-    /*
-     * Biodata generation switches are
-     * owner configuration, not public
-     * profile information.
-     */
     delete p.biodataPrivacy;
 
     /*
-     * Existing account-level phone/email
-     * unlock flow stays intact.
+     * Account phone/email keep the existing,
+     * stricter contact-unlock behavior.
+     *
+     * We intentionally do NOT automatically reveal
+     * phone/email merely because two profiles matched.
+     * This preserves the existing contact entitlement
+     * and unlock workflow.
      */
     if (
       context.contactUnlocked &&
@@ -635,21 +602,9 @@ export async function serializeProfileForViewer(
       };
     }
 
-    /*
-     * Never expose the underlying User
-     * document to another member.
-     */
     delete p.userId;
   }
 
-  /*
-   * Defensive rule:
-   *
-   * If a non-owner ever reaches this
-   * point without astrology permission,
-   * exact birth details must still be
-   * unavailable.
-   */
   if (
     !context.owner &&
     !context.privileged &&
@@ -664,10 +619,6 @@ export async function serializeProfileForViewer(
     );
   }
 
-  /*
-   * Only generate temporary media URLs
-   * AFTER all privacy decisions.
-   */
   if (
     p.profilePhoto ||
     (
