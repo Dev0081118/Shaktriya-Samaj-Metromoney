@@ -2,26 +2,59 @@ import {
   useEffect,
   useState
 } from 'react';
-import { useNavigate } from 'react-router-dom';
 
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
-import { api } from '../services/api';
+import {
+  useNavigate
+} from 'react-router-dom';
 
-const csv = (value) =>
-  Array.isArray(value)
-    ? value.join(', ')
-    : value || '';
+import {
+  useAuth
+} from '../context/AuthContext';
 
-const arrays = (value) =>
-  String(value || '')
+import {
+  useToast
+} from '../context/ToastContext';
+
+import {
+  api
+} from '../services/api';
+
+const csv = (
+  value
+) =>
+  Array.isArray(
+    value
+  )
+    ? value.join(
+        ', '
+      )
+    : value ||
+      '';
+
+const arrays = (
+  value
+) =>
+  String(
+    value ||
+      ''
+  )
     .split(',')
-    .map((item) =>
-      item.trim()
+    .map(
+      (
+        item
+      ) =>
+        item.trim()
     )
-    .filter(Boolean);
+    .filter(
+      Boolean
+    );
 
 const privacyOptions = {
+  fullNameVisibility: [
+    'Everyone',
+    'RegisteredMembers'
+  ],
+
   photoVisibility: [
     'Everyone',
     'RegisteredMembers',
@@ -29,20 +62,8 @@ const privacyOptions = {
     'Private'
   ],
 
-  contactVisibility: [
-    'AcceptedInterests',
-    'MutualMatches',
-    'Private'
-  ],
-
   incomeVisibility: [
     'Everyone',
-    'RegisteredMembers',
-    'AcceptedInterests',
-    'Private'
-  ],
-
-  familyVisibility: [
     'RegisteredMembers',
     'AcceptedInterests',
     'Private'
@@ -73,10 +94,47 @@ const privacyOptions = {
     'Private'
   ],
 
-  fullNameVisibility: [
-    'Everyone',
-    'RegisteredMembers'
+  astrologyVisibility: [
+    'RegisteredMembers',
+    'AcceptedInterests',
+    'MutualMatches',
+    'Private'
+  ],
+
+  contactAddressVisibility: [
+    'AcceptedInterests',
+    'MutualMatches',
+    'Private'
   ]
+};
+
+const privacyLabels = {
+  fullNameVisibility:
+    'Full name',
+
+  photoVisibility:
+    'Profile photos',
+
+  incomeVisibility:
+    'Annual income',
+
+  familyOverviewVisibility:
+    'Family details',
+
+  maternalFamilyVisibility:
+    'Mosal / maternal family',
+
+  siblingDetailsVisibility:
+    'Sibling details',
+
+  assetVisibility:
+    'Family assets',
+
+  astrologyVisibility:
+    'Birth & horoscope',
+
+  contactAddressVisibility:
+    'Contact address'
 };
 
 const labelClass =
@@ -103,262 +161,417 @@ const textLinkClass =
 export default function SettingsPage({
   section
 }) {
-  const [form, setForm] =
+  const [
+    form,
+    setForm
+  ] =
     useState({});
 
-  const [profile, setProfile] =
-    useState(null);
+  const [
+    profile,
+    setProfile
+  ] =
+    useState(
+      null
+    );
 
-  const [blocks, setBlocks] =
+  const [
+    blocks,
+    setBlocks
+  ] =
     useState([]);
 
   const [
     notifications,
     setNotifications
-  ] = useState({});
+  ] =
+    useState({});
 
-  const [tab, setTab] =
+  const [
+    tab,
+    setTab
+  ] =
     useState(
       section
         ? 'Preferences'
         : 'Privacy'
     );
 
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    loading,
+    setLoading
+  ] =
+    useState(
+      true
+    );
 
   const {
     user,
     logout
-  } = useAuth();
+  } =
+    useAuth();
 
-  const notify = useToast();
-  const navigate = useNavigate();
+  const notify =
+    useToast();
 
-  useEffect(() => {
-    if (section) {
-      api('/preferences')
-        .then((response) =>
-          setForm(
-            response.data.preferences
-          )
+  const navigate =
+    useNavigate();
+
+  useEffect(
+    () => {
+      if (
+        section
+      ) {
+        api(
+          '/preferences'
         )
-        .catch((error) =>
-          notify(
-            error.message,
-            'error'
+          .then(
+            (
+              response
+            ) =>
+              setForm(
+                response.data
+                  .preferences
+              )
           )
+          .catch(
+            (
+              error
+            ) =>
+              notify(
+                error.message,
+                'error'
+              )
+          )
+          .finally(
+            () =>
+              setLoading(
+                false
+              )
+          );
+
+        return;
+      }
+
+      Promise.all([
+        api(
+          '/profiles/me'
+        ),
+
+        api(
+          '/blocks'
+        ),
+
+        api(
+          '/notification-preferences'
         )
-        .finally(() =>
-          setLoading(false)
+      ])
+        .then(
+          ([
+            profileResult,
+            blockResult,
+            notificationResult
+          ]) => {
+            setProfile(
+              profileResult
+                .data
+                .profile
+            );
+
+            setForm(
+              profileResult
+                .data
+                .profile
+                .privacy ||
+                {}
+            );
+
+            setBlocks(
+              blockResult
+                .data
+                .blocks ||
+                []
+            );
+
+            setNotifications(
+              notificationResult
+                .data
+                .preferences ||
+                {}
+            );
+          }
+        )
+        .catch(
+          (
+            error
+          ) =>
+            notify(
+              error.message,
+              'error'
+            )
+        )
+        .finally(
+          () =>
+            setLoading(
+              false
+            )
         );
-
-      return;
-    }
-
-    Promise.all([
-      api('/profiles/me'),
-      api('/blocks'),
-      api(
-        '/notification-preferences'
-      )
-    ])
-      .then(
-        ([
-          profileResult,
-          blockResult,
-          notificationResult
-        ]) => {
-          setProfile(
-            profileResult.data.profile
-          );
-
-          setForm(
-            profileResult.data.profile
-              .privacy || {}
-          );
-
-          setBlocks(
-            blockResult.data.blocks ||
-              []
-          );
-
-          setNotifications(
-            notificationResult.data
-              .preferences || {}
-          );
-        }
-      )
-      .catch((error) =>
-        notify(
-          error.message,
-          'error'
-        )
-      )
-      .finally(() =>
-        setLoading(false)
-      );
-  }, [
-    section,
-    notify
-  ]);
+    },
+    [
+      section,
+      notify
+    ]
+  );
 
   const update = (
     key,
     value
   ) => {
-    setForm((current) => ({
-      ...current,
-      [key]: value
-    }));
+    setForm(
+      (
+        current
+      ) => ({
+        ...current,
+
+        [key]:
+          value
+      })
+    );
   };
 
-  const save = async (event) => {
-    event.preventDefault();
+  const save =
+    async (
+      event
+    ) => {
+      event.preventDefault();
 
-    try {
-      if (section) {
-        const payload = {
-          ...form
-        };
+      try {
+        if (
+          section
+        ) {
+          const payload = {
+            ...form
+          };
 
-        [
-          'locations',
-          'states',
-          'countries',
-          'educationPreferences',
-          'occupationPreferences',
-          'dietPreferences',
-          'communityPreferences',
-          'marriageTimeline',
-          'maritalStatus',
-          'acceptedMaritalStatuses'
-        ].forEach((key) => {
-          if (
-            typeof payload[key] ===
-            'string'
-          ) {
-            payload[key] =
-              arrays(payload[key]);
-          }
-        });
+          [
+            'locations',
+            'states',
+            'countries',
+            'educationPreferences',
+            'occupationPreferences',
+            'dietPreferences',
+            'communityPreferences',
+            'marriageTimeline',
+            'maritalStatus',
+            'acceptedMaritalStatuses'
+          ].forEach(
+            (
+              key
+            ) => {
+              if (
+                typeof payload[
+                  key
+                ] ===
+                'string'
+              ) {
+                payload[
+                  key
+                ] =
+                  arrays(
+                    payload[
+                      key
+                    ]
+                  );
+              }
+            }
+          );
 
-        await api('/preferences', {
-          method: 'PUT',
-          body: JSON.stringify(
-            payload
-          )
-        });
-      } else {
-        await api(
-          '/profiles/privacy',
-          {
-            method: 'PATCH',
-            body: JSON.stringify(
-              form
-            )
-          }
+          await api(
+            '/preferences',
+            {
+              method:
+                'PUT',
+
+              body:
+                JSON.stringify(
+                  payload
+                )
+            }
+          );
+        } else {
+          const privacyPayload =
+            Object.fromEntries(
+              Object.keys(
+                privacyOptions
+              )
+                .filter(
+                  (
+                    key
+                  ) =>
+                    form[
+                      key
+                    ] !==
+                    undefined
+                )
+                .map(
+                  (
+                    key
+                  ) => [
+                    key,
+                    form[
+                      key
+                    ]
+                  ]
+                )
+            );
+
+          await api(
+            '/profiles/privacy',
+            {
+              method:
+                'PATCH',
+
+              body:
+                JSON.stringify(
+                  privacyPayload
+                )
+            }
+          );
+        }
+
+        notify(
+          section
+            ? 'Preferences saved.'
+            : 'Privacy updated.'
+        );
+      } catch (
+        error
+      ) {
+        notify(
+          error.message,
+          'error'
         );
       }
+    };
 
-      notify(
-        section
-          ? 'Preferences saved.'
-          : 'Privacy updated.'
-      );
-    } catch (error) {
-      notify(
-        error.message,
-        'error'
-      );
-    }
-  };
+  const password =
+    async (
+      event
+    ) => {
+      event.preventDefault();
 
-  const password = async (
-    event
-  ) => {
-    event.preventDefault();
+      try {
+        await api(
+          '/auth/change-password',
+          {
+            method:
+              'PATCH',
 
-    try {
-      await api(
-        '/auth/change-password',
-        {
-          method: 'PATCH',
-          body: JSON.stringify({
-            currentPassword:
-              event.currentTarget
-                .current.value,
+            body:
+              JSON.stringify({
+                currentPassword:
+                  event.currentTarget
+                    .current
+                    .value,
 
-            newPassword:
-              event.currentTarget
-                .next.value
+                newPassword:
+                  event.currentTarget
+                    .next
+                    .value
+              })
+          }
+        );
+
+        event.currentTarget
+          .reset();
+
+        notify(
+          'Password changed.'
+        );
+      } catch (
+        error
+      ) {
+        notify(
+          error.message,
+          'error'
+        );
+      }
+    };
+
+  const lifecycle =
+    async (
+      status
+    ) => {
+      try {
+        const result =
+          await api(
+            '/profiles/lifecycle',
+            {
+              method:
+                'PATCH',
+
+              body:
+                JSON.stringify({
+                  status
+                })
+            }
+          );
+
+        setProfile(
+          (
+            current
+          ) => ({
+            ...current,
+
+            visibility:
+              result.data
+                .visibility,
+
+            lifecycleStatus:
+              result.data
+                .status
           })
-        }
-      );
+        );
 
-      event.currentTarget.reset();
-
-      notify(
-        'Password changed.'
-      );
-    } catch (error) {
-      notify(
-        error.message,
-        'error'
-      );
-    }
-  };
-
-  const lifecycle = async (
-    status
-  ) => {
-    try {
-      const result = await api(
-        '/profiles/lifecycle',
-        {
-          method: 'PATCH',
-          body: JSON.stringify({
-            status
-          })
-        }
-      );
-
-      setProfile((current) => ({
-        ...current,
-        visibility:
-          result.data.visibility,
-        lifecycleStatus:
-          result.data.status
-      }));
-
-      notify(result.message);
-    } catch (error) {
-      notify(
-        error.message,
-        'error'
-      );
-    }
-  };
+        notify(
+          result.message
+        );
+      } catch (
+        error
+      ) {
+        notify(
+          error.message,
+          'error'
+        );
+      }
+    };
 
   const saveNotifications =
-    async (event) => {
+    async (
+      event
+    ) => {
       event.preventDefault();
 
       try {
         await api(
           '/notification-preferences',
           {
-            method: 'PUT',
-            body: JSON.stringify(
-              notifications
-            )
+            method:
+              'PUT',
+
+            body:
+              JSON.stringify(
+                notifications
+              )
           }
         );
 
         notify(
           'Notification preferences saved.'
         );
-      } catch (error) {
+      } catch (
+        error
+      ) {
         notify(
           error.message,
           'error'
@@ -377,14 +590,22 @@ export default function SettingsPage({
       }
 
       try {
-        await api('/auth/account', {
-          method: 'DELETE'
-        });
+        await api(
+          '/auth/account',
+          {
+            method:
+              'DELETE'
+          }
+        );
 
         await logout();
 
-        navigate('/');
-      } catch (error) {
+        navigate(
+          '/'
+        );
+      } catch (
+        error
+      ) {
         notify(
           error.message,
           'error'
@@ -392,7 +613,9 @@ export default function SettingsPage({
       }
     };
 
-  if (loading) {
+  if (
+    loading
+  ) {
     return (
       <div className="page-skeleton">
         Loading settings…
@@ -414,10 +637,9 @@ export default function SettingsPage({
         </h1>
 
         <p className="mt-[18px] max-w-[680px] text-[14px] leading-[1.8] text-[#756a60]">
-          Choose what feels
-          comfortable. Sensitive
-          information is filtered by
-          the server.
+          Choose what feels comfortable.
+          Sensitive information is filtered
+          by the server.
         </p>
       </header>
 
@@ -439,7 +661,9 @@ export default function SettingsPage({
                 form.preferredGender ||
                 ''
               }
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 update(
                   'preferredGender',
                   event.target.value
@@ -479,22 +703,23 @@ export default function SettingsPage({
                 'Maximum height'
               ]
             ].map(
-              ([key, label]) => (
+              ([
+                key,
+                label
+              ]) => (
                 <label
                   key={key}
-                  className={
-                    labelClass
-                  }
+                  className={labelClass}
                 >
                   {label}
 
                   <input
-                    className={
-                      fieldClass
-                    }
+                    className={fieldClass}
                     type="number"
                     value={
-                      form[key] ||
+                      form[
+                        key
+                      ] ||
                       ''
                     }
                     onChange={(
@@ -505,7 +730,8 @@ export default function SettingsPage({
                         Number(
                           event.target
                             .value
-                        ) || ''
+                        ) ||
+                        ''
                       )
                     }
                   />
@@ -540,29 +766,31 @@ export default function SettingsPage({
               'Communities'
             ]
           ].map(
-            ([key, label]) => (
+            ([
+              key,
+              label
+            ]) => (
               <label
                 key={key}
-                className={
-                  labelClass
-                }
+                className={labelClass}
               >
                 {label}
 
                 <input
-                  className={
-                    fieldClass
+                  className={fieldClass}
+                  value={
+                    csv(
+                      form[
+                        key
+                      ]
+                    )
                   }
-                  value={csv(
-                    form[key]
-                  )}
                   onChange={(
                     event
                   ) =>
                     update(
                       key,
-                      event.target
-                        .value
+                      event.target.value
                     )
                   }
                   placeholder="Comma separated"
@@ -576,10 +804,15 @@ export default function SettingsPage({
 
             <input
               className={fieldClass}
-              value={csv(
-                form.acceptedMaritalStatuses
-              )}
-              onChange={(event) =>
+              value={
+                csv(
+                  form
+                    .acceptedMaritalStatuses
+                )
+              }
+              onChange={(
+                event
+              ) =>
                 update(
                   'acceptedMaritalStatuses',
                   event.target.value
@@ -590,8 +823,7 @@ export default function SettingsPage({
           </label>
 
           <label className={labelClass}>
-            Willing to consider
-            remarriage
+            Willing to consider remarriage
 
             <select
               className={fieldClass}
@@ -599,26 +831,30 @@ export default function SettingsPage({
                 form.willingForRemarriage ||
                 'Open to Discuss'
               }
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 update(
                   'willingForRemarriage',
                   event.target.value
                 )
               }
             >
-              <option>Yes</option>
-              <option>No</option>
+              <option>
+                Yes
+              </option>
+
+              <option>
+                No
+              </option>
+
               <option>
                 Open to Discuss
               </option>
             </select>
           </label>
 
-          <button
-            className={
-              primaryButtonClass
-            }
-          >
+          <button className={primaryButtonClass}>
             Save preferences
           </button>
         </form>
@@ -631,38 +867,48 @@ export default function SettingsPage({
               'Password',
               'Notifications',
               'Blocked profiles'
-            ].map((item) => (
-              <button
-                className={`border-b border-[#ddd0c1] p-[14px] text-left text-[11px] ${
-                  tab === item
-                    ? 'bg-[#fffdf8] font-extrabold text-[#681d25]'
-                    : ''
-                }`}
-                onClick={() =>
-                  setTab(item)
-                }
-                key={item}
-              >
-                {item}
-              </button>
-            ))}
+            ].map(
+              (
+                item
+              ) => (
+                <button
+                  type="button"
+                  className={`border-b border-[#ddd0c1] p-[14px] text-left text-[11px] ${
+                    tab ===
+                    item
+                      ? 'bg-[#fffdf8] font-extrabold text-[#681d25]'
+                      : ''
+                  }`}
+                  onClick={() =>
+                    setTab(
+                      item
+                    )
+                  }
+                  key={item}
+                >
+                  {item}
+                </button>
+              )
+            )}
           </nav>
 
           <div>
-            {tab === 'Privacy' && (
+            {tab ===
+              'Privacy' && (
               <form
-                className={
-                  formClass
-                }
+                className={formClass}
                 onSubmit={save}
               >
-                <h2
-                  className={
-                    formTitleClass
-                  }
-                >
+                <h2 className={formTitleClass}>
                   Privacy controls
                 </h2>
+
+                <p className="text-[11px] leading-6 text-[#756a60]">
+                  Phone and email remain protected by
+                  the contact request and unlock flow.
+                  Exact date of birth is not shown to
+                  other members.
+                </p>
 
                 {Object.entries(
                   privacyOptions
@@ -673,21 +919,21 @@ export default function SettingsPage({
                   ]) => (
                     <label
                       key={key}
-                      className={
-                        labelClass
-                      }
+                      className={labelClass}
                     >
-                      {key.replace(
-                        /([A-Z])/g,
-                        ' $1'
-                      )}
+                      {
+                        privacyLabels[
+                          key
+                        ] ||
+                        key
+                      }
 
                       <select
-                        className={
-                          fieldClass
-                        }
+                        className={fieldClass}
                         value={
-                          form[key] ||
+                          form[
+                            key
+                          ] ||
                           ''
                         }
                         onChange={(
@@ -695,24 +941,23 @@ export default function SettingsPage({
                         ) =>
                           update(
                             key,
-                            event
-                              .target
-                              .value
+                            event.target.value
                           )
                         }
                       >
+                        <option value="">
+                          Use default
+                        </option>
+
                         {options.map(
                           (
                             option
                           ) => (
                             <option
-                              key={
-                                option
-                              }
+                              key={option}
+                              value={option}
                             >
-                              {
-                                option
-                              }
+                              {option}
                             </option>
                           )
                         )}
@@ -721,63 +966,62 @@ export default function SettingsPage({
                   )
                 )}
 
-                <button
-                  className={
-                    primaryButtonClass
-                  }
-                >
+                <button className={primaryButtonClass}>
                   Save changes
                 </button>
               </form>
             )}
 
-            {tab === 'Account' && (
+            {tab ===
+              'Account' && (
               <section className={formClass}>
                 <h2 className={formTitleClass}>
                   Account & profile status
                 </h2>
 
                 <p className="text-[12px] text-[#756a60]">
-                  {user.email} •{' '}
+                  {user.email}
+                  {' • '}
                   {user.phone ||
                     'No phone number'}
                 </p>
 
                 <p className="text-[12px] text-[#756a60]">
                   Current status:{' '}
-                  {profile?.lifecycleStatus ||
+                  {profile
+                    ?.lifecycleStatus ||
                     'Active'}
                 </p>
 
                 <div className="mt-7 flex flex-wrap gap-[10px]">
                   <button
+                    type="button"
                     onClick={() =>
                       lifecycle(
-                        profile?.lifecycleStatus ===
+                        profile
+                          ?.lifecycleStatus ===
                           'Paused'
                           ? 'Active'
                           : 'Paused'
                       )
                     }
-                    className={
-                      outlineButtonClass
-                    }
+                    className={outlineButtonClass}
                   >
-                    {profile?.lifecycleStatus ===
+                    {profile
+                      ?.lifecycleStatus ===
                     'Paused'
                       ? 'Resume profile'
                       : 'Pause profile'}
                   </button>
 
                   <button
+                    type="button"
                     onClick={() =>
                       lifecycle(
                         'Married'
                       )
                     }
-                    className={
-                      outlineButtonClass
-                    }
+                    className={outlineButtonClass}
                   >
                     We found a match /
                     Got married
@@ -790,19 +1034,15 @@ export default function SettingsPage({
                   </h3>
 
                   <p className="mb-[18px] mt-2 text-[12px] text-[#756a60]">
-                    Your profile is hidden
-                    immediately and
-                    identifying login data is
+                    Your profile is hidden immediately
+                    and identifying login data is
                     anonymized.
                   </p>
 
                   <button
-                    onClick={
-                      removeAccount
-                    }
-                    className={
-                      outlineButtonClass
-                    }
+                    type="button"
+                    onClick={removeAccount}
+                    className={outlineButtonClass}
                   >
                     Delete account
                   </button>
@@ -810,49 +1050,32 @@ export default function SettingsPage({
               </section>
             )}
 
-            {tab === 'Password' && (
+            {tab ===
+              'Password' && (
               <form
-                className={
-                  formClass
-                }
+                className={formClass}
                 onSubmit={password}
               >
-                <h2
-                  className={
-                    formTitleClass
-                  }
-                >
+                <h2 className={formTitleClass}>
                   Change password
                 </h2>
 
-                <label
-                  className={
-                    labelClass
-                  }
-                >
+                <label className={labelClass}>
                   Current password
 
                   <input
-                    className={
-                      fieldClass
-                    }
+                    className={fieldClass}
                     name="current"
                     type="password"
                     required
                   />
                 </label>
 
-                <label
-                  className={
-                    labelClass
-                  }
-                >
+                <label className={labelClass}>
                   New password
 
                   <input
-                    className={
-                      fieldClass
-                    }
+                    className={fieldClass}
                     name="next"
                     type="password"
                     minLength="8"
@@ -860,11 +1083,7 @@ export default function SettingsPage({
                   />
                 </label>
 
-                <button
-                  className={
-                    primaryButtonClass
-                  }
-                >
+                <button className={primaryButtonClass}>
                   Change password
                 </button>
               </form>
@@ -873,18 +1092,10 @@ export default function SettingsPage({
             {tab ===
               'Notifications' && (
               <form
-                className={
-                  formClass
-                }
-                onSubmit={
-                  saveNotifications
-                }
+                className={formClass}
+                onSubmit={saveNotifications}
               >
-                <h2
-                  className={
-                    formTitleClass
-                  }
-                >
+                <h2 className={formTitleClass}>
                   Notification preferences
                 </h2>
 
@@ -933,10 +1144,9 @@ export default function SettingsPage({
                               current
                             ) => ({
                               ...current,
+
                               [key]:
-                                event
-                                  .target
-                                  .checked
+                                event.target.checked
                             })
                           )
                         }
@@ -947,11 +1157,7 @@ export default function SettingsPage({
                   )
                 )}
 
-                <button
-                  className={
-                    primaryButtonClass
-                  }
-                >
+                <button className={primaryButtonClass}>
                   Save preferences
                 </button>
               </form>
@@ -959,27 +1165,19 @@ export default function SettingsPage({
 
             {tab ===
               'Blocked profiles' && (
-              <section
-                className={
-                  formClass
-                }
-              >
-                <h2
-                  className={
-                    formTitleClass
-                  }
-                >
+              <section className={formClass}>
+                <h2 className={formTitleClass}>
                   Blocked profiles
                 </h2>
 
                 {blocks.length ? (
                   blocks.map(
-                    (block) => (
+                    (
+                      block
+                    ) => (
                       <div
                         className="flex justify-between border-b border-[#ddd0c1] py-[10px]"
-                        key={
-                          block._id
-                        }
+                        key={block._id}
                       >
                         <span>
                           {
@@ -990,9 +1188,8 @@ export default function SettingsPage({
                         </span>
 
                         <button
-                          className={
-                            textLinkClass
-                          }
+                          type="button"
+                          className={textLinkClass}
                           onClick={async () => {
                             await api(
                               `/blocks/${block.blockedProfile._id}`,

@@ -12,16 +12,15 @@ import {
   MapPin,
   MessageCircle,
   Phone,
-  Printer,
-  ShieldCheck,
-  ShieldX
+  ShieldCheck
 } from 'lucide-react';
 
 import {
-  Link,
   useNavigate,
   useParams
 } from 'react-router-dom';
+
+import FamilyAssetsDisplay from '../components/FamilyAssetsDisplay';
 
 import {
   useToast
@@ -31,8 +30,6 @@ import {
   api,
   assetUrl
 } from '../services/api';
-
-import FamilyAssetsDisplay from '../components/FamilyAssetsDisplay';
 
 const primaryButtonClass =
   'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318] disabled:cursor-not-allowed disabled:opacity-55';
@@ -67,139 +64,133 @@ const labelClass =
 const valueClass =
   "mt-1 break-words font-['Cormorant_Garamond'] text-[20px] font-medium leading-[1.25] text-[#291a17]";
 
-const safeValue = (
-  input
-) => {
-  if (
-    input === undefined ||
-    input === null ||
-    input === ''
-  ) {
-    return 'Not shared';
-  }
+const joinValues =
+  (
+    values,
+    separator = ', '
+  ) =>
+    values
+      .filter(
+        (
+          value
+        ) =>
+          value !==
+            undefined &&
+          value !==
+            null &&
+          value !==
+            ''
+      )
+      .join(
+        separator
+      );
 
-  return input;
-};
+const formatDate =
+  (
+    value
+  ) => {
+    if (!value) {
+      return '';
+    }
 
-const joinValues = (
-  values,
-  separator = ', '
-) =>
-  values
-    .filter(
-      (
+    const date =
+      new Date(
         value
-      ) =>
-        value !==
-          undefined &&
-        value !==
-          null &&
-        value !==
-          ''
-    )
-    .join(
-      separator
-    );
+      );
 
-const formatDate = (
-  value
-) => {
-  if (!value) {
-    return '';
-  }
-
-  const date =
-    new Date(
-      value
-    );
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-    return '';
-  }
-
-  return new Intl.DateTimeFormat(
-    'en-IN',
-    {
-      day:
-        '2-digit',
-
-      month:
-        'short',
-
-      year:
-        'numeric'
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return '';
     }
-  ).format(
-    date
-  );
-};
 
-const formatIncome = (
-  value
-) => {
-  const amount =
-    Number(
-      value
+    return new Intl.DateTimeFormat(
+      'en-IN',
+      {
+        day:
+          '2-digit',
+
+        month:
+          'short',
+
+        year:
+          'numeric'
+      }
+    ).format(
+      date
     );
+  };
 
-  if (
-    !Number.isFinite(
-      amount
-    ) ||
-    amount <= 0
-  ) {
-    return '';
-  }
+const formatIncome =
+  (
+    value
+  ) => {
+    const amount =
+      Number(
+        value
+      );
 
-  return new Intl.NumberFormat(
-    'en-IN',
-    {
-      style:
-        'currency',
-
-      currency:
-        'INR',
-
-      maximumFractionDigits:
+    if (
+      !Number.isFinite(
+        amount
+      ) ||
+      amount <=
         0
+    ) {
+      return '';
     }
-  ).format(
-    amount
-  );
-};
 
-const whatsappUrl = (
-  value
-) => {
-  if (!value) {
-    return '';
-  }
+    return new Intl.NumberFormat(
+      'en-IN',
+      {
+        style:
+          'currency',
 
-  const digits =
-    String(
-      value
-    ).replace(
-      /\D/g,
-      ''
+        currency:
+          'INR',
+
+        maximumFractionDigits:
+          0
+      }
+    ).format(
+      amount
     );
+  };
 
-  return digits
-    ? `https://wa.me/${digits}`
-    : '';
-};
+const whatsappUrl =
+  (
+    value
+  ) => {
+    if (!value) {
+      return '';
+    }
+
+    const digits =
+      String(
+        value
+      ).replace(
+        /\D/g,
+        ''
+      );
+
+    return digits
+      ? `https://wa.me/${digits}`
+      : '';
+  };
 
 function Detail({
   label,
   value
 }) {
   if (
-    value === undefined ||
-    value === null ||
-    value === ''
+    value ===
+      undefined ||
+    value ===
+      null ||
+    value ===
+      ''
   ) {
     return null;
   }
@@ -281,15 +272,7 @@ function MosalCard({
     return null;
   }
 
-  const location =
-    joinValues([
-      branch.nativeVillage,
-      branch.taluka,
-      branch.district,
-      branch.state
-    ]);
-
-  const name =
+  const person =
     branch.mamaName ||
     branch.grandmotherName;
 
@@ -302,8 +285,16 @@ function MosalCard({
       ' • '
     );
 
+  const location =
+    joinValues([
+      branch.nativeVillage,
+      branch.taluka,
+      branch.district,
+      branch.state
+    ]);
+
   if (
-    !name &&
+    !person &&
     !lineage &&
     !location &&
     !branch.notes
@@ -325,9 +316,9 @@ function MosalCard({
         {title}
       </p>
 
-      {name && (
+      {person && (
         <p className="mt-3 text-[12px] font-bold text-[#291a17]">
-          {name}
+          {person}
         </p>
       )}
 
@@ -370,7 +361,9 @@ export default function ProfilePage({
     data,
     setData
   ] =
-    useState(null);
+    useState(
+      null
+    );
 
   const [
     error,
@@ -400,6 +393,11 @@ export default function ProfilePage({
       'Fake Profile'
     );
 
+  const endpoint =
+    own
+      ? '/profiles/me'
+      : `/profiles/${profileId}`;
+
   const load =
     useCallback(
       async () => {
@@ -408,9 +406,7 @@ export default function ProfilePage({
         try {
           const result =
             await api(
-              own
-                ? '/profiles/me'
-                : `/profiles/${profileId}`
+              endpoint
             );
 
           setData(
@@ -425,8 +421,7 @@ export default function ProfilePage({
         }
       },
       [
-        own,
-        profileId
+        endpoint
       ]
     );
 
@@ -436,9 +431,7 @@ export default function ProfilePage({
         true;
 
       api(
-        own
-          ? '/profiles/me'
-          : `/profiles/${profileId}`
+        endpoint
       )
         .then(
           (
@@ -475,8 +468,7 @@ export default function ProfilePage({
       };
     },
     [
-      own,
-      profileId
+      endpoint
     ]
   );
 
@@ -484,10 +476,13 @@ export default function ProfilePage({
     async (
       name
     ) => {
-      if (
-        !data
+      const targetId =
+        data
           ?.profile
-          ?._id
+          ?._id;
+
+      if (
+        !targetId
       ) {
         return;
       }
@@ -510,8 +505,7 @@ export default function ProfilePage({
               body:
                 JSON.stringify({
                   receiverProfile:
-                    data.profile
-                      ._id
+                    targetId
                 })
             }
           );
@@ -530,8 +524,7 @@ export default function ProfilePage({
               body:
                 JSON.stringify({
                   profileId:
-                    data.profile
-                      ._id
+                    targetId
                 })
             }
           );
@@ -550,8 +543,7 @@ export default function ProfilePage({
               body:
                 JSON.stringify({
                   receiverProfile:
-                    data.profile
-                      ._id
+                    targetId
                 })
             }
           );
@@ -561,13 +553,23 @@ export default function ProfilePage({
           name ===
           'unlock'
         ) {
-          await api(
-            `/contact-requests/${data.actionState.contactRequest.id}/unlock`,
-            {
-              method:
-                'POST'
-            }
-          );
+          const requestId =
+            data
+              ?.actionState
+              ?.contactRequest
+              ?.id;
+
+          if (
+            requestId
+          ) {
+            await api(
+              `/contact-requests/${requestId}/unlock`,
+              {
+                method:
+                  'POST'
+              }
+            );
+          }
         }
 
         if (
@@ -583,8 +585,7 @@ export default function ProfilePage({
               body:
                 JSON.stringify({
                   profileId:
-                    data.profile
-                      ._id
+                    targetId
                 })
             }
           );
@@ -754,11 +755,11 @@ export default function ProfilePage({
   ) {
     return (
       <div className="flex min-h-[380px] flex-col items-center justify-center border border-[#ddd0c1] bg-[#fffdf8] px-[30px] py-[60px] text-center">
-        <h2 className="m-[15px] font-['Cormorant_Garamond'] text-[34px] font-medium">
+        <h2 className="font-['Cormorant_Garamond'] text-[34px] font-medium">
           Profile unavailable
         </h2>
 
-        <p className="max-w-[430px] text-[13px] leading-[1.8] text-[#756a60]">
+        <p className="mt-3 max-w-[430px] text-[13px] leading-[1.8] text-[#756a60]">
           {error}
         </p>
 
@@ -788,14 +789,16 @@ export default function ProfilePage({
   const profile =
     data.profile;
 
-  const contact =
-    data.actionState
+  const request =
+    data
+      .actionState
       ?.contactRequest;
 
   const location =
     joinValues([
       profile.location
         ?.city,
+
       profile.location
         ?.state
     ]);
@@ -804,10 +807,13 @@ export default function ProfilePage({
     joinValues([
       profile.location
         ?.nativePlace,
+
       profile.location
         ?.nativeTaluka,
+
       profile.location
         ?.nativeDistrict,
+
       profile.location
         ?.nativeState
     ]);
@@ -816,8 +822,10 @@ export default function ProfilePage({
     joinValues([
       profile.birthDetails
         ?.city,
+
       profile.birthDetails
         ?.district,
+
       profile.birthDetails
         ?.state
     ]);
@@ -827,9 +835,11 @@ export default function ProfilePage({
       profile.career
         ?.workLocation
         ?.city,
+
       profile.career
         ?.workLocation
         ?.state,
+
       profile.career
         ?.workLocation
         ?.country
@@ -839,12 +849,15 @@ export default function ProfilePage({
     joinValues([
       profile.paternalFamily
         ?.ancestralVillage ||
-        profile.paternalFamily
-          ?.nativePlace,
+      profile.paternalFamily
+        ?.nativePlace,
+
       profile.paternalFamily
         ?.taluka,
+
       profile.paternalFamily
         ?.district,
+
       profile.paternalFamily
         ?.state
     ]);
@@ -853,12 +866,15 @@ export default function ProfilePage({
     joinValues([
       profile.maternalFamily
         ?.maternalVillage ||
-        profile.maternalFamily
-          ?.maternalNativePlace,
+      profile.maternalFamily
+        ?.maternalNativePlace,
+
       profile.maternalFamily
         ?.maternalTaluka,
+
       profile.maternalFamily
         ?.maternalDistrict,
+
       profile.maternalFamily
         ?.maternalState
     ]);
@@ -868,21 +884,27 @@ export default function ProfilePage({
       profile.contactDetails
         ?.currentAddress
         ?.addressLine1,
+
       profile.contactDetails
         ?.currentAddress
         ?.addressLine2,
+
       profile.contactDetails
         ?.currentAddress
         ?.city,
+
       profile.contactDetails
         ?.currentAddress
         ?.taluka,
+
       profile.contactDetails
         ?.currentAddress
         ?.district,
+
       profile.contactDetails
         ?.currentAddress
         ?.state,
+
       profile.contactDetails
         ?.currentAddress
         ?.pincode
@@ -919,9 +941,11 @@ export default function ProfilePage({
       <div className="grid grid-cols-[350px_minmax(0,1fr)] items-center gap-[55px] max-[850px]:grid-cols-1 max-[850px]:gap-8">
         {profile.profilePhoto ? (
           <img
-            src={assetUrl(
-              profile.profilePhoto
-            )}
+            src={
+              assetUrl(
+                profile.profilePhoto
+              )
+            }
             alt={`${profile.firstName}'s profile`}
             className="h-[500px] w-full rounded-t-[175px] object-cover max-[850px]:mx-auto max-[850px]:h-[460px] max-[850px]:max-w-[390px]"
           />
@@ -988,9 +1012,7 @@ export default function ProfilePage({
                 </span>
 
                 <span>
-                  {
-                    profile.height
-                  }{' '}
+                  {profile.height}{' '}
                   cm
                 </span>
               </>
@@ -1028,6 +1050,7 @@ export default function ProfilePage({
               [
                 profile.education
                   ?.highestEducation,
+
                 profile.career
                   ?.occupation
               ],
@@ -1043,8 +1066,10 @@ export default function ProfilePage({
                 [
                   profile.community
                     ?.clan,
+
                   profile.community
                     ?.gotra,
+
                   profile.location
                     ?.nativePlace
                 ],
@@ -1069,7 +1094,8 @@ export default function ProfilePage({
                 0 && (
                 <p className="mt-1 text-[10px] leading-5 text-[#756a60]">
                   Shared preferences:{' '}
-                  {data.compatibility.matchedFactors
+                  {data.compatibility
+                    .matchedFactors
                     .slice(
                       0,
                       4
@@ -1083,175 +1109,103 @@ export default function ProfilePage({
             </div>
           )}
 
-          <div className="mt-8 flex flex-wrap gap-[10px]">
-            {own ? (
-              <>
-                <Link
-                  to="/onboarding"
-                  className={`${primaryButtonClass} no-underline`}
-                >
-                  Edit profile
-                </Link>
-
-                <Link
-                  to="/my-profile/biodata"
-                  className={`${outlineButtonClass} no-underline`}
-                >
-                  <Printer
-                    size={
-                      16
-                    }
-                  />
-
-                  Biodata
-                </Link>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  disabled={
-                    data.actionState
-                      ?.interestSent ||
-                    busyAction ===
-                      'interest'
-                  }
-                  onClick={() =>
-                    action(
-                      'interest'
-                    )
-                  }
-                  className={
-                    primaryButtonClass
-                  }
-                >
-                  <Heart
-                    size={
-                      16
-                    }
-                  />
-
-                  {data.actionState
+          {!own && (
+            <div className="mt-7 flex flex-wrap gap-3">
+              <button
+                type="button"
+                className={
+                  primaryButtonClass
+                }
+                disabled={
+                  busyAction ===
+                  'interest' ||
+                  data.actionState
                     ?.interestSent
-                    ? 'Interest sent'
-                    : busyAction ===
-                        'interest'
-                      ? 'Sending…'
-                      : 'Express interest'}
-                </button>
+                }
+                onClick={() =>
+                  action(
+                    'interest'
+                  )
+                }
+              >
+                <Heart
+                  size={
+                    16
+                  }
+                />
 
+                {data.actionState
+                  ?.interestSent
+                  ? 'Interest sent'
+                  : 'Send interest'}
+              </button>
+
+              <button
+                type="button"
+                className={
+                  outlineButtonClass
+                }
+                disabled={
+                  busyAction ===
+                  'shortlist' ||
+                  data.actionState
+                    ?.shortlisted
+                }
+                onClick={() =>
+                  action(
+                    'shortlist'
+                  )
+                }
+              >
+                <Bookmark
+                  size={
+                    16
+                  }
+                />
+
+                {data.actionState
+                  ?.shortlisted
+                  ? 'Shortlisted'
+                  : 'Shortlist'}
+              </button>
+
+              {!request && (
                 <button
                   type="button"
-                  disabled={
-                    data.actionState
-                      ?.shortlisted ||
-                    busyAction ===
-                      'shortlist'
-                  }
-                  onClick={() =>
-                    action(
-                      'shortlist'
-                    )
-                  }
                   className={
                     outlineButtonClass
                   }
+                  disabled={
+                    busyAction ===
+                    'contact'
+                  }
+                  onClick={() =>
+                    action(
+                      'contact'
+                    )
+                  }
                 >
-                  <Bookmark
+                  <Phone
                     size={
                       16
                     }
                   />
 
-                  {data.actionState
-                    ?.shortlisted
-                    ? 'Shortlisted'
-                    : 'Shortlist'}
+                  Request contact
                 </button>
+              )}
 
-                {profile.contact ? (
-                  <>
-                    {unlockedPhone && (
-                      <a
-                        className={`${outlineButtonClass} no-underline`}
-                        href={`tel:${unlockedPhone}`}
-                      >
-                        <Phone
-                          size={
-                            16
-                          }
-                        />
-
-                        {
-                          unlockedPhone
-                        }
-                      </a>
-                    )}
-
-                    {unlockedWhatsAppUrl && (
-                      <a
-                        className={`${outlineButtonClass} no-underline`}
-                        href={
-                          unlockedWhatsAppUrl
-                        }
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <MessageCircle
-                          size={
-                            16
-                          }
-                        />
-
-                        WhatsApp
-                      </a>
-                    )}
-                  </>
-                ) : contact
-                    ?.status ===
-                    'Accepted' &&
-                  !contact
-                    .unlocked ? (
-                  <button
-                    type="button"
-                    disabled={
-                      busyAction ===
-                      'unlock'
-                    }
-                    onClick={() =>
-                      action(
-                        'unlock'
-                      )
-                    }
-                    className={
-                      outlineButtonClass
-                    }
-                  >
-                    <Phone
-                      size={
-                        16
-                      }
-                    />
-
-                    {busyAction ===
-                    'unlock'
-                      ? 'Unlocking…'
-                      : 'Unlock contact'}
-                  </button>
-                ) : contact
-                    ?.incoming &&
-                  contact
-                    .status ===
-                    'Pending' ? (
+              {request?.incoming &&
+                request.status ===
+                  'Pending' && (
                   <>
                     <button
                       type="button"
-                      disabled={
-                        busyAction ===
-                        'accept'
-                      }
                       className={
-                        outlineButtonClass
+                        primaryButtonClass
+                      }
+                      disabled={
+                        !!busyAction
                       }
                       onClick={() =>
                         respond(
@@ -1264,12 +1218,11 @@ export default function ProfilePage({
 
                     <button
                       type="button"
-                      disabled={
-                        busyAction ===
-                        'decline'
-                      }
                       className={
                         outlineButtonClass
+                      }
+                      disabled={
+                        !!busyAction
                       }
                       onClick={() =>
                         respond(
@@ -1280,93 +1233,90 @@ export default function ProfilePage({
                       Decline
                     </button>
                   </>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={
-                      contact
-                        ?.status ===
-                        'Pending' ||
-                      contact
-                        ?.status ===
-                        'Declined' ||
-                      busyAction ===
-                        'contact'
-                    }
-                    onClick={() =>
-                      action(
-                        'contact'
-                      )
-                    }
-                    className={
-                      outlineButtonClass
-                    }
-                  >
-                    <Phone
-                      size={
-                        16
-                      }
-                    />
-
-                    {contact
-                      ?.status ===
-                    'Pending'
-                      ? 'Contact requested'
-                      : contact
-                            ?.status ===
-                          'Declined'
-                        ? 'Request declined'
-                        : busyAction ===
-                            'contact'
-                          ? 'Requesting…'
-                          : 'Request contact'}
-                  </button>
                 )}
 
+              {request?.status ===
+                'Accepted' &&
+                !request.unlocked && (
                 <button
                   type="button"
+                  className={
+                    primaryButtonClass
+                  }
                   disabled={
                     busyAction ===
-                    'block'
+                    'unlock'
                   }
                   onClick={() =>
                     action(
-                      'block'
+                      'unlock'
                     )
                   }
-                  className={
-                    iconButtonClass
-                  }
-                  aria-label="Block profile"
                 >
-                  <ShieldX
-                    size={
-                      16
-                    }
-                  />
+                  Unlock contact
                 </button>
+              )}
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setReporting(
-                      true
-                    )
+              <button
+                type="button"
+                className={
+                  iconButtonClass
+                }
+                aria-label="Report profile"
+                onClick={() =>
+                  setReporting(
+                    true
+                  )
+                }
+              >
+                <Flag
+                  size={
+                    16
                   }
+                />
+              </button>
+            </div>
+          )}
+
+          {unlockedPhone && (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <a
+                href={`tel:${unlockedPhone}`}
+                className={
+                  outlineButtonClass
+                }
+              >
+                <Phone
+                  size={
+                    15
+                  }
+                />
+
+                {unlockedPhone}
+              </a>
+
+              {unlockedWhatsAppUrl && (
+                <a
+                  href={
+                    unlockedWhatsAppUrl
+                  }
+                  target="_blank"
+                  rel="noreferrer"
                   className={
-                    iconButtonClass
+                    outlineButtonClass
                   }
-                  aria-label="Report profile"
                 >
-                  <Flag
+                  <MessageCircle
                     size={
-                      16
+                      15
                     }
                   />
-                </button>
-              </>
-            )}
-          </div>
+
+                  WhatsApp
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1380,9 +1330,8 @@ export default function ProfilePage({
               bodyClass
             }
           >
-            {safeValue(
-              profile.aboutMe
-            )}
+            {profile.aboutMe ||
+              'Not shared'}
           </p>
         </Section>
 
@@ -1439,13 +1388,6 @@ export default function ProfilePage({
               label="Profile created for"
               value={
                 profile.profileFor
-              }
-            />
-
-            <Detail
-              label="Marriage timeline"
-              value={
-                profile.marriageTimeline
               }
             />
           </div>
@@ -1538,40 +1480,12 @@ export default function ProfilePage({
             />
 
             <Detail
-              label="Kuldevta"
-              value={
-                profile.community
-                  ?.ishtaDevta
-              }
-            />
-
-            <Detail
               label="Vatan / Native place"
               value={
                 vatan
               }
             />
           </div>
-
-          {profile.community
-            ?.familyOrigin && (
-            <div className="mt-5 border border-[#ddd0c1] bg-[#fffdf8] p-5">
-              <p
-                className={
-                  labelClass
-                }
-              >
-                Family / Samaj background
-              </p>
-
-              <p className={`${bodyClass} mt-2`}>
-                {
-                  profile.community
-                    .familyOrigin
-                }
-              </p>
-            </div>
-          )}
         </Section>
 
         <Section
@@ -1701,6 +1615,7 @@ export default function ProfilePage({
                     [
                       profile.family
                         .fatherName,
+
                       profile.family
                         .fatherOccupation
                     ],
@@ -1716,6 +1631,7 @@ export default function ProfilePage({
                     [
                       profile.family
                         .motherName,
+
                       profile.family
                         .motherOccupation
                     ],
@@ -1737,14 +1653,6 @@ export default function ProfilePage({
                 value={
                   profile.family
                     .familyValues
-                }
-              />
-
-              <Detail
-                label="Family Residence State"
-                value={
-                  profile.family
-                    .familyLocation
                 }
               />
             </div>
@@ -1801,18 +1709,6 @@ export default function ProfilePage({
                 }
               />
             </div>
-
-            {profile
-              .paternalFamily
-              .notes && (
-              <p className={`${bodyClass} mt-5`}>
-                {
-                  profile
-                    .paternalFamily
-                    .notes
-                }
-              </p>
-            )}
           </Section>
         )}
 
@@ -1832,32 +1728,11 @@ export default function ProfilePage({
               />
 
               <Detail
-                label="Maternal surname"
-                value={
-                  profile
-                    .maternalFamily
-                    .maternalFamilySurname
-                }
-              />
-
-              <Detail
                 label="Maternal Shakh"
                 value={
                   profile
                     .maternalFamily
                     .maternalClan
-                }
-              />
-
-              <Detail
-                label="Maternal Gotra"
-                value={
-                  profile
-                    .maternalFamily
-                    .maternalGotra ||
-                  profile
-                    .maternalFamily
-                    .notes
                 }
               />
 
@@ -1873,19 +1748,10 @@ export default function ProfilePage({
 
         {profile.maternalLineage && (
           <Section
-            eyebrow="Three-generation lineage"
+            eyebrow="Extended lineage"
             title="Extended Mosal"
           >
-            <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-1">
-              <MosalCard
-                title="Self Mosal"
-                branch={
-                  profile
-                    .maternalLineage
-                    .selfMosal
-                }
-              />
-
+            <div className="grid grid-cols-2 gap-4 max-[900px]:grid-cols-1">
               <MosalCard
                 title="Father's Mosal"
                 branch={
@@ -1924,11 +1790,23 @@ export default function ProfilePage({
                   const spousePlace =
                     joinValues([
                       sibling.spouseVillage ||
-                        sibling.spouseNativePlace,
+                      sibling.spouseNativePlace,
+
                       sibling.spouseTaluka,
+
                       sibling.spouseDistrict,
+
                       sibling.spouseState
                     ]);
+
+                  const spouseSurname =
+                    joinValues(
+                      [
+                        sibling.spouseClan,
+                        sibling.spouseFamilySurname
+                      ],
+                      ' • '
+                    );
 
                   return (
                     <article
@@ -1979,29 +1857,19 @@ export default function ProfilePage({
                         <div className="mt-4 border-t border-[#ddd0c1] pt-4 text-[10px] leading-6 text-[#756a60]">
                           {sibling.spouseName && (
                             <p>
-                              Life Partner:{' '}
+                              Life Partner Name:{' '}
                               {
                                 sibling.spouseName
                               }
                             </p>
                           )}
 
-                          {joinValues(
-                            [
-                              sibling.spouseClan,
-                              sibling.spouseFamilySurname
-                            ],
-                            ' • '
-                          ) && (
+                          {spouseSurname && (
                             <p>
                               Life Partner Surname:{' '}
-                              {joinValues(
-                                [
-                                  sibling.spouseClan,
-                                  sibling.spouseFamilySurname
-                                ],
-                                ' • '
-                              )}
+                              {
+                                spouseSurname
+                              }
                             </p>
                           )}
 
@@ -2085,27 +1953,15 @@ export default function ProfilePage({
                   }
                 />
               </div>
-
-              {profile
-                .maritalHistory
-                .notes && (
-                <p className={`${bodyClass} mt-5`}>
-                  {
-                    profile
-                      .maritalHistory
-                      .notes
-                  }
-                </p>
-              )}
             </Section>
           )}
 
         <FamilyAssetsDisplay
-  assets={
-    profile.familyAssets
-  }
-  mode="profile"
-/>
+          assets={
+            profile.familyAssets
+          }
+          mode="profile"
+        />
 
         <Section
           eyebrow="Lifestyle"
@@ -2181,6 +2037,7 @@ export default function ProfilePage({
                     [
                       profile.contactDetails
                         ?.guardianName,
+
                       profile.contactDetails
                         ?.guardianRelation
                     ],
@@ -2225,7 +2082,9 @@ export default function ProfilePage({
                     }
                     target="_blank"
                     rel="noreferrer"
-                    className={`${outlineButtonClass} no-underline`}
+                    className={
+                      outlineButtonClass
+                    }
                   >
                     <MessageCircle
                       size={
@@ -2274,8 +2133,7 @@ export default function ProfilePage({
                   event
                 ) =>
                   setReportReason(
-                    event
-                      .target
+                    event.target
                       .value
                   )
                 }
@@ -2296,9 +2154,7 @@ export default function ProfilePage({
                         option
                       }
                     >
-                      {
-                        option
-                      }
+                      {option}
                     </option>
                   )
                 )}

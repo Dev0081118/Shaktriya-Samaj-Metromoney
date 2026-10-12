@@ -67,124 +67,54 @@ const landTypes = [
   'Other'
 ];
 
-const visibilityOptions = [
-  'AcceptedInterests',
-  'MutualMatches',
-  'Private'
-];
-
 const emptyAgricultureLand =
   () => ({
-    hasLand:
-      false,
-
-    approximateArea:
-      '',
-
-    unit:
-      'Vigha',
-
-    village:
-      '',
-
-    taluka:
-      '',
-
-    district:
-      '',
-
-    state:
-      '',
-
-    landType:
-      '',
-
-    ownershipType:
-      '',
-
-    notes:
-      ''
+    hasLand: false,
+    approximateArea: '',
+    unit: 'Vigha',
+    village: '',
+    taluka: '',
+    district: '',
+    state: '',
+    landType: '',
+    ownershipType: '',
+    notes: ''
   });
 
 const emptyResidentialProperty =
   () => ({
-    propertyName:
-      '',
-
-    propertyType:
-      'House',
-
-    ownershipType:
-      '',
-
-    cityVillage:
-      '',
-
-    district:
-      '',
-
-    state:
-      '',
-
-    approximateArea:
-      '',
-
-    areaUnit:
-      'Sq Ft',
-
-    isPrimaryResidence:
-      false,
-
-    notes:
-      ''
+    propertyName: '',
+    propertyType: 'House',
+    ownershipType: '',
+    cityVillage: '',
+    district: '',
+    state: '',
+    approximateArea: '',
+    areaUnit: 'Sq Ft',
+    isPrimaryResidence: false,
+    notes: ''
   });
 
 const emptyOtherProperty =
   () => ({
-    propertyName:
-      '',
-
-    propertyType:
-      'Plot',
-
-    ownershipType:
-      '',
-
-    cityVillage:
-      '',
-
-    district:
-      '',
-
-    state:
-      '',
-
-    approximateArea:
-      '',
-
-    areaUnit:
-      'Sq Ft',
-
-    notes:
-      ''
+    propertyName: '',
+    propertyType: 'Plot',
+    ownershipType: '',
+    cityVillage: '',
+    district: '',
+    state: '',
+    approximateArea: '',
+    areaUnit: 'Sq Ft',
+    notes: ''
   });
 
 const emptyBusinessAsset =
   () => ({
-    assetName:
-      '',
-
-    assetType:
-      '',
-
-    ownershipType:
-      '',
-
-    location:
-      '',
-
-    description:
-      ''
+    assetName: '',
+    assetType: '',
+    ownershipType: '',
+    location: '',
+    description: ''
   });
 
 const asArray =
@@ -294,11 +224,7 @@ const normalizeAssets =
           })
         ),
 
-      businessAssets,
-
-      assetSummary:
-        value.assetSummary ||
-        ''
+      businessAssets
     };
   };
 
@@ -312,59 +238,41 @@ function InputField({
   multiline = false
 }) {
   return (
-    <label
-      className={
-        labelClass
-      }
-    >
+    <label className={labelClass}>
       {label}
 
       {multiline ? (
         <textarea
-          className={
-            fieldClass
-          }
+          className={fieldClass}
           rows="3"
           value={
             value ??
             ''
           }
-          placeholder={
-            placeholder
-          }
+          placeholder={placeholder}
           onChange={(
             event
           ) =>
             onChange(
-              event.target
-                .value
+              event.target.value
             )
           }
         />
       ) : (
         <input
-          className={
-            fieldClass
-          }
-          type={
-            type
-          }
-          min={
-            min
-          }
+          className={fieldClass}
+          type={type}
+          min={min}
           value={
             value ??
             ''
           }
-          placeholder={
-            placeholder
-          }
+          placeholder={placeholder}
           onChange={(
             event
           ) =>
             onChange(
-              event.target
-                .value
+              event.target.value
             )
           }
         />
@@ -381,17 +289,11 @@ function SelectField({
   placeholder = 'Select'
 }) {
   return (
-    <label
-      className={
-        labelClass
-      }
-    >
+    <label className={labelClass}>
       {label}
 
       <select
-        className={
-          fieldClass
-        }
+        className={fieldClass}
         value={
           value ??
           ''
@@ -400,8 +302,7 @@ function SelectField({
           event
         ) =>
           onChange(
-            event.target
-              .value
+            event.target.value
           )
         }
       >
@@ -414,12 +315,8 @@ function SelectField({
             option
           ) => (
             <option
-              key={
-                option
-              }
-              value={
-                option
-              }
+              key={option}
+              value={option}
             >
               {option}
             </option>
@@ -450,18 +347,10 @@ function CollectionHeader({
 
       <button
         type="button"
-        className={
-          buttonClass
-        }
-        onClick={
-          onAdd
-        }
+        className={buttonClass}
+        onClick={onAdd}
       >
-        <Plus
-          size={
-            14
-          }
-        />
+        <Plus size={14} />
 
         {buttonLabel}
       </button>
@@ -476,19 +365,11 @@ function RemoveButton({
   return (
     <button
       type="button"
-      aria-label={
-        label
-      }
+      aria-label={label}
       className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full border border-[#ddd0c1] bg-[#fffdf8] text-[#681d25]"
-      onClick={
-        onClick
-      }
+      onClick={onClick}
     >
-      <Trash2
-        size={
-          14
-        }
-      />
+      <Trash2 size={14} />
     </button>
   );
 }
@@ -496,8 +377,6 @@ function RemoveButton({
 export default function FamilyAssetsEditor({
   value,
   onChange,
-  visibility = 'Private',
-  onVisibilityChange,
   stateOptions = []
 }) {
   const assets =
@@ -514,8 +393,7 @@ export default function FamilyAssetsEditor({
         ...assets,
 
         agricultureLand: {
-          ...assets
-            .agricultureLand,
+          ...assets.agricultureLand,
 
           [key]:
             nextValue
@@ -613,40 +491,6 @@ export default function FamilyAssetsEditor({
         </p>
       </div>
 
-      <div className="mb-7 grid grid-cols-2 gap-4 max-[680px]:grid-cols-1">
-        <SelectField
-          label="Asset visibility"
-          value={
-            visibility
-          }
-          onChange={
-            onVisibilityChange
-          }
-          options={
-            visibilityOptions
-          }
-        />
-
-        <InputField
-          label="Overall asset summary"
-          multiline
-          value={
-            assets.assetSummary
-          }
-          placeholder="Example: 25 Vigha ancestral land, family bungalow and commercial property."
-          onChange={(
-            nextValue
-          ) =>
-            onChange({
-              ...assets,
-
-              assetSummary:
-                nextValue
-            })
-          }
-        />
-      </div>
-
       <div className="border-t border-[#eee3d7] pt-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -673,8 +517,7 @@ export default function FamilyAssetsEditor({
               ) =>
                 setAgriculture(
                   'hasLand',
-                  event.target
-                    .checked
+                  event.target.checked
                 )
               }
             />
@@ -683,17 +526,14 @@ export default function FamilyAssetsEditor({
           </label>
         </div>
 
-        {assets
-          .agricultureLand
-          .hasLand && (
+        {assets.agricultureLand.hasLand && (
           <div className={`${gridClass} mt-5`}>
             <InputField
               label="Total land area"
               type="number"
               min="0"
               value={
-                assets
-                  .agricultureLand
+                assets.agricultureLand
                   .approximateArea
               }
               onChange={(
@@ -709,8 +549,7 @@ export default function FamilyAssetsEditor({
             <SelectField
               label="Land unit"
               value={
-                assets
-                  .agricultureLand
+                assets.agricultureLand
                   .unit
               }
               onChange={(
@@ -721,16 +560,13 @@ export default function FamilyAssetsEditor({
                   nextValue
                 )
               }
-              options={
-                landUnits
-              }
+              options={landUnits}
             />
 
             <SelectField
               label="Land type"
               value={
-                assets
-                  .agricultureLand
+                assets.agricultureLand
                   .landType
               }
               onChange={(
@@ -741,16 +577,13 @@ export default function FamilyAssetsEditor({
                   nextValue
                 )
               }
-              options={
-                landTypes
-              }
+              options={landTypes}
             />
 
             <SelectField
               label="Ownership"
               value={
-                assets
-                  .agricultureLand
+                assets.agricultureLand
                   .ownershipType
               }
               onChange={(
@@ -761,16 +594,13 @@ export default function FamilyAssetsEditor({
                   nextValue
                 )
               }
-              options={
-                ownershipOptions
-              }
+              options={ownershipOptions}
             />
 
             <InputField
               label="Village"
               value={
-                assets
-                  .agricultureLand
+                assets.agricultureLand
                   .village
               }
               onChange={(
@@ -786,8 +616,7 @@ export default function FamilyAssetsEditor({
             <InputField
               label="Taluka"
               value={
-                assets
-                  .agricultureLand
+                assets.agricultureLand
                   .taluka
               }
               onChange={(
@@ -803,8 +632,7 @@ export default function FamilyAssetsEditor({
             <InputField
               label="District"
               value={
-                assets
-                  .agricultureLand
+                assets.agricultureLand
                   .district
               }
               onChange={(
@@ -820,8 +648,7 @@ export default function FamilyAssetsEditor({
             <SelectField
               label="State"
               value={
-                assets
-                  .agricultureLand
+                assets.agricultureLand
                   .state
               }
               onChange={(
@@ -832,17 +659,14 @@ export default function FamilyAssetsEditor({
                   nextValue
                 )
               }
-              options={
-                stateOptions
-              }
+              options={stateOptions}
             />
 
             <InputField
               label="Land notes"
               multiline
               value={
-                assets
-                  .agricultureLand
+                assets.agricultureLand
                   .notes
               }
               onChange={(
@@ -877,9 +701,7 @@ export default function FamilyAssetsEditor({
             index
           ) => (
             <div
-              className={
-                cardClass
-              }
+              className={cardClass}
               key={`residential-${index}`}
             >
               <RemoveButton
@@ -926,9 +748,7 @@ export default function FamilyAssetsEditor({
                       nextValue
                     )
                   }
-                  options={
-                    propertyTypes
-                  }
+                  options={propertyTypes}
                 />
 
                 <SelectField
@@ -946,9 +766,7 @@ export default function FamilyAssetsEditor({
                       nextValue
                     )
                   }
-                  options={
-                    ownershipOptions
-                  }
+                  options={ownershipOptions}
                 />
 
                 <InputField
@@ -1000,9 +818,7 @@ export default function FamilyAssetsEditor({
                       nextValue
                     )
                   }
-                  options={
-                    stateOptions
-                  }
+                  options={stateOptions}
                 />
 
                 <InputField
@@ -1039,9 +855,7 @@ export default function FamilyAssetsEditor({
                       nextValue
                     )
                   }
-                  options={
-                    areaUnits
-                  }
+                  options={areaUnits}
                 />
 
                 <label className="flex items-center gap-3 text-[11px] font-bold text-[#431318]">
@@ -1057,8 +871,7 @@ export default function FamilyAssetsEditor({
                         'residentialProperties',
                         index,
                         'isPrimaryResidence',
-                        event.target
-                          .checked
+                        event.target.checked
                       )
                     }
                   />
@@ -1108,9 +921,7 @@ export default function FamilyAssetsEditor({
             index
           ) => (
             <div
-              className={
-                cardClass
-              }
+              className={cardClass}
               key={`other-${index}`}
             >
               <RemoveButton
@@ -1157,9 +968,7 @@ export default function FamilyAssetsEditor({
                       nextValue
                     )
                   }
-                  options={
-                    otherPropertyTypes
-                  }
+                  options={otherPropertyTypes}
                 />
 
                 <SelectField
@@ -1177,9 +986,7 @@ export default function FamilyAssetsEditor({
                       nextValue
                     )
                   }
-                  options={
-                    ownershipOptions
-                  }
+                  options={ownershipOptions}
                 />
 
                 <InputField
@@ -1231,9 +1038,7 @@ export default function FamilyAssetsEditor({
                       nextValue
                     )
                   }
-                  options={
-                    stateOptions
-                  }
+                  options={stateOptions}
                 />
 
                 <InputField
@@ -1270,9 +1075,7 @@ export default function FamilyAssetsEditor({
                       nextValue
                     )
                   }
-                  options={
-                    areaUnits
-                  }
+                  options={areaUnits}
                 />
 
                 <InputField
@@ -1317,9 +1120,7 @@ export default function FamilyAssetsEditor({
             index
           ) => (
             <div
-              className={
-                cardClass
-              }
+              className={cardClass}
               key={`business-${index}`}
             >
               <RemoveButton
@@ -1384,9 +1185,7 @@ export default function FamilyAssetsEditor({
                       nextValue
                     )
                   }
-                  options={
-                    ownershipOptions
-                  }
+                  options={ownershipOptions}
                 />
 
                 <InputField

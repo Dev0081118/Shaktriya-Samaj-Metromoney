@@ -13,10 +13,11 @@ import {
   useState
 } from 'react';
 
-
 import {
   useNavigate
 } from 'react-router-dom';
+
+import FamilyAssetsEditor from '../components/FamilyAssetsEditor';
 
 import {
   useAuth
@@ -25,13 +26,6 @@ import {
 import {
   useToast
 } from '../context/ToastContext';
-
-import {
-  api,
-  assetUrl
-} from '../services/api';
-
-import FamilyAssetsEditor from '../components/FamilyAssetsEditor';
 
 import {
   BLOOD_GROUP_OPTIONS,
@@ -51,6 +45,11 @@ import {
   SMOKING_OPTIONS,
   VANSH_OPTIONS
 } from '../data/profileOptions';
+
+import {
+  api,
+  assetUrl
+} from '../services/api';
 
 const steps = [
   [
@@ -90,8 +89,8 @@ const steps = [
     'Complete your matrimonial presentation'
   ],
   [
-    'Partner preference',
-    'Tell us what you are looking for'
+    'Preference & privacy',
+    'Review your match preferences and privacy'
   ]
 ];
 
@@ -116,1323 +115,1399 @@ const sectionClass =
 const sensitiveClass =
   'mt-5 border border-[#741f272e] bg-[#741f2709] p-5';
 
-const readDraft = () => {
-  try {
-    const raw =
-      localStorage.getItem(
-        'ksm_onboarding'
-      );
-
-    if (!raw) {
-      return {};
-    }
-
-    const parsed =
-      JSON.parse(
-        raw
-      );
-
-    return parsed &&
-      typeof parsed ===
-        'object' &&
-      !Array.isArray(
-        parsed
-      )
-      ? parsed
-      : {};
-  } catch {
-    return {};
-  }
-};
-
-const readStep = () => {
-  const step =
-    Number(
-      localStorage.getItem(
-        'ksm_onboarding_step'
-      )
-    );
-
-  return Number.isInteger(
-    step
-  ) &&
-    step >= 0 &&
-    step <= 9
-    ? step
-    : 0;
-};
-
-const optionalNumber = (
-  value
-) => {
-  if (
-    value === '' ||
-    value === undefined ||
-    value === null
-  ) {
-    return undefined;
-  }
-
-  const number =
-    Number(
-      value
-    );
-
-  return Number.isFinite(
-    number
-  )
-    ? number
-    : undefined;
-};
-
-const list = (
-  value
-) => {
-  if (
-    Array.isArray(
-      value
-    )
-  ) {
-    return value.filter(
-      Boolean
-    );
-  }
-
-  return String(
-    value ||
-      ''
-  )
-    .split(',')
-    .map(
-      (
-        item
-      ) =>
-        item.trim()
-    )
-    .filter(
-      Boolean
-    );
-};
-
-const knownSurname = (
-  value
-) =>
-  RAJPUT_SURNAMES.includes(
-    value
-  ) &&
-  value !==
-    'Other';
-
-const surnameForm = (
-  value
-) => ({
-  selection:
-    knownSurname(
-      value
-    )
-      ? value
-      : value
-        ? 'Other'
-        : '',
-
-  custom:
-    knownSurname(
-      value
-    )
-      ? ''
-      : value ||
-        ''
-});
-
-const selectedSurname = (
-  selection,
-  custom
-) =>
-  selection ===
-  'Other'
-    ? custom
-    : selection;
-
-/*
- * IMPORTANT:
- *
- * Do NOT spread the raw PartnerPreference object here.
- *
- * PartnerPreference also contains a `maritalStatus`
- * field in older/other flows. Spreading that object
- * after flatten(profile) could overwrite the actual
- * candidate marital status on Edit Profile.
- *
- * Only partner-preference-specific form fields are
- * mapped below.
- */
-const preferenceToForm = (
-  preferences
-) => ({
-  ageMin:
-    preferences
-      ?.ageMin ??
-    '',
-
-  ageMax:
-    preferences
-      ?.ageMax ??
-    '',
-
-  heightMin:
-    preferences
-      ?.heightMin ??
-    '',
-
-  heightMax:
-    preferences
-      ?.heightMax ??
-    '',
-
-  states:
-    Array.isArray(
-      preferences
-        ?.states
-    )
-      ? preferences.states
-      : [],
-
-  preferredCountry:
-    preferences
-      ?.countries?.[0] ||
-    '',
-
-  preferredDiet:
-    preferences
-      ?.dietPreferences?.[0] ||
-    '',
-
-  preferredShakh:
-    preferences
-      ?.communityPreferences?.[0] ||
-    '',
-
-  preferredMaritalStatus:
-    preferences
-      ?.acceptedMaritalStatuses?.[0] ||
-    '',
-
-  willingForRemarriage:
-    preferences
-      ?.willingForRemarriage ||
-    'Open to Discuss',
-
-  locations:
-    (
-      preferences
-        ?.locations ||
-      []
-    ).join(
-      ', '
-    ),
-
-  educationPreferences:
-    (
-      preferences
-        ?.educationPreferences ||
-      []
-    ).join(
-      ', '
-    ),
-
-  occupationPreferences:
-    (
-      preferences
-        ?.occupationPreferences ||
-      []
-    ).join(
-      ', '
-    ),
-
-  additionalPreferences:
-    preferences
-      ?.additionalPreferences ||
-    ''
-});
-
-const emptyMosal = () => ({
-  mamaName:
-    '',
-
-  grandmotherName:
-    '',
-
-  familySurname:
-    '',
-
-  clanSurname:
-    '',
-
-  nativeVillage:
-    '',
-
-  taluka:
-    '',
-
-  district:
-    '',
-
-  state:
-    '',
-
-  notes:
-    ''
-});
-
-const flattenMosal = (
-  branch = {}
-) => ({
-  mamaName:
-    branch.mamaName ||
-    '',
-
-  grandmotherName:
-    branch.grandmotherName ||
-    '',
-
-  familySurname:
-    branch.familySurname ||
-    '',
-
-  clanSurname:
-    branch.clanSurname ||
-    '',
-
-  nativeVillage:
-    branch.nativeVillage ||
-    '',
-
-  taluka:
-    branch.taluka ||
-    '',
-
-  district:
-    branch.district ||
-    '',
-
-  state:
-    branch.state ||
-    '',
-
-  notes:
-    branch.notes ||
-    ''
-});
-
-const flatten = (
-  profile
-) => {
-  const surname =
-    surnameForm(
-      profile.community
-        ?.clan
-    );
-
-  const maternalSurname =
-    surnameForm(
-      profile.maternalFamily
-        ?.maternalClan
-    );
-
-  return {
-    ...profile,
-
-    dateOfBirth:
-      profile.dateOfBirth
-        ?.slice?.(
-          0,
-          10
-        ) ||
+const emptyMosal =
+  () => ({
+    grandmotherName:
       '',
 
-    /*
-     * Candidate's own marital status.
-     * Partner preferences never participate
-     * in this value.
-     */
-    maritalStatus:
-      profile.maritalStatus ||
-      profile.maritalHistory
-        ?.status ||
+    familySurname:
       '',
 
-    timeOfBirth:
-      profile.birthDetails
-        ?.timeOfBirth ||
+    clanSurname:
       '',
 
-    birthCity:
-      profile.birthDetails
-        ?.city ||
+    nativeVillage:
       '',
 
-    birthDistrict:
-      profile.birthDetails
-        ?.district ||
-      '',
-
-    birthState:
-      profile.birthDetails
-        ?.state ||
-      '',
-
-    bloodGroup:
-      profile.bloodGroup ||
-      '',
-
-    city:
-      profile.location
-        ?.city ||
+    taluka:
       '',
 
     district:
-      profile.location
-        ?.district ||
       '',
 
     state:
-      profile.location
-        ?.state ||
       '',
 
-    nativePlace:
-      profile.location
-        ?.nativePlace ||
+    notes:
+      ''
+  });
+
+const flattenMosal =
+  (
+    branch = {}
+  ) => ({
+    grandmotherName:
+      branch.grandmotherName ||
       '',
 
-    nativeTaluka:
-      profile.location
-        ?.nativeTaluka ||
+    familySurname:
+      branch.familySurname ||
       '',
 
-    nativeDistrict:
-      profile.location
-        ?.nativeDistrict ||
+    clanSurname:
+      branch.clanSurname ||
       '',
 
-    nativeState:
-      profile.location
-        ?.nativeState ||
+    nativeVillage:
+      branch.nativeVillage ||
       '',
 
-    surnameSelection:
-      surname.selection,
-
-    customSurname:
-      surname.custom,
-
-    gotra:
-      profile.community
-        ?.gotra ||
+    taluka:
+      branch.taluka ||
       '',
 
-    vansh:
-      profile.community
-        ?.vansh ||
+    district:
+      branch.district ||
       '',
 
-    kulaDevi:
-      profile.community
-        ?.kulaDevi ||
+    state:
+      branch.state ||
       '',
 
-    kulDevta:
-      profile.community
-        ?.ishtaDevta ||
+    notes:
+      branch.notes ||
+      ''
+  });
+
+const optionalNumber =
+  (
+    value
+  ) => {
+    if (
+      value === '' ||
+      value === null ||
+      value === undefined
+    ) {
+      return undefined;
+    }
+
+    const parsed =
+      Number(
+        value
+      );
+
+    return Number.isFinite(
+      parsed
+    )
+      ? parsed
+      : undefined;
+  };
+
+const list =
+  (
+    value
+  ) => {
+    if (
+      Array.isArray(
+        value
+      )
+    ) {
+      return value
+        .map(
+          (
+            item
+          ) =>
+            String(
+              item
+            ).trim()
+        )
+        .filter(
+          Boolean
+        );
+    }
+
+    return String(
+      value ||
+        ''
+    )
+      .split(',')
+      .map(
+        (
+          item
+        ) =>
+          item.trim()
+      )
+      .filter(
+        Boolean
+      );
+  };
+
+const readDraft =
+  () => {
+    try {
+      const raw =
+        localStorage.getItem(
+          'ksm_onboarding'
+        );
+
+      if (!raw) {
+        return {};
+      }
+
+      const parsed =
+        JSON.parse(
+          raw
+        );
+
+      return parsed &&
+        typeof parsed ===
+          'object' &&
+        !Array.isArray(
+          parsed
+        )
+        ? parsed
+        : {};
+    } catch {
+      return {};
+    }
+  };
+
+const readStep =
+  () => {
+    const value =
+      Number(
+        localStorage.getItem(
+          'ksm_onboarding_step'
+        )
+      );
+
+    return Number.isInteger(
+      value
+    ) &&
+      value >= 0 &&
+      value < steps.length
+      ? value
+      : 0;
+  };
+
+const knownSurname =
+  (
+    value
+  ) =>
+    RAJPUT_SURNAMES.includes(
+      value
+    ) &&
+    value !==
+      'Other';
+
+const surnameForm =
+  (
+    value
+  ) => ({
+    selection:
+      knownSurname(
+        value
+      )
+        ? value
+        : value
+          ? 'Other'
+          : '',
+
+    custom:
+      knownSurname(
+        value
+      )
+        ? ''
+        : value ||
+          ''
+  });
+
+const selectedSurname =
+  (
+    selection,
+    custom
+  ) =>
+    selection ===
+    'Other'
+      ? custom?.trim() ||
+        ''
+      : selection ||
+        '';
+
+const optionWithOtherForm =
+  (
+    value,
+    options
+  ) => {
+    if (!value) {
+      return {
+        selection:
+          '',
+
+        custom:
+          ''
+      };
+    }
+
+    if (
+      options.includes(
+        value
+      ) &&
+      value !==
+        'Other'
+    ) {
+      return {
+        selection:
+          value,
+
+        custom:
+          ''
+      };
+    }
+
+    return {
+      selection:
+        'Other',
+
+      custom:
+        value ===
+        'Other'
+          ? ''
+          : value
+    };
+  };
+
+const selectedOtherValue =
+  (
+    selection,
+    custom
+  ) =>
+    selection ===
+    'Other'
+      ? custom?.trim() ||
+        ''
+      : selection ||
+        '';
+
+const preferenceToForm =
+  (
+    preferences
+  ) => ({
+    ageMin:
+      preferences
+        ?.ageMin ??
       '',
 
-    familyOrigin:
-      profile.community
-        ?.familyOrigin ||
+    ageMax:
+      preferences
+        ?.ageMax ??
       '',
 
-    highestEducation:
-      profile.education
-        ?.highestEducation ||
+    heightMin:
+      preferences
+        ?.heightMin ??
       '',
 
-    degree:
-      profile.education
-        ?.degree ||
+    heightMax:
+      preferences
+        ?.heightMax ??
       '',
 
-    specialization:
-      profile.education
-        ?.specialization ||
+    states:
+      Array.isArray(
+        preferences
+          ?.states
+      )
+        ? preferences.states
+        : [],
+
+    preferredCountry:
+      preferences
+        ?.countries?.[0] ||
       '',
 
-    college:
-      profile.education
-        ?.college ||
+    preferredDiet:
+      preferences
+        ?.dietPreferences?.[0] ||
       '',
 
-    university:
-      profile.education
-        ?.university ||
+    preferredShakh:
+      preferences
+        ?.communityPreferences?.[0] ||
       '',
 
-    educationDetails:
-      profile.education
-        ?.educationDetails ||
+    preferredMaritalStatus:
+      preferences
+        ?.acceptedMaritalStatuses?.[0] ||
       '',
 
-    occupationType:
-      profile.career
-        ?.occupationType ||
-      '',
+    willingForRemarriage:
+      preferences
+        ?.willingForRemarriage ||
+      'Open to Discuss',
 
-    occupation:
-      profile.career
-        ?.occupation ||
-      '',
-
-    designation:
-      profile.career
-        ?.designation ||
-      '',
-
-    companyName:
-      profile.career
-        ?.companyName ||
-      '',
-
-    businessName:
-      profile.career
-        ?.businessName ||
-      '',
-
-    annualIncome:
-      profile.career
-        ?.annualIncome ??
-      '',
-
-    workCity:
-      profile.career
-        ?.workLocation
-        ?.city ||
-      '',
-
-    workState:
-      profile.career
-        ?.workLocation
-        ?.state ||
-      '',
-
-    workCountry:
-      profile.career
-        ?.workLocation
-        ?.country ||
-      'India',
-
-    diet:
-      profile.lifestyle
-        ?.diet ||
-      '',
-
-    smoking:
-      profile.lifestyle
-        ?.smoking ||
-      '',
-
-    drinking:
-      profile.lifestyle
-        ?.drinking ||
-      '',
-
-    interests:
+    locations:
       (
-        profile.lifestyle
-          ?.interests ||
+        preferences
+          ?.locations ||
         []
       ).join(
         ', '
       ),
 
-    fatherName:
-      profile.family
-        ?.fatherName ||
-      '',
-
-    fatherOccupation:
-      profile.family
-        ?.fatherOccupation ||
-      '',
-
-    motherName:
-      profile.family
-        ?.motherName ||
-      '',
-
-    motherOccupation:
-      profile.family
-        ?.motherOccupation ||
-      '',
-
-    familyType:
-      profile.family
-        ?.familyType ||
-      '',
-
-    familyValues:
-      profile.family
-        ?.familyValues ||
-      '',
-
-    familyLocation:
-      profile.family
-        ?.familyLocation ||
-      '',
-
-    familyDescription:
-      profile.family
-        ?.familyDescription ||
-      '',
-
-    siblingDetails:
-      profile.family
-        ?.siblingDetails ||
-      [],
-
-    previousMarriageEndedAt:
-      profile.maritalHistory
-        ?.previousMarriageEndedAt
-        ?.slice?.(
-          0,
-          10
-        ) ||
-      '',
-
-    divorceFinalized:
-      !!profile.maritalHistory
-        ?.divorceFinalized,
-
-    childrenFromPreviousMarriage:
-      !!profile.maritalHistory
-        ?.childrenFromPreviousMarriage,
-
-    childrenCount:
-      profile.maritalHistory
-        ?.childrenCount ??
-      '',
-
-    childrenLivingWith:
-      profile.maritalHistory
-        ?.childrenLivingWith ||
-      '',
-
-    maritalHistoryNotes:
-      profile.maritalHistory
-        ?.notes ||
-      '',
-
-    maternalGrandfatherName:
-      profile.maternalFamily
-        ?.maternalGrandfatherName ||
-      '',
-
-    maternalFamilySurname:
-      profile.maternalFamily
-        ?.maternalFamilySurname ||
-      '',
-
-    maternalVillage:
-      profile.maternalFamily
-        ?.maternalVillage ||
-      profile.maternalFamily
-        ?.maternalNativePlace ||
-      '',
-
-    maternalTaluka:
-      profile.maternalFamily
-        ?.maternalTaluka ||
-      '',
-
-    maternalDistrict:
-      profile.maternalFamily
-        ?.maternalDistrict ||
-      '',
-
-    maternalState:
-      profile.maternalFamily
-        ?.maternalState ||
-      '',
-
-    maternalSurnameSelection:
-      maternalSurname.selection,
-
-    maternalCustomSurname:
-      maternalSurname.custom,
-
-    /*
-     * New records use maternalGotra.
-     * notes is read only as legacy fallback.
-     */
-    maternalGotra:
-      profile.maternalFamily
-        ?.maternalGotra ||
-      profile.maternalFamily
-        ?.notes ||
-      '',
-
-    selfMosal:
-      flattenMosal(
-        profile.maternalLineage
-          ?.selfMosal
+    educationPreferences:
+      (
+        preferences
+          ?.educationPreferences ||
+        []
+      ).join(
+        ', '
       ),
 
-    fathersMosal:
-      flattenMosal(
-        profile.maternalLineage
-          ?.fathersMosal
+    occupationPreferences:
+      (
+        preferences
+          ?.occupationPreferences ||
+        []
+      ).join(
+        ', '
       ),
 
-    mothersMosal:
-      flattenMosal(
-        profile.maternalLineage
-          ?.mothersMosal
-      ),
+    additionalPreferences:
+      preferences
+        ?.additionalPreferences ||
+      ''
+  });
 
-    rashi:
-      profile.astrology
-        ?.rashi ||
-      '',
+const flatten =
+  (
+    profile
+  ) => {
+    const surname =
+      surnameForm(
+        profile.community
+          ?.clan
+      );
 
-    nakshatra:
-      profile.astrology
-        ?.nakshatra ||
-      '',
+    const maternalSurname =
+      surnameForm(
+        profile.maternalFamily
+          ?.maternalClan
+      );
 
-    manglik:
-      profile.astrology
-        ?.manglik ||
-      'Unknown',
+    const vansh =
+      optionWithOtherForm(
+        profile.community
+          ?.vansh,
+        VANSH_OPTIONS
+      );
 
-    profilePhoto:
-      profile.profilePhoto ||
-      '',
+    const diet =
+      optionWithOtherForm(
+        profile.lifestyle
+          ?.diet,
+        DIET_OPTIONS
+      );
 
-    galleryAssets:
-      profile.galleryAssets ||
-      [],
+    const employmentType =
+      optionWithOtherForm(
+        profile.career
+          ?.occupationType,
+        EMPLOYMENT_TYPES
+      );
 
-    aboutMe:
-      profile.aboutMe ||
-      '',
+    return {
+      ...profile,
 
-    photoVisibility:
-      profile.privacy
-        ?.photoVisibility ||
-      'RegisteredMembers',
+      dateOfBirth:
+        profile.dateOfBirth
+          ?.slice?.(
+            0,
+            10
+          ) ||
+        '',
 
-    contactVisibility:
-      profile.privacy
-        ?.contactVisibility ||
-      'MutualMatches',
+      maritalStatus:
+        profile.maritalStatus ||
+        profile.maritalHistory
+          ?.status ||
+        '',
 
-    incomeVisibility:
-  profile.privacy
-    ?.incomeVisibility ||
-  'Private',
-
-assetVisibility:
-  profile.privacy
-    ?.assetVisibility ||
-  'Private',
-
-familyAssets:
-  profile.familyAssets ||
-  {},
-
-includeSensitiveFamilyDetailsInBiodata:
-      !!profile
-        .biodataPrivacy
-        ?.includeSensitiveFamilyDetailsInBiodata,
-
-    includeContactDetailsInBiodata:
-      !!profile
-        .biodataPrivacy
-        ?.includeContactDetailsInBiodata,
-
-    includeAstrologyInBiodata:
-      profile
-        .biodataPrivacy
-        ?.includeAstrologyInBiodata ??
-      true,
-
-    includeAssetsInBiodata:
-      !!profile
-        .biodataPrivacy
-        ?.includeAssetsInBiodata
-  };
-};
-
-const profilePayload = (
-  data,
-  visibilityOverride
-) => {
-  const maritalStatus =
-    data.maritalStatus ||
-    undefined;
-
-  return {
-    profileFor:
-      data.profileFor,
-
-    firstName:
-      data.firstName,
-
-    middleName:
-      data.middleName,
-
-    lastName:
-      data.lastName,
-
-    gender:
-      data.gender,
-
-    dateOfBirth:
-      data.dateOfBirth,
-
-    height:
-      optionalNumber(
-        data.height
-      ),
-
-    bloodGroup:
-      data.bloodGroup,
-
-    maritalStatus,
-
-    birthDetails: {
       timeOfBirth:
-        data.timeOfBirth,
+        profile.birthDetails
+          ?.timeOfBirth ||
+        '',
+
+      birthCity:
+        profile.birthDetails
+          ?.city ||
+        '',
+
+      birthDistrict:
+        profile.birthDetails
+          ?.district ||
+        '',
+
+      birthState:
+        profile.birthDetails
+          ?.state ||
+        '',
 
       city:
-        data.birthCity,
+        profile.location
+          ?.city ||
+        '',
 
       district:
-        data.birthDistrict,
+        profile.location
+          ?.district ||
+        '',
 
       state:
-        data.birthState,
-
-      country:
-        'India'
-    },
-
-    maritalHistory: {
-      status:
-        maritalStatus,
-
-      isRemarriage:
-        maritalStatus
-          ? maritalStatus !==
-            'Never Married'
-          : undefined,
-
-      previousMarriageEndedAt:
-        data.previousMarriageEndedAt ||
-        undefined,
-
-      divorceFinalized:
-        maritalStatus ===
-        'Divorced'
-          ? !!data.divorceFinalized
-          : undefined,
-
-      childrenFromPreviousMarriage:
-        !!data.childrenFromPreviousMarriage,
-
-      childrenCount:
-        data.childrenFromPreviousMarriage
-          ? optionalNumber(
-              data.childrenCount
-            ) ??
-            0
-          : 0,
-
-      childrenLivingWith:
-        data.childrenFromPreviousMarriage
-          ? data.childrenLivingWith
-          : undefined,
-
-      notes:
-        data.maritalHistoryNotes
-    },
-
-    location: {
-      city:
-        data.city,
-
-      district:
-        data.district,
-
-      state:
-        data.state,
-
-      country:
-        'India',
+        profile.location
+          ?.state ||
+        '',
 
       nativePlace:
-        data.nativePlace,
+        profile.location
+          ?.nativePlace ||
+        '',
 
       nativeTaluka:
-        data.nativeTaluka,
+        profile.location
+          ?.nativeTaluka ||
+        '',
 
       nativeDistrict:
-        data.nativeDistrict,
+        profile.location
+          ?.nativeDistrict ||
+        '',
 
       nativeState:
-        data.nativeState
-    },
+        profile.location
+          ?.nativeState ||
+        '',
 
-    community: {
-      name:
-        'Rajput / Kshatriya',
+      surnameSelection:
+        surname.selection,
 
-      clan:
-        selectedSurname(
-          data.surnameSelection,
-          data.customSurname
-        ),
+      customSurname:
+        surname.custom,
 
       gotra:
-        data.gotra,
+        profile.community
+          ?.gotra ||
+        '',
 
-      vansh:
-        data.vansh,
+      vanshSelection:
+        vansh.selection,
+
+      customVansh:
+        vansh.custom,
 
       kulaDevi:
-        data.kulaDevi,
+        profile.community
+          ?.kulaDevi ||
+        '',
 
-      ishtaDevta:
-        data.kulDevta,
-
-      familyOrigin:
-        data.familyOrigin
-    },
-
-    education: {
       highestEducation:
-        data.highestEducation,
+        profile.education
+          ?.highestEducation ||
+        '',
 
       degree:
-        data.degree,
+        profile.education
+          ?.degree ||
+        '',
 
       specialization:
-        data.specialization,
+        profile.education
+          ?.specialization ||
+        '',
 
       college:
-        data.college,
+        profile.education
+          ?.college ||
+        '',
 
       university:
-        data.university,
+        profile.education
+          ?.university ||
+        '',
 
       educationDetails:
-        data.educationDetails
-    },
+        profile.education
+          ?.educationDetails ||
+        '',
 
-    career: {
-      occupationType:
-        data.occupationType,
+      occupationTypeSelection:
+        employmentType.selection,
+
+      customOccupationType:
+        employmentType.custom,
 
       occupation:
-        data.occupation,
+        profile.career
+          ?.occupation ||
+        '',
 
       designation:
-        data.designation,
+        profile.career
+          ?.designation ||
+        '',
 
       companyName:
-        data.companyName,
+        profile.career
+          ?.companyName ||
+        '',
 
       businessName:
-        data.businessName,
+        profile.career
+          ?.businessName ||
+        '',
 
       annualIncome:
-        optionalNumber(
-          data.annualIncome
-        ),
+        profile.career
+          ?.annualIncome ??
+        '',
 
-      workLocation: {
-        city:
-          data.workCity,
+      workCity:
+        profile.career
+          ?.workLocation
+          ?.city ||
+        '',
 
-        state:
-          data.workState,
+      workState:
+        profile.career
+          ?.workLocation
+          ?.state ||
+        '',
 
-        country:
-          data.workCountry ||
-          'India'
-      }
-    },
+      workCountry:
+        profile.career
+          ?.workLocation
+          ?.country ||
+        'India',
 
-    lifestyle: {
-      diet:
-        data.diet,
+      dietSelection:
+        diet.selection,
+
+      customDiet:
+        diet.custom,
 
       smoking:
-        data.smoking,
+        profile.lifestyle
+          ?.smoking ||
+        '',
 
       drinking:
-        data.drinking,
+        profile.lifestyle
+          ?.drinking ||
+        '',
 
       interests:
-        list(
-          data.interests
-        )
-    },
+        (
+          profile.lifestyle
+            ?.interests ||
+          []
+        ).join(
+          ', '
+        ),
 
-    family: {
-  fatherName:
-    data.fatherName,
+      fatherName:
+        profile.family
+          ?.fatherName ||
+        '',
 
-  fatherOccupation:
-    data.fatherOccupation,
+      fatherOccupation:
+        profile.family
+          ?.fatherOccupation ||
+        '',
 
-  motherName:
-    data.motherName,
+      motherName:
+        profile.family
+          ?.motherName ||
+        '',
 
-  motherOccupation:
-    data.motherOccupation,
+      motherOccupation:
+        profile.family
+          ?.motherOccupation ||
+        '',
 
-  siblingDetails:
-    data.siblingDetails ||
-    [],
+      familyType:
+        profile.family
+          ?.familyType ||
+        '',
 
-  familyType:
-    data.familyType,
+      familyValues:
+        profile.family
+          ?.familyValues ||
+        '',
 
-  familyValues:
-    data.familyValues,
+      familyDescription:
+        profile.family
+          ?.familyDescription ||
+        '',
 
-  familyLocation:
-    data.familyLocation,
+      siblingDetails:
+        profile.family
+          ?.siblingDetails ||
+        [],
 
-  familyDescription:
-    data.familyDescription
-},
+      previousMarriageEndedAt:
+        profile.maritalHistory
+          ?.previousMarriageEndedAt
+          ?.slice?.(
+            0,
+            10
+          ) ||
+        '',
 
-familyAssets:
-  data.familyAssets ||
-  {},
+      divorceFinalized:
+        !!profile.maritalHistory
+          ?.divorceFinalized,
 
-maternalFamily: {
+      childrenFromPreviousMarriage:
+        !!profile.maritalHistory
+          ?.childrenFromPreviousMarriage,
+
+      childrenCount:
+        profile.maritalHistory
+          ?.childrenCount ??
+        '',
+
+      childrenLivingWith:
+        profile.maritalHistory
+          ?.childrenLivingWith ||
+        '',
+
+      maritalHistoryNotes:
+        profile.maritalHistory
+          ?.notes ||
+        '',
+
       maternalGrandfatherName:
-        data.maternalGrandfatherName,
-
-      maternalFamilySurname:
-        data.maternalFamilySurname,
-
-      maternalNativePlace:
-        data.maternalVillage,
+        profile.maternalFamily
+          ?.maternalGrandfatherName ||
+        '',
 
       maternalVillage:
-        data.maternalVillage,
+        profile.maternalFamily
+          ?.maternalVillage ||
+        profile.maternalFamily
+          ?.maternalNativePlace ||
+        '',
 
       maternalTaluka:
-        data.maternalTaluka,
+        profile.maternalFamily
+          ?.maternalTaluka ||
+        '',
 
       maternalDistrict:
-        data.maternalDistrict,
+        profile.maternalFamily
+          ?.maternalDistrict ||
+        '',
 
       maternalState:
-        data.maternalState,
+        profile.maternalFamily
+          ?.maternalState ||
+        '',
 
-      maternalClan:
-        selectedSurname(
-          data.maternalSurnameSelection,
-          data.maternalCustomSurname
-        ),
+      maternalSurnameSelection:
+        maternalSurname.selection,
 
-      /*
-       * New canonical DB field.
-       * Do not write this into notes.
-       */
-      maternalGotra:
-        data.maternalGotra
-    },
-
-    maternalLineage: {
-      selfMosal:
-        data.selfMosal ||
-        emptyMosal(),
+      maternalCustomSurname:
+        maternalSurname.custom,
 
       fathersMosal:
-        data.fathersMosal ||
-        emptyMosal(),
-
-      mothersMosal:
-        data.mothersMosal ||
-        emptyMosal()
-    },
-
-    astrology: {
-      rashi:
-        data.rashi,
-
-      nakshatra:
-        data.nakshatra,
-
-      manglik:
-        data.manglik ||
-        'Unknown'
-    },
-
-    privacy: {
-      photoVisibility:
-        data.photoVisibility ||
-        'RegisteredMembers',
-
-      contactVisibility:
-        data.contactVisibility ||
-        'MutualMatches',
-
-      incomeVisibility:
-  data.incomeVisibility ||
-  'Private',
-
-assetVisibility:
-  data.assetVisibility ||
-  'Private'
-},
-
-    biodataPrivacy: {
-      includeSensitiveFamilyDetailsInBiodata:
-        !!data.includeSensitiveFamilyDetailsInBiodata,
-
-      includeContactDetailsInBiodata:
-        !!data.includeContactDetailsInBiodata,
-
-      includeAstrologyInBiodata:
-        !!data.includeAstrologyInBiodata,
-
-      includeAssetsInBiodata:
-        !!data.includeAssetsInBiodata
-    },
-
-    aboutMe:
-      data.aboutMe,
-
-    visibility:
-      visibilityOverride ??
-      data.visibility ??
-      'draft'
-  };
-};
-
-const preferencePayload = (
-  data
-) => ({
-  ageMin:
-    optionalNumber(
-      data.ageMin
-    ),
-
-  ageMax:
-    optionalNumber(
-      data.ageMax
-    ),
-
-  heightMin:
-    optionalNumber(
-      data.heightMin
-    ),
-
-  heightMax:
-    optionalNumber(
-      data.heightMax
-    ),
-
-  locations:
-    list(
-      data.locations
-    ),
-
-  /*
-   * Preferred states must always be sent
-   * as an array.
-   */
-  states:
-    Array.isArray(
-      data.states
-    )
-      ? data.states
-      : list(
-          data.states
+        flattenMosal(
+          profile.maternalLineage
+            ?.fathersMosal
         ),
 
-  countries:
-    data.preferredCountry
-      ? [
-          data.preferredCountry
-        ]
-      : [],
+      mothersMosal:
+        flattenMosal(
+          profile.maternalLineage
+            ?.mothersMosal
+        ),
 
-  educationPreferences:
-    list(
-      data.educationPreferences
-    ),
+      rashi:
+        profile.astrology
+          ?.rashi ||
+        '',
 
-  occupationPreferences:
-    list(
-      data.occupationPreferences
-    ),
+      nakshatra:
+        profile.astrology
+          ?.nakshatra ||
+        '',
 
-  dietPreferences:
-    data.preferredDiet
-      ? [
-          data.preferredDiet
-        ]
-      : [],
+      manglik:
+        profile.astrology
+          ?.manglik ||
+        'Unknown',
 
-  communityPreferences:
-    data.preferredShakh &&
-    data.preferredShakh !==
-      'Any'
-      ? [
-          data.preferredShakh
-        ]
-      : [],
+      profilePhoto:
+        profile.profilePhoto ||
+        '',
 
-  acceptedMaritalStatuses:
-    data.preferredMaritalStatus
-      ? [
-          data.preferredMaritalStatus
-        ]
-      : [],
+      galleryAssets:
+        profile.galleryAssets ||
+        [],
 
-  willingForRemarriage:
-    data.willingForRemarriage ||
-    'Open to Discuss',
+      aboutMe:
+        profile.aboutMe ||
+        '',
 
-  additionalPreferences:
-    data.additionalPreferences
-});
+      fullNameVisibility:
+        profile.privacy
+          ?.fullNameVisibility ||
+        'RegisteredMembers',
 
-const validateBasics = (
-  data
-) => {
-  if (
-    !data.profileFor
-  ) {
-    return 'Select who this profile is for.';
-  }
+      photoVisibility:
+        profile.privacy
+          ?.photoVisibility ||
+        'RegisteredMembers',
 
-  if (
-    !data.firstName
-      ?.trim() ||
-    !data.lastName
-      ?.trim()
-  ) {
-    return 'First name and surname are required.';
-  }
+      incomeVisibility:
+        profile.privacy
+          ?.incomeVisibility ||
+        'Private',
 
-  if (
-    ![
-      'Male',
-      'Female'
-    ].includes(
-      data.gender
-    )
-  ) {
-    return 'Select gender.';
-  }
+      familyOverviewVisibility:
+        profile.privacy
+          ?.familyOverviewVisibility ||
+        'AcceptedInterests',
 
-  if (
-    !data.dateOfBirth
-  ) {
-    return 'Date of birth is required.';
-  }
+      maternalFamilyVisibility:
+        profile.privacy
+          ?.maternalFamilyVisibility ||
+        'AcceptedInterests',
 
-  const age =
-    (
-      Date.now() -
+      siblingDetailsVisibility:
+        profile.privacy
+          ?.siblingDetailsVisibility ||
+        'AcceptedInterests',
+
+      assetVisibility:
+        profile.privacy
+          ?.assetVisibility ||
+        'Private',
+
+      astrologyVisibility:
+        profile.privacy
+          ?.astrologyVisibility ||
+        'RegisteredMembers',
+
+      contactAddressVisibility:
+        profile.privacy
+          ?.contactAddressVisibility ||
+        'Private',
+
+      familyAssets:
+        profile.familyAssets ||
+        {},
+
+      includeSensitiveFamilyDetailsInBiodata:
+        !!profile
+          .biodataPrivacy
+          ?.includeSensitiveFamilyDetailsInBiodata,
+
+      includeContactDetailsInBiodata:
+        !!profile
+          .biodataPrivacy
+          ?.includeContactDetailsInBiodata,
+
+      includeAstrologyInBiodata:
+        profile
+          .biodataPrivacy
+          ?.includeAstrologyInBiodata ??
+        true,
+
+      includeAssetsInBiodata:
+        !!profile
+          .biodataPrivacy
+          ?.includeAssetsInBiodata
+    };
+  };
+
+const profilePayload =
+  (
+    data,
+    visibilityOverride
+  ) => {
+    const maritalStatus =
+      data.maritalStatus ||
+      undefined;
+
+    return {
+      profileFor:
+        data.profileFor,
+
+      firstName:
+        data.firstName,
+
+      middleName:
+        data.middleName,
+
+      lastName:
+        data.lastName,
+
+      gender:
+        data.gender,
+
+      dateOfBirth:
+        data.dateOfBirth,
+
+      height:
+        optionalNumber(
+          data.height
+        ),
+
+      bloodGroup:
+        data.bloodGroup,
+
+      maritalStatus,
+
+      birthDetails: {
+        timeOfBirth:
+          data.timeOfBirth,
+
+        city:
+          data.birthCity,
+
+        district:
+          data.birthDistrict,
+
+        state:
+          data.birthState,
+
+        country:
+          'India'
+      },
+
+      maritalHistory: {
+        status:
+          maritalStatus,
+
+        isRemarriage:
+          maritalStatus
+            ? maritalStatus !==
+              'Never Married'
+            : undefined,
+
+        previousMarriageEndedAt:
+          data.previousMarriageEndedAt ||
+          undefined,
+
+        divorceFinalized:
+          maritalStatus ===
+          'Divorced'
+            ? !!data.divorceFinalized
+            : undefined,
+
+        childrenFromPreviousMarriage:
+          !!data.childrenFromPreviousMarriage,
+
+        childrenCount:
+          data.childrenFromPreviousMarriage
+            ? optionalNumber(
+                data.childrenCount
+              ) ??
+              0
+            : 0,
+
+        childrenLivingWith:
+          data.childrenFromPreviousMarriage
+            ? data.childrenLivingWith
+            : undefined,
+
+        notes:
+          data.maritalHistoryNotes
+      },
+
+      location: {
+        city:
+          data.city,
+
+        district:
+          data.district,
+
+        state:
+          data.state,
+
+        country:
+          'India',
+
+        nativePlace:
+          data.nativePlace,
+
+        nativeTaluka:
+          data.nativeTaluka,
+
+        nativeDistrict:
+          data.nativeDistrict,
+
+        nativeState:
+          data.nativeState
+      },
+
+      community: {
+        name:
+          'Rajput / Kshatriya',
+
+        clan:
+          selectedSurname(
+            data.surnameSelection,
+            data.customSurname
+          ),
+
+        gotra:
+          data.gotra,
+
+        vansh:
+          selectedOtherValue(
+            data.vanshSelection,
+            data.customVansh
+          ),
+
+        kulaDevi:
+          data.kulaDevi
+      },
+
+      education: {
+        highestEducation:
+          data.highestEducation,
+
+        degree:
+          data.degree,
+
+        specialization:
+          data.specialization,
+
+        college:
+          data.college,
+
+        university:
+          data.university,
+
+        educationDetails:
+          data.educationDetails
+      },
+
+      career: {
+        occupationType:
+          selectedOtherValue(
+            data.occupationTypeSelection,
+            data.customOccupationType
+          ),
+
+        occupation:
+          data.occupation,
+
+        designation:
+          data.designation,
+
+        companyName:
+          data.companyName,
+
+        businessName:
+          data.businessName,
+
+        annualIncome:
+          optionalNumber(
+            data.annualIncome
+          ),
+
+        workLocation: {
+          city:
+            data.workCity,
+
+          state:
+            data.workState,
+
+          country:
+            data.workCountry ||
+            'India'
+        }
+      },
+
+      lifestyle: {
+        diet:
+          selectedOtherValue(
+            data.dietSelection,
+            data.customDiet
+          ),
+
+        smoking:
+          data.smoking,
+
+        drinking:
+          data.drinking,
+
+        interests:
+          list(
+            data.interests
+          )
+      },
+
+      family: {
+        fatherName:
+          data.fatherName,
+
+        fatherOccupation:
+          data.fatherOccupation,
+
+        motherName:
+          data.motherName,
+
+        motherOccupation:
+          data.motherOccupation,
+
+        siblingDetails:
+          data.siblingDetails ||
+          [],
+
+        familyType:
+          data.familyType,
+
+        familyValues:
+          data.familyValues,
+
+        familyDescription:
+          data.familyDescription
+      },
+
+      familyAssets:
+        data.familyAssets ||
+        {},
+
+      maternalFamily: {
+        maternalGrandfatherName:
+          data.maternalGrandfatherName,
+
+        maternalNativePlace:
+          data.maternalVillage,
+
+        maternalVillage:
+          data.maternalVillage,
+
+        maternalTaluka:
+          data.maternalTaluka,
+
+        maternalDistrict:
+          data.maternalDistrict,
+
+        maternalState:
+          data.maternalState,
+
+        maternalClan:
+          selectedSurname(
+            data.maternalSurnameSelection,
+            data.maternalCustomSurname
+          )
+      },
+
+      maternalLineage: {
+        fathersMosal:
+          data.fathersMosal ||
+          emptyMosal(),
+
+        mothersMosal:
+          data.mothersMosal ||
+          emptyMosal()
+      },
+
+      astrology: {
+        rashi:
+          data.rashi,
+
+        nakshatra:
+          data.nakshatra,
+
+        manglik:
+          data.manglik ||
+          'Unknown'
+      },
+
+      privacy: {
+        fullNameVisibility:
+          data.fullNameVisibility ||
+          'RegisteredMembers',
+
+        photoVisibility:
+          data.photoVisibility ||
+          'RegisteredMembers',
+
+        incomeVisibility:
+          data.incomeVisibility ||
+          'Private',
+
+        familyOverviewVisibility:
+          data.familyOverviewVisibility ||
+          'AcceptedInterests',
+
+        maternalFamilyVisibility:
+          data.maternalFamilyVisibility ||
+          'AcceptedInterests',
+
+        siblingDetailsVisibility:
+          data.siblingDetailsVisibility ||
+          'AcceptedInterests',
+
+        assetVisibility:
+          data.assetVisibility ||
+          'Private',
+
+        astrologyVisibility:
+          data.astrologyVisibility ||
+          'RegisteredMembers',
+
+        contactAddressVisibility:
+          data.contactAddressVisibility ||
+          'Private'
+      },
+
+      biodataPrivacy: {
+        includeSensitiveFamilyDetailsInBiodata:
+          !!data.includeSensitiveFamilyDetailsInBiodata,
+
+        includeContactDetailsInBiodata:
+          !!data.includeContactDetailsInBiodata,
+
+        includeAstrologyInBiodata:
+          !!data.includeAstrologyInBiodata,
+
+        includeAssetsInBiodata:
+          !!data.includeAssetsInBiodata
+      },
+
+      aboutMe:
+        data.aboutMe,
+
+      visibility:
+        visibilityOverride ??
+        data.visibility ??
+        'draft'
+    };
+  };
+
+const preferencePayload =
+  (
+    data
+  ) => ({
+    ageMin:
+      optionalNumber(
+        data.ageMin
+      ),
+
+    ageMax:
+      optionalNumber(
+        data.ageMax
+      ),
+
+    heightMin:
+      optionalNumber(
+        data.heightMin
+      ),
+
+    heightMax:
+      optionalNumber(
+        data.heightMax
+      ),
+
+    locations:
+      list(
+        data.locations
+      ),
+
+    states:
+      Array.isArray(
+        data.states
+      )
+        ? data.states
+        : list(
+            data.states
+          ),
+
+    countries:
+      data.preferredCountry
+        ? [
+            data.preferredCountry
+          ]
+        : [],
+
+    educationPreferences:
+      list(
+        data.educationPreferences
+      ),
+
+    occupationPreferences:
+      list(
+        data.occupationPreferences
+      ),
+
+    dietPreferences:
+      data.preferredDiet
+        ? [
+            data.preferredDiet
+          ]
+        : [],
+
+    communityPreferences:
+      data.preferredShakh &&
+      data.preferredShakh !==
+        'Any'
+        ? [
+            data.preferredShakh
+          ]
+        : [],
+
+    acceptedMaritalStatuses:
+      data.preferredMaritalStatus
+        ? [
+            data.preferredMaritalStatus
+          ]
+        : [],
+
+    willingForRemarriage:
+      data.willingForRemarriage ||
+      'Open to Discuss',
+
+    additionalPreferences:
+      data.additionalPreferences
+  });
+
+const validateBasics =
+  (
+    data
+  ) => {
+    if (
+      !data.profileFor
+    ) {
+      return 'Select who this profile is for.';
+    }
+
+    if (
+      !data.firstName
+        ?.trim() ||
+      !data.lastName
+        ?.trim()
+    ) {
+      return 'First name and surname are required.';
+    }
+
+    if (
+      ![
+        'Male',
+        'Female'
+      ].includes(
+        data.gender
+      )
+    ) {
+      return 'Select gender.';
+    }
+
+    if (
+      !data.dateOfBirth
+    ) {
+      return 'Date of birth is required.';
+    }
+
+    const birth =
       new Date(
         data.dateOfBirth
-      ).getTime()
-    ) /
-    (
-      365.25 *
-      864e5
+      );
+
+    if (
+      Number.isNaN(
+        birth.getTime()
+      )
+    ) {
+      return 'Enter a valid date of birth.';
+    }
+
+    const age =
+      (
+        Date.now() -
+        birth.getTime()
+      ) /
+      (
+        365.25 *
+        864e5
+      );
+
+    if (
+      age < 18 ||
+      age > 80
+    ) {
+      return 'Age must be between 18 and 80 years.';
+    }
+
+    if (
+      !optionalNumber(
+        data.height
+      )
+    ) {
+      return 'Height is required.';
+    }
+
+    if (
+      !data.maritalStatus
+    ) {
+      return 'Marital status is required.';
+    }
+
+    return '';
+  };
+
+const localCompletion =
+  (
+    data
+  ) => {
+    const fields = [
+      data.profileFor,
+      data.firstName,
+      data.lastName,
+      data.gender,
+      data.dateOfBirth,
+      data.height,
+      data.maritalStatus,
+      data.profilePhoto,
+      data.aboutMe,
+
+      selectedSurname(
+        data.surnameSelection,
+        data.customSurname
+      ),
+
+      data.gotra,
+
+      selectedOtherValue(
+        data.vanshSelection,
+        data.customVansh
+      ),
+
+      data.nativePlace,
+      data.nativeDistrict,
+      data.highestEducation,
+      data.occupation,
+      data.fatherName,
+      data.motherName,
+      data.maternalVillage,
+      data.ageMin,
+      data.ageMax
+    ];
+
+    return Math.round(
+      (
+        fields.filter(
+          Boolean
+        ).length /
+        fields.length
+      ) *
+        100
     );
-
-  if (
-    !Number.isFinite(
-      age
-    ) ||
-    age < 18 ||
-    age > 80
-  ) {
-    return 'Age must be between 18 and 80 years.';
-  }
-
-  if (
-    !optionalNumber(
-      data.height
-    )
-  ) {
-    return 'Height is required.';
-  }
-
-  if (
-    !data.maritalStatus
-  ) {
-    return 'Marital status is required.';
-  }
-
-  return '';
-};
-
-const localCompletion = (
-  data
-) => {
-  const fields = [
-    data.profileFor,
-    data.firstName,
-    data.lastName,
-    data.gender,
-    data.dateOfBirth,
-    data.height,
-    data.maritalStatus,
-    data.profilePhoto,
-    data.aboutMe,
-
-    selectedSurname(
-      data.surnameSelection,
-      data.customSurname
-    ),
-
-    data.gotra,
-    data.nativePlace,
-    data.nativeDistrict,
-    data.highestEducation,
-    data.occupation,
-    data.fatherName,
-    data.motherName,
-    data.maternalFamilySurname,
-    data.maternalVillage,
-    data.ageMin,
-    data.ageMax
-  ];
-
-  const complete =
-    fields.filter(
-      Boolean
-    ).length;
-
-  return Math.round(
-    (
-      complete /
-      fields.length
-    ) *
-      100
-  );
-};
+  };
 
 function TextField({
   label,
@@ -1456,17 +1531,13 @@ function TextField({
 
       {multiline ? (
         <textarea
-          className={
-            fieldClass
-          }
+          className={fieldClass}
           rows="3"
           value={
             value ??
             ''
           }
-          placeholder={
-            placeholder
-          }
+          placeholder={placeholder}
           onChange={(
             event
           ) =>
@@ -1477,17 +1548,13 @@ function TextField({
         />
       ) : (
         <input
-          className={
-            fieldClass
-          }
+          className={fieldClass}
           type={type}
           value={
             value ??
             ''
           }
-          placeholder={
-            placeholder
-          }
+          placeholder={placeholder}
           min={min}
           max={max}
           onChange={(
@@ -1511,17 +1578,11 @@ function SelectField({
   placeholder = 'Select'
 }) {
   return (
-    <label
-      className={
-        labelClass
-      }
-    >
+    <label className={labelClass}>
       {label}
 
       <select
-        className={
-          fieldClass
-        }
+        className={fieldClass}
         value={
           value ||
           ''
@@ -1543,12 +1604,8 @@ function SelectField({
             option
           ) => (
             <option
-              key={
-                option
-              }
-              value={
-                option
-              }
+              key={option}
+              value={option}
             >
               {option}
             </option>
@@ -1570,28 +1627,65 @@ function SurnameField({
     <>
       <SelectField
         label={label}
-        value={
-          selection
-        }
-        onChange={
-          onSelection
-        }
-        options={
-          RAJPUT_SURNAMES
-        }
+        value={selection}
+        onChange={onSelection}
+        options={RAJPUT_SURNAMES}
       />
 
       {selection ===
         'Other' && (
         <TextField
           label={`${label} - Other`}
-          value={
-            custom
-          }
-          onChange={
-            onCustom
-          }
+          value={custom}
+          onChange={onCustom}
           placeholder="Enter surname"
+        />
+      )}
+    </>
+  );
+}
+
+function OtherSelectField({
+  label,
+  selection,
+  custom,
+  options,
+  otherLabel,
+  otherPlaceholder,
+  onSelection,
+  onCustom
+}) {
+  return (
+    <>
+      <SelectField
+        label={label}
+        value={selection}
+        options={options}
+        onChange={(
+          value
+        ) => {
+          onSelection(
+            value
+          );
+
+          if (
+            value !==
+            'Other'
+          ) {
+            onCustom(
+              ''
+            );
+          }
+        }}
+      />
+
+      {selection ===
+        'Other' && (
+        <TextField
+          label={otherLabel}
+          value={custom}
+          placeholder={otherPlaceholder}
+          onChange={onCustom}
         />
       )}
     </>
@@ -1641,11 +1735,7 @@ function MultiSelectDropdown({
     };
 
   return (
-    <label
-      className={
-        labelClass
-      }
-    >
+    <label className={labelClass}>
       {label}
 
       <details className="relative">
@@ -1665,9 +1755,7 @@ function MultiSelectDropdown({
               option
             ) => (
               <label
-                key={
-                  option
-                }
+                key={option}
                 className="flex cursor-pointer items-center gap-3 border-b border-[#eee4d8] py-2 text-[12px] normal-case tracking-normal last:border-b-0"
               >
                 <input
@@ -1700,9 +1788,11 @@ function MosalBranchFields({
   value,
   onChange
 }) {
-  const branch =
-    value ||
-    emptyMosal();
+  const branch = {
+    ...emptyMosal(),
+    ...(value ||
+      {})
+  };
 
   const updateBranch =
     (
@@ -1712,9 +1802,7 @@ function MosalBranchFields({
       onChange({
         ...branch,
 
-        [
-          key
-        ]:
+        [key]:
           nextValue
       });
 
@@ -1729,29 +1817,23 @@ function MosalBranchFields({
           {title}
         </h3>
 
-        {subtitle && (
-          <p className="mt-1 text-[10px] leading-5 text-[#756a60]">
-            {subtitle}
-          </p>
-        )}
+        <p className="mt-1 text-[10px] leading-5 text-[#756a60]">
+          {subtitle}
+        </p>
       </div>
 
-      <div
-        className={
-          gridClass
-        }
-      >
+      <div className={gridClass}>
         <TextField
           label="Family Surname"
           value={
             branch.familySurname
           }
           onChange={(
-            nextValue
+            value
           ) =>
             updateBranch(
               'familySurname',
-              nextValue
+              value
             )
           }
         />
@@ -1762,11 +1844,26 @@ function MosalBranchFields({
             branch.nativeVillage
           }
           onChange={(
-            nextValue
+            value
           ) =>
             updateBranch(
               'nativeVillage',
-              nextValue
+              value
+            )
+          }
+        />
+
+        <TextField
+          label="Taluka"
+          value={
+            branch.taluka
+          }
+          onChange={(
+            value
+          ) =>
+            updateBranch(
+              'taluka',
+              value
             )
           }
         />
@@ -1777,11 +1874,11 @@ function MosalBranchFields({
             branch.district
           }
           onChange={(
-            nextValue
+            value
           ) =>
             updateBranch(
               'district',
-              nextValue
+              value
             )
           }
         />
@@ -1792,19 +1889,49 @@ function MosalBranchFields({
             branch.state
           }
           onChange={(
-            nextValue
+            value
           ) =>
             updateBranch(
               'state',
-              nextValue
+              value
             )
           }
-          options={
-            INDIA_STATES
+          options={INDIA_STATES}
+        />
+
+        <TextField
+          label="Notes"
+          multiline
+          value={
+            branch.notes
+          }
+          onChange={(
+            value
+          ) =>
+            updateBranch(
+              'notes',
+              value
+            )
           }
         />
       </div>
     </section>
+  );
+}
+
+function PrivacySelect({
+  label,
+  value,
+  options,
+  onChange
+}) {
+  return (
+    <SelectField
+      label={label}
+      value={value}
+      options={options}
+      onChange={onChange}
+    />
   );
 }
 
@@ -1832,9 +1959,7 @@ export default function OnboardingPage() {
     data,
     setData
   ] =
-    useState(
-      {}
-    );
+    useState({});
 
   const [
     existing,
@@ -1900,22 +2025,21 @@ export default function OnboardingPage() {
       ]
     );
 
-  const update = (
-    key,
-    value
-  ) =>
-    setData(
-      (
-        current
-      ) => ({
-        ...current,
+  const update =
+    (
+      key,
+      value
+    ) =>
+      setData(
+        (
+          current
+        ) => ({
+          ...current,
 
-        [
-          key
-        ]:
-          value
-      })
-    );
+          [key]:
+            value
+        })
+      );
 
   useEffect(
     () => {
@@ -1976,12 +2100,6 @@ export default function OnboardingPage() {
               true
             );
 
-            /*
-             * preferenceToForm() contains only
-             * partner-preference fields now, so
-             * candidate maritalStatus from flatten()
-             * cannot be overwritten here.
-             */
             setData({
               ...flatten(
                 profile
@@ -2014,11 +2132,35 @@ export default function OnboardingPage() {
               includeAstrologyInBiodata:
                 true,
 
+              fullNameVisibility:
+                'RegisteredMembers',
+
+              photoVisibility:
+                'RegisteredMembers',
+
+              incomeVisibility:
+                'Private',
+
+              familyOverviewVisibility:
+                'AcceptedInterests',
+
+              maternalFamilyVisibility:
+                'AcceptedInterests',
+
+              siblingDetailsVisibility:
+                'AcceptedInterests',
+
+              assetVisibility:
+                'Private',
+
+              astrologyVisibility:
+                'RegisteredMembers',
+
+              contactAddressVisibility:
+                'Private',
+
               states:
                 [],
-
-              selfMosal:
-                emptyMosal(),
 
               fathersMosal:
                 emptyMosal(),
@@ -2334,14 +2476,21 @@ export default function OnboardingPage() {
             data.customSurname
           );
 
+        const vansh =
+          selectedOtherValue(
+            data.vanshSelection,
+            data.customVansh
+          );
+
         if (
           !surname ||
           !data.gotra ||
+          !vansh ||
           !data.nativePlace ||
           !data.nativeDistrict
         ) {
           setError(
-            'Surname, Gotra, native village and native district are required.'
+            'Surname, Gotra, Kul / Vansh, native village and native district are required.'
           );
 
           return;
@@ -2349,19 +2498,50 @@ export default function OnboardingPage() {
       }
 
       if (
-        step === 2 &&
-        !data.aboutMe
+        step === 2
+      ) {
+        if (
+          !data.aboutMe
+            ?.trim()
+        ) {
+          setError(
+            'About Me is required.'
+          );
+
+          return;
+        }
+
+        if (
+          data.dietSelection ===
+            'Other' &&
+          !data.customDiet
+            ?.trim()
+        ) {
+          setError(
+            'Enter your diet when selecting Other.'
+          );
+
+          return;
+        }
+      }
+
+      if (
+        step === 4 &&
+        data.occupationTypeSelection ===
+          'Other' &&
+        !data.customOccupationType
           ?.trim()
       ) {
         setError(
-          'About Me is required.'
+          'Enter your employment type when selecting Other.'
         );
 
         return;
       }
 
       if (
-        step === 9
+        step ===
+          9
       ) {
         if (
           !data.profilePhoto
@@ -2461,6 +2641,8 @@ export default function OnboardingPage() {
         true
       );
 
+      setError('');
+
       try {
         await saveProfile();
 
@@ -2513,7 +2695,11 @@ export default function OnboardingPage() {
         true
       );
 
+      setError('');
+
       try {
+        await saveProfile();
+
         const form =
           new FormData();
 
@@ -2564,6 +2750,8 @@ export default function OnboardingPage() {
         true
       );
 
+      setError('');
+
       try {
         const result =
           await api(
@@ -2611,12 +2799,14 @@ export default function OnboardingPage() {
             aria-label="Go back"
             className="grid h-11 w-11 place-items-center rounded-full border border-[#ddd0c1]"
             onClick={() =>
-              step > 0
+              step >
+              0
                 ? setStep(
                     (
                       current
                     ) =>
-                      current - 1
+                      current -
+                      1
                   )
                 : navigate(
                     '/dashboard'
@@ -2634,12 +2824,14 @@ export default function OnboardingPage() {
             <div className="flex justify-between text-[9px] font-bold uppercase tracking-[0.12em] text-[#756a60]">
               <span>
                 Step{' '}
-                {step + 1}{' '}
+                {step +
+                  1}{' '}
                 of 10
               </span>
 
               <span>
-                {completion}% complete
+                {completion}
+                % complete
               </span>
             </div>
 
@@ -2703,18 +2895,11 @@ export default function OnboardingPage() {
           }
         </h1>
 
-        {step === 0 && (
+        {step ===
+          0 && (
           <>
-            <div
-              className={
-                sectionClass
-              }
-            >
-              <div
-                className={
-                  gridClass
-                }
-              >
+            <div className={sectionClass}>
+              <div className={gridClass}>
                 <SelectField
                   label="Profile created for"
                   value={
@@ -2859,26 +3044,14 @@ export default function OnboardingPage() {
             {data.maritalStatus &&
               data.maritalStatus !==
                 'Never Married' && (
-                <div
-                  className={
-                    sensitiveClass
-                  }
-                >
+                <div className={sensitiveClass}>
                   <p className="mb-5 flex items-center gap-2 text-[11px] font-bold text-[#681d25]">
-                    <LockKeyhole
-                      size={
-                        15
-                      }
-                    />
+                    <LockKeyhole size={15} />
 
                     Private marital context
                   </p>
 
-                  <div
-                    className={
-                      gridClass
-                    }
-                  >
+                  <div className={gridClass}>
                     <TextField
                       label="Previous marriage ended"
                       type="date"
@@ -2908,8 +3081,7 @@ export default function OnboardingPage() {
                           ) =>
                             update(
                               'divorceFinalized',
-                              event.target
-                                .checked
+                              event.target.checked
                             )
                           }
                         />
@@ -2929,8 +3101,7 @@ export default function OnboardingPage() {
                         ) =>
                           update(
                             'childrenFromPreviousMarriage',
-                            event.target
-                              .checked
+                            event.target.checked
                           )
                         }
                       />
@@ -2994,11 +3165,7 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-            <div
-              className={
-                sectionClass
-              }
-            >
+            <div className={sectionClass}>
               <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#681d25]">
                 Mobile verification
               </p>
@@ -3026,13 +3193,9 @@ export default function OnboardingPage() {
                 <>
                   <button
                     type="button"
-                    disabled={
-                      busy
-                    }
+                    disabled={busy}
                     className={`${outlineButtonClass} mt-4`}
-                    onClick={
-                      sendOtp
-                    }
+                    onClick={sendOtp}
                   >
                     Send verification code
                   </button>
@@ -3041,22 +3204,14 @@ export default function OnboardingPage() {
                     <div className="mt-4 flex items-end gap-3">
                       <TextField
                         label="OTP"
-                        value={
-                          otp
-                        }
-                        onChange={
-                          setOtp
-                        }
+                        value={otp}
+                        onChange={setOtp}
                       />
 
                       <button
                         type="button"
-                        className={
-                          primaryButtonClass
-                        }
-                        onClick={
-                          verifyOtp
-                        }
+                        className={primaryButtonClass}
+                        onClick={verifyOtp}
                       >
                         Verify
                       </button>
@@ -3068,7 +3223,8 @@ export default function OnboardingPage() {
           </>
         )}
 
-        {step === 1 && (
+        {step ===
+          1 && (
           <>
             <div className="mt-7 border border-[#c49b70] bg-[#c49b7010] p-5">
               <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#91683f]">
@@ -3080,20 +3236,14 @@ export default function OnboardingPage() {
               </h2>
 
               <p className="mt-2 text-[11px] leading-6 text-[#756a60]">
-                Religion, caste and Sub-Samaj are not asked because this platform is built exclusively for the community.
+                Religion, caste and Sub-Samaj are not
+                asked because this platform is built
+                exclusively for the community.
               </p>
             </div>
 
-            <div
-              className={
-                sectionClass
-              }
-            >
-              <div
-                className={
-                  gridClass
-                }
-              >
+            <div className={sectionClass}>
+              <div className={gridClass}>
                 <SurnameField
                   label="Surname"
                   selection={
@@ -3135,21 +3285,32 @@ export default function OnboardingPage() {
                   }
                 />
 
-                <SelectField
+                <OtherSelectField
                   label="Kul / Vansh"
-                  value={
-                    data.vansh
+                  selection={
+                    data.vanshSelection
                   }
-                  onChange={(
+                  custom={
+                    data.customVansh
+                  }
+                  options={VANSH_OPTIONS}
+                  otherLabel="Other Kul / Vansh"
+                  otherPlaceholder="Enter Kul / Vansh"
+                  onSelection={(
                     value
                   ) =>
                     update(
-                      'vansh',
+                      'vanshSelection',
                       value
                     )
                   }
-                  options={
-                    VANSH_OPTIONS
+                  onCustom={(
+                    value
+                  ) =>
+                    update(
+                      'customVansh',
+                      value
+                    )
                   }
                 />
 
@@ -3163,21 +3324,6 @@ export default function OnboardingPage() {
                   ) =>
                     update(
                       'kulaDevi',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Kuldevta"
-                  value={
-                    data.kulDevta
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'kulDevta',
                       value
                     )
                   }
@@ -3241,43 +3387,17 @@ export default function OnboardingPage() {
                       value
                     )
                   }
-                  options={
-                    INDIA_STATES
-                  }
-                />
-
-                <TextField
-                  label="Family Introduction"
-                  multiline
-                  placeholder="Briefly introduce your family, background, values and connection with the Samaj."
-                  value={
-                    data.familyOrigin
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'familyOrigin',
-                      value
-                    )
-                  }
+                  options={INDIA_STATES}
                 />
               </div>
             </div>
           </>
         )}
 
-        {step === 2 && (
-          <div
-            className={
-              sectionClass
-            }
-          >
-            <div
-              className={
-                gridClass
-              }
-            >
+        {step ===
+          2 && (
+          <div className={sectionClass}>
+            <div className={gridClass}>
               <TextField
                 label="Birth Time"
                 type="time"
@@ -3337,9 +3457,7 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  INDIA_STATES
-                }
+                options={INDIA_STATES}
               />
 
               <SelectField
@@ -3355,26 +3473,35 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  BLOOD_GROUP_OPTIONS
-                }
+                options={BLOOD_GROUP_OPTIONS}
               />
 
-              <SelectField
+              <OtherSelectField
                 label="Diet"
-                value={
-                  data.diet
+                selection={
+                  data.dietSelection
                 }
-                onChange={(
+                custom={
+                  data.customDiet
+                }
+                options={DIET_OPTIONS}
+                otherLabel="Other Diet"
+                otherPlaceholder="Enter diet preference"
+                onSelection={(
                   value
                 ) =>
                   update(
-                    'diet',
+                    'dietSelection',
                     value
                   )
                 }
-                options={
-                  DIET_OPTIONS
+                onCustom={(
+                  value
+                ) =>
+                  update(
+                    'customDiet',
+                    value
+                  )
                 }
               />
 
@@ -3391,9 +3518,7 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  SMOKING_OPTIONS
-                }
+                options={SMOKING_OPTIONS}
               />
 
               <SelectField
@@ -3409,9 +3534,7 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  DRINKING_OPTIONS
-                }
+                options={DRINKING_OPTIONS}
               />
 
               <TextField
@@ -3489,25 +3612,16 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  INDIA_STATES
-                }
+                options={INDIA_STATES}
               />
             </div>
           </div>
         )}
 
-        {step === 3 && (
-          <div
-            className={
-              sectionClass
-            }
-          >
-            <div
-              className={
-                gridClass
-              }
-            >
+        {step ===
+          3 && (
+          <div className={sectionClass}>
+            <div className={gridClass}>
               <TextField
                 label="Highest Education"
                 value={
@@ -3602,32 +3716,36 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {step === 4 && (
-          <div
-            className={
-              sectionClass
-            }
-          >
-            <div
-              className={
-                gridClass
-              }
-            >
-              <SelectField
+        {step ===
+          4 && (
+          <div className={sectionClass}>
+            <div className={gridClass}>
+              <OtherSelectField
                 label="Employment Type"
-                value={
-                  data.occupationType
+                selection={
+                  data.occupationTypeSelection
                 }
-                onChange={(
+                custom={
+                  data.customOccupationType
+                }
+                options={EMPLOYMENT_TYPES}
+                otherLabel="Other Employment Type"
+                otherPlaceholder="Enter employment type"
+                onSelection={(
                   value
                 ) =>
                   update(
-                    'occupationType',
+                    'occupationTypeSelection',
                     value
                   )
                 }
-                options={
-                  EMPLOYMENT_TYPES
+                onCustom={(
+                  value
+                ) =>
+                  update(
+                    'customOccupationType',
+                    value
+                  )
                 }
               />
 
@@ -3708,28 +3826,6 @@ export default function OnboardingPage() {
                 }
               />
 
-              <SelectField
-                label="Income visibility"
-                value={
-                  data.incomeVisibility ||
-                  'Private'
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'incomeVisibility',
-                    value
-                  )
-                }
-                options={[
-                  'Everyone',
-                  'RegisteredMembers',
-                  'AcceptedInterests',
-                  'Private'
-                ]}
-              />
-
               <TextField
                 label="Work City"
                 value={
@@ -3758,9 +3854,7 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  INDIA_STATES
-                }
+                options={INDIA_STATES}
               />
 
               <TextField
@@ -3781,17 +3875,10 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {step === 5 && (
-          <div
-            className={
-              sectionClass
-            }
-          >
-            <div
-              className={
-                gridClass
-              }
-            >
+        {step ===
+          5 && (
+          <div className={sectionClass}>
+            <div className={gridClass}>
               <TextField
                 label="Father's Name"
                 value={
@@ -3865,9 +3952,7 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  FAMILY_TYPES
-                }
+                options={FAMILY_TYPES}
               />
 
               <SelectField
@@ -3883,28 +3968,7 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  FAMILY_VALUES
-                }
-              />
-
-              <SelectField
-                label="Family Residence State"
-                value={
-                  data.familyLocation
-                }
-                onChange={(
-                  value
-                ) =>
-                  update(
-                    'familyLocation',
-                    value
-                  )
-                }
-                options={
-                  INDIA_STATES
-                }
-                placeholder="Select state"
+                options={FAMILY_VALUES}
               />
 
               <TextField
@@ -3925,22 +3989,21 @@ export default function OnboardingPage() {
             </div>
 
             <div className="mt-6 border-t border-[#ddd0c1] pt-5">
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h3 className="font-['Cormorant_Garamond'] text-[27px] font-medium">
                     Brothers & Sisters
                   </h3>
 
                   <p className="mt-1 text-[10px] leading-5 text-[#756a60]">
-                    Married siblings can include their life partner and Sasariyu details.
+                    Married siblings can include their
+                    life partner and Sasariyu details.
                   </p>
                 </div>
 
                 <button
                   type="button"
-                  className={
-                    outlineButtonClass
-                  }
+                  className={outlineButtonClass}
                   onClick={() =>
                     update(
                       'siblingDetails',
@@ -3979,11 +4042,7 @@ export default function OnboardingPage() {
                     )
                   }
                 >
-                  <Plus
-                    size={
-                      15
-                    }
-                  />
+                  <Plus size={15} />
 
                   Add sibling
                 </button>
@@ -4000,10 +4059,9 @@ export default function OnboardingPage() {
                       key,
                       value
                     ) => {
-                      const next =
-                        [
-                          ...data.siblingDetails
-                        ];
+                      const next = [
+                        ...data.siblingDetails
+                      ];
 
                       next[
                         index
@@ -4012,9 +4070,7 @@ export default function OnboardingPage() {
                           index
                         ],
 
-                        [
-                          key
-                        ]:
+                        [key]:
                           value
                       };
 
@@ -4027,15 +4083,9 @@ export default function OnboardingPage() {
                   return (
                     <div
                       className="relative mt-4 border border-[#ddd0c1] p-4"
-                      key={
-                        index
-                      }
+                      key={`${sibling.relation}-${index}`}
                     >
-                      <div
-                        className={
-                          gridClass
-                        }
-                      >
+                      <div className={gridClass}>
                         <SelectField
                           label="Relation"
                           value={
@@ -4127,11 +4177,7 @@ export default function OnboardingPage() {
                             Marriage Details
                           </p>
 
-                          <div
-                            className={
-                              gridClass
-                            }
-                          >
+                          <div className={gridClass}>
                             <TextField
                               label="Life Partner Name"
                               value={
@@ -4171,10 +4217,9 @@ export default function OnboardingPage() {
                               onChange={(
                                 value
                               ) => {
-                                const next =
-                                  [
-                                    ...data.siblingDetails
-                                  ];
+                                const next = [
+                                  ...data.siblingDetails
+                                ];
 
                                 next[
                                   index
@@ -4186,10 +4231,6 @@ export default function OnboardingPage() {
                                   spouseVillage:
                                     value,
 
-                                  /*
-                                   * Keep legacy place value
-                                   * synchronized for old consumers.
-                                   */
                                   spouseNativePlace:
                                     value
                                 };
@@ -4222,55 +4263,35 @@ export default function OnboardingPage() {
                           )
                         }
                       >
-                        <Trash2
-                          size={
-                            14
-                          }
-                        />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   );
                 }
               )}
             </div>
+
             <FamilyAssetsEditor
-  value={
-    data.familyAssets
-  }
-  onChange={(
-    value
-  ) =>
-    update(
-      'familyAssets',
-      value
-    )
-  }
-  visibility={
-    data.assetVisibility ||
-    'Private'
-  }
-  onVisibilityChange={(
-    value
-  ) =>
-    update(
-      'assetVisibility',
-      value
-    )
-  }
-  stateOptions={
-    INDIA_STATES
-  }
-/>
+              value={
+                data.familyAssets
+              }
+              onChange={(
+                value
+              ) =>
+                update(
+                  'familyAssets',
+                  value
+                )
+              }
+              stateOptions={INDIA_STATES}
+            />
           </div>
         )}
 
-        {step === 6 && (
+        {step ===
+          6 && (
           <>
-            <div
-              className={
-                sectionClass
-              }
-            >
+            <div className={sectionClass}>
               <div className="mb-5">
                 <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#91683f]">
                   Mother's Family
@@ -4281,11 +4302,7 @@ export default function OnboardingPage() {
                 </h2>
               </div>
 
-              <div
-                className={
-                  gridClass
-                }
-              >
+              <div className={gridClass}>
                 <TextField
                   label="Maternal Grandfather's Name"
                   value={
@@ -4296,21 +4313,6 @@ export default function OnboardingPage() {
                   ) =>
                     update(
                       'maternalGrandfatherName',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Maternal Family Surname"
-                  value={
-                    data.maternalFamilySurname
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'maternalFamilySurname',
                       value
                     )
                   }
@@ -4337,21 +4339,6 @@ export default function OnboardingPage() {
                   ) =>
                     update(
                       'maternalCustomSurname',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Maternal Gotra"
-                  value={
-                    data.maternalGotra
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'maternalGotra',
                       value
                     )
                   }
@@ -4415,9 +4402,7 @@ export default function OnboardingPage() {
                       value
                     )
                   }
-                  options={
-                    INDIA_STATES
-                  }
+                  options={INDIA_STATES}
                 />
               </div>
             </div>
@@ -4456,21 +4441,14 @@ export default function OnboardingPage() {
           </>
         )}
 
-        {step === 7 && (
-          <div
-            className={
-              sectionClass
-            }
-          >
+        {step ===
+          7 && (
+          <div className={sectionClass}>
             <p className="mb-5 text-[11px] leading-6 text-[#756a60]">
               Horoscope details are optional.
             </p>
 
-            <div
-              className={
-                gridClass
-              }
-            >
+            <div className={gridClass}>
               <SelectField
                 label="Rashi"
                 value={
@@ -4484,9 +4462,7 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  RASHI_OPTIONS
-                }
+                options={RASHI_OPTIONS}
               />
 
               <SelectField
@@ -4502,9 +4478,7 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  NAKSHATRA_OPTIONS
-                }
+                options={NAKSHATRA_OPTIONS}
               />
 
               <SelectField
@@ -4521,21 +4495,16 @@ export default function OnboardingPage() {
                     value
                   )
                 }
-                options={
-                  MANGLIK_OPTIONS
-                }
+                options={MANGLIK_OPTIONS}
               />
             </div>
           </div>
         )}
 
-        {step === 8 && (
+        {step ===
+          8 && (
           <>
-            <div
-              className={
-                sectionClass
-              }
-            >
+            <div className={sectionClass}>
               <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
                 Profile Photo
               </h2>
@@ -4543,9 +4512,11 @@ export default function OnboardingPage() {
               {data.profilePhoto && (
                 <img
                   className="my-5 h-[190px] w-[150px] rounded-t-[75px] object-cover"
-                  src={assetUrl(
-                    data.profilePhoto
-                  )}
+                  src={
+                    assetUrl(
+                      data.profilePhoto
+                    )
+                  }
                   alt="Profile"
                 />
               )}
@@ -4553,9 +4524,7 @@ export default function OnboardingPage() {
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                disabled={
-                  busy
-                }
+                disabled={busy}
                 onChange={(
                   event
                 ) => {
@@ -4574,11 +4543,7 @@ export default function OnboardingPage() {
               />
             </div>
 
-            <div
-              className={
-                sectionClass
-              }
-            >
+            <div className={sectionClass}>
               <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
                 Additional Photos
               </h2>
@@ -4592,13 +4557,16 @@ export default function OnboardingPage() {
                     <div
                       className="relative"
                       key={
-                        asset._id
+                        asset._id ||
+                        asset.url
                       }
                     >
                       <img
-                        src={assetUrl(
-                          asset.url
-                        )}
+                        src={
+                          assetUrl(
+                            asset.url
+                          )
+                        }
                         className="h-[150px] w-full object-cover"
                         alt=""
                       />
@@ -4613,11 +4581,7 @@ export default function OnboardingPage() {
                           )
                         }
                       >
-                        <Trash2
-                          size={
-                            13
-                          }
-                        />
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   )
@@ -4628,9 +4592,7 @@ export default function OnboardingPage() {
                 className="mt-4"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                disabled={
-                  busy
-                }
+                disabled={busy}
                 onChange={(
                   event
                 ) => {
@@ -4649,14 +4611,16 @@ export default function OnboardingPage() {
               />
             </div>
 
-            <div
-              className={
-                sectionClass
-              }
-            >
+            <div className={sectionClass}>
               <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
                 Biodata Privacy
               </h2>
+
+              <p className="mt-2 text-[11px] leading-6 text-[#756a60]">
+                These options control what is included
+                when you generate or print your own
+                matrimonial biodata.
+              </p>
 
               <div className="mt-5 grid gap-4 text-[12px]">
                 {[
@@ -4671,11 +4635,6 @@ export default function OnboardingPage() {
                   ],
 
                   [
-                    'includeContactDetailsInBiodata',
-                    'Include contact details'
-                  ],
-
-                  [
                     'includeAssetsInBiodata',
                     'Include family assets'
                   ]
@@ -4685,9 +4644,7 @@ export default function OnboardingPage() {
                     label
                   ]) => (
                     <label
-                      key={
-                        key
-                      }
+                      key={key}
                       className="flex items-center gap-3"
                     >
                       <input
@@ -4702,8 +4659,7 @@ export default function OnboardingPage() {
                         ) =>
                           update(
                             key,
-                            event.target
-                              .checked
+                            event.target.checked
                           )
                         }
                       />
@@ -4717,18 +4673,21 @@ export default function OnboardingPage() {
           </>
         )}
 
-        {step === 9 && (
+        {step ===
+          9 && (
           <>
-            <div
-              className={
-                sectionClass
-              }
-            >
-              <div
-                className={
-                  gridClass
-                }
-              >
+            <div className={sectionClass}>
+              <div className="mb-5">
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#91683f]">
+                  Match preferences
+                </p>
+
+                <h2 className="mt-1 font-['Cormorant_Garamond'] text-[29px] font-medium text-[#431318]">
+                  The person you hope to meet
+                </h2>
+              </div>
+
+              <div className={gridClass}>
                 <TextField
                   label="Minimum Age"
                   type="number"
@@ -4806,9 +4765,7 @@ export default function OnboardingPage() {
                       value
                     )
                   }
-                  options={
-                    PREFERRED_SHAKHS
-                  }
+                  options={PREFERRED_SHAKHS}
                   placeholder="Select preferred Shakh"
                 />
 
@@ -4872,9 +4829,7 @@ export default function OnboardingPage() {
                       values
                     )
                   }
-                  options={
-                    INDIA_STATES
-                  }
+                  options={INDIA_STATES}
                   placeholder="Select one or more states"
                 />
 
@@ -4891,9 +4846,7 @@ export default function OnboardingPage() {
                       value
                     )
                   }
-                  options={
-                    COUNTRY_OPTIONS
-                  }
+                  options={COUNTRY_OPTIONS}
                 />
 
                 <SelectField
@@ -4909,9 +4862,7 @@ export default function OnboardingPage() {
                       value
                     )
                   }
-                  options={
-                    MARITAL_STATUS_OPTIONS
-                  }
+                  options={MARITAL_STATUS_OPTIONS}
                 />
 
                 <SelectField
@@ -4927,9 +4878,7 @@ export default function OnboardingPage() {
                       value
                     )
                   }
-                  options={
-                    DIET_OPTIONS
-                  }
+                  options={DIET_OPTIONS}
                 />
 
                 <TextField
@@ -4950,6 +4899,200 @@ export default function OnboardingPage() {
               </div>
             </div>
 
+            <div className={sectionClass}>
+              <div className="mb-6">
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#91683f]">
+                  Final privacy review
+                </p>
+
+                <h2 className="mt-1 font-['Cormorant_Garamond'] text-[30px] font-medium text-[#431318]">
+                  Who can view your profile information?
+                </h2>
+
+                <p className="mt-2 text-[11px] leading-6 text-[#756a60]">
+                  Review these settings before submitting
+                  your profile. You can change them later
+                  from Settings.
+                </p>
+              </div>
+
+              <div className={gridClass}>
+                <PrivacySelect
+                  label="Full Name"
+                  value={
+                    data.fullNameVisibility
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'fullNameVisibility',
+                      value
+                    )
+                  }
+                  options={[
+                    'Everyone',
+                    'RegisteredMembers'
+                  ]}
+                />
+
+                <PrivacySelect
+                  label="Profile Photos"
+                  value={
+                    data.photoVisibility
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'photoVisibility',
+                      value
+                    )
+                  }
+                  options={[
+                    'Everyone',
+                    'RegisteredMembers',
+                    'AcceptedInterests',
+                    'Private'
+                  ]}
+                />
+
+                <PrivacySelect
+                  label="Annual Income"
+                  value={
+                    data.incomeVisibility
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'incomeVisibility',
+                      value
+                    )
+                  }
+                  options={[
+                    'Everyone',
+                    'RegisteredMembers',
+                    'AcceptedInterests',
+                    'Private'
+                  ]}
+                />
+
+                <PrivacySelect
+                  label="Family Details"
+                  value={
+                    data.familyOverviewVisibility
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'familyOverviewVisibility',
+                      value
+                    )
+                  }
+                  options={[
+                    'RegisteredMembers',
+                    'AcceptedInterests',
+                    'MutualMatches',
+                    'Private'
+                  ]}
+                />
+
+                <PrivacySelect
+                  label="Mosal / Maternal Family"
+                  value={
+                    data.maternalFamilyVisibility
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'maternalFamilyVisibility',
+                      value
+                    )
+                  }
+                  options={[
+                    'AcceptedInterests',
+                    'MutualMatches',
+                    'Private'
+                  ]}
+                />
+
+                <PrivacySelect
+                  label="Sibling Details"
+                  value={
+                    data.siblingDetailsVisibility
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'siblingDetailsVisibility',
+                      value
+                    )
+                  }
+                  options={[
+                    'AcceptedInterests',
+                    'MutualMatches',
+                    'Private'
+                  ]}
+                />
+
+                <PrivacySelect
+                  label="Family Assets"
+                  value={
+                    data.assetVisibility
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'assetVisibility',
+                      value
+                    )
+                  }
+                  options={[
+                    'AcceptedInterests',
+                    'MutualMatches',
+                    'Private'
+                  ]}
+                />
+
+                <PrivacySelect
+                  label="Birth & Horoscope"
+                  value={
+                    data.astrologyVisibility
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'astrologyVisibility',
+                      value
+                    )
+                  }
+                  options={[
+                    'RegisteredMembers',
+                    'AcceptedInterests',
+                    'MutualMatches',
+                    'Private'
+                  ]}
+                />
+              </div>
+
+              <div className="mt-5 border border-[#d8c6b3] bg-[#f8f3ec] p-4 text-[10px] leading-5 text-[#756a60]">
+                <strong className="text-[#431318]">
+                  Protected automatically:
+                </strong>{' '}
+                exact date of birth is hidden from other
+                members; previous-marriage details are
+                restricted by relationship context; phone
+                and email require the contact-request /
+                unlock flow.
+              </div>
+            </div>
+
             <div className="mt-6 border border-[#c49b70] bg-[#c49b7010] p-6">
               <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#91683f]">
                 Profile completion
@@ -4960,7 +5103,8 @@ export default function OnboardingPage() {
               </p>
 
               <p className="mt-2 text-[11px] leading-6 text-[#756a60]">
-                You can update optional details later from Edit Profile.
+                You can update optional details later
+                from Edit Profile.
               </p>
             </div>
           </>
@@ -4974,25 +5118,18 @@ export default function OnboardingPage() {
 
         <button
           type="button"
-          disabled={
-            busy
-          }
-          onClick={
-            next
-          }
+          disabled={busy}
+          onClick={next}
           className={`${primaryButtonClass} mt-8 min-w-[190px]`}
         >
           {busy
             ? 'Saving…'
-            : step === 9
+            : step ===
+                9
               ? 'Submit for review'
               : 'Save & continue'}
 
-          <ArrowRight
-            size={
-              15
-            }
-          />
+          <ArrowRight size={15} />
         </button>
       </main>
     </div>

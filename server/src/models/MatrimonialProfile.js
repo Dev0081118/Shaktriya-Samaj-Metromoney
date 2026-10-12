@@ -2,6 +2,21 @@ import mongoose from 'mongoose';
 
 import Counter from './Counter.js';
 
+const text = (
+  maxlength,
+  extra = {}
+) => ({
+  type:
+    String,
+
+  trim:
+    true,
+
+  maxlength,
+
+  ...extra
+});
+
 const privacy = {
   photoVisibility: {
     type:
@@ -18,6 +33,11 @@ const privacy = {
       'RegisteredMembers'
   },
 
+  /*
+   * Legacy privacy field.
+   * Current contact/address serialization uses
+   * contactAddressVisibility plus contact unlock.
+   */
   contactVisibility: {
     type:
       String,
@@ -47,6 +67,10 @@ const privacy = {
       'Private'
   },
 
+  /*
+   * Legacy fallback used by older profiles.
+   * New UI uses familyOverviewVisibility.
+   */
   familyVisibility: {
     type:
       String,
@@ -162,82 +186,205 @@ const privacy = {
 };
 
 const mosalBranch = {
-  familySurname: {
-    type:
-      String,
-
-    trim:
-      true,
-
-    maxlength:
+  familySurname:
+    text(
       120
-  },
+    ),
 
-  clanSurname: {
-    type:
-      String,
-
-    trim:
-      true,
-
-    maxlength:
+  clanSurname:
+    text(
       120
-  },
+    ),
 
-  nativeVillage: {
-    type:
-      String,
-
-    trim:
-      true,
-
-    maxlength:
+  nativeVillage:
+    text(
       120
-  },
+    ),
 
-  taluka: {
-    type:
-      String,
-
-    trim:
-      true,
-
-    maxlength:
+  taluka:
+    text(
       120
-  },
+    ),
 
-  district: {
-    type:
-      String,
-
-    trim:
-      true,
-
-    maxlength:
+  district:
+    text(
       120
-  },
+    ),
 
-  state: {
-    type:
-      String,
-
-    trim:
-      true,
-
-    maxlength:
+  state:
+    text(
       120
-  },
+    ),
 
-  notes: {
-    type:
-      String,
-
-    trim:
-      true,
-
-    maxlength:
+  notes:
+    text(
       500
-  }
+    )
+};
+
+const siblingSchema = {
+  name:
+    text(
+      100
+    ),
+
+  gender: {
+    type:
+      String,
+
+    enum: [
+      'Male',
+      'Female',
+      'Other'
+    ]
+  },
+
+  relation: {
+    type:
+      String,
+
+    enum: [
+      'Brother',
+      'Sister'
+    ]
+  },
+
+  age: {
+    type:
+      Number,
+
+    min:
+      0,
+
+    max:
+      120
+  },
+
+  maritalStatus:
+    text(
+      60
+    ),
+
+  occupation:
+    text(
+      120
+    ),
+
+  education:
+    text(
+      120
+    ),
+
+  spouseName:
+    text(
+      100
+    ),
+
+  spouseClan:
+    text(
+      120
+    ),
+
+  spouseFamilySurname:
+    text(
+      100
+    ),
+
+  spouseNativePlace:
+    text(
+      120
+    ),
+
+  spouseVillage:
+    text(
+      120
+    ),
+
+  spouseTaluka:
+    text(
+      120
+    ),
+
+  spouseDistrict:
+    text(
+      120
+    ),
+
+  spouseState:
+    text(
+      120
+    ),
+
+  spouseFamilyDetails:
+    text(
+      400
+    ),
+
+  notes:
+    text(
+      400
+    )
+};
+
+const propertySchema = {
+  propertyName:
+    text(
+      160
+    ),
+
+  propertyType:
+    text(
+      100
+    ),
+
+  ownershipType:
+    text(
+      80
+    ),
+
+  cityVillage:
+    text(
+      120
+    ),
+
+  district:
+    text(
+      120
+    ),
+
+  state:
+    text(
+      120
+    ),
+
+  approximateArea: {
+    type:
+      Number,
+
+    min:
+      0,
+
+    max:
+      100000000
+  },
+
+  areaUnit: {
+    type:
+      String,
+
+    enum: [
+      'Sq Ft',
+      'Sq Yard',
+      'Vigha',
+      'Acre',
+      'Hectare'
+    ]
+  },
+
+  notes:
+    text(
+      500
+    )
 };
 
 const schema =
@@ -286,45 +433,28 @@ const schema =
           true
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Personal profile                                                   */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Personal                                                       */
+      /* -------------------------------------------------------------- */
 
       firstName: {
-        type:
-          String,
-
-        trim:
-          true,
+        ...text(
+          100
+        ),
 
         required:
-          true,
-
-        maxlength:
-          100
+          true
       },
 
-      middleName: {
-        type:
-          String,
-
-        trim:
-          true,
-
-        maxlength:
+      middleName:
+        text(
           100
-      },
+        ),
 
-      lastName: {
-        type:
-          String,
-
-        trim:
-          true,
-
-        maxlength:
+      lastName:
+        text(
           100
-      },
+        ),
 
       gender: {
         type:
@@ -340,59 +470,30 @@ const schema =
         Date,
 
       birthDetails: {
-        timeOfBirth: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        timeOfBirth:
+          text(
             20
-        },
+          ),
 
-        city: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        city:
+          text(
             120
-        },
+          ),
 
-        district: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        district:
+          text(
             120
-        },
+          ),
 
-        state: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        state:
+          text(
             120
-        },
+          ),
 
         country: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            120,
+          ...text(
+            120
+          ),
 
           default:
             'India'
@@ -427,16 +528,10 @@ const schema =
         ]
       },
 
-      complexion: {
-        type:
-          String,
-
-        trim:
-          true,
-
-        maxlength:
+      complexion:
+        text(
           80
-      },
+        ),
 
       maritalStatus: {
         type:
@@ -488,427 +583,234 @@ const schema =
             20
         },
 
-        childrenLivingWith: {
-          type:
-            String,
-
-          maxlength:
+        childrenLivingWith:
+          text(
             120
-        },
+          ),
 
-        notes: {
-          type:
-            String,
-
-          maxlength:
+        notes:
+          text(
             600
-        }
+          )
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Current + native location                                          */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Current + native location                                      */
+      /* -------------------------------------------------------------- */
 
       location: {
-        city: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        city:
+          text(
             120
-        },
+          ),
 
-        taluka: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        taluka:
+          text(
             120
-        },
+          ),
 
-        district: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        district:
+          text(
             120
-        },
+          ),
 
-        state: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        state:
+          text(
             120
-        },
+          ),
 
         country: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            120,
+          ...text(
+            120
+          ),
 
           default:
             'India'
         },
 
-        nativePlace: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        nativePlace:
+          text(
             120
-        },
+          ),
 
-        nativeTaluka: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        nativeTaluka:
+          text(
             120
-        },
+          ),
 
-        nativeDistrict: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        nativeDistrict:
+          text(
             120
-        },
+          ),
 
-        nativeState: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        nativeState:
+          text(
             120
-        }
+          )
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Rajput heritage & lineage                                          */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Rajput heritage                                                */
+      /* -------------------------------------------------------------- */
 
       community: {
         religion: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            80,
+          ...text(
+            80
+          ),
 
           default:
             'Hinduism'
         },
 
-        caste: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        caste:
+          text(
             100
-        },
+          ),
 
-        name: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        name:
+          text(
             100
-        },
+          ),
 
         /*
-         * Legacy field retained only so old
-         * records do not break.
-         *
-         * New profile writes no longer accept
-         * subCommunity.
+         * Legacy only.
+         * New profile flow does not collect Sub-Samaj.
          */
-        subCommunity: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        subCommunity:
+          text(
             100
-        },
+          ),
 
         /*
-         * DB key retained for compatibility.
-         * Main profile UI displays this value
-         * as "Surname".
+         * DB key remains clan.
+         * UI calls this Surname.
          */
-        clan: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        clan:
+          text(
             120
-        },
+          ),
 
-        gotra: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        gotra:
+          text(
             120
-        },
+          ),
 
-        vansh: {
-          type:
-            String,
+        /*
+         * Free text is intentional.
+         * Standard choices still come from the frontend,
+         * but "Other" stores the user's actual Kul/Vansh.
+         */
+        vansh:
+          text(
+            120
+          ),
 
-          enum: [
-            'Suryavanshi',
-            'Chandravanshi',
-            'Agnivanshi',
-            'Other'
-          ]
-        },
-
-        kulaDevi: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        kulaDevi:
+          text(
             160
-        },
+          ),
 
-        ishtaDevta: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        /*
+         * Legacy only.
+         * New profile flow no longer collects Kuldevta.
+         */
+        ishtaDevta:
+          text(
             160
-        },
+          ),
 
-        familyOrigin: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        familyOrigin:
+          text(
             300
-        }
+          )
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Education                                                          */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Education                                                      */
+      /* -------------------------------------------------------------- */
 
       education: {
-        highestEducation: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        highestEducation:
+          text(
             160
-        },
+          ),
 
-        degree: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        degree:
+          text(
             160
-        },
+          ),
 
-        specialization: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        specialization:
+          text(
             160
-        },
+          ),
 
-        college: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        college:
+          text(
             200
-        },
+          ),
 
-        university: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        university:
+          text(
             200
-        },
+          ),
 
-        educationDetails: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        educationDetails:
+          text(
             800
-        }
+          )
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Career                                                             */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Career                                                         */
+      /* -------------------------------------------------------------- */
 
       career: {
-        occupationType: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        /*
+         * Free text is intentional so an "Other"
+         * employment type can save its real value.
+         */
+        occupationType:
+          text(
             120
-        },
+          ),
 
-        occupation: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        occupation:
+          text(
             160
-        },
+          ),
 
-        designation: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        designation:
+          text(
             160
-        },
+          ),
 
-        companyName: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        companyName:
+          text(
             200
-        },
+          ),
 
-        businessName: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        businessName:
+          text(
             200
-        },
+          ),
 
         workLocation: {
-          city: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          city:
+            text(
               120
-          },
+            ),
 
-          state: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          state:
+            text(
               120
-          },
+            ),
 
           country: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
-              120,
+            ...text(
+              120
+            ),
 
             default:
               'India'
@@ -924,51 +826,35 @@ const schema =
         },
 
         /*
-         * Legacy field kept for compatibility.
-         * Real visibility is controlled by
-         * privacy.incomeVisibility.
+         * Legacy field.
+         * Current visibility lives in privacy.incomeVisibility.
          */
         incomeVisibility:
           Boolean
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Lifestyle                                                          */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Lifestyle                                                      */
+      /* -------------------------------------------------------------- */
 
       lifestyle: {
-        diet: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        /*
+         * Free text allows custom "Other" diets.
+         */
+        diet:
+          text(
             80
-        },
+          ),
 
-        smoking: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        smoking:
+          text(
             80
-        },
+          ),
 
-        drinking: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        drinking:
+          text(
             80
-        },
+          ),
 
         interests: {
           type: [
@@ -996,213 +882,39 @@ const schema =
         }
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Immediate family                                                   */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Immediate family                                               */
+      /* -------------------------------------------------------------- */
 
       family: {
-        fatherName: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        fatherName:
+          text(
             120
-        },
+          ),
 
-        fatherOccupation: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        fatherOccupation:
+          text(
             160
-        },
+          ),
 
-        motherName: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        motherName:
+          text(
             120
-        },
+          ),
 
-        motherOccupation: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        motherOccupation:
+          text(
             160
-        },
+          ),
 
-        siblings: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        siblings:
+          text(
             500
-        },
+          ),
 
         siblingDetails: {
           type: [
-            {
-              name: {
-                type:
-                  String,
-
-                maxlength:
-                  100
-              },
-
-              gender: {
-                type:
-                  String,
-
-                enum: [
-                  'Male',
-                  'Female',
-                  'Other'
-                ]
-              },
-
-              relation: {
-                type:
-                  String,
-
-                enum: [
-                  'Brother',
-                  'Sister'
-                ]
-              },
-
-              age: {
-                type:
-                  Number,
-
-                min:
-                  0,
-
-                max:
-                  120
-              },
-
-              maritalStatus: {
-                type:
-                  String,
-
-                maxlength:
-                  60
-              },
-
-              occupation: {
-                type:
-                  String,
-
-                maxlength:
-                  120
-              },
-
-              education: {
-                type:
-                  String,
-
-                maxlength:
-                  120
-              },
-
-              spouseName: {
-                type:
-                  String,
-
-                maxlength:
-                  100
-              },
-
-              spouseClan: {
-                type:
-                  String,
-
-                maxlength:
-                  120
-              },
-
-              spouseFamilySurname: {
-                type:
-                  String,
-
-                maxlength:
-                  100
-              },
-
-              spouseNativePlace: {
-                type:
-                  String,
-
-                maxlength:
-                  120
-              },
-
-              spouseVillage: {
-                type:
-                  String,
-
-                maxlength:
-                  120
-              },
-
-              spouseTaluka: {
-                type:
-                  String,
-
-                maxlength:
-                  120
-              },
-
-              spouseDistrict: {
-                type:
-                  String,
-
-                maxlength:
-                  120
-              },
-
-              spouseState: {
-                type:
-                  String,
-
-                maxlength:
-                  120
-              },
-
-              spouseFamilyDetails: {
-                type:
-                  String,
-
-                maxlength:
-                  400
-              },
-
-              notes: {
-                type:
-                  String,
-
-                maxlength:
-                  400
-              }
-            }
+            siblingSchema
           ],
 
           validate: [
@@ -1216,26 +928,15 @@ const schema =
           ]
         },
 
-        familyType: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        familyType:
+          text(
             100
-        },
+          ),
 
-        /*
-         * Newly persisted field.
-         */
         familyValues: {
-          type:
-            String,
-
-          trim:
-            true,
+          ...text(
+            100
+          ),
 
           enum: [
             'Traditional',
@@ -1245,286 +946,185 @@ const schema =
         },
 
         /*
-         * Existing DB key retained.
-         * UI displays it as:
-         * "Family Residence State".
+         * Legacy only.
+         * New UI no longer asks Family Residence State.
          */
-        familyLocation: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        familyLocation:
+          text(
             200
-        },
+          ),
 
-        familyDescription: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        familyDescription:
+          text(
             1000
-        }
+          )
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Paternal lineage                                                   */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Paternal lineage                                               */
+      /* -------------------------------------------------------------- */
 
       paternalFamily: {
-        ancestralVillage: {
-          type:
-            String,
-
-          maxlength:
+        ancestralVillage:
+          text(
             120
-        },
+          ),
 
-        nativePlace: {
-          type:
-            String,
-
-          maxlength:
+        nativePlace:
+          text(
             120
-        },
+          ),
 
-        taluka: {
-          type:
-            String,
-
-          maxlength:
+        taluka:
+          text(
             120
-        },
+          ),
 
-        district: {
-          type:
-            String,
-
-          maxlength:
+        district:
+          text(
             120
-        },
+          ),
 
-        state: {
-          type:
-            String,
-
-          maxlength:
+        state:
+          text(
             120
-        },
+          ),
 
-        familySurname: {
-          type:
-            String,
-
-          maxlength:
+        familySurname:
+          text(
             100
-        },
+          ),
 
-        clan: {
-          type:
-            String,
-
-          maxlength:
+        clan:
+          text(
             100
-        },
+          ),
 
-        gotra: {
-          type:
-            String,
-
-          maxlength:
+        gotra:
+          text(
             100
-        },
+          ),
 
-        notes: {
-          type:
-            String,
-
-          maxlength:
+        notes:
+          text(
             600
-        }
+          )
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Maternal family summary                                            */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Maternal family                                                */
+      /* -------------------------------------------------------------- */
 
       maternalFamily: {
-        maternalGrandfatherName: {
-          type:
-            String,
-
-          maxlength:
+        maternalGrandfatherName:
+          text(
             120
-        },
-
-        maternalFamilySurname: {
-          type:
-            String,
-
-          maxlength:
-            100
-        },
-
-        maternalNativePlace: {
-          type:
-            String,
-
-          maxlength:
-            120
-        },
-
-        maternalVillage: {
-          type:
-            String,
-
-          maxlength:
-            120
-        },
-
-        maternalTaluka: {
-          type:
-            String,
-
-          maxlength:
-            120
-        },
-
-        maternalDistrict: {
-          type:
-            String,
-
-          maxlength:
-            120
-        },
-
-        maternalState: {
-          type:
-            String,
-
-          maxlength:
-            120
-        },
-
-        maternalClan: {
-          type:
-            String,
-
-          maxlength:
-            100
-        },
+          ),
 
         /*
-         * Canonical maternal Gotra storage.
+         * Legacy field.
+         * New flow uses maternalClan / Maternal Shakh.
          */
-        maternalGotra: {
-          type:
-            String,
+        maternalFamilySurname:
+          text(
+            100
+          ),
 
-          trim:
-            true,
-
-          maxlength:
+        maternalNativePlace:
+          text(
             120
-        },
+          ),
+
+        maternalVillage:
+          text(
+            120
+          ),
+
+        maternalTaluka:
+          text(
+            120
+          ),
+
+        maternalDistrict:
+          text(
+            120
+          ),
+
+        maternalState:
+          text(
+            120
+          ),
+
+        maternalClan:
+          text(
+            100
+          ),
 
         /*
-         * Legacy field retained because older
-         * records stored maternal Gotra here.
-         *
-         * New saves do NOT use notes for Gotra.
+         * Legacy canonical field retained so old profiles
+         * remain readable, but new UI no longer collects it.
          */
-        notes: {
-          type:
-            String,
+        maternalGotra:
+          text(
+            120
+          ),
 
-          maxlength:
+        /*
+         * Older records used notes for maternal Gotra.
+         */
+        notes:
+          text(
             600
-        }
+          )
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Three-generation Mosal lineage                                     */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Three-generation Mosal                                         */
+      /* -------------------------------------------------------------- */
 
       maternalLineage: {
         selfMosal: {
-          mamaName: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          mamaName:
+            text(
               120
-          },
+            ),
 
           ...mosalBranch
         },
 
         fathersMosal: {
-          grandmotherName: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          grandmotherName:
+            text(
               120
-          },
+            ),
 
           ...mosalBranch
         },
 
         mothersMosal: {
-          grandmotherName: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          grandmotherName:
+            text(
               120
-          },
+            ),
 
           ...mosalBranch
         }
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Astrology                                                          */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Astrology                                                      */
+      /* -------------------------------------------------------------- */
 
       astrology: {
-        rashi: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        rashi:
+          text(
             100
-        },
+          ),
 
-        nakshatra: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        nakshatra:
+          text(
             100
-        },
+          ),
 
         manglik: {
           type:
@@ -1542,77 +1142,41 @@ const schema =
         }
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Contact / biodata address                                          */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Contact / biodata address                                      */
+      /* -------------------------------------------------------------- */
 
       contactDetails: {
         currentAddress: {
-          addressLine1: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          addressLine1:
+            text(
               200
-          },
+            ),
 
-          addressLine2: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          addressLine2:
+            text(
               200
-          },
+            ),
 
-          city: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          city:
+            text(
               120
-          },
+            ),
 
-          taluka: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          taluka:
+            text(
               120
-          },
+            ),
 
-          district: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          district:
+            text(
               120
-          },
+            ),
 
-          state: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
+          state:
+            text(
               120
-          },
+            ),
 
           pincode: {
             type:
@@ -1626,544 +1190,226 @@ const schema =
           },
 
           country: {
-            type:
-              String,
-
-            trim:
-              true,
-
-            maxlength:
-              120,
+            ...text(
+              120
+            ),
 
             default:
               'India'
           }
         },
 
-        guardianName: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        guardianName:
+          text(
             120
-        },
+          ),
 
-        guardianRelation: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        guardianRelation:
+          text(
             80
-        },
+          ),
 
-        guardianPhone: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        guardianPhone:
+          text(
             30
-        },
+          ),
 
-        selfPhone: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
+        selfPhone:
+          text(
             30
-        },
+          ),
 
         email: {
-          type:
-            String,
-
-          trim:
-            true,
+          ...text(
+            254
+          ),
 
           lowercase:
-            true,
-
-          maxlength:
-            254
+            true
         }
       },
 
-      /* ------------------------------------------------------------------ */
-      /* Family assets                                                      */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Family assets                                                  */
+      /* -------------------------------------------------------------- */
 
       familyAssets: {
-  agricultureLand: {
-    hasLand:
-      Boolean,
-
-    approximateArea: {
-      type:
-        Number,
-
-      min:
-        0,
-
-      max:
-        1000000
-    },
-
-    unit: {
-      type:
-        String,
-
-      enum: [
-        'Vigha',
-        'Acre',
-        'Hectare'
-      ]
-    },
-
-    village: {
-      type:
-        String,
-
-      trim:
-        true,
-
-      maxlength:
-        120
-    },
-
-    taluka: {
-      type:
-        String,
-
-      trim:
-        true,
-
-      maxlength:
-        120
-    },
-
-    district: {
-      type:
-        String,
-
-      trim:
-        true,
-
-      maxlength:
-        120
-    },
-
-    state: {
-      type:
-        String,
-
-      trim:
-        true,
-
-      maxlength:
-        120
-    },
-
-    landType: {
-      type:
-        String,
-
-      trim:
-        true,
-
-      maxlength:
-        80
-    },
-
-    ownershipType: {
-      type:
-        String,
-
-      trim:
-        true,
-
-      maxlength:
-        80
-    },
-
-    notes: {
-      type:
-        String,
-
-      trim:
-        true,
-
-      maxlength:
-        500
-    }
-  },
-
-  residentialProperties: {
-    type: [
-      {
-        propertyName: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            160
-        },
-
-        propertyType: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            100
-        },
-
-        ownershipType: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            80
-        },
-
-        cityVillage: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            120
-        },
-
-        district: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            120
-        },
-
-        state: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            120
-        },
-
-        approximateArea: {
-          type:
-            Number,
-
-          min:
-            0,
-
-          max:
-            100000000
-        },
-
-        areaUnit: {
-          type:
-            String,
-
-          enum: [
-            'Sq Ft',
-            'Sq Yard',
-            'Vigha',
-            'Acre',
-            'Hectare'
-          ]
-        },
-
-        isPrimaryResidence: {
-          type:
+        agricultureLand: {
+          hasLand:
             Boolean,
 
-          default:
-            false
+          approximateArea: {
+            type:
+              Number,
+
+            min:
+              0,
+
+            max:
+              1000000
+          },
+
+          unit: {
+            type:
+              String,
+
+            enum: [
+              'Vigha',
+              'Acre',
+              'Hectare'
+            ]
+          },
+
+          village:
+            text(
+              120
+            ),
+
+          taluka:
+            text(
+              120
+            ),
+
+          district:
+            text(
+              120
+            ),
+
+          state:
+            text(
+              120
+            ),
+
+          landType:
+            text(
+              80
+            ),
+
+          ownershipType:
+            text(
+              80
+            ),
+
+          notes:
+            text(
+              500
+            )
         },
 
-        notes: {
-          type:
-            String,
+        residentialProperties: {
+          type: [
+            {
+              ...propertySchema,
 
-          trim:
-            true,
+              isPrimaryResidence: {
+                type:
+                  Boolean,
 
-          maxlength:
-            500
-        }
-      }
-    ],
+                default:
+                  false
+              }
+            }
+          ],
 
-    validate: [
-      (
-        value
-      ) =>
-        value.length <=
-        10,
+          validate: [
+            (
+              value
+            ) =>
+              value.length <=
+              10,
 
-      'A maximum of 10 residential properties is supported.'
-    ]
-  },
-
-  otherProperties: {
-    type: [
-      {
-        propertyName: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            160
-        },
-
-        propertyType: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            100
-        },
-
-        ownershipType: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            80
-        },
-
-        cityVillage: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            120
-        },
-
-        district: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            120
-        },
-
-        state: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            120
-        },
-
-        approximateArea: {
-          type:
-            Number,
-
-          min:
-            0,
-
-          max:
-            100000000
-        },
-
-        areaUnit: {
-          type:
-            String,
-
-          enum: [
-            'Sq Ft',
-            'Sq Yard',
-            'Vigha',
-            'Acre',
-            'Hectare'
+            'A maximum of 10 residential properties is supported.'
           ]
         },
 
-        notes: {
-          type:
-            String,
+        otherProperties: {
+          type: [
+            propertySchema
+          ],
 
-          trim:
-            true,
+          validate: [
+            (
+              value
+            ) =>
+              value.length <=
+              15,
 
-          maxlength:
+            'A maximum of 15 other properties is supported.'
+          ]
+        },
+
+        businessAssets: {
+          type: [
+            {
+              assetName:
+                text(
+                  180
+                ),
+
+              assetType:
+                text(
+                  120
+                ),
+
+              ownershipType:
+                text(
+                  80
+                ),
+
+              location:
+                text(
+                  200
+                ),
+
+              description:
+                text(
+                  600
+                )
+            }
+          ],
+
+          validate: [
+            (
+              value
+            ) =>
+              value.length <=
+              10,
+
+            'A maximum of 10 business assets is supported.'
+          ]
+        },
+
+        /*
+         * Legacy only.
+         * Overall Asset Summary is no longer exposed in UI.
+         */
+        assetSummary:
+          text(
+            1000
+          ),
+
+        /*
+         * Legacy structured-asset migration fields.
+         */
+        propertySummary:
+          text(
             500
-        }
-      }
-    ],
+          ),
 
-    validate: [
-      (
-        value
-      ) =>
-        value.length <=
-        15,
+        primaryResidenceType:
+          text(
+            100
+          ),
 
-      'A maximum of 15 other properties is supported.'
-    ]
-  },
+        businessAssetsSummary:
+          text(
+            500
+          )
+      },
 
-  businessAssets: {
-    type: [
-      {
-        assetName: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            180
-        },
-
-        assetType: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            120
-        },
-
-        ownershipType: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            80
-        },
-
-        location: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            200
-        },
-
-        description: {
-          type:
-            String,
-
-          trim:
-            true,
-
-          maxlength:
-            600
-        }
-      }
-    ],
-
-    validate: [
-      (
-        value
-      ) =>
-        value.length <=
-        10,
-
-      'A maximum of 10 business assets is supported.'
-    ]
-  },
-
-  assetSummary: {
-    type:
-      String,
-
-    trim:
-      true,
-
-    maxlength:
-      1000
-  },
-
-  /*
-   * Legacy fields retained so old
-   * profile records continue working.
-   */
-  propertySummary: {
-    type:
-      String,
-
-    maxlength:
-      500
-  },
-
-  primaryResidenceType: {
-    type:
-      String,
-
-    maxlength:
-      100
-  },
-
-  businessAssetsSummary: {
-    type:
-      String,
-
-    maxlength:
-      500
-  }
-},
-
-      /* ------------------------------------------------------------------ */
-      /* Biodata controls                                                   */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* Biodata controls                                               */
+      /* -------------------------------------------------------------- */
 
       biodataPrivacy: {
         includeSensitiveFamilyDetailsInBiodata: {
@@ -2174,6 +1420,10 @@ const schema =
             false
         },
 
+        /*
+         * Legacy preference retained for existing profiles.
+         * New onboarding does not ask for this.
+         */
         includeContactDetailsInBiodata: {
           type:
             Boolean,
@@ -2199,31 +1449,19 @@ const schema =
         }
       },
 
-      /* ------------------------------------------------------------------ */
-      /* General profile                                                    */
-      /* ------------------------------------------------------------------ */
+      /* -------------------------------------------------------------- */
+      /* General profile                                                */
+      /* -------------------------------------------------------------- */
 
-      marriageTimeline: {
-        type:
-          String,
-
-        trim:
-          true,
-
-        maxlength:
+      marriageTimeline:
+        text(
           160
-      },
+        ),
 
-      aboutMe: {
-        type:
-          String,
-
-        trim:
-          true,
-
-        maxlength:
+      aboutMe:
+        text(
           2000
-      },
+        ),
 
       profilePhoto:
         String,
@@ -2375,70 +1613,74 @@ schema.pre(
   'validate',
   async function () {
     if (
-      !this.profileId
+      this.profileId
     ) {
-      let counter =
-        await Counter.findById(
-          'profileId'
-        );
+      return;
+    }
 
-      if (
-        !counter
-      ) {
-        const last =
-          await this.constructor
-            .findOne(
-              {
-                profileId:
-                  /^KSM\d+$/
-              },
-              'profileId'
-            )
-            .sort({
+    let counter =
+      await Counter.findById(
+        'profileId'
+      );
+
+    if (
+      !counter
+    ) {
+      const last =
+        await this.constructor
+          .findOne(
+            {
               profileId:
-                -1
-            })
-            .lean();
+                /^KSM\d+$/
+            },
+            'profileId'
+          )
+          .sort({
+            profileId:
+              -1
+          })
+          .lean();
 
-        try {
-          await Counter.create({
-            _id:
-              'profileId',
+      try {
+        await Counter.create({
+          _id:
+            'profileId',
 
-            sequence:
-              Number(
-                last?.profileId?.slice(
+          sequence:
+            Number(
+              last
+                ?.profileId
+                ?.slice(
                   3
                 )
-              ) ||
-              100000
-          });
-        } catch {
-          /*
-           * Another request created
-           * the counter concurrently.
-           */
-        }
+            ) ||
+            100000
+        });
+      } catch {
+        /*
+         * Another request created
+         * the counter concurrently.
+         */
       }
-
-      counter =
-        await Counter.findByIdAndUpdate(
-          'profileId',
-          {
-            $inc: {
-              sequence:
-                1
-            }
-          },
-          {
-            returnDocument:
-              'after'
-          }
-        );
-
-      this.profileId =
-        `KSM${counter.sequence}`;
     }
+
+    counter =
+      await Counter.findByIdAndUpdate(
+        'profileId',
+        {
+          $inc: {
+            sequence:
+              1
+          }
+        },
+        {
+          returnDocument:
+            'after'
+        }
+      );
+
+    this.profileId =
+      `KSM${counter.sequence}`;
   }
 );
 

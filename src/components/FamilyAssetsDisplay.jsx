@@ -18,37 +18,34 @@ const joinValues = (
       separator
     );
 
-const asArray =
-  (
+const asArray = (
+  value
+) =>
+  Array.isArray(
     value
-  ) =>
-    Array.isArray(
-      value
-    )
-      ? value
-      : [];
+  )
+    ? value
+    : [];
 
-const hasContent =
-  (
-    assets
-  ) =>
-    !!(
-      assets?.agricultureLand
-        ?.hasLand ||
-      asArray(
-        assets?.residentialProperties
-      ).length ||
-      asArray(
-        assets?.otherProperties
-      ).length ||
-      asArray(
-        assets?.businessAssets
-      ).length ||
-      assets?.assetSummary ||
-      assets?.primaryResidenceType ||
-      assets?.propertySummary ||
-      assets?.businessAssetsSummary
-    );
+const hasContent = (
+  assets
+) =>
+  !!(
+    assets?.agricultureLand
+      ?.hasLand ||
+    asArray(
+      assets?.residentialProperties
+    ).length ||
+    asArray(
+      assets?.otherProperties
+    ).length ||
+    asArray(
+      assets?.businessAssets
+    ).length ||
+    assets?.primaryResidenceType ||
+    assets?.propertySummary ||
+    assets?.businessAssetsSummary
+  );
 
 function AssetCard({
   title,
@@ -111,14 +108,7 @@ function AssetsBody({
 
   return (
     <div className="space-y-5">
-      {assets.assetSummary && (
-        <p className="text-[11px] leading-6 text-[#6f6259]">
-          {assets.assetSummary}
-        </p>
-      )}
-
-      {agriculture
-        ?.hasLand && (
+      {agriculture?.hasLand && (
         <AssetCard
           subtitle="Agricultural Land"
           title={
@@ -363,9 +353,7 @@ export default function FamilyAssetsDisplay({
 
         <div className="mt-5">
           <AssetsBody
-            assets={
-              assets
-            }
+            assets={assets}
           />
         </div>
       </section>
@@ -386,9 +374,7 @@ export default function FamilyAssetsDisplay({
         </header>
 
         <AssetsBody
-          assets={
-            assets
-          }
+          assets={assets}
         />
       </div>
     </section>

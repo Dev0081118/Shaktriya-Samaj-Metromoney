@@ -34,9 +34,9 @@ vi.mock(
 
     assetUrl:
       (
-        path
+        value
       ) =>
-        path ||
+        value ||
         ''
   })
 );
@@ -113,10 +113,6 @@ const profile = {
     name:
       'Rajput / Kshatriya',
 
-    /*
-     * Legacy field intentionally exists in
-     * fixture but must not be rendered.
-     */
     subCommunity:
       'Rajput',
 
@@ -127,7 +123,7 @@ const profile = {
       'Kashyap',
 
     vansh:
-      'Suryavanshi',
+      'Nagvanshi',
 
     kulaDevi:
       'Ashapura Mata',
@@ -143,6 +139,9 @@ const profile = {
     degree:
       'B.E.',
 
+    specialization:
+      'Information Technology',
+
     college:
       'VVP Engineering College',
 
@@ -152,10 +151,13 @@ const profile = {
 
   career: {
     occupationType:
-      'Private Job',
+      'Defence Contractor',
 
     occupation:
       'Software Developer',
+
+    designation:
+      'Full Stack Developer',
 
     companyName:
       'Savvy Infotech',
@@ -177,7 +179,13 @@ const profile = {
 
   lifestyle: {
     diet:
-      'Vegetarian',
+      'Satvik',
+
+    smoking:
+      'No',
+
+    drinking:
+      'No',
 
     interests: [
       'Technology',
@@ -267,7 +275,7 @@ const profile = {
       'Maternal Grandfather',
 
     maternalFamilySurname:
-      'Jadeja',
+      'Legacy Jadeja',
 
     maternalVillage:
       'Gondal',
@@ -282,27 +290,10 @@ const profile = {
       'Jadeja',
 
     maternalGotra:
-      'Vashishtha'
+      'Legacy Vashishtha'
   },
 
   maternalLineage: {
-    selfMosal: {
-      mamaName:
-        'Mama Jadeja',
-
-      familySurname:
-        'Jadeja',
-
-      nativeVillage:
-        'Gondal',
-
-      district:
-        'Rajkot',
-
-      state:
-        'Gujarat'
-    },
-
     fathersMosal: {
       grandmotherName:
         'Paternal Grandmother',
@@ -392,11 +383,30 @@ const profile = {
         'Vigha'
     },
 
-    propertySummary:
-      'Family residential property.',
+    residentialProperties: [
+      {
+        propertyName:
+          'Rana House',
 
-    primaryResidenceType:
-      'Owned House'
+        propertyType:
+          'Bungalow',
+
+        ownershipType:
+          'Family Owned',
+
+        cityVillage:
+          'Rajkot',
+
+        district:
+          'Rajkot',
+
+        state:
+          'Gujarat',
+
+        isPrimaryResidence:
+          true
+      }
+    ]
   },
 
   biodataPrivacy: {
@@ -433,7 +443,7 @@ describe(
   'BiodataPage',
   () => {
     test(
-      'renders the core Rajput matrimonial biodata fields using current terminology',
+      'renders current core biodata fields and excludes removed legacy fields',
       async () => {
         render(
           <MemoryRouter>
@@ -478,25 +488,19 @@ describe(
 
         expect(
           screen.getByText(
-            'Rana'
-          )
-        ).toBeInTheDocument();
-
-        expect(
-          screen.queryByText(
-            'Sub-Samaj'
-          )
-        ).not.toBeInTheDocument();
-
-        expect(
-          screen.getByText(
-            'Kashyap'
+            'Gotra'
           )
         ).toBeInTheDocument();
 
         expect(
           screen.getByText(
-            'Suryavanshi'
+            'Kul / Vansh'
+          )
+        ).toBeInTheDocument();
+
+        expect(
+          screen.getByText(
+            'Nagvanshi'
           )
         ).toBeInTheDocument();
 
@@ -508,29 +512,16 @@ describe(
 
         expect(
           screen.getByText(
-            'Mahadev'
-          )
-        ).toBeInTheDocument();
-
-        expect(
-          screen.getByRole(
-            'heading',
-            {
-              name:
-                'Education & Career'
-            }
+            'Defence Contractor'
           )
         ).toBeInTheDocument();
 
         expect(
           screen.getByText(
-            'GTU'
+            'Satvik'
           )
         ).toBeInTheDocument();
 
-        /*
-         * New family fields.
-         */
         expect(
           screen.getByText(
             'Family Values'
@@ -544,10 +535,28 @@ describe(
         ).toBeInTheDocument();
 
         expect(
-          screen.getByText(
+          screen.queryByText(
+            'Sub-Samaj'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Kuldevta'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Mahadev'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
             'Family Residence State'
           )
-        ).toBeInTheDocument();
+        ).not.toBeInTheDocument();
 
         expect(
           screen.queryByText(
@@ -592,7 +601,7 @@ describe(
     );
 
     test(
-      'sensitive lineage uses canonical maternal Gotra and updated sibling terminology',
+      'sensitive lineage shows Maternal Shakh and Mosal but not removed maternal fields',
       async () => {
         render(
           <MemoryRouter>
@@ -610,16 +619,6 @@ describe(
               'Raj V Rana'
           }
         );
-
-        expect(
-          screen.queryByRole(
-            'heading',
-            {
-              name:
-                'Paternal Lineage'
-            }
-          )
-        ).not.toBeInTheDocument();
 
         expect(
           screen.queryByRole(
@@ -646,16 +645,6 @@ describe(
             'heading',
             {
               name:
-                'Paternal Lineage'
-            }
-          )
-        ).toBeInTheDocument();
-
-        expect(
-          screen.getByRole(
-            'heading',
-            {
-              name:
                 'Mosal Details'
             }
           )
@@ -663,22 +652,54 @@ describe(
 
         expect(
           screen.getByText(
-            'Maternal Gotra'
+            'Maternal Shakh'
           )
         ).toBeInTheDocument();
 
         expect(
+  screen.getAllByText(
+    'Jadeja'
+  ).length
+).toBeGreaterThanOrEqual(
+  1
+);
+
+        expect(
           screen.getByText(
-            'Vashishtha'
+            'Maternal Native Place'
           )
         ).toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Maternal Gotra'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Legacy Vashishtha'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Maternal Family Surname'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Legacy Jadeja'
+          )
+        ).not.toBeInTheDocument();
 
         expect(
           screen.getByRole(
             'heading',
             {
               name:
-                'Three-Generation Mosal'
+                'Extended Mosal'
             }
           )
         ).toBeInTheDocument();
@@ -721,12 +742,6 @@ describe(
 
         expect(
           screen.getByText(
-            'Jay Jadeja'
-          )
-        ).toBeInTheDocument();
-
-        expect(
-          screen.getByText(
             'Life Partner Surname'
           )
         ).toBeInTheDocument();
@@ -736,84 +751,11 @@ describe(
             'Sasariyu / Village'
           )
         ).toBeInTheDocument();
-
-        const gondalLocations =
-        screen.getAllByText(
-            /Gondal.*Rajkot.*Gujarat/
-        );
-
-        expect(
-        gondalLocations.length
-        ).toBeGreaterThanOrEqual(
-        1
-        );
       }
     );
 
     test(
-      'legacy maternal notes remain readable as a maternal Gotra fallback',
-      async () => {
-        apiMock.mockResolvedValue({
-          data: {
-            profile: {
-              ...profile,
-
-              maternalFamily: {
-                ...profile.maternalFamily,
-
-                maternalGotra:
-                  undefined,
-
-                notes:
-                  'Legacy Gotra'
-              }
-            }
-          }
-        });
-
-        render(
-          <MemoryRouter>
-            <BiodataPage />
-          </MemoryRouter>
-        );
-
-        await screen.findByRole(
-          'heading',
-          {
-            level:
-              1,
-
-            name:
-              'Raj V Rana'
-          }
-        );
-
-        fireEvent.click(
-          screen.getByRole(
-            'checkbox',
-            {
-              name:
-                /family lineage/i
-            }
-          )
-        );
-
-        expect(
-          screen.getByText(
-            'Maternal Gotra'
-          )
-        ).toBeInTheDocument();
-
-        expect(
-          screen.getByText(
-            'Legacy Gotra'
-          )
-        ).toBeInTheDocument();
-      }
-    );
-
-    test(
-      'contact assets and astrology sections respect biodata privacy toggles',
+      'contact assets and astrology owner-side print toggles work independently',
       async () => {
         render(
           <MemoryRouter>
@@ -894,12 +836,6 @@ describe(
           )
         ).toBeInTheDocument();
 
-        expect(
-          screen.getByText(
-            '+919999999999'
-          )
-        ).toBeInTheDocument();
-
         fireEvent.click(
           screen.getByRole(
             'checkbox',
@@ -922,13 +858,13 @@ describe(
 
         expect(
           screen.getByText(
-            'Owned House'
+            '12 Vigha'
           )
         ).toBeInTheDocument();
 
         expect(
           screen.getByText(
-            '12 Vigha'
+            'Rana House'
           )
         ).toBeInTheDocument();
 

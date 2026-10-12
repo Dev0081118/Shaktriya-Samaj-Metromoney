@@ -14,12 +14,12 @@ import {
   Link
 } from 'react-router-dom';
 
+import FamilyAssetsDisplay from '../components/FamilyAssetsDisplay';
+
 import {
   api,
   assetUrl
 } from '../services/api';
-
-import FamilyAssetsDisplay from '../components/FamilyAssetsDisplay';
 
 const notShared =
   'Not shared';
@@ -42,105 +42,112 @@ const smallTextClass =
 const toolbarButtonClass =
   'inline-flex min-h-[42px] items-center justify-center gap-2 rounded-[99px] border border-[#cbb8a4] bg-[#fffdf8] px-4 text-[10px] font-extrabold text-[#431318] transition hover:border-[#681d25]';
 
-const joinValues = (
-  values,
-  separator = ', '
-) =>
-  values
-    .filter(
-      (
+const joinValues =
+  (
+    values,
+    separator = ', '
+  ) =>
+    values
+      .filter(
+        (
+          value
+        ) =>
+          value !==
+            undefined &&
+          value !==
+            null &&
+          value !==
+            ''
+      )
+      .join(
+        separator
+      );
+
+const formatDate =
+  (
+    value
+  ) => {
+    if (!value) {
+      return '';
+    }
+
+    const date =
+      new Date(
         value
-      ) =>
-        value !==
-          undefined &&
-        value !==
-          null &&
-        value !==
-          ''
-    )
-    .join(
-      separator
-    );
+      );
 
-const formatDate = (
-  value
-) => {
-  if (!value) {
-    return '';
-  }
-
-  const date =
-    new Date(
-      value
-    );
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-    return '';
-  }
-
-  return new Intl.DateTimeFormat(
-    'en-IN',
-    {
-      day:
-        '2-digit',
-
-      month:
-        'long',
-
-      year:
-        'numeric'
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return '';
     }
-  ).format(
-    date
-  );
-};
 
-const formatIncome = (
-  value
-) => {
-  const amount =
-    Number(
-      value
+    return new Intl.DateTimeFormat(
+      'en-IN',
+      {
+        day:
+          '2-digit',
+
+        month:
+          'long',
+
+        year:
+          'numeric'
+      }
+    ).format(
+      date
     );
+  };
 
-  if (
-    !Number.isFinite(
-      amount
-    ) ||
-    amount <= 0
-  ) {
-    return '';
-  }
+const formatIncome =
+  (
+    value
+  ) => {
+    const amount =
+      Number(
+        value
+      );
 
-  return new Intl.NumberFormat(
-    'en-IN',
-    {
-      style:
-        'currency',
-
-      currency:
-        'INR',
-
-      maximumFractionDigits:
+    if (
+      !Number.isFinite(
+        amount
+      ) ||
+      amount <=
         0
+    ) {
+      return '';
     }
-  ).format(
-    amount
-  );
-};
+
+    return new Intl.NumberFormat(
+      'en-IN',
+      {
+        style:
+          'currency',
+
+        currency:
+          'INR',
+
+        maximumFractionDigits:
+          0
+      }
+    ).format(
+      amount
+    );
+  };
 
 function Field({
   label,
   value
 }) {
   if (
-    value === undefined ||
-    value === null ||
-    value === ''
+    value ===
+      undefined ||
+    value ===
+      null ||
+    value ===
+      ''
   ) {
     return null;
   }
@@ -267,7 +274,9 @@ export default function BiodataPage() {
     profile,
     setProfile
   ] =
-    useState(null);
+    useState(
+      null
+    );
 
   const [
     error,
@@ -319,7 +328,9 @@ export default function BiodataPage() {
           (
             response
           ) => {
-            if (!active) {
+            if (
+              !active
+            ) {
               return;
             }
 
@@ -403,8 +414,10 @@ export default function BiodataPage() {
             joinValues([
               profile.location
                 ?.city,
+
               profile.location
                 ?.district,
+
               profile.location
                 ?.state
             ]),
@@ -413,10 +426,13 @@ export default function BiodataPage() {
             joinValues([
               profile.location
                 ?.nativePlace,
+
               profile.location
                 ?.nativeTaluka,
+
               profile.location
                 ?.nativeDistrict,
+
               profile.location
                 ?.nativeState
             ]),
@@ -425,8 +441,10 @@ export default function BiodataPage() {
             joinValues([
               profile.birthDetails
                 ?.city,
+
               profile.birthDetails
                 ?.district,
+
               profile.birthDetails
                 ?.state
             ]),
@@ -436,9 +454,11 @@ export default function BiodataPage() {
               profile.career
                 ?.workLocation
                 ?.city,
+
               profile.career
                 ?.workLocation
                 ?.state,
+
               profile.career
                 ?.workLocation
                 ?.country
@@ -448,12 +468,15 @@ export default function BiodataPage() {
             joinValues([
               profile.paternalFamily
                 ?.ancestralVillage ||
-                profile.paternalFamily
-                  ?.nativePlace,
+              profile.paternalFamily
+                ?.nativePlace,
+
               profile.paternalFamily
                 ?.taluka,
+
               profile.paternalFamily
                 ?.district,
+
               profile.paternalFamily
                 ?.state
             ]),
@@ -462,12 +485,15 @@ export default function BiodataPage() {
             joinValues([
               profile.maternalFamily
                 ?.maternalVillage ||
-                profile.maternalFamily
-                  ?.maternalNativePlace,
+              profile.maternalFamily
+                ?.maternalNativePlace,
+
               profile.maternalFamily
                 ?.maternalTaluka,
+
               profile.maternalFamily
                 ?.maternalDistrict,
+
               profile.maternalFamily
                 ?.maternalState
             ]),
@@ -477,24 +503,31 @@ export default function BiodataPage() {
               profile.contactDetails
                 ?.currentAddress
                 ?.addressLine1,
+
               profile.contactDetails
                 ?.currentAddress
                 ?.addressLine2,
+
               profile.contactDetails
                 ?.currentAddress
                 ?.city,
+
               profile.contactDetails
                 ?.currentAddress
                 ?.taluka,
+
               profile.contactDetails
                 ?.currentAddress
                 ?.district,
+
               profile.contactDetails
                 ?.currentAddress
                 ?.state,
+
               profile.contactDetails
                 ?.currentAddress
                 ?.pincode,
+
               profile.contactDetails
                 ?.currentAddress
                 ?.country
@@ -541,11 +574,7 @@ export default function BiodataPage() {
           to="/my-profile"
           className="inline-flex items-center gap-2 text-[11px] font-bold text-[#431318] no-underline"
         >
-          <ArrowLeft
-            size={
-              16
-            }
-          />
+          <ArrowLeft size={16} />
 
           My Profile
         </Link>
@@ -559,11 +588,7 @@ export default function BiodataPage() {
             window.print()
           }
         >
-          <Printer
-            size={
-              15
-            }
-          />
+          <Printer size={15} />
 
           Print biodata
         </button>
@@ -580,8 +605,7 @@ export default function BiodataPage() {
               event
             ) =>
               setIncludeSensitive(
-                event.target
-                  .checked
+                event.target.checked
               )
             }
           />
@@ -599,8 +623,7 @@ export default function BiodataPage() {
               event
             ) =>
               setIncludeAstrology(
-                event.target
-                  .checked
+                event.target.checked
               )
             }
           />
@@ -618,8 +641,7 @@ export default function BiodataPage() {
               event
             ) =>
               setIncludeContact(
-                event.target
-                  .checked
+                event.target.checked
               )
             }
           />
@@ -637,8 +659,7 @@ export default function BiodataPage() {
               event
             ) =>
               setIncludeAssets(
-                event.target
-                  .checked
+                event.target.checked
               )
             }
           />
@@ -675,9 +696,11 @@ export default function BiodataPage() {
 
             {profile.profilePhoto && (
               <img
-                src={assetUrl(
-                  profile.profilePhoto
-                )}
+                src={
+                  assetUrl(
+                    profile.profilePhoto
+                  )
+                }
                 alt=""
                 className="h-[190px] w-[145px] shrink-0 rounded-t-[72px] object-cover"
               />
@@ -817,33 +840,12 @@ export default function BiodataPage() {
             />
 
             <Field
-              label="Kuldevta"
-              value={
-                profile.community
-                  ?.ishtaDevta
-              }
-            />
-
-            <Field
               label="Vatan / Native Place"
               value={
                 derived.vatan
               }
             />
           </dl>
-
-          {profile.community
-            ?.familyOrigin && (
-            <p className={`${smallTextClass} mt-5`}>
-              <strong className="text-[#431318]">
-                Family / Samaj background:
-              </strong>{' '}
-              {
-                profile.community
-                  .familyOrigin
-              }
-            </p>
-          )}
         </Section>
 
         <Section
@@ -971,6 +973,7 @@ export default function BiodataPage() {
                     [
                       profile.family
                         .fatherName,
+
                       profile.family
                         .fatherOccupation
                     ],
@@ -986,6 +989,7 @@ export default function BiodataPage() {
                     [
                       profile.family
                         .motherName,
+
                       profile.family
                         .motherOccupation
                     ],
@@ -1007,14 +1011,6 @@ export default function BiodataPage() {
                 value={
                   profile.family
                     .familyValues
-                }
-              />
-
-              <Field
-                label="Family Residence State"
-                value={
-                  profile.family
-                    .familyLocation
                 }
               />
             </dl>
@@ -1090,32 +1086,11 @@ export default function BiodataPage() {
                 />
 
                 <Field
-                  label="Maternal Surname"
-                  value={
-                    profile
-                      .maternalFamily
-                      .maternalFamilySurname
-                  }
-                />
-
-                <Field
                   label="Maternal Shakh"
                   value={
                     profile
                       .maternalFamily
                       .maternalClan
-                  }
-                />
-
-                <Field
-                  label="Maternal Gotra"
-                  value={
-                    profile
-                      .maternalFamily
-                      .maternalGotra ||
-                    profile
-                      .maternalFamily
-                      .notes
                   }
                 />
 
@@ -1132,18 +1107,9 @@ export default function BiodataPage() {
         {includeSensitive &&
           profile.maternalLineage && (
             <Section
-              title="Three-Generation Mosal"
+              title="Extended Mosal"
             >
-              <div className="grid grid-cols-3 gap-3 max-[700px]:grid-cols-1">
-                <MosalBlock
-                  title="Self Mosal"
-                  branch={
-                    profile
-                      .maternalLineage
-                      .selfMosal
-                  }
-                />
-
+              <div className="grid grid-cols-2 gap-3 max-[700px]:grid-cols-1">
                 <MosalBlock
                   title="Father's Mosal"
                   branch={
@@ -1192,8 +1158,11 @@ export default function BiodataPage() {
                       joinValues([
                         sibling.spouseVillage ||
                           sibling.spouseNativePlace,
+
                         sibling.spouseTaluka,
+
                         sibling.spouseDistrict,
+
                         sibling.spouseState
                       ]);
 
@@ -1360,13 +1329,13 @@ export default function BiodataPage() {
           )}
 
         {includeAssets && (
-  <FamilyAssetsDisplay
-    assets={
-      profile.familyAssets
-    }
-    mode="biodata"
-  />
-)}
+          <FamilyAssetsDisplay
+            assets={
+              profile.familyAssets
+            }
+            mode="biodata"
+          />
+        )}
 
         <Section
           title="About"
@@ -1414,6 +1383,7 @@ export default function BiodataPage() {
                     [
                       profile.contactDetails
                         ?.guardianName,
+
                       profile.contactDetails
                         ?.guardianRelation
                     ],
@@ -1462,7 +1432,10 @@ export default function BiodataPage() {
           </p>
 
           <p className="mx-auto mt-3 max-w-[560px] text-[7px] leading-4 text-[#a09287]">
-            This biodata is generated by the profile owner for matrimonial purposes. Sensitive family, contact and asset information should be shared only with trusted families.
+            This biodata is generated by the profile
+            owner for matrimonial purposes. Sensitive
+            family, contact and asset information should
+            be shared only with trusted families.
           </p>
         </footer>
       </article>

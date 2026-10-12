@@ -47,9 +47,9 @@ vi.mock(
 
     assetUrl:
       (
-        path
+        value
       ) =>
-        path ||
+        value ||
         ''
   })
 );
@@ -76,12 +76,6 @@ const publicProfile = {
   age:
     28,
 
-  /*
-   * Public serializer should normally
-   * remove this, but keeping it in this
-   * fixture verifies the UI itself does
-   * not display exact DOB for visitors.
-   */
   dateOfBirth:
     '1998-05-14T00:00:00.000Z',
 
@@ -91,10 +85,6 @@ const publicProfile = {
   bloodGroup:
     'B+',
 
-  /*
-   * Legacy value intentionally retained.
-   * Dedicated-community UI must ignore it.
-   */
   complexion:
     'Wheatish',
 
@@ -142,11 +132,6 @@ const publicProfile = {
   },
 
   community: {
-    /*
-     * Legacy generic values intentionally
-     * retained so the test guarantees the
-     * new UI does not render them.
-     */
     religion:
       'Hinduism',
 
@@ -156,17 +141,9 @@ const publicProfile = {
     name:
       'Rajput / Kshatriya',
 
-    /*
-     * Legacy field intentionally retained.
-     * New profile UI must not render it.
-     */
     subCommunity:
       'Rajput',
 
-    /*
-     * Existing backend key.
-     * Profile UI now presents this as Surname.
-     */
     clan:
       'Rana',
 
@@ -174,7 +151,7 @@ const publicProfile = {
       'Kashyap',
 
     vansh:
-      'Suryavanshi',
+      'Nagvanshi',
 
     kulaDevi:
       'Ashapura Mata',
@@ -183,7 +160,7 @@ const publicProfile = {
       'Mahadev',
 
     familyOrigin:
-      'Traditional Rajput family from Saurashtra.'
+      'Legacy family introduction'
   },
 
   education: {
@@ -205,7 +182,7 @@ const publicProfile = {
 
   career: {
     occupationType:
-      'Private Job',
+      'Defence Contractor',
 
     occupation:
       'Software Developer',
@@ -233,7 +210,7 @@ const publicProfile = {
 
   lifestyle: {
     diet:
-      'Vegetarian',
+      'Satvik',
 
     smoking:
       'No',
@@ -272,7 +249,8 @@ const publicProfile = {
     familyDescription:
       'Traditional family.',
 
-    siblingDetails: []
+    siblingDetails:
+      []
   },
 
   maternalFamily: {
@@ -280,7 +258,7 @@ const publicProfile = {
       'Maternal Grandfather',
 
     maternalFamilySurname:
-      'Jadeja',
+      'Legacy Jadeja',
 
     maternalVillage:
       'Gondal',
@@ -297,34 +275,11 @@ const publicProfile = {
     maternalClan:
       'Jadeja',
 
-    /*
-     * Canonical maternal Gotra field.
-     */
     maternalGotra:
-      'Vashishtha'
+      'Legacy Vashishtha'
   },
 
   maternalLineage: {
-    selfMosal: {
-      mamaName:
-        'Mama Jadeja',
-
-      familySurname:
-        'Jadeja',
-
-      clanSurname:
-        'Jadeja',
-
-      nativeVillage:
-        'Gondal',
-
-      district:
-        'Rajkot',
-
-      state:
-        'Gujarat'
-    },
-
     fathersMosal: {
       grandmotherName:
         'Paternal Grandmother',
@@ -408,7 +363,7 @@ describe(
   'ProfilePage',
   () => {
     test(
-      'renders Rajput-specific profile terminology and hides generic matrimony fields',
+      'renders current Rajput profile fields and hides removed legacy fields',
       async () => {
         apiMock.mockResolvedValue({
           data: {
@@ -453,20 +408,12 @@ describe(
           )
         ).toBeInTheDocument();
 
-        /*
-         * Dedicated Rajput / Kshatriya
-         * terminology.
-         */
         expect(
           screen.getByText(
             'Rajput lineage'
           )
         ).toBeInTheDocument();
 
-        /*
-         * community.clan remains the backend
-         * key, but UI terminology is Surname.
-         */
         expect(
           screen.getByText(
             'Surname'
@@ -499,7 +446,7 @@ describe(
 
         expect(
           screen.getByText(
-            'Suryavanshi'
+            'Nagvanshi'
           )
         ).toBeInTheDocument();
 
@@ -517,20 +464,16 @@ describe(
 
         expect(
           screen.getByText(
-            'Kuldevta'
+            'Defence Contractor'
           )
         ).toBeInTheDocument();
 
         expect(
           screen.getByText(
-            'Mahadev'
+            'Satvik'
           )
         ).toBeInTheDocument();
 
-        /*
-         * Family information added in the
-         * updated profile model.
-         */
         expect(
           screen.getByText(
             'Family values'
@@ -545,28 +488,16 @@ describe(
 
         expect(
           screen.getByText(
-            'Family Residence State'
-          )
-        ).toBeInTheDocument();
-
-        /*
-         * Canonical maternalGotra should render.
-         */
-        expect(
-          screen.getByText(
-            'Maternal Gotra'
+            'Maternal Shakh'
           )
         ).toBeInTheDocument();
 
         expect(
           screen.getByText(
-            'Vashishtha'
+            'Jadeja'
           )
         ).toBeInTheDocument();
 
-        /*
-         * Existing Mosal branches remain visible.
-         */
         expect(
           screen.getByText(
             "Father's Mosal"
@@ -579,11 +510,48 @@ describe(
           )
         ).toBeInTheDocument();
 
-        /*
-         * Generic matrimony fields are
-         * intentionally absent from the
-         * dedicated-community UI.
-         */
+        expect(
+          screen.queryByText(
+            'Kuldevta'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Mahadev'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Family Residence State'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Maternal Gotra'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Legacy Vashishtha'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Maternal Family Surname'
+          )
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            'Legacy Jadeja'
+          )
+        ).not.toBeInTheDocument();
+
         expect(
           screen.queryByText(
             'Complexion'
@@ -604,39 +572,20 @@ describe(
 
         expect(
           screen.queryByText(
-            'Community'
-          )
-        ).not.toBeInTheDocument();
-
-        expect(
-          screen.queryByText(
             'Sub-Samaj'
           )
         ).not.toBeInTheDocument();
 
-        /*
-         * Public visitors must not see the
-         * exact DOB even if a malformed API
-         * response accidentally contains it.
-         */
         expect(
           screen.queryByText(
             /14 May 1998/i
           )
         ).not.toBeInTheDocument();
 
-        /*
-         * Age intentionally appears twice:
-         * once in the hero summary and once
-         * in Personal Details.
-         */
-        const ageValues =
+        expect(
           screen.getAllByText(
             '28 years'
-          );
-
-        expect(
-          ageValues.length
+          ).length
         ).toBeGreaterThanOrEqual(
           2
         );
@@ -656,7 +605,7 @@ describe(
     );
 
     test(
-      'shows phone and WhatsApp only when contact has been unlocked',
+      'shows phone and WhatsApp only when contact is unlocked',
       async () => {
         apiMock.mockResolvedValue({
           data: {
@@ -712,34 +661,33 @@ describe(
           }
         );
 
-        const phoneLink =
+        expect(
           screen.getByRole(
             'link',
             {
               name:
                 /\+919876543210/i
             }
-          );
-
-        expect(
-          phoneLink
+          )
         ).toHaveAttribute(
           'href',
           'tel:+919876543210'
         );
 
         const whatsappLinks =
-          screen.getAllByRole(
-            'link'
-          ).filter(
-            (
-              link
-            ) =>
-              link.getAttribute(
-                'href'
-              ) ===
-              'https://wa.me/919876543210'
-          );
+          screen
+            .getAllByRole(
+              'link'
+            )
+            .filter(
+              (
+                link
+              ) =>
+                link.getAttribute(
+                  'href'
+                ) ===
+                'https://wa.me/919876543210'
+            );
 
         expect(
           whatsappLinks.length
@@ -762,7 +710,7 @@ describe(
     );
 
     test(
-      'keeps contact hidden before the request is unlocked',
+      'keeps contact hidden before accepted request is unlocked',
       async () => {
         apiMock.mockResolvedValue({
           data: {
@@ -822,16 +770,6 @@ describe(
             {
               name:
                 /\+919876543210/i
-            }
-          )
-        ).not.toBeInTheDocument();
-
-        expect(
-          screen.queryByRole(
-            'link',
-            {
-              name:
-                /whatsapp/i
             }
           )
         ).not.toBeInTheDocument();
