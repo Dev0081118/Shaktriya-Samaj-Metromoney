@@ -1521,15 +1521,85 @@ const localCompletion =
   (
     data
   ) => {
-    const fields = [
+    const hasPreferences =
+      Boolean(
+        data.ageMin ||
+        data.ageMax ||
+        data.heightMin ||
+        data.heightMax ||
+        data.preferredShakh ||
+        data.preferredMaritalStatus ||
+        data.preferredDiet ||
+        data.preferredCountry ||
+        data.locations ||
+        data.educationPreferences ||
+        data.occupationPreferences ||
+        data.additionalPreferences ||
+        (
+          Array.isArray(
+            data.states
+          ) &&
+          data.states.length >
+            0
+        )
+      );
+
+    const residentialAddressComplete =
+      [
+        data.currentAddressLine1,
+        data.currentAddressCity,
+        data.currentAddressDistrict,
+        data.currentAddressState,
+        data.currentAddressPincode
+      ].every(
+        Boolean
+      );
+
+    const fathersMosalComplete =
+      [
+        data.fathersMosal
+          ?.familySurname,
+        data.fathersMosal
+          ?.nativeVillage,
+        data.fathersMosal
+          ?.district,
+        data.fathersMosal
+          ?.state
+      ].every(
+        Boolean
+      );
+
+    const mothersMosalComplete =
+      [
+        data.mothersMosal
+          ?.familySurname,
+        data.mothersMosal
+          ?.nativeVillage,
+        data.mothersMosal
+          ?.district,
+        data.mothersMosal
+          ?.state
+      ].every(
+        Boolean
+      );
+
+    const checkpoints = [
       data.profileFor,
+
       data.firstName,
+
       data.lastName,
+
       data.gender,
+
       data.dateOfBirth,
+
       data.height,
+
       data.maritalStatus,
+
       data.profilePhoto,
+
       data.aboutMe,
 
       selectedSurname(
@@ -1545,22 +1615,34 @@ const localCompletion =
       ),
 
       data.nativePlace,
+
       data.nativeDistrict,
+
       data.highestEducation,
+
       data.occupation,
+
       data.fatherName,
+
       data.motherName,
+
       data.maternalVillage,
-      data.ageMin,
-      data.ageMax
+
+      hasPreferences,
+
+      residentialAddressComplete,
+
+      fathersMosalComplete,
+
+      mothersMosalComplete
     ];
 
     return Math.round(
       (
-        fields.filter(
+        checkpoints.filter(
           Boolean
         ).length /
-        fields.length
+        checkpoints.length
       ) *
         100
     );
