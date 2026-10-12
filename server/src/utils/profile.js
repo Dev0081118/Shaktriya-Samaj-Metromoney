@@ -1,101 +1,62 @@
-const present = (
-  value
-) => {
-  if (
-    Array.isArray(
-      value
-    )
-  ) {
-    return value.length >
-      0;
-  }
+import {
+  calculateAge as engineCalculateAge,
+  calculateMutualMatch,
+  evaluateDirectionalMatch
+} from '../services/matchingEngine.js';
 
-  if (
-    value ===
-      true
-  ) {
-    return true;
-  }
+const present =
+  (
+    value
+  ) => {
+    if (
+      Array.isArray(
+        value
+      )
+    ) {
+      return value.length >
+        0;
+    }
 
-  if (
-    value ===
-      false ||
-    value ===
-      null ||
-    value ===
-      undefined
-  ) {
-    return false;
-  }
+    if (
+      value ===
+        true
+    ) {
+      return true;
+    }
 
-  return Boolean(
-    String(
-      value
-    ).trim()
-  );
-};
+    if (
+      value ===
+        false ||
+      value ===
+        null ||
+      value ===
+        undefined
+    ) {
+      return false;
+    }
 
-export function calculateAge(
-  dateOfBirth
-) {
-  if (
-    !dateOfBirth
-  ) {
-    return null;
-  }
-
-  const birth =
-    new Date(
-      dateOfBirth
+    return Boolean(
+      String(
+        value
+      ).trim()
     );
+  };
 
-  if (
-    Number.isNaN(
-      birth.getTime()
-    )
-  ) {
-    return null;
-  }
-
-  const now =
-    new Date();
-
-  let age =
-    now.getFullYear() -
-    birth.getFullYear();
-
-  if (
-    now.getMonth() <
-      birth.getMonth() ||
-    (
-      now.getMonth() ===
-        birth.getMonth() &&
-      now.getDate() <
-        birth.getDate()
-    )
-  ) {
-    age--;
-  }
-
-  return age;
-}
+export const calculateAge =
+  engineCalculateAge;
 
 /*
  * Canonical profile-completion calculation.
  *
- * IMPORTANT:
- * This must only use fields that belong to the
- * CURRENT profile flow.
+ * Only fields belonging to the CURRENT profile flow
+ * should affect completion.
  *
- * Removed fields such as:
- * - current city
- * - current district
- * - current state
+ * Current residential city/state fields are not used
+ * as general profile location.
  *
- * must never affect completion.
- *
- * Exact residential address is optional/private and
- * therefore also does not affect profile completion.
+ * Exact residential address remains private, but its
+ * minimum required fields are still part of the user's
+ * own profile-completion calculation.
  */
 export function completion(
   profile,
@@ -118,31 +79,54 @@ export function completion(
 
   const residentialAddressComplete =
     [
-      residentialAddress.addressLine1,
-      residentialAddress.city,
-      residentialAddress.district,
-      residentialAddress.state,
-      residentialAddress.pincode
+      residentialAddress
+        .addressLine1,
+
+      residentialAddress
+        .city,
+
+      residentialAddress
+        .district,
+
+      residentialAddress
+        .state,
+
+      residentialAddress
+        .pincode
     ].every(
       present
     );
 
   const fathersMosalComplete =
     [
-      fathersMosal.familySurname,
-      fathersMosal.nativeVillage,
-      fathersMosal.district,
-      fathersMosal.state
+      fathersMosal
+        .familySurname,
+
+      fathersMosal
+        .nativeVillage,
+
+      fathersMosal
+        .district,
+
+      fathersMosal
+        .state
     ].every(
       present
     );
 
   const mothersMosalComplete =
     [
-      mothersMosal.familySurname,
-      mothersMosal.nativeVillage,
-      mothersMosal.district,
-      mothersMosal.state
+      mothersMosal
+        .familySurname,
+
+      mothersMosal
+        .nativeVillage,
+
+      mothersMosal
+        .district,
+
+      mothersMosal
+        .state
     ].every(
       present
     );
@@ -160,8 +144,14 @@ export function completion(
 
     profile.height,
 
+    /*
+     * Body weight is now a core profile field.
+     */
+    profile.weight,
+
     profile.maritalStatus ||
-      profile.maritalHistory
+      profile
+        .maritalHistory
         ?.status,
 
     profile.profilePhoto,
@@ -197,7 +187,8 @@ export function completion(
 
     profile.maternalFamily
       ?.maternalVillage ||
-      profile.maternalFamily
+      profile
+        .maternalFamily
         ?.maternalNativePlace,
 
     hasPreferences,
@@ -220,291 +211,155 @@ export function completion(
   );
 }
 
-const includes = (
-  list,
-  value
-) =>
-  !list?.length ||
-  list.some(
-    (
-      item
-    ) =>
-      String(
-        item
-      ).toLowerCase() ===
-      String(
-        value ||
-          ''
-      ).toLowerCase()
-  );
-
-const matchesAny = (
-  list,
-  value
-) =>
-  Boolean(
-    list?.some(
-      (
-        item
-      ) =>
-        String(
-          item
-        ).toLowerCase() ===
-        String(
-          value ||
-            ''
-        ).toLowerCase()
-    )
-  );
-
+/*
+ * Directional preference evaluation.
+ *
+ * Example:
+ *
+ * evaluatePreferences(
+ *   Raj's preferences,
+ *   Priya
+ * )
+ *
+ * means:
+ *
+ * "How well does Priya satisfy Raj's preferences?"
+ *
+ * This is not reciprocal by itself.
+ */
 export function evaluatePreferences(
   preferences,
   candidate
 ) {
-  const age =
-    calculateAge(
-      candidate.dateOfBirth
+  const result =
+    evaluateDirectionalMatch(
+      preferences,
+      candidate
     );
-
-  const tests = [
-    [
-      'Preferred age range',
-
-      !preferences ||
-        (
-          (
-            !preferences.ageMin ||
-            age >=
-              preferences.ageMin
-          ) &&
-          (
-            !preferences.ageMax ||
-            age <=
-              preferences.ageMax
-          )
-        )
-    ],
-
-    [
-      'Preferred height',
-
-      !preferences ||
-        (
-          (
-            !preferences.heightMin ||
-            candidate.height >=
-              preferences.heightMin
-          ) &&
-          (
-            !preferences.heightMax ||
-            candidate.height <=
-              preferences.heightMax
-          )
-        )
-    ],
-
-    [
-      'Location preference',
-
-      (
-        !preferences
-          ?.locations
-          ?.length &&
-        !preferences
-          ?.states
-          ?.length
-      ) ||
-        matchesAny(
-          preferences.locations,
-          candidate.location
-            ?.city
-        ) ||
-        matchesAny(
-          preferences.states,
-          candidate.location
-            ?.state
-        )
-    ],
-
-    [
-      'Education preference',
-
-      includes(
-        preferences
-          ?.educationPreferences,
-
-        candidate.education
-          ?.highestEducation
-      )
-    ],
-
-    [
-      'Occupation preference',
-
-      includes(
-        preferences
-          ?.occupationPreferences,
-
-        candidate.career
-          ?.occupation
-      )
-    ],
-
-    [
-      'Marital status',
-
-      includes(
-        preferences
-          ?.acceptedMaritalStatuses
-          ?.length
-          ? preferences.acceptedMaritalStatuses
-          : preferences
-              ?.maritalStatus,
-
-        candidate.maritalStatus ||
-          candidate
-            .maritalHistory
-            ?.status
-      )
-    ],
-
-    [
-      'Diet preference',
-
-      includes(
-        preferences
-          ?.dietPreferences,
-
-        candidate.lifestyle
-          ?.diet
-      )
-    ],
-
-    [
-      'Community preference',
-
-      includes(
-        preferences
-          ?.communityPreferences,
-
-        candidate.community
-          ?.name
-      )
-    ],
-
-    [
-      'Marriage timeline',
-
-      includes(
-        preferences
-          ?.marriageTimeline,
-
-        candidate
-          .marriageTimeline
-      )
-    ]
-  ];
-
-  const matched =
-    tests
-      .filter(
-        ([
-          ,
-          value
-        ]) =>
-          value
-      )
-      .map(
-        ([
-          name
-        ]) =>
-          name
-      );
-
-  const unmatched =
-    tests
-      .filter(
-        ([
-          ,
-          value
-        ]) =>
-          !value
-      )
-      .map(
-        ([
-          name
-        ]) =>
-          name
-      );
 
   return {
     score:
-      Math.round(
-        (
-          matched.length /
-          tests.length
-        ) *
-          100
-      ),
+      result.score,
+
+    confidence:
+      result.confidence,
+
+    rankingScore:
+      result.rankingScore,
+
+    eligible:
+      result.eligible,
+
+    hasPreferences:
+      result.hasPreferences,
+
+    activeCriteria:
+      result.activeCriteria,
 
     matchedFactors:
-      matched,
+      result.matchedFactors,
 
     unmatchedFactors:
-      unmatched
+      result.unmatchedFactors,
+
+    unknownFactors:
+      result.unknownFactors,
+
+    hardFailures:
+      result.hardFailures
   };
 }
 
+/*
+ * Full reciprocal compatibility.
+ *
+ * profileA/preferencesA = logged-in viewer
+ * profileB/preferencesB = candidate
+ *
+ * Important:
+ *
+ * score
+ * -----
+ * directional viewer -> candidate percentage
+ *
+ * preferenceFitScore
+ * ------------------
+ * same as score, explicitly named
+ *
+ * reverseFitScore
+ * ---------------
+ * candidate -> viewer percentage
+ *
+ * mutualScore
+ * -----------
+ * balanced reciprocal compatibility
+ *
+ * rankingScore
+ * ------------
+ * internal recommendation-order score
+ *
+ * Private matched-factor details are intentionally not
+ * returned from here.
+ */
 export function calculateCompatibility(
   profileA,
   preferencesA,
   profileB,
   preferencesB
 ) {
-  const aToB =
-    evaluatePreferences(
+  const result =
+    calculateMutualMatch(
+      profileA,
       preferencesA,
-      profileB
-    );
-
-  const bToA =
-    evaluatePreferences(
-      preferencesB,
-      profileA
+      profileB,
+      preferencesB
     );
 
   return {
     score:
-      Math.round(
-        (
-          aToB.score +
-          bToA.score
-        ) /
-          2
-      ),
+      result.score,
 
-    aToBScore:
-      aToB.score,
+    preferenceFitScore:
+      result.preferenceFitScore,
 
-    bToAScore:
-      bToA.score,
+    reverseFitScore:
+      result.reverseFitScore,
 
-    matchedFactors: [
-      ...new Set([
-        ...aToB.matchedFactors,
-        ...bToA.matchedFactors
-      ])
-    ],
+    mutualScore:
+      result.mutualScore,
 
-    unmatchedFactors: [
-      ...new Set([
-        ...aToB.unmatchedFactors,
-        ...bToA.unmatchedFactors
-      ])
-    ]
+    confidence:
+      result.confidence,
+
+    reverseConfidence:
+      result.reverseConfidence,
+
+    rankingScore:
+      result.rankingScore,
+
+    eligible:
+      result.eligible,
+
+    viewerEligible:
+      result.viewerEligible,
+
+    candidateEligible:
+      result.candidateEligible,
+
+    viewerHasPreferences:
+      result.viewerHasPreferences,
+
+    candidateHasPreferences:
+      result.candidateHasPreferences
   };
 }
 
+/*
+ * Small profile-card serializer.
+ *
+ * Do not put sensitive fields such as income,
+ * residential address or family assets here.
+ */
 export function profileCard(
   profile,
   compatibility = null
@@ -536,8 +391,35 @@ export function profileCard(
     height:
       p.height,
 
+    /*
+     * Weight is now part of the standard profile card
+     * payload so profile/detail UI can display it.
+     */
+    weight:
+      p.weight,
+
+    /*
+     * Serialized profile privacy rules decide which
+     * location fields are present.
+     *
+     * Public UI should use native location only.
+     */
     location:
       p.location,
+
+    community: {
+      clan:
+        p.community
+          ?.clan,
+
+      gotra:
+        p.community
+          ?.gotra,
+
+      vansh:
+        p.community
+          ?.vansh
+    },
 
     education:
       p.education,
@@ -551,6 +433,15 @@ export function profileCard(
         p.career
           ?.designation
     },
+
+    lifestyle: {
+      diet:
+        p.lifestyle
+          ?.diet
+    },
+
+    maritalStatus:
+      p.maritalStatus,
 
     profilePhoto:
       p.profilePhoto,

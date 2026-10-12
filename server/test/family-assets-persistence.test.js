@@ -79,7 +79,7 @@ const tokenFor =
     );
 
 test(
-  'structured family assets persist',
+  'structured family assets persist while retired asset summary is ignored',
   async () => {
     const user =
       await User.create({
@@ -252,6 +252,11 @@ test(
               }
             ],
 
+            /*
+             * Retired legacy field.
+             *
+             * Controller must ignore this on new writes.
+             */
             assetSummary:
               '25 Vigha land, bungalow and business assets.'
           }
@@ -290,9 +295,30 @@ test(
 
     assert.equal(
       saved.familyAssets
+        .agricultureLand
+        .unit,
+      'Vigha'
+    );
+
+    assert.equal(
+      saved.familyAssets
+        .agricultureLand
+        .hasLand,
+      true
+    );
+
+    assert.equal(
+      saved.familyAssets
         .residentialProperties[0]
         .propertyName,
       'Rana House'
+    );
+
+    assert.equal(
+      saved.familyAssets
+        .residentialProperties[0]
+        .isPrimaryResidence,
+      true
     );
 
     assert.equal(
@@ -309,10 +335,16 @@ test(
       'Rana Agro'
     );
 
+    /*
+     * Overall Asset Summary is no longer part of
+     * the current profile-edit flow.
+     *
+     * New requests must not re-introduce it.
+     */
     assert.equal(
       saved.familyAssets
         .assetSummary,
-      '25 Vigha land, bungalow and business assets.'
+      undefined
     );
   }
 );

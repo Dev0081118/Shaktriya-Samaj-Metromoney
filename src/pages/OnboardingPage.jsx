@@ -413,6 +413,16 @@ const preferenceToForm =
         ?.heightMax ??
       '',
 
+    weightMin:
+      preferences
+        ?.weightMin ??
+      '',
+
+    weightMax:
+      preferences
+        ?.weightMax ??
+      '',
+
     states:
       Array.isArray(
         preferences
@@ -432,6 +442,8 @@ const preferenceToForm =
       '',
 
     preferredShakh:
+      preferences
+        ?.shakhPreferences?.[0] ||
       preferences
         ?.communityPreferences?.[0] ||
       '',
@@ -980,6 +992,11 @@ const profilePayload =
           data.height
         ),
 
+      weight:
+        optionalNumber(
+          data.weight
+        ),
+
       bloodGroup:
         data.bloodGroup,
 
@@ -1372,6 +1389,16 @@ const preferencePayload =
         data.heightMax
       ),
 
+    weightMin:
+      optionalNumber(
+        data.weightMin
+      ),
+
+    weightMax:
+      optionalNumber(
+        data.weightMax
+      ),
+
     locations:
       list(
         data.locations
@@ -1410,7 +1437,7 @@ const preferencePayload =
           ]
         : [],
 
-    communityPreferences:
+    shakhPreferences:
       data.preferredShakh &&
       data.preferredShakh !==
         'Any'
@@ -1508,6 +1535,21 @@ const validateBasics =
       return 'Height is required.';
     }
 
+    const weight =
+      optionalNumber(
+        data.weight
+      );
+
+    if (
+      !weight ||
+      weight <
+        30 ||
+      weight >
+        250
+    ) {
+      return 'Weight must be between 30 and 250 kg.';
+    }
+
     if (
       !data.maritalStatus
     ) {
@@ -1527,6 +1569,8 @@ const localCompletion =
         data.ageMax ||
         data.heightMin ||
         data.heightMax ||
+        data.weightMin ||
+        data.weightMax ||
         data.preferredShakh ||
         data.preferredMaritalStatus ||
         data.preferredDiet ||
@@ -1595,6 +1639,8 @@ const localCompletion =
       data.dateOfBirth,
 
       data.height,
+
+      data.weight,
 
       data.maritalStatus,
 
@@ -3170,6 +3216,24 @@ export default function OnboardingPage() {
                   ) =>
                     update(
                       'height',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Weight in kg"
+                  type="number"
+                  min="30"
+                  max="250"
+                  value={
+                    data.weight
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'weight',
                       value
                     )
                   }
@@ -5011,6 +5075,42 @@ export default function OnboardingPage() {
                   ) =>
                     update(
                       'heightMax',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Minimum Weight (kg)"
+                  type="number"
+                  min="30"
+                  max="250"
+                  value={
+                    data.weightMin
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'weightMin',
+                      value
+                    )
+                  }
+                />
+
+                <TextField
+                  label="Maximum Weight (kg)"
+                  type="number"
+                  min="30"
+                  max="250"
+                  value={
+                    data.weightMax
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      'weightMax',
                       value
                     )
                   }

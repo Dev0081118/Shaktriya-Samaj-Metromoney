@@ -80,20 +80,30 @@ const pick =
     Object.fromEntries(
       keys
         .filter(
-          (key) =>
-            source?.[key] !==
+          (
+            key
+          ) =>
+            source?.[
+              key
+            ] !==
             undefined
         )
         .map(
-          (key) => [
+          (
+            key
+          ) => [
             key,
-            source[key]
+            source[
+              key
+            ]
           ]
         )
     );
 
 const emptyToUndefined =
-  (value) => {
+  (
+    value
+  ) => {
     if (
       typeof value ===
         'string' &&
@@ -107,30 +117,39 @@ const emptyToUndefined =
   };
 
 const normalizeBoolean =
-  (value) => {
+  (
+    value
+  ) => {
     if (
-      value === true ||
-      value === false
+      value ===
+        true ||
+      value ===
+        false
     ) {
       return value;
     }
 
     if (
-      value === 'true'
+      value ===
+      'true'
     ) {
       return true;
     }
 
     if (
-      value === 'false'
+      value ===
+      'false'
     ) {
       return false;
     }
 
     if (
-      value === '' ||
-      value === null ||
-      value === undefined
+      value ===
+        '' ||
+      value ===
+        null ||
+      value ===
+        undefined
     ) {
       return undefined;
     }
@@ -138,11 +157,85 @@ const normalizeBoolean =
     return value;
   };
 
+const optionalNumber =
+  (
+    value
+  ) => {
+    if (
+      value ===
+        '' ||
+      value ===
+        null ||
+      value ===
+        undefined
+    ) {
+      return undefined;
+    }
+
+    const parsed =
+      Number(
+        value
+      );
+
+    return Number.isFinite(
+      parsed
+    )
+      ? parsed
+      : undefined;
+  };
+
+/*
+ * Lint-safe version.
+ *
+ * Accepts:
+ * - arrays
+ * - comma separated strings
+ *
+ * Returns:
+ * - trimmed unique values
+ */
+const normalizeStringArray =
+  (
+    value
+  ) => {
+    const values =
+      Array.isArray(
+        value
+      )
+        ? value
+        : typeof value ===
+            'string'
+          ? value.split(
+              ','
+            )
+          : [];
+
+    return [
+      ...new Set(
+        values
+          .map(
+            (
+              item
+            ) =>
+              String(
+                item
+              ).trim()
+          )
+          .filter(
+            Boolean
+          )
+      )
+    ];
+  };
+
 const cleanObject =
-  (object) =>
+  (
+    object
+  ) =>
     Object.fromEntries(
       Object.entries(
-        object || {}
+        object ||
+          {}
       )
         .map(
           ([
@@ -166,7 +259,9 @@ const cleanObject =
     );
 
 const objectValue =
-  (value) => {
+  (
+    value
+  ) => {
     if (!value) {
       return {};
     }
@@ -216,8 +311,7 @@ const deepMerge =
       const [
         key,
         value
-      ]
-      of Object.entries(
+      ] of Object.entries(
         source
       )
     ) {
@@ -240,16 +334,22 @@ const deepMerge =
           Date
         )
       ) {
-        result[key] =
+        result[
+          key
+        ] =
           deepMerge(
-            base[key],
+            base[
+              key
+            ],
             value
           );
 
         continue;
       }
 
-      result[key] =
+      result[
+        key
+      ] =
         value;
     }
 
@@ -264,11 +364,17 @@ const setNestedIfPresent =
     fields
   ) => {
     if (
-      !body?.[key] ||
-      typeof body[key] !==
+      !body?.[
+        key
+      ] ||
+      typeof body[
+        key
+      ] !==
         'object' ||
       Array.isArray(
-        body[key]
+        body[
+          key
+        ]
       )
     ) {
       return;
@@ -277,7 +383,9 @@ const setNestedIfPresent =
     const nested =
       cleanObject(
         pick(
-          body[key],
+          body[
+            key
+          ],
           fields
         )
       );
@@ -287,13 +395,17 @@ const setNestedIfPresent =
         nested
       ).length
     ) {
-      safe[key] =
+      safe[
+        key
+      ] =
         nested;
     }
   };
 
 const mosalPayload =
-  (source) => {
+  (
+    source
+  ) => {
     if (
       !source ||
       typeof source !==
@@ -331,7 +443,9 @@ const mosalPayload =
   };
 
 const profilePayload =
-  (body) => {
+  (
+    body
+  ) => {
     const safe =
       cleanObject(
         pick(
@@ -344,6 +458,7 @@ const profilePayload =
             'gender',
             'dateOfBirth',
             'height',
+            'weight',
             'bloodGroup',
             'complexion',
             'maritalStatus',
@@ -353,6 +468,26 @@ const profilePayload =
           ]
         )
       );
+
+    if (
+      safe.height !==
+      undefined
+    ) {
+      safe.height =
+        optionalNumber(
+          safe.height
+        );
+    }
+
+    if (
+      safe.weight !==
+      undefined
+    ) {
+      safe.weight =
+        optionalNumber(
+          safe.weight
+        );
+    }
 
     setNestedIfPresent(
       safe,
@@ -367,28 +502,49 @@ const profilePayload =
       ]
     );
 
-    setNestedIfPresent(
-      safe,
-      body,
-      'location',
-      [
-        'city',
-        'taluka',
-        'district',
-        'state',
-        'country',
-        'nativePlace',
-        'nativeTaluka',
-        'nativeDistrict',
-        'nativeState'
-      ]
-    );
-
     /*
-     * subCommunity intentionally excluded.
-     * Old DB data stays untouched, but new
-     * writes cannot re-introduce it.
+     * Current residential city / district / state are
+     * no longer general matrimonial location.
+     *
+     * Only native location belongs here.
      */
+    if (
+      body?.location &&
+      typeof body.location ===
+        'object' &&
+      !Array.isArray(
+        body.location
+      )
+    ) {
+      safe.location =
+        cleanObject({
+          city:
+            null,
+
+          taluka:
+            null,
+
+          district:
+            null,
+
+          state:
+            null,
+
+          country:
+            null,
+
+          ...pick(
+            body.location,
+            [
+              'nativePlace',
+              'nativeTaluka',
+              'nativeDistrict',
+              'nativeState'
+            ]
+          )
+        });
+    }
+
     setNestedIfPresent(
       safe,
       body,
@@ -400,9 +556,7 @@ const profilePayload =
         'clan',
         'gotra',
         'vansh',
-        'kulaDevi',
-        'ishtaDevta',
-        'familyOrigin'
+        'kulaDevi'
       ]
     );
 
@@ -436,6 +590,19 @@ const profilePayload =
     );
 
     if (
+      safe.career
+        ?.annualIncome !==
+      undefined
+    ) {
+      safe.career
+        .annualIncome =
+        optionalNumber(
+          safe.career
+            .annualIncome
+        );
+    }
+
+    if (
       body?.career
         ?.workLocation &&
       typeof body.career
@@ -443,8 +610,10 @@ const profilePayload =
         'object'
     ) {
       safe.career = {
-        ...(safe.career ||
-          {}),
+        ...(
+          safe.career ||
+          {}
+        ),
 
         workLocation:
           cleanObject(
@@ -486,7 +655,6 @@ const profilePayload =
         'siblingDetails',
         'familyType',
         'familyValues',
-        'familyLocation',
         'familyDescription'
       ]
     );
@@ -505,10 +673,19 @@ const profilePayload =
         'maternalFamilyVisibility',
         'siblingDetailsVisibility',
         'assetVisibility',
-        'astrologyVisibility',
-        'contactAddressVisibility'
+        'astrologyVisibility'
       ]
     );
+
+    safe.privacy = {
+      ...(
+        safe.privacy ||
+        {}
+      ),
+
+      contactAddressVisibility:
+        'Private'
+    };
 
     setNestedIfPresent(
       safe,
@@ -543,29 +720,18 @@ const profilePayload =
       ]
     );
 
-    /*
-     * Important:
-     * notes is deliberately excluded here.
-     *
-     * Existing legacy notes survive because
-     * nested profile updates are deep-merged.
-     *
-     * New clients must write maternalGotra.
-     */
     setNestedIfPresent(
       safe,
       body,
       'maternalFamily',
       [
         'maternalGrandfatherName',
-        'maternalFamilySurname',
         'maternalNativePlace',
         'maternalVillage',
         'maternalTaluka',
         'maternalDistrict',
         'maternalState',
-        'maternalClan',
-        'maternalGotra'
+        'maternalClan'
       ]
     );
 
@@ -578,13 +744,6 @@ const profilePayload =
         body.maternalLineage
       )
     ) {
-      const selfMosal =
-        mosalPayload(
-          body
-            .maternalLineage
-            .selfMosal
-        );
-
       const fathersMosal =
         mosalPayload(
           body
@@ -600,12 +759,6 @@ const profilePayload =
         );
 
       const lineage = {
-        ...(selfMosal
-          ? {
-              selfMosal
-            }
-          : {}),
-
         ...(fathersMosal
           ? {
               fathersMosal
@@ -662,8 +815,10 @@ const profilePayload =
         'object'
     ) {
       safe.contactDetails = {
-        ...(safe.contactDetails ||
-          {}),
+        ...(
+          safe.contactDetails ||
+          {}
+        ),
 
         currentAddress:
           cleanObject(
@@ -687,24 +842,23 @@ const profilePayload =
     }
 
     setNestedIfPresent(
-  safe,
-  body,
-  'familyAssets',
-  [
-    'agricultureLand',
-    'residentialProperties',
-    'otherProperties',
-    'businessAssets',
-    'assetSummary',
+      safe,
+      body,
+      'familyAssets',
+      [
+        'agricultureLand',
+        'residentialProperties',
+        'otherProperties',
+        'businessAssets',
 
-    /*
-     * Legacy support.
-     */
-    'propertySummary',
-    'primaryResidenceType',
-    'businessAssetsSummary'
-  ]
-);
+        /*
+         * Legacy structured fields retained.
+         */
+        'propertySummary',
+        'primaryResidenceType',
+        'businessAssetsSummary'
+      ]
+    );
 
     setNestedIfPresent(
       safe,
@@ -742,6 +896,19 @@ const profilePayload =
             .childrenFromPreviousMarriage
         );
 
+      if (
+        safe.maritalHistory
+          .childrenCount !==
+        undefined
+      ) {
+        safe.maritalHistory
+          .childrenCount =
+          optionalNumber(
+            safe.maritalHistory
+              .childrenCount
+          );
+      }
+
       safe.maritalHistory =
         cleanObject(
           safe.maritalHistory
@@ -777,8 +944,7 @@ const profilePayload =
       safe.biodataPrivacy
     ) {
       for (
-        const key
-        of [
+        const key of [
           'includeSensitiveFamilyDetailsInBiodata',
           'includeContactDetailsInBiodata',
           'includeAstrologyInBiodata',
@@ -856,8 +1022,8 @@ const mergeProfileData =
     };
 
     for (
-      const key
-      of nestedProfileSections
+      const key of
+      nestedProfileSections
     ) {
       delete topLevel[
         key
@@ -870,26 +1036,36 @@ const mergeProfileData =
     );
 
     for (
-      const key
-      of nestedProfileSections
+      const key of
+      nestedProfileSections
     ) {
       if (
-        incoming[key] ===
+        incoming[
+          key
+        ] ===
         undefined
       ) {
         continue;
       }
 
-      profile[key] =
+      profile[
+        key
+      ] =
         deepMerge(
-          profile[key],
-          incoming[key]
+          profile[
+            key
+          ],
+          incoming[
+            key
+          ]
         );
     }
   };
 
 const escapedRegex =
-  (value) =>
+  (
+    value
+  ) =>
     new RegExp(
       String(
         value
@@ -899,6 +1075,37 @@ const escapedRegex =
       ),
       'i'
     );
+
+const validateRange =
+  (
+    min,
+    max,
+    message
+  ) => {
+    const minimum =
+      optionalNumber(
+        min
+      );
+
+    const maximum =
+      optionalNumber(
+        max
+      );
+
+    if (
+      minimum !==
+        undefined &&
+      maximum !==
+        undefined &&
+      minimum >
+        maximum
+    ) {
+      throw new ApiError(
+        400,
+        message
+      );
+    }
+  };
 
 export const upsert =
   asyncHandler(
@@ -933,8 +1140,10 @@ export const upsert =
           !Number.isFinite(
             age
           ) ||
-          age < 18 ||
-          age > 80
+          age <
+            18 ||
+          age >
+            80
         ) {
           throw new ApiError(
             400,
@@ -943,13 +1152,47 @@ export const upsert =
         }
       }
 
+      if (
+        safe.height !==
+          undefined &&
+        (
+          safe.height <
+            100 ||
+          safe.height >
+            250
+        )
+      ) {
+        throw new ApiError(
+          400,
+          'Height must be between 100 and 250 cm.'
+        );
+      }
+
+      if (
+        safe.weight !==
+          undefined &&
+        (
+          safe.weight <
+            30 ||
+          safe.weight >
+            250
+        )
+      ) {
+        throw new ApiError(
+          400,
+          'Weight must be between 30 and 250 kg.'
+        );
+      }
+
       let profile =
         await MatrimonialProfile.findOne({
           userId:
             req.user.id
         });
 
-      if (profile) {
+      if (
+        profile
+      ) {
         mergeProfileData(
           profile,
           safe
@@ -1006,6 +1249,7 @@ export const upsert =
                 'userId',
                 'email phone role'
               ),
+
               req.user
             )
         },
@@ -1141,13 +1385,6 @@ export const discover =
           : {})
       };
 
-      /*
-       * Discovery intentionally uses public/native
-       * matrimonial profile context.
-       *
-       * Exact current residential address is private
-       * and is never searchable here.
-       */
       if (
         req.query.search
       ) {
@@ -1169,7 +1406,9 @@ export const discover =
           (
             key
           ) => ({
-            [key]:
+            [
+              key
+            ]:
               escapedRegex(
                 req.query.search
               )
@@ -1219,7 +1458,9 @@ export const discover =
             param
           ]
         ) {
-          query[fieldPath] =
+          query[
+            fieldPath
+          ] =
             escapedRegex(
               req.query[
                 param
@@ -1292,12 +1533,9 @@ export const discover =
         const now =
           new Date();
 
-        const dateOfBirth = {};
+        const dateOfBirth =
+          {};
 
-        /*
-         * Age >= minimum age:
-         * DOB must be on or before today minus ageMin.
-         */
         if (
           Number.isFinite(
             ageMin
@@ -1317,11 +1555,6 @@ export const discover =
             youngest;
         }
 
-        /*
-         * Age <= maximum age:
-         * DOB must be after the day representing
-         * maximumAge + 1 years ago.
-         */
         if (
           Number.isFinite(
             ageMax
@@ -1511,14 +1744,6 @@ export const discover =
           )
         );
 
-      /*
-       * Discover intentionally does not calculate or
-       * rank by compatibility yet.
-       *
-       * That logic belongs to the dedicated matching /
-       * recommendation engine so discovery does not
-       * expose a misleading temporary score.
-       */
       const profiles =
         (
           await Promise.all(
@@ -1593,6 +1818,7 @@ export const discover =
       );
     }
   );
+
 export const getOne =
   asyncHandler(
     async (
@@ -1609,7 +1835,9 @@ export const getOne =
           'email phone role'
         );
 
-      if (!profile) {
+      if (
+        !profile
+      ) {
         throw new ApiError(
           404,
           'Profile not found.'
@@ -1618,7 +1846,8 @@ export const getOne =
 
       const owner =
         String(
-          profile.userId?._id ||
+          profile.userId
+            ?._id ||
             profile.userId
         ) ===
         String(
@@ -1678,7 +1907,9 @@ export const getOne =
             }
           });
 
-        if (!viewed) {
+        if (
+          !viewed
+        ) {
           await ProfileView.create({
             viewerProfile:
               mine._id,
@@ -1713,21 +1944,28 @@ export const getOne =
           profile._id
         )
       ) {
-        compatibility =
-          calculateCompatibility(
-            mine,
-
-            await PartnerPreference.findOne({
+        const [
+          minePreferences,
+          candidatePreferences
+        ] =
+          await Promise.all([
+            PartnerPreference.findOne({
               profileId:
                 mine._id
             }),
 
-            profile,
-
-            await PartnerPreference.findOne({
+            PartnerPreference.findOne({
               profileId:
                 profile._id
             })
+          ]);
+
+        compatibility =
+          calculateCompatibility(
+            mine,
+            minePreferences,
+            profile,
+            candidatePreferences
           );
       }
 
@@ -1783,8 +2021,12 @@ export const getOne =
                     receiverProfile:
                       profile._id,
 
-                    status:
-                      'Pending'
+                    status: {
+                      $in: [
+                        'Pending',
+                        'Accepted'
+                      ]
+                    }
                   })
                 ),
 
@@ -1846,7 +2088,9 @@ export const getPreferences =
             'true'
         );
 
-      if (!profile) {
+      if (
+        !profile
+      ) {
         return ok(
           res,
           {
@@ -1856,21 +2100,26 @@ export const getPreferences =
         );
       }
 
+      const preferences =
+        await PartnerPreference.findOne({
+          profileId:
+            profile._id
+        });
+
       ok(
         res,
         {
           preferences:
-            (
-              await PartnerPreference.findOne({
-                profileId:
-                  profile._id
-              })
-            ) || {
+            preferences ||
+            {
               preferredGender:
                 profile.gender ===
                   'Male'
                   ? 'Female'
-                  : 'Male'
+                  : profile.gender ===
+                      'Female'
+                    ? 'Male'
+                    : undefined
             }
         }
       );
@@ -1893,86 +2142,426 @@ export const savePreferences =
           req.body,
           [
             'preferredGender',
+
             'ageMin',
             'ageMax',
+
             'heightMin',
             'heightMax',
+
+            'weightMin',
+            'weightMax',
+
             'maritalStatus',
             'acceptedMaritalStatuses',
             'willingForRemarriage',
+
             'locations',
             'states',
             'countries',
+
+            'shakhPreferences',
+            'gotraPreferences',
+            'vanshPreferences',
+
+            'communityPreferences',
+
             'educationPreferences',
             'occupationPreferences',
+
             'incomePreferences',
+
             'dietPreferences',
-            'communityPreferences',
+
+            'familyTypePreferences',
+            'familyValuePreferences',
+
+            'smokingPreferences',
+            'drinkingPreferences',
+
+            'propertyPreferences',
+
             'marriageTimeline',
+
+            'importance',
+
             'additionalPreferences'
           ]
         );
 
+      validateRange(
+        safe.ageMin,
+        safe.ageMax,
+        'Minimum age cannot exceed maximum age.'
+      );
+
+      validateRange(
+        safe.heightMin,
+        safe.heightMax,
+        'Minimum height cannot exceed maximum height.'
+      );
+
+      validateRange(
+        safe.weightMin,
+        safe.weightMax,
+        'Minimum weight cannot exceed maximum weight.'
+      );
+
+      validateRange(
+        safe.incomePreferences
+          ?.min,
+        safe.incomePreferences
+          ?.max,
+        'Minimum income cannot exceed maximum income.'
+      );
+
+      const numericFields = [
+        'ageMin',
+        'ageMax',
+        'heightMin',
+        'heightMax',
+        'weightMin',
+        'weightMax'
+      ];
+
+      for (
+        const key of
+        numericFields
+      ) {
+        if (
+          safe[
+            key
+          ] !==
+          undefined
+        ) {
+          safe[
+            key
+          ] =
+            optionalNumber(
+              safe[
+                key
+              ]
+            );
+        }
+      }
+
       if (
-        safe.ageMin &&
-        safe.ageMax &&
-        safe.ageMin >
-          safe.ageMax
+        safe.ageMin !==
+          undefined &&
+        (
+          safe.ageMin <
+            18 ||
+          safe.ageMin >
+            80
+        )
       ) {
         throw new ApiError(
           400,
-          'Minimum age cannot exceed maximum age.'
+          'Minimum age must be between 18 and 80.'
         );
       }
 
       if (
-        safe.heightMin &&
-        safe.heightMax &&
-        safe.heightMin >
-          safe.heightMax
+        safe.ageMax !==
+          undefined &&
+        (
+          safe.ageMax <
+            18 ||
+          safe.ageMax >
+            80
+        )
       ) {
         throw new ApiError(
           400,
-          'Minimum height cannot exceed maximum height.'
+          'Maximum age must be between 18 and 80.'
         );
       }
 
-      /*
-       * Always persist Preferred States as an
-       * array. This also safely handles any
-       * older client that sends CSV text.
-       */
       if (
-        safe.states !==
-        undefined
+        safe.heightMin !==
+          undefined &&
+        (
+          safe.heightMin <
+            100 ||
+          safe.heightMin >
+            250
+        )
       ) {
-        safe.states =
-          Array.isArray(
-            safe.states
+        throw new ApiError(
+          400,
+          'Minimum height must be between 100 and 250 cm.'
+        );
+      }
+
+      if (
+        safe.heightMax !==
+          undefined &&
+        (
+          safe.heightMax <
+            100 ||
+          safe.heightMax >
+            250
+        )
+      ) {
+        throw new ApiError(
+          400,
+          'Maximum height must be between 100 and 250 cm.'
+        );
+      }
+
+      if (
+        safe.weightMin !==
+          undefined &&
+        (
+          safe.weightMin <
+            30 ||
+          safe.weightMin >
+            250
+        )
+      ) {
+        throw new ApiError(
+          400,
+          'Minimum weight must be between 30 and 250 kg.'
+        );
+      }
+
+      if (
+        safe.weightMax !==
+          undefined &&
+        (
+          safe.weightMax <
+            30 ||
+          safe.weightMax >
+            250
+        )
+      ) {
+        throw new ApiError(
+          400,
+          'Maximum weight must be between 30 and 250 kg.'
+        );
+      }
+
+      const arrayFields = [
+        'maritalStatus',
+        'acceptedMaritalStatuses',
+
+        'locations',
+        'states',
+        'countries',
+
+        'shakhPreferences',
+        'gotraPreferences',
+        'vanshPreferences',
+
+        'communityPreferences',
+
+        'educationPreferences',
+        'occupationPreferences',
+
+        'dietPreferences',
+
+        'familyTypePreferences',
+        'familyValuePreferences',
+
+        'smokingPreferences',
+        'drinkingPreferences',
+
+        'marriageTimeline'
+      ];
+
+      for (
+        const key of
+        arrayFields
+      ) {
+        if (
+          safe[
+            key
+          ] !==
+          undefined
+        ) {
+          safe[
+            key
+          ] =
+            normalizeStringArray(
+              safe[
+                key
+              ]
+            );
+        }
+      }
+
+      if (
+        safe.shakhPreferences ===
+          undefined &&
+        safe.communityPreferences
+          ?.length
+      ) {
+        safe.shakhPreferences = [
+          ...safe
+            .communityPreferences
+        ];
+      }
+
+      if (
+        safe.incomePreferences &&
+        typeof safe.incomePreferences ===
+          'object'
+      ) {
+        const min =
+          optionalNumber(
+            safe
+              .incomePreferences
+              .min
+          );
+
+        const max =
+          optionalNumber(
+            safe
+              .incomePreferences
+              .max
+          );
+
+        safe.incomePreferences =
+          cleanObject({
+            min,
+            max
+          });
+      }
+
+      if (
+        safe.propertyPreferences &&
+        typeof safe.propertyPreferences ===
+          'object'
+      ) {
+        const allowed =
+          new Set([
+            'Any',
+            'Yes',
+            'No'
+          ]);
+
+        safe.propertyPreferences = {
+          ownResidence:
+            allowed.has(
+              safe
+                .propertyPreferences
+                .ownResidence
+            )
+              ? safe
+                  .propertyPreferences
+                  .ownResidence
+              : 'Any',
+
+          agricultureLand:
+            allowed.has(
+              safe
+                .propertyPreferences
+                .agricultureLand
+            )
+              ? safe
+                  .propertyPreferences
+                  .agricultureLand
+              : 'Any',
+
+          businessAssets:
+            allowed.has(
+              safe
+                .propertyPreferences
+                .businessAssets
+            )
+              ? safe
+                  .propertyPreferences
+                  .businessAssets
+              : 'Any'
+        };
+      }
+
+      if (
+        safe.importance &&
+        typeof safe.importance ===
+          'object'
+      ) {
+        const allowedImportance =
+          new Set([
+            'Low',
+            'Medium',
+            'High',
+            'Must Have'
+          ]);
+
+        const allowedKeys =
+          new Set([
+            'age',
+            'height',
+            'weight',
+            'maritalStatus',
+            'location',
+            'shakh',
+            'gotra',
+            'vansh',
+            'education',
+            'occupation',
+            'income',
+            'diet',
+            'familyType',
+            'familyValues',
+            'smoking',
+            'drinking',
+            'ownResidence',
+            'agricultureLand',
+            'businessAssets',
+            'marriageTimeline'
+          ]);
+
+        const importance =
+          {};
+
+        for (
+          const [
+            key,
+            value
+          ] of Object.entries(
+            safe.importance
           )
-            ? safe.states
-                .map(
-                  (state) =>
-                    typeof state ===
-                      'string'
-                      ? state.trim()
-                      : state
-                )
-                .filter(
-                  Boolean
-                )
-            : typeof safe.states ===
-                'string'
-              ? safe.states
-                  .split(',')
-                  .map(
-                    (state) =>
-                      state.trim()
-                  )
-                  .filter(
-                    Boolean
-                  )
-              : [];
+        ) {
+          if (
+            allowedKeys.has(
+              key
+            ) &&
+            allowedImportance.has(
+              value
+            )
+          ) {
+            importance[
+              key
+            ] =
+              value;
+          }
+        }
+
+        safe.importance =
+          importance;
+      }
+
+      if (
+        safe.additionalPreferences !==
+          undefined
+      ) {
+        safe.additionalPreferences =
+          String(
+            safe.additionalPreferences ||
+              ''
+          ).trim();
+
+        if (
+          safe.additionalPreferences.length >
+          1500
+        ) {
+          throw new ApiError(
+            400,
+            'Additional preferences cannot exceed 1500 characters.'
+          );
+        }
       }
 
       const preferences =
@@ -1983,10 +2572,12 @@ export const savePreferences =
           },
 
           {
-            ...safe,
+            $set: {
+              ...safe,
 
-            profileId:
-              profile._id
+              profileId:
+                profile._id
+            }
           },
 
           {
@@ -1997,6 +2588,9 @@ export const savePreferences =
               'after',
 
             runValidators:
+              true,
+
+            setDefaultsOnInsert:
               true
           }
         );
@@ -2006,6 +2600,9 @@ export const savePreferences =
           profile,
           true
         );
+
+      profile.lastActiveAt =
+        new Date();
 
       await profile.save();
 
@@ -2047,10 +2644,12 @@ export const updatePrivacy =
             'maternalFamilyVisibility',
             'siblingDetailsVisibility',
             'assetVisibility',
-            'astrologyVisibility',
-            'contactAddressVisibility'
+            'astrologyVisibility'
           ]
-        )
+        ),
+
+        contactAddressVisibility:
+          'Private'
       };
 
       await profile.save();
@@ -2136,7 +2735,9 @@ export const savePhoto =
       req,
       res
     ) => {
-      if (!req.file) {
+      if (
+        !req.file
+      ) {
         throw new ApiError(
           400,
           'Choose an image to upload.'
@@ -2213,7 +2814,9 @@ export const savePhoto =
               previous.url
           })
           .catch(
-            (error) =>
+            (
+              error
+            ) =>
               console.error(
                 'Previous profile photo cleanup failed:',
                 error.message
@@ -2252,7 +2855,9 @@ export const addGalleryPhoto =
       req,
       res
     ) => {
-      if (!req.file) {
+      if (
+        !req.file
+      ) {
         throw new ApiError(
           400,
           'Choose an image to upload.'
@@ -2316,7 +2921,9 @@ export const addGalleryPhoto =
 
       const gallery =
         profile.galleryAssets.map(
-          (galleryAsset) => ({
+          (
+            galleryAsset
+          ) => ({
             _id:
               galleryAsset._id,
 
@@ -2374,7 +2981,9 @@ export const removeGalleryPhoto =
           req.params.assetId
         );
 
-      if (!asset) {
+      if (
+        !asset
+      ) {
         throw new ApiError(
           404,
           'Gallery photo not found.'
@@ -2399,7 +3008,9 @@ export const removeGalleryPhoto =
 
       const gallery =
         profile.galleryAssets.map(
-          (galleryAsset) => ({
+          (
+            galleryAsset
+          ) => ({
             _id:
               galleryAsset._id,
 

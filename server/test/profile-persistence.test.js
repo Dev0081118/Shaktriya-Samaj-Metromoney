@@ -69,7 +69,9 @@ after(
 );
 
 const authToken =
-  (user) =>
+  (
+    user
+  ) =>
     jwt.sign(
       {
         sub:
@@ -127,6 +129,9 @@ const createMemberWithProfile =
         height:
           178,
 
+        weight:
+          72,
+
         bloodGroup:
           'B+',
 
@@ -157,6 +162,14 @@ const createMemberWithProfile =
             'India'
         },
 
+        /*
+         * Current city/state are legacy values.
+         *
+         * They remain here intentionally so the tests
+         * verify that old records stay readable while
+         * new writes use native location + exact private
+         * contact address.
+         */
         location: {
           city:
             'Rajkot',
@@ -215,6 +228,10 @@ const createMemberWithProfile =
           kulaDevi:
             'Ashapura Mata',
 
+          /*
+           * Legacy-only fields retained to confirm
+           * backward-compatible reads.
+           */
           ishtaDevta:
             'Mahadev',
 
@@ -305,6 +322,10 @@ const createMemberWithProfile =
           familyValues:
             'Traditional',
 
+          /*
+           * Legacy-only field retained so the test can
+           * verify a modern PATCH does not overwrite it.
+           */
           familyLocation:
             'Gujarat',
 
@@ -382,6 +403,9 @@ const createMemberWithProfile =
           maternalGrandfatherName:
             'Maternal Grandfather',
 
+          /*
+           * Legacy fields retained for read compatibility.
+           */
           maternalFamilySurname:
             'Jadeja',
 
@@ -408,6 +432,12 @@ const createMemberWithProfile =
         },
 
         maternalLineage: {
+          /*
+           * Legacy existing selfMosal record.
+           *
+           * New PATCH requests do not write this branch,
+           * but an existing record remains readable.
+           */
           selfMosal: {
             mamaName:
               'Mama Jadeja',
@@ -658,6 +688,16 @@ test(
     );
 
     assert.equal(
+      profile.height,
+      178
+    );
+
+    assert.equal(
+      profile.weight,
+      72
+    );
+
+    assert.equal(
       profile.maritalStatus,
       'Never Married'
     );
@@ -692,6 +732,9 @@ test(
       'Traditional'
     );
 
+    /*
+     * Existing legacy fields remain readable by owner.
+     */
     assert.equal(
       profile.family
         .familyLocation,
@@ -778,7 +821,7 @@ test(
 );
 
 test(
-  'profile edit persists family values maternal Gotra siblings and Mosal',
+  'profile edit persists current family siblings and Mosal fields while preserving retired legacy values',
   async () => {
     const {
       user,
@@ -800,6 +843,10 @@ test(
             familyValues:
               'Moderate',
 
+            /*
+             * Retired field.
+             * New writes must ignore this.
+             */
             familyLocation:
               'Rajasthan',
 
@@ -830,6 +877,11 @@ test(
           },
 
           maternalFamily: {
+            /*
+             * Retired field.
+             * Existing value must survive but this
+             * request may not replace it.
+             */
             maternalGotra:
               'Bharadwaj'
           },
@@ -876,16 +928,23 @@ test(
       'Moderate'
     );
 
+    /*
+     * Existing legacy familyLocation survives.
+     * Incoming modern PATCH cannot overwrite it.
+     */
     assert.equal(
       saved.family
         .familyLocation,
-      'Rajasthan'
+      'Gujarat'
     );
 
+    /*
+     * Existing legacy Maternal Gotra also survives.
+     */
     assert.equal(
       saved.maternalFamily
         .maternalGotra,
-      'Bharadwaj'
+      'Vashishtha'
     );
 
     assert.equal(
@@ -893,6 +952,13 @@ test(
         .siblingDetails[0]
         .relation,
       'Brother'
+    );
+
+    assert.equal(
+      saved.family
+        .siblingDetails[0]
+        .name,
+      'Brother Rana'
     );
 
     assert.equal(
@@ -927,14 +993,42 @@ test(
     assert.equal(
       saved
         .maternalLineage
+        .fathersMosal
+        .nativeVillage,
+      'Bhavnagar'
+    );
+
+    assert.equal(
+      saved
+        .maternalLineage
         .mothersMosal
         .familySurname,
       'Parmar'
     );
 
+    assert.equal(
+      saved
+        .maternalLineage
+        .mothersMosal
+        .nativeVillage,
+      'Junagadh'
+    );
+
     /*
-     * Main candidate marital status must not
-     * be affected by unrelated family edits.
+     * Existing legacy selfMosal branch must not be
+     * destroyed by editing the current Mosal branches.
+     */
+    assert.equal(
+      saved
+        .maternalLineage
+        .selfMosal
+        .familySurname,
+      'Jadeja'
+    );
+
+    /*
+     * Main candidate marital status must never be
+     * affected by sibling/family edits.
      */
     assert.equal(
       saved.maritalStatus,
@@ -970,8 +1064,7 @@ test(
               'Vashishtha',
 
             /*
-             * Controller should ignore
-             * this for new writes.
+             * Controller must ignore this new legacy write.
              */
             subCommunity:
               'Should Not Replace Legacy'
@@ -1002,14 +1095,137 @@ test(
     );
 
     /*
-     * Existing old value may remain for
-     * backward compatibility, but the PATCH
-     * request is not allowed to overwrite it.
+     * Existing old value remains for backwards
+     * compatibility.
      */
     assert.equal(
       saved.community
         .subCommunity,
       'Rajput'
+    );
+  }
+);
+
+test(
+  'new profile updates ignore other retired Rajput fields while preserving existing legacy data',
+  async () => {
+    const {
+      user,
+      token
+    } =
+      await createMemberWithProfile();
+
+    const response =
+      await request(app)
+        .patch(
+          '/api/profiles/me'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        )
+        .send({
+          community: {
+            clan:
+              'Jhala',
+
+            ishtaDevta:
+              'Should Not Replace Mahadev',
+
+            familyOrigin:
+              'Should Not Replace Existing Origin'
+          },
+
+          maternalFamily: {
+            maternalClan:
+              'Gohil',
+
+            maternalFamilySurname:
+              'Should Not Replace Jadeja',
+
+            maternalGotra:
+              'Should Not Replace Vashishtha'
+          },
+
+          maternalLineage: {
+            selfMosal: {
+              familySurname:
+                'Should Not Replace Jadeja'
+            }
+          },
+
+          familyAssets: {
+            assetSummary:
+              'Should Not Be Newly Written'
+          }
+        });
+
+    assert.equal(
+      response.status,
+      201
+    );
+
+    const saved =
+      await MatrimonialProfile.findOne({
+        userId:
+          user._id
+      }).lean();
+
+    assert.equal(
+      saved.community
+        .clan,
+      'Jhala'
+    );
+
+    /*
+     * Legacy values are preserved.
+     */
+    assert.equal(
+      saved.community
+        .ishtaDevta,
+      'Mahadev'
+    );
+
+    assert.equal(
+      saved.community
+        .familyOrigin,
+      'Traditional Rajput family from Saurashtra.'
+    );
+
+    assert.equal(
+      saved.maternalFamily
+        .maternalClan,
+      'Gohil'
+    );
+
+    assert.equal(
+      saved.maternalFamily
+        .maternalFamilySurname,
+      'Jadeja'
+    );
+
+    assert.equal(
+      saved.maternalFamily
+        .maternalGotra,
+      'Vashishtha'
+    );
+
+    assert.equal(
+      saved
+        .maternalLineage
+        .selfMosal
+        .familySurname,
+      'Jadeja'
+    );
+
+    /*
+     * Existing profile did not have assetSummary,
+     * and new writes may not create it.
+     */
+    assert.equal(
+      saved.familyAssets
+        .assetSummary,
+      undefined
     );
   }
 );
@@ -1083,7 +1299,7 @@ test(
     );
 
     /*
-     * Nested siblings remain intact.
+     * Nested career values remain intact.
      */
     assert.equal(
       saved.career
@@ -1115,6 +1331,9 @@ test(
       900000
     );
 
+    /*
+     * Community values not edited by this PATCH survive.
+     */
     assert.equal(
       saved.community
         .clan,
@@ -1125,6 +1344,17 @@ test(
       saved.community
         .vansh,
       'Suryavanshi'
+    );
+
+    /*
+     * Exact residential address is deep-merged rather
+     * than replaced.
+     */
+    assert.equal(
+      saved.contactDetails
+        .currentAddress
+        .addressLine1,
+      'Kalawad Road'
     );
 
     assert.equal(
@@ -1140,13 +1370,25 @@ test(
     );
 
     /*
-     * Unrelated profile sections must
-     * survive partial PATCH requests.
+     * Native matrimonial location is unaffected by an
+     * exact residential address edit.
      */
     assert.equal(
       saved.location
         .nativePlace,
       'Khirasara'
+    );
+
+    assert.equal(
+      saved.location
+        .nativeDistrict,
+      'Rajkot'
+    );
+
+    assert.equal(
+      saved.location
+        .nativeState,
+      'Gujarat'
     );
 
     assert.equal(
@@ -1173,6 +1415,10 @@ test(
       'Kashyap'
     );
 
+    /*
+     * Legacy fields remain preserved during unrelated
+     * edits.
+     */
     assert.equal(
       saved.maternalFamily
         .maternalGotra,
@@ -1203,6 +1449,16 @@ test(
     );
 
     assert.equal(
+      saved.height,
+      178
+    );
+
+    assert.equal(
+      saved.weight,
+      72
+    );
+
+    assert.equal(
       saved.dateOfBirth
         .toISOString()
         .slice(
@@ -1213,12 +1469,125 @@ test(
     );
 
     /*
-     * A normal edit must preserve
-     * moderation/visibility state.
+     * A normal edit must preserve moderation state.
      */
     assert.equal(
       saved.visibility,
       'active'
+    );
+
+    assert.equal(
+      saved.lifecycleStatus,
+      'Active'
+    );
+  }
+);
+
+test(
+  'profile edit persists current weight and native location',
+  async () => {
+    const {
+      user,
+      token
+    } =
+      await createMemberWithProfile();
+
+    const response =
+      await request(app)
+        .patch(
+          '/api/profiles/me'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        )
+        .send({
+          weight:
+            76,
+
+          location: {
+            nativePlace:
+              'Gondal',
+
+            nativeTaluka:
+              'Gondal',
+
+            nativeDistrict:
+              'Rajkot',
+
+            nativeState:
+              'Gujarat',
+
+            /*
+             * These are retired general-current-location
+             * inputs and must not become the matching
+             * location.
+             */
+            city:
+              'Ahmedabad',
+
+            district:
+              'Ahmedabad',
+
+            state:
+              'Gujarat'
+          }
+        });
+
+    assert.equal(
+      response.status,
+      201
+    );
+
+    const saved =
+      await MatrimonialProfile.findOne({
+        userId:
+          user._id
+      }).lean();
+
+    assert.equal(
+      saved.weight,
+      76
+    );
+
+    assert.equal(
+      saved.location
+        .nativePlace,
+      'Gondal'
+    );
+
+    assert.equal(
+      saved.location
+        .nativeTaluka,
+      'Gondal'
+    );
+
+    assert.equal(
+      saved.location
+        .nativeDistrict,
+      'Rajkot'
+    );
+
+    assert.equal(
+      saved.location
+        .nativeState,
+      'Gujarat'
+    );
+
+    /*
+     * Current residential location is not persisted as
+     * general matching location by new profile writes.
+     */
+    assert.ok(
+      !saved.location.city
+    );
+
+    assert.ok(
+      !saved.location.district
+    );
+
+    assert.ok(
+      !saved.location.state
     );
   }
 );
@@ -1287,11 +1656,18 @@ test(
       response.body.data
         .profile;
 
+    /*
+     * Exact DOB is protected.
+     */
     assert.equal(
       visible.dateOfBirth,
       undefined
     );
 
+    /*
+     * Exact residential address, phone and email remain
+     * locked until explicit contact unlock.
+     */
     assert.equal(
       visible.contactDetails,
       undefined
@@ -1301,6 +1677,19 @@ test(
       Number.isInteger(
         visible.age
       )
+    );
+
+    /*
+     * Non-sensitive standard physical profile field.
+     */
+    assert.equal(
+      visible.height,
+      178
+    );
+
+    assert.equal(
+      visible.weight,
+      72
     );
 
     assert.equal(
@@ -1316,7 +1705,7 @@ test(
     );
 
     /*
-     * Assets stay private.
+     * Family assets stay private.
      */
     assert.equal(
       visible.familyAssets,
@@ -1324,8 +1713,8 @@ test(
     );
 
     /*
-     * Detailed Mosal remains hidden until
-     * relationship/privacy rules allow it.
+     * Detailed Mosal stays protected until relationship
+     * privacy rules allow it.
      */
     assert.equal(
       visible.maternalLineage,

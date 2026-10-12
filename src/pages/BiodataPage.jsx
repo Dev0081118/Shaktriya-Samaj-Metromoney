@@ -410,16 +410,20 @@ export default function BiodataPage() {
               ' '
             ),
 
+          /*
+           * Biodata header uses native matrimonial
+           * location only.
+           *
+           * Exact residential address is shown only
+           * when Contact Details is explicitly enabled.
+           */
           location:
             joinValues([
               profile.location
-                ?.city,
+                ?.nativeDistrict,
 
               profile.location
-                ?.district,
-
-              profile.location
-                ?.state
+                ?.nativeState
             ]),
 
           vatan:
@@ -759,6 +763,15 @@ export default function BiodataPage() {
               value={
                 profile.height
                   ? `${profile.height} cm`
+                  : ''
+              }
+            />
+
+            <Field
+              label="Weight"
+              value={
+                profile.weight
+                  ? `${profile.weight} kg`
                   : ''
               }
             />

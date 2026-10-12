@@ -26,14 +26,16 @@ test(
       );
 
     assert.ok(
-      age === 29 ||
-      age === 30
+      age ===
+        29 ||
+      age ===
+        30
     );
   }
 );
 
 test(
-  'preferences reject incompatible gender-neutral profile attributes',
+  'preferences reject incompatible age and native location attributes',
   () => {
     const result =
       evaluatePreferences(
@@ -60,7 +62,14 @@ test(
             ),
 
           location: {
+            /*
+             * Current residential state is deliberately
+             * irrelevant to matching.
+             */
             state:
+              'Gujarat',
+
+            nativeState:
               'Rajasthan'
           }
         }
@@ -74,14 +83,14 @@ test(
 
     assert.ok(
       result.unmatchedFactors.includes(
-        'Location preference'
+        'Native location'
       )
     );
   }
 );
 
 test(
-  'compatibility is symmetric average',
+  'compatibility is directional and also returns reciprocal mutual score',
   () => {
     const a = {
       dateOfBirth:
@@ -92,10 +101,10 @@ test(
         ),
 
       height:
-        175,
+        170,
 
       location: {
-        state:
+        nativeState:
           'Gujarat'
       }
     };
@@ -112,7 +121,7 @@ test(
         165,
 
       location: {
-        state:
+        nativeState:
           'Gujarat'
       }
     };
@@ -124,7 +133,13 @@ test(
         {
           states: [
             'Gujarat'
-          ]
+          ],
+
+          heightMin:
+            160,
+
+          heightMax:
+            175
         },
 
         b,
@@ -132,13 +147,57 @@ test(
         {
           states: [
             'Gujarat'
-          ]
+          ],
+
+          heightMin:
+            175,
+
+          heightMax:
+            185
         }
       );
 
+    /*
+     * B fully satisfies A's configured preferences.
+     */
     assert.equal(
       result.score,
       100
+    );
+
+    assert.equal(
+      result.preferenceFitScore,
+      100
+    );
+
+    /*
+     * A does not fully satisfy B's height preference,
+     * proving directional scoring is independent.
+     */
+    assert.ok(
+      result.reverseFitScore <
+      result.preferenceFitScore
+    );
+
+    assert.ok(
+      result.mutualScore <
+      result.preferenceFitScore
+    );
+
+    assert.ok(
+      Number.isFinite(
+        result.rankingScore
+      )
+    );
+
+    assert.equal(
+      result.viewerEligible,
+      true
+    );
+
+    assert.equal(
+      result.candidateEligible,
+      true
     );
   }
 );
@@ -194,14 +253,6 @@ test(
   async () => {
     const valid =
       new MatrimonialProfile({
-        /*
-         * Supplying profileId keeps this unit test
-         * independent from MongoDB.
-         *
-         * Otherwise the model pre-validation hook
-         * tries to generate a KSM profile ID using
-         * the Counter collection.
-         */
         profileId:
           'KSM999999',
 

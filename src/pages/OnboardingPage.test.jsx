@@ -101,6 +101,9 @@ const profile = {
   height:
     178,
 
+  weight:
+    72,
+
   bloodGroup:
     'B+',
 
@@ -458,6 +461,18 @@ const preferences = {
   ageMax:
     28,
 
+  heightMin:
+    155,
+
+  heightMax:
+    180,
+
+  weightMin:
+    45,
+
+  weightMax:
+    70,
+
   states: [
     'Gujarat',
     'Rajasthan'
@@ -469,6 +484,10 @@ const preferences = {
 
   dietPreferences: [
     'Vegetarian'
+  ],
+
+  shakhPreferences: [
+    'Jadeja'
   ],
 
   communityPreferences: [
@@ -781,6 +800,14 @@ describe(
         );
 
         expect(
+          screen.getByLabelText(
+            /weight/i
+          )
+        ).toHaveValue(
+          72
+        );
+
+        expect(
           localStorage.getItem(
             'ksm_onboarding'
           )
@@ -1013,12 +1040,12 @@ describe(
         });
 
         expect(
-  savePayload()
-    .privacy
-    .contactAddressVisibility
-).toBe(
-  'Private'
-);
+          savePayload()
+            .privacy
+            .contactAddressVisibility
+        ).toBe(
+          'Private'
+        );
       }
     );
 
@@ -1243,6 +1270,12 @@ describe(
           savePayload();
 
         expect(
+          payload.weight
+        ).toBe(
+          72
+        );
+
+        expect(
           payload.maritalStatus
         ).toBe(
           'Never Married'
@@ -1423,46 +1456,28 @@ describe(
         );
 
         expect(
-  screen.queryByLabelText(
-    /^current address$/i
-  )
-).not.toBeInTheDocument();
-
-expect(
-  screen.getByText(
-    /exact current residential address/i
-  )
-).toBeInTheDocument();
-
-expect(
-  screen.getByText(
-    /mutual match/i
-  )
-).toBeInTheDocument();
-
-expect(
-  screen.getByText(
-    /explicit contact access/i
-  )
-).toBeInTheDocument();
+          screen.queryByLabelText(
+            /^current address$/i
+          )
+        ).not.toBeInTheDocument();
 
         expect(
-  screen.getByText(
-    /exact current residential address/i
-  )
-).toBeInTheDocument();
+          screen.getByText(
+            /exact current residential address/i
+          )
+        ).toBeInTheDocument();
 
-expect(
-  screen.getByText(
-    /mutual match/i
-  )
-).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            /mutual match/i
+          )
+        ).toBeInTheDocument();
 
-expect(
-  screen.getByText(
-    /explicit contact access/i
-  )
-).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            /explicit contact access/i
+          )
+        ).toBeInTheDocument();
       }
     );
   }

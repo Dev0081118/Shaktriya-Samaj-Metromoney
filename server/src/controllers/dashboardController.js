@@ -37,6 +37,22 @@ import {
   profileCard
 } from '../utils/profile.js';
 
+/*
+ * Dashboard is a recommendation surface,
+ * not a generic discovery surface.
+ *
+ * Profiles below this directional preference-fit
+ * score are not shown in dashboard recommendations.
+ */
+const MIN_RECOMMENDATION_SCORE =
+  50;
+
+const MAX_RECOMMENDATIONS =
+  3;
+
+const CANDIDATE_POOL_SIZE =
+  50;
+
 const remainingLimit = (
   limit,
   used
@@ -81,6 +97,10 @@ export const dashboard =
             req.user.id
         });
 
+      /*
+       * Membership information is useful even before
+       * the member creates a matrimonial profile.
+       */
       const entitlements =
         await getUserEntitlements(
           req.user.id
@@ -109,37 +129,46 @@ export const dashboard =
           entitlements.subscription
             ? {
                 status:
-                  entitlements.subscription
+                  entitlements
+                    .subscription
                     .status,
 
                 startsAt:
-                  entitlements.subscription
+                  entitlements
+                    .subscription
                     .startsAt,
 
                 endsAt:
-                  entitlements.subscription
+                  entitlements
+                    .subscription
                     .endsAt
               }
             : null,
 
         features: {
           interestLimit:
-            entitlements.interestLimit,
+            entitlements
+              .interestLimit,
 
           contactViewLimit:
-            entitlements.contactViewLimit,
+            entitlements
+              .contactViewLimit,
 
           advancedSearch:
-            !!entitlements.advancedSearch,
+            !!entitlements
+              .advancedSearch,
 
           profileBoost:
-            !!entitlements.profileBoost,
+            !!entitlements
+              .profileBoost,
 
           prioritySupport:
-            !!entitlements.prioritySupport,
+            !!entitlements
+              .prioritySupport,
 
           relationshipManager:
-            !!entitlements.relationshipManager
+            !!entitlements
+              .relationshipManager
         },
 
         usage: {
@@ -157,18 +186,26 @@ export const dashboard =
 
           interestsRemaining:
             remainingLimit(
-              entitlements.interestLimit,
+              entitlements
+                .interestLimit,
+
               usage.interestsUsed
             ),
 
           contactViewsRemaining:
             remainingLimit(
-              entitlements.contactViewLimit,
+              entitlements
+                .contactViewLimit,
+
               usage.contactViewsUsed
             )
         }
       };
 
+      /*
+       * Member has an account but has not created their
+       * matrimonial profile yet.
+       */
       if (
         !profile
       ) {
@@ -202,6 +239,9 @@ export const dashboard =
             profileStatus:
               'not_created',
 
+            lifecycleStatus:
+              null,
+
             membership
           }
         );
@@ -211,8 +251,49 @@ export const dashboard =
         new Date(
           Date.now() -
             30 *
-              864e5
+              24 *
+              60 *
+              60 *
+              1000
         );
+
+      /*
+       * Blocking must work in both directions.
+       *
+       * 1. Profiles I blocked.
+       * 2. Profiles belonging to users who blocked me.
+       */
+      const [
+        myBlockedProfileIds,
+        usersWhoBlockedMe
+      ] =
+        await Promise.all([
+          Block.find({
+            user:
+              req.user.id
+          }).distinct(
+            'blockedProfile'
+          ),
+
+          Block.find({
+            blockedProfile:
+              profile._id
+          }).distinct(
+            'user'
+          )
+        ]);
+
+      const blockedByProfileIds =
+        usersWhoBlockedMe.length
+          ? await MatrimonialProfile.find({
+              userId: {
+                $in:
+                  usersWhoBlockedMe
+              }
+            }).distinct(
+              '_id'
+            )
+          : [];
 
       const [
         newInterestsCount,
@@ -220,7 +301,6 @@ export const dashboard =
         shortlistCount,
         unreadNotificationsCount,
         profileViewsLast30Days,
-        blocked,
         myPref
       ] =
         await Promise.all([
@@ -272,13 +352,6 @@ export const dashboard =
             }
           }),
 
-          Block.find({
-            user:
-              req.user.id
-          }).distinct(
-            'blockedProfile'
-          ),
-
           PartnerPreference.findOne({
             profileId:
               profile._id
@@ -286,12 +359,12 @@ export const dashboard =
         ]);
 
       /*
-       * Never trust an old stored percentage here.
+       * Always recalculate completion using the current
+       * profile rules.
        *
-       * Some existing records were calculated before
-       * Current City / Current State were removed from
-       * onboarding. Recalculate using the current
-       * canonical profile-completion rules.
+       * This self-heals records saved before Weight,
+       * Residential Address and Mosal completion rules
+       * were introduced.
        */
       const profileCompletion =
         completion(
@@ -299,11 +372,6 @@ export const dashboard =
           !!myPref
         );
 
-      /*
-       * Self-heal legacy completion values so other
-       * screens reading completionPercentage also
-       * receive the corrected value later.
-       */
       if (
         profile.completionPercentage !==
         profileCompletion
@@ -314,6 +382,13 @@ export const dashboard =
         await profile.save();
       }
 
+      /*
+       * Preferred gender comes from explicit partner
+       * preference first.
+       *
+       * Otherwise we retain the current heterosexual
+       * default used by the existing app.
+       */
       const preferred =
         myPref
           ?.preferredGender ||
@@ -327,6 +402,17 @@ export const dashboard =
               : null
         );
 
+      /*
+       * Pull a reasonable candidate pool first.
+       *
+       * Do NOT put detailed preference filtering into
+       * the Mongo query because:
+       *
+       * - soft preferences should not exclude people;
+       * - Must Have behavior belongs to the engine;
+       * - missing data needs UNKNOWN handling;
+       * - reciprocal preferences must also be evaluated.
+       */
       const candidates =
         await MatrimonialProfile.find({
           visibility:
@@ -338,7 +424,10 @@ export const dashboard =
           _id: {
             $nin: [
               profile._id,
-              ...blocked
+
+              ...myBlockedProfileIds,
+
+              ...blockedByProfileIds
             ]
           },
 
@@ -350,11 +439,25 @@ export const dashboard =
             : {})
         })
           .sort({
+            /*
+             * These fields only choose the initial pool.
+             * Final recommendation ordering happens using
+             * compatibility.rankingScore below.
+             */
+            boostedUntil:
+              -1,
+
+            'verification.adminVerified':
+              -1,
+
+            lastActiveAt:
+              -1,
+
             updatedAt:
               -1
           })
           .limit(
-            30
+            CANDIDATE_POOL_SIZE
           );
 
       const candidateIds =
@@ -365,6 +468,11 @@ export const dashboard =
             candidate._id
         );
 
+      /*
+       * Bulk-load related data.
+       *
+       * Avoid one DB request per recommendation.
+       */
       const [
         candidatePreferences,
         sentInterests,
@@ -458,12 +566,208 @@ export const dashboard =
           )
         );
 
+      /*
+       * Recommendations are intentionally built from
+       * RAW server-side candidate documents first.
+       *
+       * That allows private values such as income or
+       * family assets to participate in matching when
+       * appropriate without exposing those raw values
+       * to the frontend.
+       */
+      const evaluatedCandidates =
+        candidates
+          .map(
+            (
+              candidate
+            ) => {
+              const candidatePreference =
+                preferenceMap.get(
+                  String(
+                    candidate._id
+                  )
+                ) ||
+                null;
+
+              const compatibility =
+                calculateCompatibility(
+                  profile,
+                  myPref,
+                  candidate,
+                  candidatePreference
+                );
+
+              /*
+               * Candidate must pass Must Have criteria
+               * from BOTH directions.
+               */
+              if (
+                !compatibility
+                  .eligible
+              ) {
+                return null;
+              }
+
+              /*
+               * Logged-in member must actually have
+               * evaluatable preference criteria.
+               *
+               * Without preferences we should not show a
+               * fake compatibility percentage.
+               */
+              if (
+                !compatibility
+                  .viewerHasPreferences
+              ) {
+                return null;
+              }
+
+              /*
+               * If no directional score could be
+               * calculated, this is not a recommendation.
+               */
+              if (
+                compatibility
+                  .score ===
+                  null ||
+                compatibility
+                  .score ===
+                  undefined
+              ) {
+                return null;
+              }
+
+              /*
+               * Dashboard displays only meaningfully
+               * compatible profiles.
+               */
+              if (
+                compatibility
+                  .score <
+                MIN_RECOMMENDATION_SCORE
+              ) {
+                return null;
+              }
+
+              return {
+                candidate,
+
+                compatibility
+              };
+            }
+          )
+          .filter(
+            Boolean
+          );
+
+      /*
+       * Final ranking:
+       *
+       * compatibility.rankingScore =
+       * 70% viewer preference fit
+       * +
+       * 30% reciprocal mutual compatibility
+       *
+       * A tiny verification/activity tie-breaker is used
+       * only after compatibility.
+       */
+      evaluatedCandidates.sort(
+        (
+          left,
+          right
+        ) => {
+          const compatibilityDifference =
+            (
+              right
+                .compatibility
+                .rankingScore ||
+              0
+            ) -
+            (
+              left
+                .compatibility
+                .rankingScore ||
+              0
+            );
+
+          if (
+            compatibilityDifference !==
+            0
+          ) {
+            return compatibilityDifference;
+          }
+
+          const rightVerified =
+            right.candidate
+              .verification
+              ?.adminVerified
+              ? 1
+              : 0;
+
+          const leftVerified =
+            left.candidate
+              .verification
+              ?.adminVerified
+              ? 1
+              : 0;
+
+          if (
+            rightVerified !==
+            leftVerified
+          ) {
+            return (
+              rightVerified -
+              leftVerified
+            );
+          }
+
+          const rightActive =
+            right.candidate
+              .lastActiveAt
+              ? new Date(
+                  right.candidate
+                    .lastActiveAt
+                ).getTime()
+              : 0;
+
+          const leftActive =
+            left.candidate
+              .lastActiveAt
+              ? new Date(
+                  left.candidate
+                    .lastActiveAt
+                ).getTime()
+              : 0;
+
+          return (
+            rightActive -
+            leftActive
+          );
+        }
+      );
+
+      const topCandidates =
+        evaluatedCandidates.slice(
+          0,
+          MAX_RECOMMENDATIONS
+        );
+
+      /*
+       * Apply privacy serialization only after the
+       * server-side score has been calculated.
+       *
+       * This ensures private matching inputs never need
+       * to be included in the response payload.
+       */
       const recommended =
         (
           await Promise.all(
-            candidates.map(
+            topCandidates.map(
               async (
-                candidate
+                {
+                  candidate,
+                  compatibility
+                }
               ) => {
                 const serialized =
                   await serializeProfileForViewer(
@@ -477,75 +781,39 @@ export const dashboard =
                   return null;
                 }
 
-                const card =
-                  profileCard(
-                    serialized,
-
-                    calculateCompatibility(
-                      profile,
-                      myPref,
-                      candidate,
-                      preferenceMap.get(
-                        String(
-                          candidate._id
-                        )
-                      ) ||
-                        null
-                    )
+                const candidateId =
+                  String(
+                    candidate._id
                   );
 
                 return {
-                  ...card,
+                  ...profileCard(
+                    serialized,
+                    compatibility
+                  ),
 
                   interestSent:
                     interestMap.has(
-                      String(
-                        candidate._id
-                      )
+                      candidateId
                     ),
 
                   interestStatus:
                     interestMap.get(
-                      String(
-                        candidate._id
-                      )
+                      candidateId
                     ) ||
                     null,
 
                   shortlisted:
                     shortlistSet.has(
-                      String(
-                        candidate._id
-                      )
+                      candidateId
                     )
                 };
               }
             )
           )
-        )
-          .filter(
-            Boolean
-          )
-          .sort(
-            (
-              a,
-              b
-            ) =>
-              (
-                b.compatibility
-                  ?.score ||
-                0
-              ) -
-              (
-                a.compatibility
-                  ?.score ||
-                0
-              )
-          )
-          .slice(
-            0,
-            3
-          );
+        ).filter(
+          Boolean
+        );
 
       return ok(
         res,
@@ -569,6 +837,21 @@ export const dashboard =
 
           recommendedProfiles:
             recommended,
+
+          /*
+           * Useful for the frontend when the member has
+           * not configured preferences yet.
+           */
+          recommendationState: {
+            hasPreferences:
+              !!myPref,
+
+            minimumScore:
+              MIN_RECOMMENDATION_SCORE,
+
+            totalQualified:
+              evaluatedCandidates.length
+          },
 
           profileStatus:
             profile.visibility,

@@ -19,6 +19,13 @@ import {
   api
 } from '../services/api';
 
+const IMPORTANCE_OPTIONS = [
+  'Low',
+  'Medium',
+  'High',
+  'Must Have'
+];
+
 const csv = (
   value
 ) =>
@@ -135,10 +142,13 @@ const fieldClass =
   'w-full border border-[#ddd0c1] bg-[#fffdf8] px-[15px] py-[14px] text-[14px] tracking-normal text-[#191614] normal-case outline-none focus:border-[#681d25] focus:shadow-[0_0_0_3px_#681d2510]';
 
 const formClass =
-  'grid gap-[18px] border border-[#ddd0c1] bg-[#fffdf8] p-[35px]';
+  'grid gap-[24px] border border-[#ddd0c1] bg-[#fffdf8] p-[35px] max-[600px]:p-[22px]';
 
 const formTitleClass =
   "font-['Cormorant_Garamond'] text-[35px] font-medium";
+
+const sectionTitleClass =
+  "font-['Cormorant_Garamond'] text-[28px] font-medium text-[#431318]";
 
 const primaryButtonClass =
   'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318]';
@@ -148,6 +158,297 @@ const outlineButtonClass =
 
 const textLinkClass =
   'border-b border-[#c49b70] pb-[3px] text-[12px] font-extrabold text-[#681d25]';
+
+const preferenceSectionClass =
+  'grid gap-5 border border-[#e2d5c7] bg-[#faf6f0] p-5';
+
+function ImportanceSelect({
+  value,
+  onChange
+}) {
+  return (
+    <label
+      className={
+        labelClass
+      }
+    >
+      Importance
+
+      <select
+        className={
+          fieldClass
+        }
+        value={
+          value ||
+          'Medium'
+        }
+        onChange={(
+          event
+        ) =>
+          onChange(
+            event.target.value
+          )
+        }
+      >
+        {IMPORTANCE_OPTIONS.map(
+          (
+            option
+          ) => (
+            <option
+              key={
+                option
+              }
+              value={
+                option
+              }
+            >
+              {option}
+            </option>
+          )
+        )}
+      </select>
+    </label>
+  );
+}
+
+function RangePreference({
+  title,
+  minLabel,
+  maxLabel,
+  min,
+  max,
+  minLimit,
+  maxLimit,
+  unit,
+  importance,
+  onMin,
+  onMax,
+  onImportance
+}) {
+  return (
+    <section
+      className={
+        preferenceSectionClass
+      }
+    >
+      <div>
+        <h3
+          className={
+            sectionTitleClass
+          }
+        >
+          {title}
+        </h3>
+
+        {unit && (
+          <p className="mt-1 text-[10px] text-[#8b7d72]">
+            Values are entered in{' '}
+            {unit}.
+          </p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 max-[800px]:grid-cols-1">
+        <label
+          className={
+            labelClass
+          }
+        >
+          {minLabel}
+
+          <input
+            className={
+              fieldClass
+            }
+            type="number"
+            min={
+              minLimit
+            }
+            max={
+              maxLimit
+            }
+            value={
+              min ??
+              ''
+            }
+            onChange={(
+              event
+            ) =>
+              onMin(
+                event.target.value
+              )
+            }
+          />
+        </label>
+
+        <label
+          className={
+            labelClass
+          }
+        >
+          {maxLabel}
+
+          <input
+            className={
+              fieldClass
+            }
+            type="number"
+            min={
+              minLimit
+            }
+            max={
+              maxLimit
+            }
+            value={
+              max ??
+              ''
+            }
+            onChange={(
+              event
+            ) =>
+              onMax(
+                event.target.value
+              )
+            }
+          />
+        </label>
+
+        <ImportanceSelect
+          value={
+            importance
+          }
+          onChange={
+            onImportance
+          }
+        />
+      </div>
+    </section>
+  );
+}
+
+function CsvPreference({
+  title,
+  label,
+  value,
+  placeholder,
+  importance,
+  onChange,
+  onImportance
+}) {
+  return (
+    <section
+      className={
+        preferenceSectionClass
+      }
+    >
+      <h3
+        className={
+          sectionTitleClass
+        }
+      >
+        {title}
+      </h3>
+
+      <div className="grid grid-cols-[minmax(0,1fr)_220px] gap-4 max-[767px]:grid-cols-1">
+        <label
+          className={
+            labelClass
+          }
+        >
+          {label}
+
+          <input
+            className={
+              fieldClass
+            }
+            value={
+              csv(
+                value
+              )
+            }
+            onChange={(
+              event
+            ) =>
+              onChange(
+                event.target.value
+              )
+            }
+            placeholder={
+              placeholder
+            }
+          />
+        </label>
+
+        <ImportanceSelect
+          value={
+            importance
+          }
+          onChange={
+            onImportance
+          }
+        />
+      </div>
+    </section>
+  );
+}
+
+function PropertyPreference({
+  label,
+  value,
+  importance,
+  onChange,
+  onImportance
+}) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_220px] gap-4 max-[767px]:grid-cols-1">
+      <label
+        className={
+          labelClass
+        }
+      >
+        {label}
+
+        <select
+          className={
+            fieldClass
+          }
+          value={
+            value ||
+            'Any'
+          }
+          onChange={(
+            event
+          ) =>
+            onChange(
+              event.target.value
+            )
+          }
+        >
+          <option value="Any">
+            No preference
+          </option>
+
+          <option value="Yes">
+            Yes
+          </option>
+
+          <option value="No">
+            No
+          </option>
+        </select>
+      </label>
+
+      <ImportanceSelect
+        value={
+          importance
+        }
+        onChange={
+          onImportance
+        }
+      />
+    </div>
+  );
+}
 
 export default function SettingsPage({
   section
@@ -196,6 +497,14 @@ export default function SettingsPage({
       true
     );
 
+  const [
+    saving,
+    setSaving
+  ] =
+    useState(
+      false
+    );
+
   const {
     user,
     logout
@@ -210,6 +519,13 @@ export default function SettingsPage({
 
   useEffect(
     () => {
+      /*
+       * Do NOT call setLoading(true) synchronously here.
+       *
+       * Initial loading state is already true and the
+       * React lint rule rejects synchronous setState at
+       * the beginning of the effect.
+       */
       if (
         section
       ) {
@@ -219,11 +535,13 @@ export default function SettingsPage({
           .then(
             (
               response
-            ) =>
+            ) => {
               setForm(
                 response.data
-                  .preferences
-              )
+                  .preferences ||
+                  {}
+              );
+            }
           )
           .catch(
             (
@@ -314,27 +632,121 @@ export default function SettingsPage({
     ]
   );
 
-  const update = (
-    key,
-    value
-  ) => {
-    setForm(
-      (
-        current
-      ) => ({
-        ...current,
+  const update =
+    (
+      key,
+      value
+    ) => {
+      setForm(
+        (
+          current
+        ) => ({
+          ...current,
 
-        [key]:
-          value
-      })
-    );
-  };
+          [
+            key
+          ]:
+            value
+        })
+      );
+    };
+
+  const updateImportance =
+    (
+      key,
+      value
+    ) => {
+      setForm(
+        (
+          current
+        ) => ({
+          ...current,
+
+          importance: {
+            ...(
+              current.importance ||
+              {}
+            ),
+
+            [
+              key
+            ]:
+              value
+          }
+        })
+      );
+    };
+
+  const updateIncome =
+    (
+      key,
+      value
+    ) => {
+      setForm(
+        (
+          current
+        ) => ({
+          ...current,
+
+          incomePreferences: {
+            ...(
+              current.incomePreferences ||
+              {}
+            ),
+
+            [
+              key
+            ]:
+              value
+          }
+        })
+      );
+    };
+
+  const updateProperty =
+    (
+      key,
+      value
+    ) => {
+      setForm(
+        (
+          current
+        ) => ({
+          ...current,
+
+          propertyPreferences: {
+            ownResidence:
+              'Any',
+
+            agricultureLand:
+              'Any',
+
+            businessAssets:
+              'Any',
+
+            ...(
+              current.propertyPreferences ||
+              {}
+            ),
+
+            [
+              key
+            ]:
+              value
+          }
+        })
+      );
+    };
 
   const save =
     async (
       event
     ) => {
       event.preventDefault();
+
+      setSaving(
+        true
+      );
 
       try {
         if (
@@ -344,18 +756,35 @@ export default function SettingsPage({
             ...form
           };
 
-          [
+          const arrayFields = [
             'locations',
             'states',
             'countries',
+
+            'shakhPreferences',
+            'gotraPreferences',
+            'vanshPreferences',
+
+            'communityPreferences',
+
             'educationPreferences',
             'occupationPreferences',
+
             'dietPreferences',
-            'communityPreferences',
+
+            'familyTypePreferences',
+            'familyValuePreferences',
+
+            'smokingPreferences',
+            'drinkingPreferences',
+
             'marriageTimeline',
+
             'maritalStatus',
             'acceptedMaritalStatuses'
-          ].forEach(
+          ];
+
+          arrayFields.forEach(
             (
               key
             ) => {
@@ -377,6 +806,94 @@ export default function SettingsPage({
             }
           );
 
+          const numericFields = [
+            'ageMin',
+            'ageMax',
+            'heightMin',
+            'heightMax',
+            'weightMin',
+            'weightMax'
+          ];
+
+          numericFields.forEach(
+            (
+              key
+            ) => {
+              if (
+                payload[
+                  key
+                ] ===
+                  '' ||
+                payload[
+                  key
+                ] ===
+                  null
+              ) {
+                delete payload[
+                  key
+                ];
+              } else if (
+                payload[
+                  key
+                ] !==
+                undefined
+              ) {
+                payload[
+                  key
+                ] =
+                  Number(
+                    payload[
+                      key
+                    ]
+                  );
+              }
+            }
+          );
+
+          if (
+            payload.incomePreferences
+          ) {
+            const min =
+              payload
+                .incomePreferences
+                .min;
+
+            const max =
+              payload
+                .incomePreferences
+                .max;
+
+            payload.incomePreferences = {
+              ...(min !==
+                '' &&
+              min !==
+                null &&
+              min !==
+                undefined
+                ? {
+                    min:
+                      Number(
+                        min
+                      )
+                  }
+                : {}),
+
+              ...(max !==
+                '' &&
+              max !==
+                null &&
+              max !==
+                undefined
+                ? {
+                    max:
+                      Number(
+                        max
+                      )
+                  }
+                : {})
+            };
+          }
+
           await api(
             '/preferences',
             {
@@ -388,6 +905,10 @@ export default function SettingsPage({
                   payload
                 )
             }
+          );
+
+          notify(
+            'Matching preferences saved.'
           );
         } else {
           const privacyPayload =
@@ -416,11 +937,6 @@ export default function SettingsPage({
                 )
             );
 
-          /*
-           * Current address is always globally private.
-           * Access is granted per person through the
-           * explicit contact request/unlock flow.
-           */
           privacyPayload.contactAddressVisibility =
             'Private';
 
@@ -436,19 +952,21 @@ export default function SettingsPage({
                 )
             }
           );
-        }
 
-        notify(
-          section
-            ? 'Preferences saved.'
-            : 'Privacy updated.'
-        );
+          notify(
+            'Privacy updated.'
+          );
+        }
       } catch (
         error
       ) {
         notify(
           error.message,
           'error'
+        );
+      } finally {
+        setSaving(
+          false
         );
       }
     };
@@ -635,226 +1153,1022 @@ export default function SettingsPage({
             : 'Settings & privacy'}
         </h1>
 
-        <p className="mt-[18px] max-w-[680px] text-[14px] leading-[1.8] text-[#756a60]">
-          Choose what feels comfortable.
-          Sensitive information is filtered
-          by the server.
+        <p className="mt-[18px] max-w-[720px] text-[14px] leading-[1.8] text-[#756a60]">
+          {section
+            ? 'Tell us what matters to you. These preferences are used by your personal recommendation engine.'
+            : 'Choose what feels comfortable. Sensitive information is filtered by the server.'}
         </p>
       </header>
 
       {section ? (
         <form
-          className={formClass}
-          onSubmit={save}
+          className={
+            formClass
+          }
+          onSubmit={
+            save
+          }
         >
-          <h2 className={formTitleClass}>
-            The person you hope to meet
-          </h2>
+          <section className="grid gap-4">
+            <div>
+              <p className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-[#91683f]">
+                Matching preferences
+              </p>
 
-          <label className={labelClass}>
-            Preferred gender
+              <h2
+                className={
+                  formTitleClass
+                }
+              >
+                The person you hope to meet
+              </h2>
 
-            <select
-              className={fieldClass}
-              value={
-                form.preferredGender ||
-                ''
-              }
-              onChange={(
-                event
-              ) =>
-                update(
-                  'preferredGender',
-                  event.target.value
-                )
+              <p className="mt-2 max-w-[720px] text-[11px] leading-6 text-[#756a60]">
+                Your match percentage is personal to you.
+                The same member may receive a different
+                percentage when they view your profile,
+                because their preferences are evaluated
+                separately.
+              </p>
+            </div>
+
+            <label
+              className={
+                labelClass
               }
             >
-              <option value="">
-                Select
-              </option>
+              Preferred gender
 
-              <option>
-                Female
-              </option>
-
-              <option>
-                Male
-              </option>
-            </select>
-          </label>
-
-          <div className="grid grid-cols-2 gap-[18px] max-[767px]:grid-cols-1">
-            {[
-              [
-                'ageMin',
-                'Minimum age'
-              ],
-              [
-                'ageMax',
-                'Maximum age'
-              ],
-              [
-                'heightMin',
-                'Minimum height'
-              ],
-              [
-                'heightMax',
-                'Maximum height'
-              ]
-            ].map(
-              ([
-                key,
-                label
-              ]) => (
-                <label
-                  key={key}
-                  className={labelClass}
-                >
-                  {label}
-
-                  <input
-                    className={fieldClass}
-                    type="number"
-                    value={
-                      form[
-                        key
-                      ] ||
-                      ''
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      update(
-                        key,
-                        Number(
-                          event.target
-                            .value
-                        ) ||
-                        ''
-                      )
-                    }
-                  />
-                </label>
-              )
-            )}
-          </div>
-
-          {[
-            [
-              'locations',
-              'Preferred cities'
-            ],
-            [
-              'states',
-              'Preferred states'
-            ],
-            [
-              'educationPreferences',
-              'Education'
-            ],
-            [
-              'occupationPreferences',
-              'Occupations'
-            ],
-            [
-              'dietPreferences',
-              'Diet'
-            ],
-            [
-              'communityPreferences',
-              'Communities'
-            ]
-          ].map(
-            ([
-              key,
-              label
-            ]) => (
-              <label
-                key={key}
-                className={labelClass}
+              <select
+                className={
+                  fieldClass
+                }
+                value={
+                  form.preferredGender ||
+                  ''
+                }
+                onChange={(
+                  event
+                ) =>
+                  update(
+                    'preferredGender',
+                    event.target.value
+                  )
+                }
               >
-                {label}
+                <option value="">
+                  Select
+                </option>
+
+                <option value="Female">
+                  Female
+                </option>
+
+                <option value="Male">
+                  Male
+                </option>
+              </select>
+            </label>
+          </section>
+
+          <RangePreference
+            title="Age preference"
+            minLabel="Minimum age"
+            maxLabel="Maximum age"
+            min={
+              form.ageMin
+            }
+            max={
+              form.ageMax
+            }
+            minLimit={
+              18
+            }
+            maxLimit={
+              80
+            }
+            importance={
+              form.importance
+                ?.age
+            }
+            onMin={(
+              value
+            ) =>
+              update(
+                'ageMin',
+                value
+              )
+            }
+            onMax={(
+              value
+            ) =>
+              update(
+                'ageMax',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'age',
+                value
+              )
+            }
+          />
+
+          <RangePreference
+            title="Height preference"
+            minLabel="Minimum height"
+            maxLabel="Maximum height"
+            min={
+              form.heightMin
+            }
+            max={
+              form.heightMax
+            }
+            minLimit={
+              100
+            }
+            maxLimit={
+              250
+            }
+            unit="centimetres"
+            importance={
+              form.importance
+                ?.height
+            }
+            onMin={(
+              value
+            ) =>
+              update(
+                'heightMin',
+                value
+              )
+            }
+            onMax={(
+              value
+            ) =>
+              update(
+                'heightMax',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'height',
+                value
+              )
+            }
+          />
+
+          <RangePreference
+            title="Body weight preference"
+            minLabel="Minimum weight"
+            maxLabel="Maximum weight"
+            min={
+              form.weightMin
+            }
+            max={
+              form.weightMax
+            }
+            minLimit={
+              30
+            }
+            maxLimit={
+              250
+            }
+            unit="kilograms"
+            importance={
+              form.importance
+                ?.weight
+            }
+            onMin={(
+              value
+            ) =>
+              update(
+                'weightMin',
+                value
+              )
+            }
+            onMax={(
+              value
+            ) =>
+              update(
+                'weightMax',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'weight',
+                value
+              )
+            }
+          />
+
+          <section
+            className={
+              preferenceSectionClass
+            }
+          >
+            <h3
+              className={
+                sectionTitleClass
+              }
+            >
+              Marital preference
+            </h3>
+
+            <div className="grid grid-cols-[minmax(0,1fr)_220px] gap-4 max-[767px]:grid-cols-1">
+              <label
+                className={
+                  labelClass
+                }
+              >
+                Accepted marital statuses
 
                 <input
-                  className={fieldClass}
+                  className={
+                    fieldClass
+                  }
                   value={
                     csv(
-                      form[
-                        key
-                      ]
+                      form
+                        .acceptedMaritalStatuses
                     )
                   }
                   onChange={(
                     event
                   ) =>
                     update(
-                      key,
+                      'acceptedMaritalStatuses',
                       event.target.value
                     )
                   }
-                  placeholder="Comma separated"
+                  placeholder="Never Married, Divorced, Widowed"
                 />
               </label>
-            )
-          )}
 
-          <label className={labelClass}>
-            Accepted marital statuses
+              <ImportanceSelect
+                value={
+                  form.importance
+                    ?.maritalStatus
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateImportance(
+                    'maritalStatus',
+                    value
+                  )
+                }
+              />
+            </div>
 
-            <input
-              className={fieldClass}
-              value={
-                csv(
-                  form
-                    .acceptedMaritalStatuses
-                )
-              }
-              onChange={(
-                event
-              ) =>
-                update(
-                  'acceptedMaritalStatuses',
-                  event.target.value
-                )
-              }
-              placeholder="Never Married, Divorced, Widowed"
-            />
-          </label>
-
-          <label className={labelClass}>
-            Willing to consider remarriage
-
-            <select
-              className={fieldClass}
-              value={
-                form.willingForRemarriage ||
-                'Open to Discuss'
-              }
-              onChange={(
-                event
-              ) =>
-                update(
-                  'willingForRemarriage',
-                  event.target.value
-                )
+            <label
+              className={
+                labelClass
               }
             >
-              <option>
-                Yes
-              </option>
+              Willing to consider remarriage
 
-              <option>
-                No
-              </option>
+              <select
+                className={
+                  fieldClass
+                }
+                value={
+                  form.willingForRemarriage ||
+                  'Open to Discuss'
+                }
+                onChange={(
+                  event
+                ) =>
+                  update(
+                    'willingForRemarriage',
+                    event.target.value
+                  )
+                }
+              >
+                <option value="Yes">
+                  Yes
+                </option>
 
-              <option>
-                Open to Discuss
-              </option>
-            </select>
-          </label>
+                <option value="No">
+                  No
+                </option>
 
-          <button className={primaryButtonClass}>
-            Save preferences
+                <option value="Open to Discuss">
+                  Open to Discuss
+                </option>
+              </select>
+            </label>
+          </section>
+
+          <section
+            className={
+              preferenceSectionClass
+            }
+          >
+            <h3
+              className={
+                sectionTitleClass
+              }
+            >
+              Native location
+            </h3>
+
+            <p className="text-[10px] leading-5 text-[#8b7d72]">
+              Recommendations use only matrimonial/native
+              location. Exact current residential address
+              is never used by the matching engine.
+            </p>
+
+            <label
+              className={
+                labelClass
+              }
+            >
+              Preferred native states
+
+              <input
+                className={
+                  fieldClass
+                }
+                value={
+                  csv(
+                    form.states
+                  )
+                }
+                onChange={(
+                  event
+                ) =>
+                  update(
+                    'states',
+                    event.target.value
+                  )
+                }
+                placeholder="Gujarat, Rajasthan"
+              />
+            </label>
+
+            <label
+              className={
+                labelClass
+              }
+            >
+              Preferred native district / place
+
+              <input
+                className={
+                  fieldClass
+                }
+                value={
+                  csv(
+                    form.locations
+                  )
+                }
+                onChange={(
+                  event
+                ) =>
+                  update(
+                    'locations',
+                    event.target.value
+                  )
+                }
+                placeholder="Rajkot, Jamnagar, Udaipur"
+              />
+            </label>
+
+            <ImportanceSelect
+              value={
+                form.importance
+                  ?.location
+              }
+              onChange={(
+                value
+              ) =>
+                updateImportance(
+                  'location',
+                  value
+                )
+              }
+            />
+          </section>
+
+          <CsvPreference
+            title="Surname / Shakh"
+            label="Preferred Surname / Shakh"
+            value={
+              form.shakhPreferences
+            }
+            placeholder="Jadeja, Gohil, Jhala"
+            importance={
+              form.importance
+                ?.shakh
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'shakhPreferences',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'shakh',
+                value
+              )
+            }
+          />
+
+          <CsvPreference
+            title="Gotra"
+            label="Preferred Gotra"
+            value={
+              form.gotraPreferences
+            }
+            placeholder="Enter one or multiple Gotras"
+            importance={
+              form.importance
+                ?.gotra
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'gotraPreferences',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'gotra',
+                value
+              )
+            }
+          />
+
+          <CsvPreference
+            title="Kul / Vansh"
+            label="Preferred Kul / Vansh"
+            value={
+              form.vanshPreferences
+            }
+            placeholder="Suryavanshi, Chandravanshi"
+            importance={
+              form.importance
+                ?.vansh
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'vanshPreferences',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'vansh',
+                value
+              )
+            }
+          />
+
+          <CsvPreference
+            title="Education"
+            label="Preferred education"
+            value={
+              form.educationPreferences
+            }
+            placeholder="B.E., MBA, MBBS"
+            importance={
+              form.importance
+                ?.education
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'educationPreferences',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'education',
+                value
+              )
+            }
+          />
+
+          <CsvPreference
+            title="Profession"
+            label="Preferred occupation / profession"
+            value={
+              form.occupationPreferences
+            }
+            placeholder="Engineer, Doctor, Business"
+            importance={
+              form.importance
+                ?.occupation
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'occupationPreferences',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'occupation',
+                value
+              )
+            }
+          />
+
+          <section
+            className={
+              preferenceSectionClass
+            }
+          >
+            <h3
+              className={
+                sectionTitleClass
+              }
+            >
+              Annual income
+            </h3>
+
+            <div className="grid grid-cols-3 gap-4 max-[800px]:grid-cols-1">
+              <label
+                className={
+                  labelClass
+                }
+              >
+                Minimum annual income
+
+                <input
+                  className={
+                    fieldClass
+                  }
+                  type="number"
+                  min="0"
+                  value={
+                    form
+                      .incomePreferences
+                      ?.min ??
+                    ''
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    updateIncome(
+                      'min',
+                      event.target.value
+                    )
+                  }
+                />
+              </label>
+
+              <label
+                className={
+                  labelClass
+                }
+              >
+                Maximum annual income
+
+                <input
+                  className={
+                    fieldClass
+                  }
+                  type="number"
+                  min="0"
+                  value={
+                    form
+                      .incomePreferences
+                      ?.max ??
+                    ''
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    updateIncome(
+                      'max',
+                      event.target.value
+                    )
+                  }
+                />
+              </label>
+
+              <ImportanceSelect
+                value={
+                  form.importance
+                    ?.income
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateImportance(
+                    'income',
+                    value
+                  )
+                }
+              />
+            </div>
+          </section>
+
+          <CsvPreference
+            title="Diet"
+            label="Preferred diet"
+            value={
+              form.dietPreferences
+            }
+            placeholder="Vegetarian, Jain"
+            importance={
+              form.importance
+                ?.diet
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'dietPreferences',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'diet',
+                value
+              )
+            }
+          />
+
+          <CsvPreference
+            title="Family type"
+            label="Preferred family type"
+            value={
+              form.familyTypePreferences
+            }
+            placeholder="Joint, Nuclear"
+            importance={
+              form.importance
+                ?.familyType
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'familyTypePreferences',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'familyType',
+                value
+              )
+            }
+          />
+
+          <CsvPreference
+            title="Family values"
+            label="Preferred family values"
+            value={
+              form.familyValuePreferences
+            }
+            placeholder="Traditional, Moderate, Liberal"
+            importance={
+              form.importance
+                ?.familyValues
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'familyValuePreferences',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'familyValues',
+                value
+              )
+            }
+          />
+
+          <CsvPreference
+            title="Smoking"
+            label="Smoking preference"
+            value={
+              form.smokingPreferences
+            }
+            placeholder="Never, Occasionally"
+            importance={
+              form.importance
+                ?.smoking
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'smokingPreferences',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'smoking',
+                value
+              )
+            }
+          />
+
+          <CsvPreference
+            title="Drinking"
+            label="Drinking preference"
+            value={
+              form.drinkingPreferences
+            }
+            placeholder="Never, Occasionally"
+            importance={
+              form.importance
+                ?.drinking
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'drinkingPreferences',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'drinking',
+                value
+              )
+            }
+          />
+
+          <section
+            className={
+              preferenceSectionClass
+            }
+          >
+            <div>
+              <h3
+                className={
+                  sectionTitleClass
+                }
+              >
+                Property & family assets
+              </h3>
+
+              <p className="mt-1 text-[10px] leading-5 text-[#8b7d72]">
+                These values are used internally for
+                matching. Private property information is
+                not revealed through the percentage.
+              </p>
+            </div>
+
+            <PropertyPreference
+              label="Own residential property"
+              value={
+                form
+                  .propertyPreferences
+                  ?.ownResidence
+              }
+              importance={
+                form.importance
+                  ?.ownResidence
+              }
+              onChange={(
+                value
+              ) =>
+                updateProperty(
+                  'ownResidence',
+                  value
+                )
+              }
+              onImportance={(
+                value
+              ) =>
+                updateImportance(
+                  'ownResidence',
+                  value
+                )
+              }
+            />
+
+            <PropertyPreference
+              label="Agricultural land"
+              value={
+                form
+                  .propertyPreferences
+                  ?.agricultureLand
+              }
+              importance={
+                form.importance
+                  ?.agricultureLand
+              }
+              onChange={(
+                value
+              ) =>
+                updateProperty(
+                  'agricultureLand',
+                  value
+                )
+              }
+              onImportance={(
+                value
+              ) =>
+                updateImportance(
+                  'agricultureLand',
+                  value
+                )
+              }
+            />
+
+            <PropertyPreference
+              label="Business assets"
+              value={
+                form
+                  .propertyPreferences
+                  ?.businessAssets
+              }
+              importance={
+                form.importance
+                  ?.businessAssets
+              }
+              onChange={(
+                value
+              ) =>
+                updateProperty(
+                  'businessAssets',
+                  value
+                )
+              }
+              onImportance={(
+                value
+              ) =>
+                updateImportance(
+                  'businessAssets',
+                  value
+                )
+              }
+            />
+          </section>
+
+          <CsvPreference
+            title="Marriage timeline"
+            label="Preferred marriage timeline"
+            value={
+              form.marriageTimeline
+            }
+            placeholder="Within 6 months, Within 1 year"
+            importance={
+              form.importance
+                ?.marriageTimeline
+            }
+            onChange={(
+              value
+            ) =>
+              update(
+                'marriageTimeline',
+                value
+              )
+            }
+            onImportance={(
+              value
+            ) =>
+              updateImportance(
+                'marriageTimeline',
+                value
+              )
+            }
+          />
+
+          <section
+            className={
+              preferenceSectionClass
+            }
+          >
+            <h3
+              className={
+                sectionTitleClass
+              }
+            >
+              Additional expectations
+            </h3>
+
+            <label
+              className={
+                labelClass
+              }
+            >
+              Notes
+
+              <textarea
+                className={`${fieldClass} min-h-[130px] resize-y`}
+                maxLength={
+                  1500
+                }
+                value={
+                  form.additionalPreferences ||
+                  ''
+                }
+                onChange={(
+                  event
+                ) =>
+                  update(
+                    'additionalPreferences',
+                    event.target.value
+                  )
+                }
+                placeholder="Any additional expectations you would like to record..."
+              />
+            </label>
+          </section>
+
+          <div className="border border-[#c9b18f] bg-[#c49b700b] p-5">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#681d25]">
+              How importance works
+            </p>
+
+            <div className="mt-3 grid gap-2 text-[10px] leading-5 text-[#756a60]">
+              <p>
+                <strong>
+                  Low:
+                </strong>{' '}
+                small influence on recommendation ranking.
+              </p>
+
+              <p>
+                <strong>
+                  Medium:
+                </strong>{' '}
+                normal matching importance.
+              </p>
+
+              <p>
+                <strong>
+                  High:
+                </strong>{' '}
+                strong influence on your percentage.
+              </p>
+
+              <p>
+                <strong>
+                  Must Have:
+                </strong>{' '}
+                candidate is excluded if the requirement
+                fails or cannot be verified.
+              </p>
+            </div>
+          </div>
+
+          <button
+            className={
+              primaryButtonClass
+            }
+            disabled={
+              saving
+            }
+          >
+            {saving
+              ? 'Saving…'
+              : 'Save matching preferences'}
           </button>
         </form>
       ) : (
@@ -883,7 +2197,9 @@ export default function SettingsPage({
                       item
                     )
                   }
-                  key={item}
+                  key={
+                    item
+                  }
                 >
                   {item}
                 </button>
@@ -895,10 +2211,18 @@ export default function SettingsPage({
             {tab ===
               'Privacy' && (
               <form
-                className={formClass}
-                onSubmit={save}
+                className={
+                  formClass
+                }
+                onSubmit={
+                  save
+                }
               >
-                <h2 className={formTitleClass}>
+                <h2
+                  className={
+                    formTitleClass
+                  }
+                >
                   Privacy controls
                 </h2>
 
@@ -909,8 +2233,7 @@ export default function SettingsPage({
                   member after the contact access request
                   is approved and explicitly unlocked.
                   A mutual match alone does not expose
-                  them. Exact date of birth is also hidden
-                  from other members.
+                  them. Exact date of birth is also hidden.
                 </p>
 
                 {Object.entries(
@@ -921,8 +2244,12 @@ export default function SettingsPage({
                     options
                   ]) => (
                     <label
-                      key={key}
-                      className={labelClass}
+                      key={
+                        key
+                      }
+                      className={
+                        labelClass
+                      }
                     >
                       {
                         privacyLabels[
@@ -932,7 +2259,9 @@ export default function SettingsPage({
                       }
 
                       <select
-                        className={fieldClass}
+                        className={
+                          fieldClass
+                        }
                         value={
                           form[
                             key
@@ -957,8 +2286,12 @@ export default function SettingsPage({
                             option
                           ) => (
                             <option
-                              key={option}
-                              value={option}
+                              key={
+                                option
+                              }
+                              value={
+                                option
+                              }
                             >
                               {option}
                             </option>
@@ -983,16 +2316,33 @@ export default function SettingsPage({
                   </p>
                 </div>
 
-                <button className={primaryButtonClass}>
-                  Save changes
+                <button
+                  className={
+                    primaryButtonClass
+                  }
+                  disabled={
+                    saving
+                  }
+                >
+                  {saving
+                    ? 'Saving…'
+                    : 'Save changes'}
                 </button>
               </form>
             )}
 
             {tab ===
               'Account' && (
-              <section className={formClass}>
-                <h2 className={formTitleClass}>
+              <section
+                className={
+                  formClass
+                }
+              >
+                <h2
+                  className={
+                    formTitleClass
+                  }
+                >
                   Account & profile status
                 </h2>
 
@@ -1022,7 +2372,9 @@ export default function SettingsPage({
                           : 'Paused'
                       )
                     }
-                    className={outlineButtonClass}
+                    className={
+                      outlineButtonClass
+                    }
                   >
                     {profile
                       ?.lifecycleStatus ===
@@ -1038,7 +2390,9 @@ export default function SettingsPage({
                         'Married'
                       )
                     }
-                    className={outlineButtonClass}
+                    className={
+                      outlineButtonClass
+                    }
                   >
                     We found a match /
                     Got married
@@ -1058,8 +2412,12 @@ export default function SettingsPage({
 
                   <button
                     type="button"
-                    onClick={removeAccount}
-                    className={outlineButtonClass}
+                    onClick={
+                      removeAccount
+                    }
+                    className={
+                      outlineButtonClass
+                    }
                   >
                     Delete account
                   </button>
@@ -1070,29 +2428,49 @@ export default function SettingsPage({
             {tab ===
               'Password' && (
               <form
-                className={formClass}
-                onSubmit={password}
+                className={
+                  formClass
+                }
+                onSubmit={
+                  password
+                }
               >
-                <h2 className={formTitleClass}>
+                <h2
+                  className={
+                    formTitleClass
+                  }
+                >
                   Change password
                 </h2>
 
-                <label className={labelClass}>
+                <label
+                  className={
+                    labelClass
+                  }
+                >
                   Current password
 
                   <input
-                    className={fieldClass}
+                    className={
+                      fieldClass
+                    }
                     name="current"
                     type="password"
                     required
                   />
                 </label>
 
-                <label className={labelClass}>
+                <label
+                  className={
+                    labelClass
+                  }
+                >
                   New password
 
                   <input
-                    className={fieldClass}
+                    className={
+                      fieldClass
+                    }
                     name="next"
                     type="password"
                     minLength="8"
@@ -1100,7 +2478,11 @@ export default function SettingsPage({
                   />
                 </label>
 
-                <button className={primaryButtonClass}>
+                <button
+                  className={
+                    primaryButtonClass
+                  }
+                >
                   Change password
                 </button>
               </form>
@@ -1109,10 +2491,18 @@ export default function SettingsPage({
             {tab ===
               'Notifications' && (
               <form
-                className={formClass}
-                onSubmit={saveNotifications}
+                className={
+                  formClass
+                }
+                onSubmit={
+                  saveNotifications
+                }
               >
-                <h2 className={formTitleClass}>
+                <h2
+                  className={
+                    formTitleClass
+                  }
+                >
                   Notification preferences
                 </h2>
 
@@ -1144,7 +2534,9 @@ export default function SettingsPage({
                   ]) => (
                     <label
                       className="flex items-center gap-2 text-[11px] text-[#5e4e46]"
-                      key={key}
+                      key={
+                        key
+                      }
                     >
                       <input
                         type="checkbox"
@@ -1162,7 +2554,9 @@ export default function SettingsPage({
                             ) => ({
                               ...current,
 
-                              [key]:
+                              [
+                                key
+                              ]:
                                 event.target.checked
                             })
                           )
@@ -1174,7 +2568,11 @@ export default function SettingsPage({
                   )
                 )}
 
-                <button className={primaryButtonClass}>
+                <button
+                  className={
+                    primaryButtonClass
+                  }
+                >
                   Save preferences
                 </button>
               </form>
@@ -1182,8 +2580,16 @@ export default function SettingsPage({
 
             {tab ===
               'Blocked profiles' && (
-              <section className={formClass}>
-                <h2 className={formTitleClass}>
+              <section
+                className={
+                  formClass
+                }
+              >
+                <h2
+                  className={
+                    formTitleClass
+                  }
+                >
                   Blocked profiles
                 </h2>
 
@@ -1194,7 +2600,9 @@ export default function SettingsPage({
                     ) => (
                       <div
                         className="flex justify-between border-b border-[#ddd0c1] py-[10px]"
-                        key={block._id}
+                        key={
+                          block._id
+                        }
                       >
                         <span>
                           {
@@ -1206,7 +2614,9 @@ export default function SettingsPage({
 
                         <button
                           type="button"
-                          className={textLinkClass}
+                          className={
+                            textLinkClass
+                          }
                           onClick={async () => {
                             await api(
                               `/blocks/${block.blockedProfile._id}`,

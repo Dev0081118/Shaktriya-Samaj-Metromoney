@@ -343,6 +343,117 @@ function MosalCard({
   );
 }
 
+function MatchSummary({
+  compatibility
+}) {
+  if (
+    !compatibility ||
+    compatibility.score ===
+      null ||
+    compatibility.score ===
+      undefined
+  ) {
+    return null;
+  }
+
+  const score =
+    Math.round(
+      compatibility.score
+    );
+
+  const mutualScore =
+    compatibility.mutualScore ===
+      null ||
+    compatibility.mutualScore ===
+      undefined
+      ? null
+      : Math.round(
+          compatibility.mutualScore
+        );
+
+  const confidence =
+    compatibility.confidence ===
+      null ||
+    compatibility.confidence ===
+      undefined
+      ? null
+      : Math.round(
+          compatibility.confidence
+        );
+
+  const label =
+    score >=
+      85
+      ? 'Excellent Match'
+      : score >=
+          70
+        ? 'Strong Match'
+        : score >=
+            50
+          ? 'Compatible'
+          : 'Low Match';
+
+  return (
+    <div className="mt-6 max-w-[520px] border border-[#c49b70] bg-[#c49b7010] p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#91683f]">
+            Your preference match
+          </p>
+
+          <p className="mt-1 font-['Cormorant_Garamond'] text-[30px] font-medium leading-none text-[#681d25]">
+            {score}%
+          </p>
+        </div>
+
+        <span className="rounded-full border border-[#c49b70] bg-[#fffdf8] px-3 py-2 text-[9px] font-extrabold uppercase tracking-[0.08em] text-[#681d25]">
+          {label}
+        </span>
+      </div>
+
+      <p className="mt-3 text-[10px] leading-5 text-[#756a60]">
+        This percentage is calculated from your saved partner
+        preferences. The same profile can have a different
+        percentage for another member.
+      </p>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 max-[500px]:grid-cols-1">
+        {mutualScore !==
+          null && (
+          <div className="border border-[#ded0c1] bg-[#fffdf8] p-3">
+            <p className={labelClass}>
+              Mutual compatibility
+            </p>
+
+            <p className="mt-1 text-[15px] font-extrabold text-[#431318]">
+              {mutualScore}%
+            </p>
+          </div>
+        )}
+
+        {confidence !==
+          null && (
+          <div className="border border-[#ded0c1] bg-[#fffdf8] p-3">
+            <p className={labelClass}>
+              Match confidence
+            </p>
+
+            <p className="mt-1 text-[15px] font-extrabold text-[#431318]">
+              {confidence}%
+            </p>
+          </div>
+        )}
+      </div>
+
+      <p className="mt-3 text-[9px] leading-5 text-[#91867d]">
+        Private income, property and family information is used
+        only by the matching engine when available. Exact private
+        values are not revealed here.
+      </p>
+    </div>
+  );
+}
+
 export default function ProfilePage({
   own = false
 }) {
@@ -794,13 +905,19 @@ export default function ProfilePage({
       .actionState
       ?.contactRequest;
 
+  /*
+   * Public/member profile summary must not use
+   * current residential city/state.
+   *
+   * Native place is safe matrimonial context.
+   */
   const location =
     joinValues([
       profile.location
-        ?.city,
+        ?.nativeDistrict,
 
       profile.location
-        ?.state
+        ?.nativeState
     ]);
 
   const vatan =
@@ -1018,6 +1135,19 @@ export default function ProfilePage({
               </>
             )}
 
+            {profile.weight && (
+              <>
+                <span>
+                  •
+                </span>
+
+                <span>
+                  {profile.weight}{' '}
+                  kg
+                </span>
+              </>
+            )}
+
             {profile.maritalStatus && (
               <>
                 <span>
@@ -1078,35 +1208,12 @@ export default function ProfilePage({
             </p>
           )}
 
-          {data.compatibility && (
-            <div className="mt-6 max-w-[500px] border border-[#c49b70] bg-[#c49b7010] px-4 py-3">
-              <strong className="text-[12px] text-[#681d25]">
-                {
-                  data.compatibility
-                    .score
-                }
-                % preference match
-              </strong>
-
-              {data.compatibility
-                .matchedFactors
-                ?.length >
-                0 && (
-                <p className="mt-1 text-[10px] leading-5 text-[#756a60]">
-                  Shared preferences:{' '}
-                  {data.compatibility
-                    .matchedFactors
-                    .slice(
-                      0,
-                      4
-                    )
-                    .join(
-                      ', '
-                    )
-                    .toLowerCase()}
-                </p>
-              )}
-            </div>
+          {!own && (
+            <MatchSummary
+              compatibility={
+                data.compatibility
+              }
+            />
           )}
 
           {!own && (
@@ -1366,6 +1473,15 @@ export default function ProfilePage({
               value={
                 profile.height
                   ? `${profile.height} cm`
+                  : ''
+              }
+            />
+
+            <Detail
+              label="Weight"
+              value={
+                profile.weight
+                  ? `${profile.weight} kg`
                   : ''
               }
             />

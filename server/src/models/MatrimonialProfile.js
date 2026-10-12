@@ -511,6 +511,23 @@ const schema =
           250
       },
 
+      /*
+       * Body weight in kilograms.
+       *
+       * This is a core personal-profile field and is
+       * also used by the preference matching engine.
+       */
+      weight: {
+        type:
+          Number,
+
+        min:
+          30,
+
+        max:
+          250
+      },
+
       bloodGroup: {
         type:
           String,
@@ -599,6 +616,14 @@ const schema =
       /* -------------------------------------------------------------- */
 
       location: {
+        /*
+         * Legacy current-location fields are retained
+         * for older documents only.
+         *
+         * New onboarding clears these fields and exact
+         * residential location lives only inside
+         * contactDetails.currentAddress.
+         */
         city:
           text(
             120
@@ -684,7 +709,7 @@ const schema =
 
         /*
          * DB key remains clan.
-         * UI calls this Surname.
+         * UI calls this Surname / Shakh.
          */
         clan:
           text(
@@ -720,6 +745,11 @@ const schema =
             160
           ),
 
+        /*
+         * Legacy only.
+         * New profile flow does not collect a separate
+         * family-origin field.
+         */
         familyOrigin:
           text(
             300
@@ -1083,6 +1113,10 @@ const schema =
       /* -------------------------------------------------------------- */
 
       maternalLineage: {
+        /*
+         * Legacy only.
+         * New onboarding no longer writes selfMosal.
+         */
         selfMosal: {
           mamaName:
             text(
@@ -1577,6 +1611,9 @@ const schema =
     }
   );
 
+/*
+ * Core listing / moderation indexes.
+ */
 schema.index({
   visibility:
     1,
@@ -1601,11 +1638,39 @@ schema.index({
     1
 });
 
+/*
+ * Discovery and recommendations use native location.
+ *
+ * Current residential location must not be used for
+ * public matching/discovery indexes.
+ */
 schema.index({
-  'location.state':
+  'location.nativeState':
     1,
 
-  'location.city':
+  'location.nativeDistrict':
+    1
+});
+
+schema.index({
+  'community.clan':
+    1,
+
+  'community.gotra':
+    1,
+
+  'community.vansh':
+    1
+});
+
+schema.index({
+  maritalStatus:
+    1,
+
+  gender:
+    1,
+
+  visibility:
     1
 });
 
