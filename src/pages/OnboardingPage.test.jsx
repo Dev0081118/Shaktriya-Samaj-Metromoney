@@ -1013,12 +1013,12 @@ describe(
         });
 
         expect(
-          savePayload()
-            .privacy
-            .contactAddressVisibility
-        ).toBe(
-          'MutualMatches'
-        );
+  savePayload()
+    .privacy
+    .contactAddressVisibility
+).toBe(
+  'Private'
+);
       }
     );
 
@@ -1423,18 +1423,46 @@ describe(
         );
 
         expect(
-          screen.getByLabelText(
-            /^current address$/i
-          )
-        ).toHaveValue(
-          'MutualMatches'
-        );
+  screen.queryByLabelText(
+    /^current address$/i
+  )
+).not.toBeInTheDocument();
+
+expect(
+  screen.getByText(
+    /exact current residential address/i
+  )
+).toBeInTheDocument();
+
+expect(
+  screen.getByText(
+    /mutual match/i
+  )
+).toBeInTheDocument();
+
+expect(
+  screen.getByText(
+    /explicit contact access/i
+  )
+).toBeInTheDocument();
 
         expect(
-          screen.getByText(
-            /phone and email continue to require/i
-          )
-        ).toBeInTheDocument();
+  screen.getByText(
+    /exact current residential address/i
+  )
+).toBeInTheDocument();
+
+expect(
+  screen.getByText(
+    /mutual match/i
+  )
+).toBeInTheDocument();
+
+expect(
+  screen.getByText(
+    /explicit contact access/i
+  )
+).toBeInTheDocument();
       }
     );
   }

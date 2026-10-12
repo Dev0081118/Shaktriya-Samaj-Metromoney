@@ -99,12 +99,6 @@ const privacyOptions = {
     'AcceptedInterests',
     'MutualMatches',
     'Private'
-  ],
-
-  contactAddressVisibility: [
-    'AcceptedInterests',
-    'MutualMatches',
-    'Private'
   ]
 };
 
@@ -131,10 +125,7 @@ const privacyLabels = {
     'Family assets',
 
   astrologyVisibility:
-    'Birth & horoscope',
-
-  contactAddressVisibility:
-    'Contact address'
+    'Birth & horoscope'
 };
 
 const labelClass =
@@ -424,6 +415,14 @@ export default function SettingsPage({
                   ]
                 )
             );
+
+          /*
+           * Current address is always globally private.
+           * Access is granted per person through the
+           * explicit contact request/unlock flow.
+           */
+          privacyPayload.contactAddressVisibility =
+            'Private';
 
           await api(
             '/profiles/privacy',
@@ -904,10 +903,14 @@ export default function SettingsPage({
                 </h2>
 
                 <p className="text-[11px] leading-6 text-[#756a60]">
-                  Phone and email remain protected by
-                  the contact request and unlock flow.
-                  Exact date of birth is not shown to
-                  other members.
+                  Phone, email and your exact current
+                  residential address remain private.
+                  They are shared only with a specific
+                  member after the contact access request
+                  is approved and explicitly unlocked.
+                  A mutual match alone does not expose
+                  them. Exact date of birth is also hidden
+                  from other members.
                 </p>
 
                 {Object.entries(
@@ -965,6 +968,20 @@ export default function SettingsPage({
                     </label>
                   )
                 )}
+
+                <div className="border border-[#ddd0c1] bg-[#fffdf8] p-4">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#91683f]">
+                    Current Address
+                  </p>
+
+                  <p className="mt-2 text-[11px] leading-6 text-[#756a60]">
+                    Your address has no automatic
+                    visibility setting. You stay in
+                    control by approving contact access
+                    only for the specific member you want
+                    to share it with.
+                  </p>
+                </div>
 
                 <button className={primaryButtonClass}>
                   Save changes

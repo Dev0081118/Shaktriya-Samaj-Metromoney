@@ -558,21 +558,6 @@ const flatten =
           ?.state ||
         '',
 
-      city:
-        profile.location
-          ?.city ||
-        '',
-
-      district:
-        profile.location
-          ?.district ||
-        '',
-
-      state:
-        profile.location
-          ?.state ||
-        '',
-
       currentAddressLine1:
         currentAddress.addressLine1 ||
         '',
@@ -583,8 +568,6 @@ const flatten =
 
       currentAddressCity:
         currentAddress.city ||
-        profile.location
-          ?.city ||
         '',
 
       currentAddressTaluka:
@@ -593,14 +576,10 @@ const flatten =
 
       currentAddressDistrict:
         currentAddress.district ||
-        profile.location
-          ?.district ||
         '',
 
       currentAddressState:
         currentAddress.state ||
-        profile.location
-          ?.state ||
         '',
 
       currentAddressPincode:
@@ -941,11 +920,6 @@ const flatten =
           ?.astrologyVisibility ||
         'RegisteredMembers',
 
-      contactAddressVisibility:
-        profile.privacy
-          ?.contactAddressVisibility ||
-        'Private',
-
       familyAssets:
         profile.familyAssets ||
         {},
@@ -1068,18 +1042,26 @@ const profilePayload =
           data.maritalHistoryNotes
       },
 
+      /*
+       * Current city / district / state are intentionally
+       * cleared from the general profile location.
+       *
+       * Exact current location now exists only inside
+       * contactDetails.currentAddress so it can never
+       * leak through the public location object.
+       */
       location: {
         city:
-          data.city,
+          null,
 
         district:
-          data.district,
+          null,
 
         state:
-          data.state,
+          null,
 
         country:
-          'India',
+          null,
 
         nativePlace:
           data.nativePlace,
@@ -1103,19 +1085,16 @@ const profilePayload =
             data.currentAddressLine2,
 
           city:
-            data.currentAddressCity ||
-            data.city,
+            data.currentAddressCity,
 
           taluka:
             data.currentAddressTaluka,
 
           district:
-            data.currentAddressDistrict ||
-            data.district,
+            data.currentAddressDistrict,
 
           state:
-            data.currentAddressState ||
-            data.state,
+            data.currentAddressState,
 
           pincode:
             data.currentAddressPincode,
@@ -1337,9 +1316,12 @@ const profilePayload =
           data.astrologyVisibility ||
           'RegisteredMembers',
 
+        /*
+         * Address is never automatically shared through
+         * a global relationship rule.
+         */
         contactAddressVisibility:
-          data.contactAddressVisibility ||
-          'MutualMatches'
+          'Private'
       },
 
       biodataPrivacy: {
@@ -2233,9 +2215,6 @@ export default function OnboardingPage() {
 
               astrologyVisibility:
                 'RegisteredMembers',
-
-              contactAddressVisibility:
-                'MutualMatches',
 
               states:
                 [],
@@ -3662,80 +3641,27 @@ export default function OnboardingPage() {
                     )
                   }
                 />
-
-                <TextField
-                  label="Current City"
-                  value={
-                    data.city
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'city',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Current District"
-                  value={
-                    data.district
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'district',
-                      value
-                    )
-                  }
-                />
-
-                <SelectField
-                  label="Current State"
-                  value={
-                    data.state
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'state',
-                      value
-                    )
-                  }
-                  options={INDIA_STATES}
-                />
               </div>
             </div>
 
-            <div className={sensitiveClass}>
-              <div className="mb-5 flex items-start gap-3">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#681d2510] text-[#681d25]">
-                  <LockKeyhole
-                    size={
-                      16
-                    }
-                  />
-                </div>
+            <div className={sectionClass}>
+              <div className="mb-5">
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#91683f]">
+                  Current Address
+                </p>
 
-                <div>
-                  <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#681d25]">
-                    Current Address
-                  </p>
+                <h2 className="mt-1 font-['Cormorant_Garamond'] text-[28px] font-medium text-[#431318]">
+                  Residential Address
+                </h2>
 
-                  <p className="mt-1 max-w-[600px] text-[10px] leading-5 text-[#756a60]">
-                    Your exact residential address is
-                    protected information. By default it
-                    can be viewed only after a mutual
-                    match. An explicit contact unlock can
-                    also grant access. Your phone number
-                    continues to use the existing secure
-                    contact-unlock flow.
-                  </p>
-                </div>
+                <p className="mt-2 text-[10px] leading-5 text-[#756a60]">
+                  Your exact address stays private.
+                  It is not automatically revealed after
+                  an interest or mutual match. It is shared
+                  only with a specific member after the
+                  contact access is explicitly approved
+                  and unlocked.
+                </p>
               </div>
 
               <div className={gridClass}>
@@ -3776,10 +3702,6 @@ export default function OnboardingPage() {
                   value={
                     data.currentAddressCity
                   }
-                  placeholder={
-                    data.city ||
-                    'City'
-                  }
                   onChange={(
                     value
                   ) =>
@@ -3809,10 +3731,6 @@ export default function OnboardingPage() {
                   label="Address District"
                   value={
                     data.currentAddressDistrict
-                  }
-                  placeholder={
-                    data.district ||
-                    'District'
                   }
                   onChange={(
                     value
@@ -5343,38 +5261,18 @@ export default function OnboardingPage() {
                     'Private'
                   ]}
                 />
-
-                <PrivacySelect
-                  label="Current Address"
-                  value={
-                    data.contactAddressVisibility
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'contactAddressVisibility',
-                      value
-                    )
-                  }
-                  options={[
-                    'MutualMatches',
-                    'Private'
-                  ]}
-                />
               </div>
 
-              <div className="mt-5 border border-[#d8c6b3] bg-[#f8f3ec] p-4 text-[10px] leading-5 text-[#756a60]">
+              <div className="mt-5 border border-[#ddd0c1] bg-[#fffdf8] p-4 text-[10px] leading-5 text-[#756a60]">
                 <strong className="text-[#431318]">
                   Protected automatically:
                 </strong>{' '}
                 exact date of birth is hidden from other
-                members; previous-marriage details are
-                restricted by relationship context;
-                current residential address is protected
-                by the address privacy rule; phone and
-                email continue to require the secure
-                contact-request / unlock flow.
+                members. Your exact current residential
+                address, phone number and email are not
+                automatically revealed by a mutual match.
+                They require the explicit contact access
+                and unlock flow for that specific member.
               </div>
             </div>
 

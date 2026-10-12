@@ -342,8 +342,7 @@ const removeBirthAndAstrologyDetails =
 const sanitizeContactDetails =
   (
     profileObject,
-    context,
-    privacy
+    context
   ) => {
     if (
       !profileObject
@@ -352,39 +351,22 @@ const sanitizeContactDetails =
       return;
     }
 
-    const contactRule =
-      privacy
-        .contactAddressVisibility ||
-      'Private';
-
     /*
-     * Exact address is sensitive.
+     * Exact residential address is NEVER
+     * automatically exposed because of:
      *
-     * It may become visible when:
+     * - registered membership
+     * - accepted interest
+     * - mutual match
      *
-     * 1. the configured relationship rule allows it,
-     *    for example MutualMatches, OR
+     * It requires the explicit contact-request
+     * approval + unlock flow for this exact viewer.
      *
-     * 2. this specific viewer has explicitly completed
-     *    the accepted contact unlock flow.
-     *
-     * This means an explicit per-person unlock can
-     * override a global "Private" address setting,
-     * while the address still remains invisible to
-     * everybody else.
+     * Owner and privileged staff are handled before
+     * this function is reached.
      */
-    const relationshipAllowed =
-      allowed(
-        contactRule,
-        context
-      );
-
-    const explicitlyUnlocked =
-      !!context.contactUnlocked;
-
     if (
-      !relationshipAllowed &&
-      !explicitlyUnlocked
+      !context.contactUnlocked
     ) {
       delete profileObject
         .contactDetails;
@@ -556,29 +538,21 @@ export async function serializeProfileForViewer(
     }
 
     /*
-     * Exact residential address:
+     * Exact address requires explicit
+     * contact access for this viewer.
      *
-     * - obeys contactAddressVisibility
-     * - MutualMatches reveals it to an actual match
-     * - explicit contact unlock can reveal it to the
-     *   specific approved viewer
+     * A mutual match alone is not sufficient.
      */
     sanitizeContactDetails(
       p,
-      context,
-      privacy
+      context
     );
 
     delete p.biodataPrivacy;
 
     /*
-     * Account phone/email keep the existing,
-     * stricter contact-unlock behavior.
-     *
-     * We intentionally do NOT automatically reveal
-     * phone/email merely because two profiles matched.
-     * This preserves the existing contact entitlement
-     * and unlock workflow.
+     * Phone and email use the same explicit
+     * contact unlock requirement.
      */
     if (
       context.contactUnlocked &&
