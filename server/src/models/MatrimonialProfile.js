@@ -1704,57 +1704,462 @@ const schema =
       /* ------------------------------------------------------------------ */
 
       familyAssets: {
-        agricultureLand: {
-          hasLand:
-            Boolean,
+  agricultureLand: {
+    hasLand:
+      Boolean,
 
-          approximateArea: {
-            type:
-              Number,
+    approximateArea: {
+      type:
+        Number,
 
-            min:
-              0,
+      min:
+        0,
 
-            max:
-              1000000
-          },
+      max:
+        1000000
+    },
 
-          unit: {
-            type:
-              String,
+    unit: {
+      type:
+        String,
 
-            enum: [
-              'Vigha',
-              'Acre',
-              'Hectare'
-            ]
-          }
-        },
+      enum: [
+        'Vigha',
+        'Acre',
+        'Hectare'
+      ]
+    },
 
-        propertySummary: {
+    village: {
+      type:
+        String,
+
+      trim:
+        true,
+
+      maxlength:
+        120
+    },
+
+    taluka: {
+      type:
+        String,
+
+      trim:
+        true,
+
+      maxlength:
+        120
+    },
+
+    district: {
+      type:
+        String,
+
+      trim:
+        true,
+
+      maxlength:
+        120
+    },
+
+    state: {
+      type:
+        String,
+
+      trim:
+        true,
+
+      maxlength:
+        120
+    },
+
+    landType: {
+      type:
+        String,
+
+      trim:
+        true,
+
+      maxlength:
+        80
+    },
+
+    ownershipType: {
+      type:
+        String,
+
+      trim:
+        true,
+
+      maxlength:
+        80
+    },
+
+    notes: {
+      type:
+        String,
+
+      trim:
+        true,
+
+      maxlength:
+        500
+    }
+  },
+
+  residentialProperties: {
+    type: [
+      {
+        propertyName: {
           type:
             String,
+
+          trim:
+            true,
 
           maxlength:
-            500
+            160
         },
 
-        primaryResidenceType: {
+        propertyType: {
           type:
             String,
+
+          trim:
+            true,
 
           maxlength:
             100
         },
 
-        businessAssetsSummary: {
+        ownershipType: {
           type:
             String,
+
+          trim:
+            true,
+
+          maxlength:
+            80
+        },
+
+        cityVillage: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            120
+        },
+
+        district: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            120
+        },
+
+        state: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            120
+        },
+
+        approximateArea: {
+          type:
+            Number,
+
+          min:
+            0,
+
+          max:
+            100000000
+        },
+
+        areaUnit: {
+          type:
+            String,
+
+          enum: [
+            'Sq Ft',
+            'Sq Yard',
+            'Vigha',
+            'Acre',
+            'Hectare'
+          ]
+        },
+
+        isPrimaryResidence: {
+          type:
+            Boolean,
+
+          default:
+            false
+        },
+
+        notes: {
+          type:
+            String,
+
+          trim:
+            true,
 
           maxlength:
             500
         }
-      },
+      }
+    ],
+
+    validate: [
+      (
+        value
+      ) =>
+        value.length <=
+        10,
+
+      'A maximum of 10 residential properties is supported.'
+    ]
+  },
+
+  otherProperties: {
+    type: [
+      {
+        propertyName: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            160
+        },
+
+        propertyType: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            100
+        },
+
+        ownershipType: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            80
+        },
+
+        cityVillage: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            120
+        },
+
+        district: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            120
+        },
+
+        state: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            120
+        },
+
+        approximateArea: {
+          type:
+            Number,
+
+          min:
+            0,
+
+          max:
+            100000000
+        },
+
+        areaUnit: {
+          type:
+            String,
+
+          enum: [
+            'Sq Ft',
+            'Sq Yard',
+            'Vigha',
+            'Acre',
+            'Hectare'
+          ]
+        },
+
+        notes: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            500
+        }
+      }
+    ],
+
+    validate: [
+      (
+        value
+      ) =>
+        value.length <=
+        15,
+
+      'A maximum of 15 other properties is supported.'
+    ]
+  },
+
+  businessAssets: {
+    type: [
+      {
+        assetName: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            180
+        },
+
+        assetType: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            120
+        },
+
+        ownershipType: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            80
+        },
+
+        location: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            200
+        },
+
+        description: {
+          type:
+            String,
+
+          trim:
+            true,
+
+          maxlength:
+            600
+        }
+      }
+    ],
+
+    validate: [
+      (
+        value
+      ) =>
+        value.length <=
+        10,
+
+      'A maximum of 10 business assets is supported.'
+    ]
+  },
+
+  assetSummary: {
+    type:
+      String,
+
+    trim:
+      true,
+
+    maxlength:
+      1000
+  },
+
+  /*
+   * Legacy fields retained so old
+   * profile records continue working.
+   */
+  propertySummary: {
+    type:
+      String,
+
+    maxlength:
+      500
+  },
+
+  primaryResidenceType: {
+    type:
+      String,
+
+    maxlength:
+      100
+  },
+
+  businessAssetsSummary: {
+    type:
+      String,
+
+    maxlength:
+      500
+  }
+},
 
       /* ------------------------------------------------------------------ */
       /* Biodata controls                                                   */

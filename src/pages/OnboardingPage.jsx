@@ -13,6 +13,7 @@ import {
   useState
 } from 'react';
 
+
 import {
   useNavigate
 } from 'react-router-dom';
@@ -29,6 +30,8 @@ import {
   api,
   assetUrl
 } from '../services/api';
+
+import FamilyAssetsEditor from '../components/FamilyAssetsEditor';
 
 import {
   BLOOD_GROUP_OPTIONS,
@@ -832,11 +835,20 @@ const flatten = (
       'MutualMatches',
 
     incomeVisibility:
-      profile.privacy
-        ?.incomeVisibility ||
-      'Private',
+  profile.privacy
+    ?.incomeVisibility ||
+  'Private',
 
-    includeSensitiveFamilyDetailsInBiodata:
+assetVisibility:
+  profile.privacy
+    ?.assetVisibility ||
+  'Private',
+
+familyAssets:
+  profile.familyAssets ||
+  {},
+
+includeSensitiveFamilyDetailsInBiodata:
       !!profile
         .biodataPrivacy
         ?.includeSensitiveFamilyDetailsInBiodata,
@@ -1076,36 +1088,40 @@ const profilePayload = (
     },
 
     family: {
-      fatherName:
-        data.fatherName,
+  fatherName:
+    data.fatherName,
 
-      fatherOccupation:
-        data.fatherOccupation,
+  fatherOccupation:
+    data.fatherOccupation,
 
-      motherName:
-        data.motherName,
+  motherName:
+    data.motherName,
 
-      motherOccupation:
-        data.motherOccupation,
+  motherOccupation:
+    data.motherOccupation,
 
-      siblingDetails:
-        data.siblingDetails ||
-        [],
+  siblingDetails:
+    data.siblingDetails ||
+    [],
 
-      familyType:
-        data.familyType,
+  familyType:
+    data.familyType,
 
-      familyValues:
-        data.familyValues,
+  familyValues:
+    data.familyValues,
 
-      familyLocation:
-        data.familyLocation,
+  familyLocation:
+    data.familyLocation,
 
-      familyDescription:
-        data.familyDescription
-    },
+  familyDescription:
+    data.familyDescription
+},
 
-    maternalFamily: {
+familyAssets:
+  data.familyAssets ||
+  {},
+
+maternalFamily: {
       maternalGrandfatherName:
         data.maternalGrandfatherName,
 
@@ -1177,9 +1193,13 @@ const profilePayload = (
         'MutualMatches',
 
       incomeVisibility:
-        data.incomeVisibility ||
-        'Private'
-    },
+  data.incomeVisibility ||
+  'Private',
+
+assetVisibility:
+  data.assetVisibility ||
+  'Private'
+},
 
     biodataPrivacy: {
       includeSensitiveFamilyDetailsInBiodata:
@@ -4213,6 +4233,34 @@ export default function OnboardingPage() {
                 }
               )}
             </div>
+            <FamilyAssetsEditor
+  value={
+    data.familyAssets
+  }
+  onChange={(
+    value
+  ) =>
+    update(
+      'familyAssets',
+      value
+    )
+  }
+  visibility={
+    data.assetVisibility ||
+    'Private'
+  }
+  onVisibilityChange={(
+    value
+  ) =>
+    update(
+      'assetVisibility',
+      value
+    )
+  }
+  stateOptions={
+    INDIA_STATES
+  }
+/>
           </div>
         )}
 

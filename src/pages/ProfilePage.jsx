@@ -32,6 +32,8 @@ import {
   assetUrl
 } from '../services/api';
 
+import FamilyAssetsDisplay from '../components/FamilyAssetsDisplay';
+
 const primaryButtonClass =
   'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318] disabled:cursor-not-allowed disabled:opacity-55';
 
@@ -2098,64 +2100,12 @@ export default function ProfilePage({
             </Section>
           )}
 
-        {profile.familyAssets && (
-          <Section
-            eyebrow="Private family information"
-            title="Family assets"
-          >
-            <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1">
-              <Detail
-                label="Primary residence"
-                value={
-                  profile
-                    .familyAssets
-                    .primaryResidenceType
-                }
-              />
-
-              {profile.familyAssets
-                .agricultureLand
-                ?.hasLand && (
-                <Detail
-                  label="Agricultural land"
-                  value={
-                    joinValues(
-                      [
-                        profile
-                          .familyAssets
-                          .agricultureLand
-                          .approximateArea,
-                        profile
-                          .familyAssets
-                          .agricultureLand
-                          .unit
-                      ],
-                      ' '
-                    )
-                  }
-                />
-              )}
-
-              <Detail
-                label="Property summary"
-                value={
-                  profile
-                    .familyAssets
-                    .propertySummary
-                }
-              />
-
-              <Detail
-                label="Business assets"
-                value={
-                  profile
-                    .familyAssets
-                    .businessAssetsSummary
-                }
-              />
-            </div>
-          </Section>
-        )}
+        <FamilyAssetsDisplay
+  assets={
+    profile.familyAssets
+  }
+  mode="profile"
+/>
 
         <Section
           eyebrow="Lifestyle"

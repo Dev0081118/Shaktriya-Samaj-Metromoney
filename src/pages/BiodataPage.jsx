@@ -19,6 +19,8 @@ import {
   assetUrl
 } from '../services/api';
 
+import FamilyAssetsDisplay from '../components/FamilyAssetsDisplay';
+
 const notShared =
   'Not shared';
 
@@ -1357,64 +1359,14 @@ export default function BiodataPage() {
             </Section>
           )}
 
-        {includeAssets &&
-          profile.familyAssets && (
-            <Section
-              title="Family Assets"
-            >
-              <dl className="grid grid-cols-2 gap-x-8 gap-y-5 max-[600px]:grid-cols-1">
-                <Field
-                  label="Primary Residence"
-                  value={
-                    profile
-                      .familyAssets
-                      .primaryResidenceType
-                  }
-                />
-
-                {profile.familyAssets
-                  .agricultureLand
-                  ?.hasLand && (
-                  <Field
-                    label="Agricultural Land"
-                    value={
-                      joinValues(
-                        [
-                          profile
-                            .familyAssets
-                            .agricultureLand
-                            .approximateArea,
-                          profile
-                            .familyAssets
-                            .agricultureLand
-                            .unit
-                        ],
-                        ' '
-                      )
-                    }
-                  />
-                )}
-
-                <Field
-                  label="Property Summary"
-                  value={
-                    profile
-                      .familyAssets
-                      .propertySummary
-                  }
-                />
-
-                <Field
-                  label="Business Assets"
-                  value={
-                    profile
-                      .familyAssets
-                      .businessAssetsSummary
-                  }
-                />
-              </dl>
-            </Section>
-          )}
+        {includeAssets && (
+  <FamilyAssetsDisplay
+    assets={
+      profile.familyAssets
+    }
+    mode="biodata"
+  />
+)}
 
         <Section
           title="About"

@@ -687,16 +687,24 @@ const profilePayload =
     }
 
     setNestedIfPresent(
-      safe,
-      body,
-      'familyAssets',
-      [
-        'agricultureLand',
-        'propertySummary',
-        'primaryResidenceType',
-        'businessAssetsSummary'
-      ]
-    );
+  safe,
+  body,
+  'familyAssets',
+  [
+    'agricultureLand',
+    'residentialProperties',
+    'otherProperties',
+    'businessAssets',
+    'assetSummary',
+
+    /*
+     * Legacy support.
+     */
+    'propertySummary',
+    'primaryResidenceType',
+    'businessAssetsSummary'
+  ]
+);
 
     setNestedIfPresent(
       safe,
