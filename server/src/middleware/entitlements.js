@@ -1,31 +1,99 @@
 import MatrimonialProfile from '../models/MatrimonialProfile.js';
-import { Interest } from '../models/Interaction.js';
+
 import {
-  getUserEntitlements,
-  entitlementPeriod
+  Interest
+} from '../models/Interaction.js';
+
+import {
+  entitlementPeriod,
+  getUserEntitlements
 } from '../services/entitlementService.js';
-import { ApiError } from '../utils/http.js';
-export async function requireInterestAllowance(req, _res, next) {
+
+import {
+  ApiError
+} from '../utils/http.js';
+
+export async function requireInterestAllowance(
+  req,
+  _res,
+  next
+) {
   try {
-    const entitlements = await getUserEntitlements(req.user.id),
-      limit = entitlements.interestLimit ?? 0;
-    if (limit >= 999) return next();
-    const profile = await MatrimonialProfile.findOne({
-      userId: req.user.id
-    }).select('_id');
-    if (!profile) throw new ApiError(404, 'Create your profile first.');
-    const { periodStart, periodEnd } = entitlementPeriod(entitlements),
-      used = await Interest.countDocuments({
-        senderProfile: profile._id,
-        createdAt: { $gte: periodStart, $lt: periodEnd }
+    const entitlements =
+      await getUserEntitlements(
+        req.user.id
+      );
+
+    const limit =
+      entitlements.interestLimit ??
+      0;
+
+    if (
+      limit >=
+      999
+    ) {
+      return next();
+    }
+
+    const profile =
+      await MatrimonialProfile.findOne({
+        userId:
+          req.user.id
+      }).select(
+        '_id'
+      );
+
+    if (
+      !profile
+    ) {
+      throw new ApiError(
+        404,
+        'Create your profile first.'
+      );
+    }
+
+    const {
+      periodStart,
+      periodEnd
+    } =
+      entitlementPeriod(
+        entitlements
+      );
+
+    const used =
+      await Interest.countDocuments({
+        senderProfile:
+          profile._id,
+
+        createdAt: {
+          $gte:
+            periodStart,
+
+          $lt:
+            periodEnd
+        }
       });
-    if (used >= limit)
-      throw new ApiError(403, "Your plan's interest limit has been reached.");
+
+    if (
+      used >=
+      limit
+    ) {
+      throw new ApiError(
+        403,
+        "Your plan's interest limit has been reached."
+      );
+    }
+
     next();
-  } catch (error) {
-    next(error);
+  } catch (
+    error
+  ) {
+    next(
+      error
+    );
   }
 }
+
 const advancedKeys = [
   'education',
   'occupation',
@@ -33,28 +101,63 @@ const advancedKeys = [
   'heightMax',
   'verified',
   'withPhoto',
-  'community',
+  'clan',
+  'gotra',
+  'vansh',
   'diet'
 ];
-export async function requireAdvancedSearch(req, _res, next) {
+
+export async function requireAdvancedSearch(
+  req,
+  _res,
+  next
+) {
   try {
+    const usesAdvancedSearch =
+      advancedKeys.some(
+        (
+          key
+        ) =>
+          req.query[
+            key
+          ] !==
+            undefined &&
+          req.query[
+            key
+          ] !==
+            '' &&
+          req.query[
+            key
+          ] !==
+            'false'
+      );
+
     if (
-      !advancedKeys.some(
-        (key) =>
-          req.query[key] !== undefined &&
-          req.query[key] !== '' &&
-          req.query[key] !== 'false'
-      )
-    )
+      !usesAdvancedSearch
+    ) {
       return next();
-    const entitlements = await getUserEntitlements(req.user.id);
-    if (!entitlements.advancedSearch)
+    }
+
+    const entitlements =
+      await getUserEntitlements(
+        req.user.id
+      );
+
+    if (
+      !entitlements.advancedSearch
+    ) {
       throw new ApiError(
         403,
         'Advanced search is available with Connect membership or above.'
       );
+    }
+
     next();
-  } catch (error) {
-    next(error);
+  } catch (
+    error
+  ) {
+    next(
+      error
+    );
   }
 }

@@ -17,43 +17,45 @@ import {
   assetUrl
 } from '../../services/api';
 
-const displayLocation = (
-  profile
-) => {
-  const nativeDistrict =
-    profile.location
-      ?.nativeDistrict;
+const displayLocation =
+  (
+    profile
+  ) => {
+    const nativeDistrict =
+      profile.location
+        ?.nativeDistrict;
 
-  const nativeState =
-    profile.location
-      ?.nativeState;
+    const nativeState =
+      profile.location
+        ?.nativeState;
 
-  if (
-    nativeDistrict &&
-    nativeState
-  ) {
-    return `${nativeDistrict}, ${nativeState}`;
-  }
+    if (
+      nativeDistrict &&
+      nativeState
+    ) {
+      return `${nativeDistrict}, ${nativeState}`;
+    }
 
-  if (
-    nativeDistrict
-  ) {
-    return nativeDistrict;
-  }
+    if (
+      nativeDistrict
+    ) {
+      return nativeDistrict;
+    }
 
-  if (
-    nativeState
-  ) {
-    return nativeState;
-  }
+    if (
+      nativeState
+    ) {
+      return nativeState;
+    }
 
-  return '';
-};
+    return '';
+  };
 
 export default function ProfileCard({
   profile,
   onShortlist,
-  onInterest
+  onInterest,
+  allowUnshortlist = false
 }) {
   const {
     t
@@ -88,9 +90,13 @@ export default function ProfileCard({
       ? `/profile/${profile.profileId}`
       : '#';
 
+  const shortlistDisabled =
+    shortlisted &&
+    !allowUnshortlist;
+
   return (
     <article className="group overflow-hidden border border-[#ddd0c1] bg-[#fffdf8] transition duration-200 hover:-translate-y-[2px] hover:border-[#c8b29b] hover:shadow-[0_16px_40px_rgba(67,19,24,0.07)]">
-      <div className="relative h-[380px] overflow-hidden max-[767px]:h-[430px]">
+      <div className="relative h-[360px] overflow-hidden max-[767px]:h-[430px]">
         {profile.profilePhoto ? (
           <img
             src={
@@ -131,16 +137,18 @@ export default function ProfileCard({
         <button
           type="button"
           disabled={
-            shortlisted
+            shortlistDisabled
           }
           className={`absolute right-[14px] top-[14px] grid h-10 w-10 place-items-center rounded-full transition ${
             shortlisted
-              ? 'cursor-default bg-[#681d25] text-white'
+              ? allowUnshortlist
+                ? 'bg-[#681d25] text-white hover:bg-[#431318]'
+                : 'cursor-default bg-[#681d25] text-white'
               : 'bg-[#211817b5] text-white hover:bg-[#681d25]'
           }`}
           onClick={() => {
             if (
-              !shortlisted
+              !shortlistDisabled
             ) {
               onShortlist?.(
                 profile
@@ -149,33 +157,33 @@ export default function ProfileCard({
           }}
           aria-label={
             shortlisted
-              ? 'Profile shortlisted'
+              ? allowUnshortlist
+                ? 'Remove from shortlist'
+                : 'Profile shortlisted'
               : t(
                   'actions.shortlist'
                 )
           }
           title={
             shortlisted
-              ? 'Shortlisted'
+              ? allowUnshortlist
+                ? 'Remove from shortlist'
+                : 'Shortlisted'
               : t(
                   'actions.shortlist'
                 )
           }
         >
-          {shortlisted ? (
-            <Bookmark
-              size={
-                18
-              }
-              fill="currentColor"
-            />
-          ) : (
-            <Bookmark
-              size={
-                18
-              }
-            />
-          )}
+          <Bookmark
+            size={
+              18
+            }
+            fill={
+              shortlisted
+                ? 'currentColor'
+                : 'none'
+            }
+          />
         </button>
 
         {score !==
@@ -200,57 +208,49 @@ export default function ProfileCard({
       </div>
 
       <div className="p-5">
-        <div>
-          <h3 className="font-['Cormorant_Garamond'] text-[31px] font-medium leading-none text-[#2c1a18]">
-            {name}
-          </h3>
+        <h3 className="font-['Cormorant_Garamond'] text-[31px] font-medium leading-none text-[#2c1a18]">
+          {name}
+        </h3>
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#756a60]">
-            {profile.age !==
-              undefined &&
-              profile.age !==
-                null && (
-                <span>
-                  {profile.age}{' '}
-                  {t(
-                    'profile.years'
-                  )}
-                </span>
-              )}
-
-            {profile.height && (
-              <>
-                <span
-                  aria-hidden="true"
-                  className="text-[#c0afa0]"
-                >
-                  •
-                </span>
-
-                <span>
-                  {
-                    profile.height
-                  }{' '}
-                  cm
-                </span>
-              </>
+        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#756a60]">
+          {profile.age !==
+            undefined &&
+            profile.age !==
+              null && (
+              <span>
+                {profile.age}{' '}
+                {t(
+                  'profile.years'
+                )}
+              </span>
             )}
 
-            {location && (
-              <>
-                <span
-                  aria-hidden="true"
-                  className="text-[#c0afa0]"
-                >
-                  •
-                </span>
+          {profile.height && (
+            <>
+              <span className="text-[#c0afa0]">
+                •
+              </span>
 
-                <span>
-                  {location}
-                </span>
-              </>
-            )}
-          </div>
+              <span>
+                {
+                  profile.height
+                }{' '}
+                cm
+              </span>
+            </>
+          )}
+
+          {location && (
+            <>
+              <span className="text-[#c0afa0]">
+                •
+              </span>
+
+              <span>
+                {location}
+              </span>
+            </>
+          )}
         </div>
 
         <div className="mt-4 grid gap-2 border-y border-[#e9dfd4] py-4">
@@ -366,9 +366,7 @@ export default function ProfileCard({
             {interestAccepted
               ? 'Interest Accepted'
               : interestSent
-                ? t(
-                    'member.interestSent'
-                  )
+                ? 'Interest Sent'
                 : t(
                     'actions.expressInterest'
                   )}

@@ -1056,7 +1056,9 @@ export const discover =
             req.user.id
         });
 
-      if (!mine) {
+      if (
+        !mine
+      ) {
         throw new ApiError(
           404,
           'Create your profile first.'
@@ -1069,31 +1071,37 @@ export const discover =
             mine._id
         });
 
-      const myBlocked =
-        await Block.find({
-          user:
-            req.user.id
-        }).distinct(
-          'blockedProfile'
-        );
+      const [
+        myBlocked,
+        blockedByUsers
+      ] =
+        await Promise.all([
+          Block.find({
+            user:
+              req.user.id
+          }).distinct(
+            'blockedProfile'
+          ),
 
-      const blockedByUsers =
-        await Block.find({
-          blockedProfile:
-            mine._id
-        }).distinct(
-          'user'
-        );
+          Block.find({
+            blockedProfile:
+              mine._id
+          }).distinct(
+            'user'
+          )
+        ]);
 
       const blockedByProfiles =
-        await MatrimonialProfile.find({
-          userId: {
-            $in:
-              blockedByUsers
-          }
-        }).distinct(
-          '_id'
-        );
+        blockedByUsers.length
+          ? await MatrimonialProfile.find({
+              userId: {
+                $in:
+                  blockedByUsers
+              }
+            }).distinct(
+              '_id'
+            )
+          : [];
 
       const requestedGender =
         req.query
@@ -1102,7 +1110,7 @@ export const discover =
           ?.preferredGender ||
         (
           mine.gender ===
-            'Male'
+          'Male'
             ? 'Female'
             : mine.gender ===
                 'Female'
@@ -1119,73 +1127,92 @@ export const discover =
 
         _id: {
           $nin: [
+            mine._id,
             ...myBlocked,
-            ...blockedByProfiles,
-            mine._id
+            ...blockedByProfiles
           ]
         },
 
-        ...(
-          requestedGender
-            ? {
-                gender:
-                  requestedGender
-              }
-            : {}
-        )
+        ...(requestedGender
+          ? {
+              gender:
+                requestedGender
+            }
+          : {})
       };
 
+      /*
+       * Discovery intentionally uses public/native
+       * matrimonial profile context.
+       *
+       * Exact current residential address is private
+       * and is never searchable here.
+       */
       if (
         req.query.search
       ) {
         query.$or = [
           'firstName',
+          'middleName',
           'lastName',
-          'location.city',
-          'location.state',
           'location.nativePlace',
+          'location.nativeDistrict',
+          'location.nativeState',
           'community.clan',
           'community.gotra',
+          'community.vansh',
           'education.highestEducation',
-          'career.occupation'
+          'education.degree',
+          'career.occupation',
+          'career.designation'
         ].map(
-          (key) => ({
+          (
+            key
+          ) => ({
             [key]:
               escapedRegex(
-                req.query
-                  .search
+                req.query.search
               )
           })
         );
       }
 
+      const textFilters = {
+        district:
+          'location.nativeDistrict',
+
+        state:
+          'location.nativeState',
+
+        education:
+          'education.highestEducation',
+
+        occupation:
+          'career.occupation',
+
+        maritalStatus:
+          'maritalStatus',
+
+        clan:
+          'community.clan',
+
+        gotra:
+          'community.gotra',
+
+        vansh:
+          'community.vansh',
+
+        diet:
+          'lifestyle.diet'
+      };
+
       for (
         const [
           param,
           fieldPath
-        ]
-        of Object.entries({
-          city:
-            'location.city',
-
-          state:
-            'location.state',
-
-          education:
-            'education.highestEducation',
-
-          occupation:
-            'career.occupation',
-
-          maritalStatus:
-            'maritalStatus',
-
-          community:
-            'community.name',
-
-          diet:
-            'lifestyle.diet'
-        })
+        ] of Object.entries(
+          textFilters
+        )
       ) {
         if (
           req.query[
@@ -1201,84 +1228,127 @@ export const discover =
         }
       }
 
+      const heightMin =
+        Number(
+          req.query
+            .heightMin
+        );
+
+      const heightMax =
+        Number(
+          req.query
+            .heightMax
+        );
+
       if (
-        req.query.heightMin ||
-        req.query.heightMax
+        Number.isFinite(
+          heightMin
+        ) ||
+        Number.isFinite(
+          heightMax
+        )
       ) {
         query.height = {
-          ...(
-            req.query.heightMin
-              ? {
-                  $gte:
-                    Number(
-                      req.query
-                        .heightMin
-                    )
-                }
-              : {}
-          ),
-
-          ...(
-            req.query.heightMax
-              ? {
-                  $lte:
-                    Number(
-                      req.query
-                        .heightMax
-                    )
-                }
-              : {}
+          ...(Number.isFinite(
+            heightMin
           )
+            ? {
+                $gte:
+                  heightMin
+              }
+            : {}),
+
+          ...(Number.isFinite(
+            heightMax
+          )
+            ? {
+                $lte:
+                  heightMax
+              }
+            : {})
         };
       }
 
+      const ageMin =
+        Number(
+          req.query
+            .ageMin
+        );
+
+      const ageMax =
+        Number(
+          req.query
+            .ageMax
+        );
+
       if (
-        req.query.ageMin ||
-        req.query.ageMax
+        Number.isFinite(
+          ageMin
+        ) ||
+        Number.isFinite(
+          ageMax
+        )
       ) {
         const now =
           new Date();
 
-        query.dateOfBirth = {
-          ...(
-            req.query.ageMax
-              ? {
-                  $gte:
-                    new Date(
-                      now.getFullYear() -
-                        Number(
-                          req.query
-                            .ageMax
-                        ) -
-                        1,
+        const dateOfBirth = {};
 
-                      now.getMonth(),
-
-                      now.getDate()
-                    )
-                }
-              : {}
-          ),
-
-          ...(
-            req.query.ageMin
-              ? {
-                  $lte:
-                    new Date(
-                      now.getFullYear() -
-                        Number(
-                          req.query
-                            .ageMin
-                        ),
-
-                      now.getMonth(),
-
-                      now.getDate()
-                    )
-                }
-              : {}
+        /*
+         * Age >= minimum age:
+         * DOB must be on or before today minus ageMin.
+         */
+        if (
+          Number.isFinite(
+            ageMin
           )
-        };
+        ) {
+          const youngest =
+            new Date(
+              now
+            );
+
+          youngest.setFullYear(
+            now.getFullYear() -
+              ageMin
+          );
+
+          dateOfBirth.$lte =
+            youngest;
+        }
+
+        /*
+         * Age <= maximum age:
+         * DOB must be after the day representing
+         * maximumAge + 1 years ago.
+         */
+        if (
+          Number.isFinite(
+            ageMax
+          )
+        ) {
+          const oldest =
+            new Date(
+              now
+            );
+
+          oldest.setFullYear(
+            now.getFullYear() -
+              ageMax -
+              1
+          );
+
+          oldest.setDate(
+            oldest.getDate() +
+              1
+          );
+
+          dateOfBirth.$gte =
+            oldest;
+        }
+
+        query.dateOfBirth =
+          dateOfBirth;
       }
 
       if (
@@ -1343,6 +1413,9 @@ export const discover =
                 -1,
 
               lastActiveAt:
+                -1,
+
+              updatedAt:
                 -1
             })
             .skip(
@@ -1361,76 +1434,153 @@ export const discover =
           )
         ]);
 
-      const shortlisted =
-        await Shortlist.find({
-          userProfile:
-            mine._id
-        }).distinct(
-          'shortlistedProfile'
+      const foundIds =
+        found.map(
+          (
+            profile
+          ) =>
+            profile._id
         );
 
-      const pending =
-        await Interest.find({
-          senderProfile:
-            mine._id,
+      const [
+        shortlisted,
+        interests
+      ] =
+        foundIds.length
+          ? await Promise.all([
+              Shortlist.find({
+                userProfile:
+                  mine._id,
 
-          status:
-            'Pending'
-        }).distinct(
-          'receiverProfile'
-        );
-
-      const data =
-        await Promise.all(
-          found.map(
-            async (
-              profile
-            ) => ({
-              ...profileCard(
-                await serializeProfileForViewer(
-                  profile,
-                  req.user
-                ),
-
-                calculateCompatibility(
-                  mine,
-                  myPreference,
-                  profile,
-                  await PartnerPreference.findOne({
-                    profileId:
-                      profile._id
-                  })
-                )
+                shortlistedProfile: {
+                  $in:
+                    foundIds
+                }
+              }).select(
+                'shortlistedProfile'
               ),
 
-              shortlisted:
-                shortlisted.some(
-                  (id) =>
-                    id.equals(
-                      profile._id
-                    )
-                ),
+              Interest.find({
+                senderProfile:
+                  mine._id,
 
-              interestSent:
-                pending.some(
-                  (id) =>
-                    id.equals(
-                      profile._id
-                    )
-                )
-            })
+                receiverProfile: {
+                  $in:
+                    foundIds
+                },
+
+                status: {
+                  $in: [
+                    'Pending',
+                    'Accepted'
+                  ]
+                }
+              }).select(
+                'receiverProfile status'
+              )
+            ])
+          : [
+              [],
+              []
+            ];
+
+      const shortlistSet =
+        new Set(
+          shortlisted.map(
+            (
+              item
+            ) =>
+              String(
+                item.shortlistedProfile
+              )
           )
+        );
+
+      const interestMap =
+        new Map(
+          interests.map(
+            (
+              item
+            ) => [
+              String(
+                item.receiverProfile
+              ),
+
+              item.status
+            ]
+          )
+        );
+
+      /*
+       * Discover intentionally does not calculate or
+       * rank by compatibility yet.
+       *
+       * That logic belongs to the dedicated matching /
+       * recommendation engine so discovery does not
+       * expose a misleading temporary score.
+       */
+      const profiles =
+        (
+          await Promise.all(
+            found.map(
+              async (
+                profile
+              ) => {
+                const serialized =
+                  await serializeProfileForViewer(
+                    profile,
+                    req.user
+                  );
+
+                if (
+                  !serialized
+                ) {
+                  return null;
+                }
+
+                const id =
+                  String(
+                    profile._id
+                  );
+
+                return {
+                  ...profileCard(
+                    serialized
+                  ),
+
+                  shortlisted:
+                    shortlistSet.has(
+                      id
+                    ),
+
+                  interestSent:
+                    interestMap.has(
+                      id
+                    ),
+
+                  interestStatus:
+                    interestMap.get(
+                      id
+                    ) ||
+                    null
+                };
+              }
+            )
+          )
+        ).filter(
+          Boolean
         );
 
       ok(
         res,
         {
-          profiles:
-            data,
+          profiles,
 
           pagination: {
             page,
+
             limit,
+
             total,
 
             totalPages:
@@ -1443,7 +1593,6 @@ export const discover =
       );
     }
   );
-
 export const getOne =
   asyncHandler(
     async (
