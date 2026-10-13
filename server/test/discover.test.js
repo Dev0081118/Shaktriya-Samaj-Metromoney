@@ -115,6 +115,7 @@ const createProfile =
     user,
     profileId,
     firstName,
+    lastName = 'Test',
     gender,
     nativeDistrict,
     nativeState,
@@ -136,8 +137,7 @@ const createProfile =
 
       firstName,
 
-      lastName:
-        'Test',
+      lastName,
 
       gender,
 
@@ -985,6 +985,387 @@ test(
 
     assert.ok(
       mine
+    );
+  }
+);
+
+test(
+  'same Surname or Shakh is excluded from discover and direct member profile access',
+  async () => {
+    const [
+      viewer,
+      sameSurnameUser,
+      differentSurnameUser
+    ] =
+      await Promise.all([
+        createMember(
+          'surname-viewer@example.com'
+        ),
+
+        createMember(
+          'surname-same@example.com'
+        ),
+
+        createMember(
+          'surname-different@example.com'
+        )
+      ]);
+
+    await createProfile({
+      user:
+        viewer,
+
+      profileId:
+        'KSM950001',
+
+      firstName:
+        'Raj',
+
+      lastName:
+        'Rana',
+
+      gender:
+        'Male',
+
+      nativePlace:
+        'Rajkot',
+
+      nativeDistrict:
+        'Rajkot',
+
+      nativeState:
+        'Gujarat',
+
+      currentCity:
+        'Ahmedabad',
+
+      clan:
+        'Rana',
+
+      gotra:
+        'Kashyap',
+
+      vansh:
+        'Suryavanshi'
+    });
+
+    const sameSurname =
+      await createProfile({
+        user:
+          sameSurnameUser,
+
+        profileId:
+          'KSM950002',
+
+        firstName:
+          'Priya',
+
+        lastName:
+          'Rana',
+
+        gender:
+          'Female',
+
+        nativePlace:
+          'Gondal',
+
+        nativeDistrict:
+          'Rajkot',
+
+        nativeState:
+          'Gujarat',
+
+        currentCity:
+          'Rajkot',
+
+        /*
+         * Intentional case + whitespace difference.
+         * This must still match viewer's "Rana".
+         */
+        clan:
+          ' RANA ',
+
+        gotra:
+          'Vashishtha',
+
+        vansh:
+          'Suryavanshi'
+      });
+
+    const differentSurname =
+      await createProfile({
+        user:
+          differentSurnameUser,
+
+        profileId:
+          'KSM950003',
+
+        firstName:
+          'Nisha',
+
+        lastName:
+          'Jadeja',
+
+        gender:
+          'Female',
+
+        nativePlace:
+          'Gondal',
+
+        nativeDistrict:
+          'Rajkot',
+
+        nativeState:
+          'Gujarat',
+
+        currentCity:
+          'Rajkot',
+
+        clan:
+          'Jadeja',
+
+        gotra:
+          'Vashishtha',
+
+        vansh:
+          'Suryavanshi'
+      });
+
+    const token =
+      tokenFor(
+        viewer
+      );
+
+    const response =
+      await request(
+        app
+      )
+        .get(
+          '/api/profiles/discover'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        );
+
+    assert.equal(
+      response.status,
+      200
+    );
+
+    const ids =
+      response.body.data
+        .profiles.map(
+          (
+            profile
+          ) =>
+            profile.profileId
+        );
+
+    /*
+     * Same surname must never be discoverable.
+     */
+    assert.equal(
+      ids.includes(
+        sameSurname.profileId
+      ),
+      false
+    );
+
+    /*
+     * Different surname remains discoverable.
+     */
+    assert.equal(
+      ids.includes(
+        differentSurname.profileId
+      ),
+      true
+    );
+
+    /*
+     * Pagination must also reflect the server-side hard
+     * exclusion. Hidden same-surname records must not
+     * inflate result counts.
+     */
+    assert.equal(
+      response.body.data
+        .pagination.total,
+      1
+    );
+
+    /*
+     * Knowing a profile URL must not bypass the rule.
+     */
+    const directResponse =
+      await request(
+        app
+      )
+        .get(
+          `/api/profiles/${sameSurname.profileId}`
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        );
+
+    assert.equal(
+      directResponse.status,
+      404
+    );
+
+    /*
+     * A different-surname profile remains directly
+     * accessible under normal privacy rules.
+     */
+    const allowedResponse =
+      await request(
+        app
+      )
+        .get(
+          `/api/profiles/${differentSurname.profileId}`
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        );
+
+    assert.equal(
+      allowedResponse.status,
+      200
+    );
+  }
+);
+
+test(
+  'missing clan does not blindly exclude a different fallback surname',
+  async () => {
+    const [
+      viewer,
+      candidate
+    ] =
+      await Promise.all([
+        createMember(
+          'surname-missing-viewer@example.com'
+        ),
+
+        createMember(
+          'surname-missing-candidate@example.com'
+        )
+      ]);
+
+    await createProfile({
+      user:
+        viewer,
+
+      profileId:
+        'KSM960001',
+
+      firstName:
+        'Raj',
+
+      lastName:
+        'Rana',
+
+      gender:
+        'Male',
+
+      nativePlace:
+        'Rajkot',
+
+      nativeDistrict:
+        'Rajkot',
+
+      nativeState:
+        'Gujarat',
+
+      currentCity:
+        'Ahmedabad',
+
+      clan:
+        'Rana',
+
+      gotra:
+        'Kashyap',
+
+      vansh:
+        'Suryavanshi'
+    });
+
+    const target =
+      await createProfile({
+        user:
+          candidate,
+
+        profileId:
+          'KSM960002',
+
+        firstName:
+          'Priya',
+
+        lastName:
+          'Solanki',
+
+        gender:
+          'Female',
+
+        nativePlace:
+          'Gondal',
+
+        nativeDistrict:
+          'Rajkot',
+
+        nativeState:
+          'Gujarat',
+
+        currentCity:
+          'Rajkot',
+
+        /*
+         * Legacy / incomplete record:
+         * no canonical community.clan.
+         *
+         * Fallback surname is Solanki, therefore this
+         * profile must NOT be blocked for a Rana viewer.
+         */
+        clan:
+          undefined,
+
+        gotra:
+          'Vashishtha',
+
+        vansh:
+          'Suryavanshi'
+      });
+
+    const response =
+      await request(
+        app
+      )
+        .get(
+          '/api/profiles/discover'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${tokenFor(
+            viewer
+          )}`
+        );
+
+    assert.equal(
+      response.status,
+      200
+    );
+
+    assert.equal(
+      response.body.data
+        .profiles.some(
+          (
+            profile
+          ) =>
+            profile.profileId ===
+            target.profileId
+        ),
+      true
     );
   }
 );
