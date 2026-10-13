@@ -30,6 +30,11 @@ import {
 } from '../utils/profile.js';
 
 import {
+  isSameSurname,
+  sameSurnameMongoExclusion
+} from '../utils/communityRules.js';
+
+import {
   serializeProfileForViewer
 } from '../services/profilePrivacy.js';
 
@@ -184,16 +189,6 @@ const optionalNumber =
       : undefined;
   };
 
-/*
- * Lint-safe version.
- *
- * Accepts:
- * - arrays
- * - comma separated strings
- *
- * Returns:
- * - trimmed unique values
- */
 const normalizeStringArray =
   (
     value
@@ -502,12 +497,6 @@ const profilePayload =
       ]
     );
 
-    /*
-     * Current residential city / district / state are
-     * no longer general matrimonial location.
-     *
-     * Only native location belongs here.
-     */
     if (
       body?.location &&
       typeof body.location ===
@@ -850,10 +839,6 @@ const profilePayload =
         'residentialProperties',
         'otherProperties',
         'businessAssets',
-
-        /*
-         * Legacy structured fields retained.
-         */
         'propertySummary',
         'primaryResidenceType',
         'businessAssetsSummary'
@@ -1362,6 +1347,14 @@ export const discover =
               : null
         );
 
+      /*
+       * Same Surname / Shakh is a permanent community
+       * exclusion rule and is independent of user-set
+       * partner preferences.
+       *
+       * This means a member cannot manually search around
+       * the rule using Discover filters either.
+       */
       const query = {
         visibility:
           'active',
@@ -1376,6 +1369,10 @@ export const discover =
             ...blockedByProfiles
           ]
         },
+
+        ...sameSurnameMongoExclusion(
+          mine
+        ),
 
         ...(requestedGender
           ? {
@@ -1668,12 +1665,22 @@ export const discover =
         ]);
 
       const foundIds =
-        found.map(
-          (
-            profile
-          ) =>
-            profile._id
-        );
+        found
+          .filter(
+            (
+              profile
+            ) =>
+              !isSameSurname(
+                mine,
+                profile
+              )
+          )
+          .map(
+            (
+              profile
+            ) =>
+              profile._id
+          );
 
       const [
         shortlisted,
@@ -1751,6 +1758,19 @@ export const discover =
               async (
                 profile
               ) => {
+                /*
+                 * Defensive server-side check in addition
+                 * to MongoDB query exclusion.
+                 */
+                if (
+                  isSameSurname(
+                    mine,
+                    profile
+                  )
+                ) {
+                  return null;
+                }
+
                 const serialized =
                   await serializeProfileForViewer(
                     profile,
@@ -1880,6 +1900,28 @@ export const getOne =
           userId:
             req.user.id
         });
+
+      /*
+       * Same Surname / Shakh members must not be able
+       * to view each other's matrimonial profile even
+       * when someone manually knows the profile URL.
+       *
+       * Administrative/moderation access is retained.
+       */
+      if (
+        !owner &&
+        !privileged &&
+        mine &&
+        isSameSurname(
+          mine,
+          profile
+        )
+      ) {
+        throw new ApiError(
+          404,
+          'Profile not found.'
+        );
+      }
 
       if (
         mine &&
@@ -2142,49 +2184,33 @@ export const savePreferences =
           req.body,
           [
             'preferredGender',
-
             'ageMin',
             'ageMax',
-
             'heightMin',
             'heightMax',
-
             'weightMin',
             'weightMax',
-
             'maritalStatus',
             'acceptedMaritalStatuses',
             'willingForRemarriage',
-
             'locations',
             'states',
             'countries',
-
             'shakhPreferences',
             'gotraPreferences',
             'vanshPreferences',
-
             'communityPreferences',
-
             'educationPreferences',
             'occupationPreferences',
-
             'incomePreferences',
-
             'dietPreferences',
-
             'familyTypePreferences',
             'familyValuePreferences',
-
             'smokingPreferences',
             'drinkingPreferences',
-
             'propertyPreferences',
-
             'marriageTimeline',
-
             'importance',
-
             'additionalPreferences'
           ]
         );
@@ -2344,28 +2370,20 @@ export const savePreferences =
       const arrayFields = [
         'maritalStatus',
         'acceptedMaritalStatuses',
-
         'locations',
         'states',
         'countries',
-
         'shakhPreferences',
         'gotraPreferences',
         'vanshPreferences',
-
         'communityPreferences',
-
         'educationPreferences',
         'occupationPreferences',
-
         'dietPreferences',
-
         'familyTypePreferences',
         'familyValuePreferences',
-
         'smokingPreferences',
         'drinkingPreferences',
-
         'marriageTimeline'
       ];
 

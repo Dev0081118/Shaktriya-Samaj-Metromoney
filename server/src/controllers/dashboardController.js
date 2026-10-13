@@ -37,6 +37,11 @@ import {
   profileCard
 } from '../utils/profile.js';
 
+import {
+  isSameSurname,
+  sameSurnameMongoExclusion
+} from '../utils/communityRules.js';
+
 /*
  * Dashboard is a recommendation surface,
  * not a generic discovery surface.
@@ -405,13 +410,16 @@ export const dashboard =
       /*
        * Pull a reasonable candidate pool first.
        *
-       * Do NOT put detailed preference filtering into
-       * the Mongo query because:
+       * Same Surname / Shakh is a HARD community rule.
        *
-       * - soft preferences should not exclude people;
-       * - Must Have behavior belongs to the engine;
-       * - missing data needs UNKNOWN handling;
-       * - reciprocal preferences must also be evaluated.
+       * Example:
+       * Rana boy + Rana girl
+       *
+       * They must never enter the recommendation pool,
+       * regardless of compatibility score or boost.
+       *
+       * This rule runs BEFORE boost sorting so a boosted
+       * same-surname profile can never bypass it.
        */
       const candidates =
         await MatrimonialProfile.find({
@@ -430,6 +438,10 @@ export const dashboard =
               ...blockedByProfileIds
             ]
           },
+
+          ...sameSurnameMongoExclusion(
+            profile
+          ),
 
           ...(preferred
             ? {
@@ -581,6 +593,22 @@ export const dashboard =
             (
               candidate
             ) => {
+              /*
+               * Defensive second layer.
+               *
+               * Mongo already excludes the surname, but
+               * keep this check so malformed/legacy data
+               * cannot accidentally enter recommendations.
+               */
+              if (
+                isSameSurname(
+                  profile,
+                  candidate
+                )
+              ) {
+                return null;
+              }
+
               const candidatePreference =
                 preferenceMap.get(
                   String(
