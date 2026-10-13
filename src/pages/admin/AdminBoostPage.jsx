@@ -5,10 +5,13 @@ import {
 } from 'react';
 
 import {
+  CircleDollarSign,
+  Layers3,
   Plus,
   RefreshCw,
   Rocket,
   Save,
+  Timer,
   Zap
 } from 'lucide-react';
 
@@ -27,16 +30,16 @@ import {
 } from '../../utils/formatters';
 
 const inputClass =
-  'w-full border border-[#ddd0c1] bg-[#fffdf8] px-4 py-3 text-[13px] outline-none focus:border-[#681d25]';
+  'w-full border border-[#d8c9ba] bg-[#fffdf8] px-4 py-3 text-[12px] text-[#2c1a18] outline-none transition focus:border-[#681d25]';
 
 const labelClass =
-  'grid gap-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#5e4e46]';
+  'grid gap-2 text-[9px] font-extrabold uppercase tracking-[0.1em] text-[#756a60]';
 
 const primaryButtonClass =
-  'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#681d25] px-5 text-[11px] font-extrabold text-white disabled:opacity-50';
+  'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#681d25] px-5 text-[10px] font-extrabold uppercase tracking-[0.05em] text-white transition hover:bg-[#431318] disabled:opacity-45';
 
 const outlineButtonClass =
-  'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-[#cbb8a4] px-5 text-[11px] font-extrabold text-[#431318] disabled:opacity-50';
+  'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-[#cbb8a4] bg-[#fffdf8] px-5 text-[10px] font-extrabold text-[#431318] transition hover:border-[#681d25] disabled:opacity-45';
 
 const emptyPack =
   () => ({
@@ -47,7 +50,7 @@ const emptyPack =
       '',
 
     price:
-      0,
+      '',
 
     credits:
       10,
@@ -129,17 +132,10 @@ export default function AdminBoostPage() {
             .packs ||
             []
         );
-
-        return result;
       },
       []
     );
 
-  /*
-   * Initial loading is scheduled after mount instead of
-   * synchronously invoking a state-setting function inside
-   * the effect body.
-   */
   useEffect(
     () => {
       const timer =
@@ -198,6 +194,48 @@ export default function AdminBoostPage() {
       }
     };
 
+  const activePacks =
+    packs.filter(
+      (
+        pack
+      ) =>
+        pack.active
+    ).length;
+
+  const configuredPlans =
+    plans.filter(
+      (
+        plan
+      ) =>
+        Number(
+          plan.boostConfig
+            ?.includedCredits ||
+            0
+        ) >
+        0
+    ).length;
+
+  const totalPackCredits =
+    packs
+      .filter(
+        (
+          pack
+        ) =>
+          pack.active
+      )
+      .reduce(
+        (
+          total,
+          pack
+        ) =>
+          total +
+          Number(
+            pack.credits ||
+              0
+          ),
+        0
+      );
+
   const updatePlan =
     (
       planId,
@@ -228,8 +266,7 @@ export default function AdminBoostPage() {
                         true,
 
                       ...(
-                        plan
-                          .boostConfig ||
+                        plan.boostConfig ||
                         {}
                       ),
 
@@ -311,14 +348,17 @@ export default function AdminBoostPage() {
         ...pack
       });
 
-      window.scrollTo({
-        top:
-          document.body
-            .scrollHeight,
+      document
+        .getElementById(
+          'boost-pack-editor'
+        )
+        ?.scrollIntoView({
+          behavior:
+            'smooth',
 
-        behavior:
-          'smooth'
-      });
+          block:
+            'start'
+        });
     };
 
   const savePack =
@@ -381,7 +421,9 @@ export default function AdminBoostPage() {
         );
 
         notify(
-          'Boost pack saved.'
+          editingPack._id
+            ? 'Boost pack updated.'
+            : 'Boost pack created.'
         );
 
         setEditingPack(
@@ -408,23 +450,22 @@ export default function AdminBoostPage() {
       <AdminNav />
 
       <main className="min-w-0 p-[55px] max-[767px]:px-[15px] max-[767px]:py-[30px]">
-        <header className="mb-9 flex items-end justify-between gap-5 max-[700px]:items-start">
+        <header className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
-              Revenue & visibility
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.24em] text-[#91683f]">
+              Monetization · visibility
             </p>
 
-            <h1 className="mt-3 font-['Cormorant_Garamond'] text-[clamp(42px,5vw,66px)] font-medium leading-none text-[#2c1a18]">
+            <h1 className="mt-3 font-['Cormorant_Garamond'] text-[clamp(46px,6vw,72px)] font-medium leading-[0.9] text-[#2c1a18]">
               Profile Boosts
             </h1>
 
-            <p className="mt-4 max-w-[720px] text-[13px] leading-7 text-[#756a60]">
-              Control subscription
-              boost allowances,
-              duration per credit
-              and individually
-              purchasable boost
-              packs.
+            <p className="mt-4 max-w-[680px] text-[12px] leading-7 text-[#756a60]">
+              Configure boost credits
+              included with memberships
+              and sell additional
+              visibility packs
+              independently.
             </p>
           </div>
 
@@ -442,7 +483,7 @@ export default function AdminBoostPage() {
           >
             <RefreshCw
               size={
-                15
+                14
               }
               className={
                 refreshing
@@ -458,32 +499,102 @@ export default function AdminBoostPage() {
         </header>
 
         {loading ? (
-          <div className="py-20 text-center text-[#756a60]">
+          <div className="py-24 text-center text-[12px] text-[#756a60]">
             Loading boost
-            configuration…
+            management…
           </div>
         ) : (
           <>
-            <section className="border border-[#ddd0c1] bg-[#fffdf8] p-[30px]">
-              <div className="flex items-center gap-3">
-                <Rocket className="text-[#681d25]" />
+            {/* Stats */}
 
-                <div>
-                  <h2 className="font-['Cormorant_Garamond'] text-[32px] font-medium">
-                    Membership boost
-                    credits
-                  </h2>
+            <section className="mt-9 grid grid-cols-3 gap-4 max-[850px]:grid-cols-1">
+              <div className="border border-[#ddd0c1] bg-[#fffdf8] p-5">
+                <Layers3
+                  size={
+                    18
+                  }
+                  className="text-[#681d25]"
+                />
 
-                  <p className="text-[11px] text-[#756a60]">
-                    Set 5 for Premium,
-                    10 for Assisted,
-                    or any value you
-                    choose.
-                  </p>
+                <strong className="mt-4 block font-['Cormorant_Garamond'] text-[36px] font-medium text-[#431318]">
+                  {
+                    configuredPlans
+                  }
+                </strong>
+
+                <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#756a60]">
+                  Plans with boosts
+                </span>
+              </div>
+
+              <div className="border border-[#ddd0c1] bg-[#fffdf8] p-5">
+                <Rocket
+                  size={
+                    18
+                  }
+                  className="text-[#681d25]"
+                />
+
+                <strong className="mt-4 block font-['Cormorant_Garamond'] text-[36px] font-medium text-[#431318]">
+                  {
+                    activePacks
+                  }
+                </strong>
+
+                <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#756a60]">
+                  Active packs
+                </span>
+              </div>
+
+              <div className="border border-[#ddd0c1] bg-[#fffdf8] p-5">
+                <Zap
+                  size={
+                    18
+                  }
+                  className="text-[#681d25]"
+                />
+
+                <strong className="mt-4 block font-['Cormorant_Garamond'] text-[36px] font-medium text-[#431318]">
+                  {
+                    totalPackCredits
+                  }
+                </strong>
+
+                <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#756a60]">
+                  Credits across packs
+                </span>
+              </div>
+            </section>
+
+            {/* Membership plans */}
+
+            <section className="mt-7 border border-[#ddd0c1] bg-[#fffdf8]">
+              <div className="border-b border-[#e5d9cd] p-7">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-[#681d250a] text-[#681d25]">
+                    <Zap
+                      size={
+                        17
+                      }
+                    />
+                  </span>
+
+                  <div>
+                    <h2 className="font-['Cormorant_Garamond'] text-[32px] font-medium text-[#2c1a18]">
+                      Membership
+                      allowances
+                    </h2>
+
+                    <p className="text-[10px] text-[#756a60]">
+                      Example: Premium
+                      5 boosts, Assisted
+                      10 boosts.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-7 grid gap-4">
+              <div className="divide-y divide-[#eee4d8]">
                 {plans.map(
                   (
                     plan
@@ -506,16 +617,21 @@ export default function AdminBoostPage() {
                         key={
                           plan._id
                         }
-                        className="grid grid-cols-[minmax(160px,1fr)_150px_170px_auto] items-end gap-4 border-t border-[#ddd0c1] pt-5 max-[900px]:grid-cols-2 max-[600px]:grid-cols-1"
+                        className="grid grid-cols-[minmax(180px,1fr)_150px_170px_auto] items-end gap-5 p-6 max-[950px]:grid-cols-2 max-[600px]:grid-cols-1"
                       >
                         <div>
-                          <strong className="block text-[14px] text-[#2c1a18]">
+                          <p className="text-[8px] font-extrabold uppercase tracking-[0.12em] text-[#91683f]">
+                            Membership
+                            plan
+                          </p>
+
+                          <h3 className="mt-1 font-['Cormorant_Garamond'] text-[29px] font-medium text-[#2c1a18]">
                             {
                               plan.name
                             }
-                          </strong>
+                          </h3>
 
-                          <span className="mt-1 block text-[10px] text-[#756a60]">
+                          <p className="mt-1 text-[9px] text-[#756a60]">
                             {formatCurrency(
                               plan.price
                             )}{' '}
@@ -524,7 +640,7 @@ export default function AdminBoostPage() {
                               plan.durationDays
                             }{' '}
                             days
-                          </span>
+                          </p>
                         </div>
 
                         <label
@@ -532,8 +648,7 @@ export default function AdminBoostPage() {
                             labelClass
                           }
                         >
-                          Included
-                          credits
+                          Included boosts
 
                           <input
                             className={
@@ -552,8 +667,7 @@ export default function AdminBoostPage() {
                               updatePlan(
                                 plan._id,
                                 'includedCredits',
-                                event
-                                  .target
+                                event.target
                                   .value
                               )
                             }
@@ -565,8 +679,7 @@ export default function AdminBoostPage() {
                             labelClass
                           }
                         >
-                          Hours per
-                          boost
+                          Hours per boost
 
                           <input
                             className={
@@ -585,8 +698,7 @@ export default function AdminBoostPage() {
                               updatePlan(
                                 plan._id,
                                 'durationHours',
-                                event
-                                  .target
+                                event.target
                                   .value
                               )
                             }
@@ -610,7 +722,7 @@ export default function AdminBoostPage() {
                         >
                           <Save
                             size={
-                              14
+                              13
                             }
                           />
 
@@ -626,108 +738,185 @@ export default function AdminBoostPage() {
               </div>
             </section>
 
-            <section className="mt-8 border border-[#ddd0c1] bg-[#fffdf8] p-[30px]">
-              <div className="flex items-center gap-3">
-                <Zap className="text-[#681d25]" />
+            {/* Existing packs */}
 
+            <section className="mt-7 border border-[#ddd0c1] bg-[#fffdf8]">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e5d9cd] p-7">
                 <div>
-                  <h2 className="font-['Cormorant_Garamond'] text-[32px] font-medium">
-                    Individual boost
-                    packs
+                  <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#91683f]">
+                    Individual sales
+                  </p>
+
+                  <h2 className="mt-1 font-['Cormorant_Garamond'] text-[32px] font-medium text-[#2c1a18]">
+                    Boost packs
                   </h2>
-
-                  <p className="text-[11px] text-[#756a60]">
-                    These packs can be
-                    purchased separately
-                    from a membership.
-                  </p>
                 </div>
+
+                <button
+                  type="button"
+                  className={
+                    outlineButtonClass
+                  }
+                  onClick={() => {
+                    setEditingPack(
+                      emptyPack()
+                    );
+
+                    document
+                      .getElementById(
+                        'boost-pack-editor'
+                      )
+                      ?.scrollIntoView({
+                        behavior:
+                          'smooth'
+                      });
+                  }}
+                >
+                  <Plus
+                    size={
+                      14
+                    }
+                  />
+
+                  New pack
+                </button>
               </div>
 
-              <div className="mt-6 grid gap-3">
-                {packs.map(
-                  (
-                    pack
-                  ) => (
-                    <div
-                      key={
-                        pack._id
-                      }
-                      className="grid grid-cols-[1fr_auto_auto] items-center gap-5 border-t border-[#ddd0c1] py-4 max-[700px]:grid-cols-1"
-                    >
-                      <div>
-                        <strong className="block text-[13px]">
-                          {
-                            pack.name
-                          }
-                        </strong>
-
-                        <span className="mt-1 block text-[10px] text-[#756a60]">
-                          {
-                            pack.credits
-                          }{' '}
-                          boosts ·{' '}
-                          {
-                            pack.durationHours
-                          }
-                          h each ·{' '}
-                          {
-                            pack.active
-                              ? 'Active'
-                              : 'Inactive'
-                          }
-                        </span>
-                      </div>
-
-                      <strong className="text-[14px]">
-                        {formatCurrency(
-                          pack.price
-                        )}
-                      </strong>
-
-                      <button
-                        type="button"
-                        className={
-                          outlineButtonClass
+              {packs.length ? (
+                <div className="grid grid-cols-3 gap-px bg-[#e5d9cd] max-[1050px]:grid-cols-2 max-[700px]:grid-cols-1">
+                  {packs.map(
+                    (
+                      pack
+                    ) => (
+                      <article
+                        key={
+                          pack._id
                         }
-                        onClick={() =>
-                          editPack(
-                            pack
-                          )
-                        }
+                        className="bg-[#fffdf8] p-6"
                       >
-                        Edit
-                      </button>
-                    </div>
-                  )
-                )}
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-[7px] font-extrabold uppercase tracking-[0.08em] ${
+                                pack.active
+                                  ? 'bg-[#46634412] text-[#466344]'
+                                  : 'bg-[#8a7e7312] text-[#756a60]'
+                              }`}
+                            >
+                              {pack.active
+                                ? 'Active'
+                                : 'Inactive'}
+                            </span>
 
-                {!packs.length && (
-                  <p className="py-6 text-center text-[11px] text-[#756a60]">
-                    No boost packs
-                    created yet.
-                  </p>
-                )}
-              </div>
+                            <h3 className="mt-3 font-['Cormorant_Garamond'] text-[29px] font-medium text-[#2c1a18]">
+                              {
+                                pack.name
+                              }
+                            </h3>
+                          </div>
+
+                          <Rocket
+                            size={
+                              18
+                            }
+                            className="text-[#91683f]"
+                          />
+                        </div>
+
+                        <div className="mt-5 flex items-end gap-2">
+                          <strong className="font-['Cormorant_Garamond'] text-[42px] font-medium leading-none text-[#681d25]">
+                            {
+                              pack.credits
+                            }
+                          </strong>
+
+                          <span className="mb-1 text-[9px] text-[#756a60]">
+                            credits
+                          </span>
+                        </div>
+
+                        <div className="mt-4 grid gap-2 border-y border-[#eee4d8] py-4 text-[9px] text-[#756a60]">
+                          <span className="flex items-center gap-2">
+                            <Timer
+                              size={
+                                12
+                              }
+                            />
+
+                            {
+                              pack.durationHours
+                            }
+                            h per boost
+                          </span>
+
+                          <span className="flex items-center gap-2">
+                            <CircleDollarSign
+                              size={
+                                12
+                              }
+                            />
+
+                            {formatCurrency(
+                              pack.price
+                            )}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          className={`${outlineButtonClass} mt-5 w-full`}
+                          onClick={() =>
+                            editPack(
+                              pack
+                            )
+                          }
+                        >
+                          Edit pack
+                        </button>
+                      </article>
+                    )
+                  )}
+                </div>
+              ) : (
+                <div className="p-10 text-center text-[11px] text-[#756a60]">
+                  No individual boost
+                  packs created yet.
+                </div>
+              )}
             </section>
 
+            {/* Editor */}
+
             <form
-              className="mt-8 border border-[#ddd0c1] bg-[#fffdf8] p-[30px]"
+              id="boost-pack-editor"
+              className="mt-7 scroll-mt-8 border border-[#ddd0c1] bg-[#fffdf8] p-[clamp(24px,4vw,34px)]"
               onSubmit={
                 savePack
               }
             >
-              <div className="mb-6 flex items-center gap-3">
-                <Plus className="text-[#681d25]" />
+              <div className="mb-7 flex items-start gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-[#681d250a] text-[#681d25]">
+                  <Plus
+                    size={
+                      17
+                    }
+                  />
+                </span>
 
-                <h2 className="font-['Cormorant_Garamond'] text-[30px] font-medium">
-                  {editingPack._id
-                    ? 'Edit Boost Pack'
-                    : 'Create Boost Pack'}
-                </h2>
+                <div>
+                  <p className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-[#91683f]">
+                    Pack editor
+                  </p>
+
+                  <h2 className="mt-1 font-['Cormorant_Garamond'] text-[32px] font-medium text-[#2c1a18]">
+                    {editingPack._id
+                      ? 'Edit boost pack'
+                      : 'Create boost pack'}
+                  </h2>
+                </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
+              <div className="grid grid-cols-3 gap-5 max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
                 <label
                   className={
                     labelClass
@@ -740,6 +929,7 @@ export default function AdminBoostPage() {
                       inputClass
                     }
                     required
+                    placeholder="Visibility 10"
                     value={
                       editingPack.name
                     }
@@ -753,8 +943,7 @@ export default function AdminBoostPage() {
                           ...current,
 
                           name:
-                            event
-                              .target
+                            event.target
                               .value
                         })
                       )
@@ -774,6 +963,7 @@ export default function AdminBoostPage() {
                       inputClass
                     }
                     required
+                    placeholder="visibility-10"
                     value={
                       editingPack.slug
                     }
@@ -787,8 +977,7 @@ export default function AdminBoostPage() {
                           ...current,
 
                           slug:
-                            event
-                              .target
+                            event.target
                               .value
                         })
                       )
@@ -810,6 +999,7 @@ export default function AdminBoostPage() {
                     type="number"
                     min="1"
                     required
+                    placeholder="499"
                     value={
                       editingPack.price
                     }
@@ -823,8 +1013,7 @@ export default function AdminBoostPage() {
                           ...current,
 
                           price:
-                            event
-                              .target
+                            event.target
                               .value
                         })
                       )
@@ -860,8 +1049,7 @@ export default function AdminBoostPage() {
                           ...current,
 
                           credits:
-                            event
-                              .target
+                            event.target
                               .value
                         })
                       )
@@ -898,8 +1086,7 @@ export default function AdminBoostPage() {
                           ...current,
 
                           durationHours:
-                            event
-                              .target
+                            event.target
                               .value
                         })
                       )
@@ -933,8 +1120,7 @@ export default function AdminBoostPage() {
                           ...current,
 
                           sortOrder:
-                            event
-                              .target
+                            event.target
                               .value
                         })
                       )
@@ -943,7 +1129,7 @@ export default function AdminBoostPage() {
                 </label>
               </div>
 
-              <label className="mt-5 flex items-center gap-2 text-[11px] font-bold text-[#5e4e46]">
+              <label className="mt-6 flex items-center gap-3 text-[10px] font-bold text-[#5e4e46]">
                 <input
                   type="checkbox"
                   checked={
@@ -961,18 +1147,18 @@ export default function AdminBoostPage() {
                         ...current,
 
                         active:
-                          event
-                            .target
+                          event.target
                             .checked
                       })
                     )
                   }
                 />
 
-                Pack is active
+                Publish this boost
+                pack for members
               </label>
 
-              <div className="mt-7 flex flex-wrap gap-3">
+              <div className="mt-8 flex flex-wrap gap-3">
                 <button
                   type="submit"
                   className={
@@ -984,13 +1170,15 @@ export default function AdminBoostPage() {
                 >
                   <Save
                     size={
-                      14
+                      13
                     }
                   />
 
                   {savingPack
                     ? 'Saving…'
-                    : 'Save boost pack'}
+                    : editingPack._id
+                      ? 'Update pack'
+                      : 'Create pack'}
                 </button>
 
                 {editingPack._id && (
@@ -1005,7 +1193,7 @@ export default function AdminBoostPage() {
                       )
                     }
                   >
-                    Cancel edit
+                    Cancel
                   </button>
                 )}
               </div>

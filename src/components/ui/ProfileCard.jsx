@@ -2,7 +2,8 @@ import {
   BadgeCheck,
   Bookmark,
   Check,
-  Heart
+  Heart,
+  Rocket
 } from 'lucide-react';
 
 import {
@@ -76,6 +77,9 @@ export default function ProfileCard({
     profile.interestStatus ===
     'Accepted';
 
+  const boosted =
+    !!profile.boostActive;
+
   const location =
     displayLocation(
       profile
@@ -95,7 +99,7 @@ export default function ProfileCard({
     !allowUnshortlist;
 
   return (
-    <article className="group overflow-hidden border border-[#ddd0c1] bg-[#fffdf8] transition duration-200 hover:-translate-y-[2px] hover:border-[#c8b29b] hover:shadow-[0_16px_40px_rgba(67,19,24,0.07)]">
+    <article className="group overflow-hidden border border-[#ddd0c1] bg-[#fffdf8] transition duration-300 hover:-translate-y-[3px] hover:border-[#bfa589] hover:shadow-[0_20px_50px_rgba(67,19,24,0.09)]">
       <div className="relative h-[360px] overflow-hidden max-[767px]:h-[430px]">
         {profile.profilePhoto ? (
           <img
@@ -105,10 +109,10 @@ export default function ProfileCard({
               )
             }
             alt={`${name}'s profile`}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.025]"
           />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-[#e8dace] font-['Cormorant_Garamond'] text-[72px] font-medium text-[#681d25]">
+          <div className="grid h-full w-full place-items-center bg-[linear-gradient(145deg,#eee3d7,#ddcbbb)] font-['Cormorant_Garamond'] text-[72px] font-medium text-[#681d25]">
             {name
               .charAt(
                 0
@@ -117,22 +121,36 @@ export default function ProfileCard({
           </div>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 h-[120px] bg-gradient-to-t from-[#21181766] to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[150px] bg-gradient-to-t from-[#21181799] via-[#21181733] to-transparent" />
 
-        {profile.verification
-          ?.adminVerified && (
-          <span className="absolute left-[14px] top-[14px] flex items-center gap-[6px] rounded-full bg-[#fffdf8eb] px-[10px] py-[7px] text-[9px] font-extrabold text-[#681d25] shadow-sm backdrop-blur">
-            <BadgeCheck
-              size={
-                14
-              }
-            />
+        <div className="absolute left-[14px] top-[14px] flex flex-col items-start gap-2">
+          {boosted && (
+            <span className="inline-flex items-center gap-[6px] rounded-full border border-white/40 bg-[#681d25e8] px-[11px] py-[7px] text-[8px] font-extrabold uppercase tracking-[0.1em] text-white shadow-sm backdrop-blur">
+              <Rocket
+                size={
+                  13
+                }
+              />
 
-            {t(
-              'profile.verified'
-            )}
-          </span>
-        )}
+              Boosted
+            </span>
+          )}
+
+          {profile.verification
+            ?.adminVerified && (
+            <span className="inline-flex items-center gap-[6px] rounded-full bg-[#fffdf8ed] px-[10px] py-[7px] text-[9px] font-extrabold text-[#681d25] shadow-sm backdrop-blur">
+              <BadgeCheck
+                size={
+                  14
+                }
+              />
+
+              {t(
+                'profile.verified'
+              )}
+            </span>
+          )}
+        </div>
 
         <button
           type="button"
@@ -190,7 +208,7 @@ export default function ProfileCard({
           undefined &&
           score !==
             null && (
-            <div className="absolute bottom-[14px] right-[14px] min-w-[58px] rounded-full bg-[#fffdf8ed] px-3 py-2 text-center shadow-sm backdrop-blur">
+            <div className="absolute bottom-[14px] right-[14px] min-w-[60px] rounded-full border border-white/40 bg-[#fffdf8ed] px-3 py-2 text-center shadow-sm backdrop-blur">
               <strong className="block text-[14px] font-extrabold leading-none text-[#681d25]">
                 {Math.round(
                   score
@@ -208,9 +226,23 @@ export default function ProfileCard({
       </div>
 
       <div className="p-5">
-        <h3 className="font-['Cormorant_Garamond'] text-[31px] font-medium leading-none text-[#2c1a18]">
-          {name}
-        </h3>
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="font-['Cormorant_Garamond'] text-[31px] font-medium leading-none text-[#2c1a18]">
+            {name}
+          </h3>
+
+          {boosted && (
+            <span className="mt-1 inline-flex shrink-0 items-center gap-1 text-[8px] font-extrabold uppercase tracking-[0.08em] text-[#91683f]">
+              <Rocket
+                size={
+                  11
+                }
+              />
+
+              Featured
+            </span>
+          )}
+        </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#756a60]">
           {profile.age !==

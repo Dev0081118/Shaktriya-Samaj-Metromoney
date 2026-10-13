@@ -1,206 +1,390 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import {
+  useEffect,
+  useState
+} from 'react';
 
-import { useToast } from '../context/ToastContext';
-import { api } from '../services/api';
-import { formatDate } from '../utils/formatters';
+import {
+  ArrowRight,
+  Headphones,
+  Rocket,
+  ShieldCheck,
+  Sparkles
+} from 'lucide-react';
 
-/* eslint-disable react-hooks/exhaustive-deps */
+import {
+  Link
+} from 'react-router-dom';
+
+import {
+  useToast
+} from '../context/ToastContext';
+
+import {
+  api
+} from '../services/api';
+
+import {
+  formatDate
+} from '../utils/formatters';
 
 const primaryButtonClass =
-  'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[12px] font-extrabold text-white transition duration-200 hover:bg-[#431318] disabled:opacity-55';
+  'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-transparent bg-[#681d25] px-5 text-[11px] font-extrabold text-white transition duration-200 hover:bg-[#431318]';
 
 const outlineButtonClass =
-  'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white';
+  'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[11px] font-extrabold text-[#431318] transition duration-200 hover:bg-white';
 
 export default function MemberBenefitsPage() {
-  const [boost, setBoost] = useState(null);
-  const [manager, setManager] = useState(null);
-  const [entitlements, setEntitlements] = useState(null);
+  const [
+    wallet,
+    setWallet
+  ] =
+    useState(null);
 
-  const notify = useToast();
+  const [
+    manager,
+    setManager
+  ] =
+    useState(null);
 
-  const load = () =>
-    Promise.all([
-      api('/profile-boost'),
-      api('/relationship-manager'),
-      api('/entitlements')
-    ]).then(
-      ([
-        boostResult,
-        managerResult,
-        entitlementResult
-      ]) => {
-        setBoost(boostResult.data);
-        setManager(managerResult.data);
-        setEntitlements(
-          entitlementResult.data.entitlements
+  const [
+    loading,
+    setLoading
+  ] =
+    useState(true);
+
+  const notify =
+    useToast();
+
+  useEffect(
+    () => {
+      const timer =
+        window.setTimeout(
+          () => {
+            Promise.all([
+              api(
+                '/profile-boost'
+              ),
+
+              api(
+                '/relationship-manager'
+              )
+            ])
+              .then(
+                ([
+                  boostResult,
+                  managerResult
+                ]) => {
+                  setWallet(
+                    boostResult.data
+                      .wallet
+                  );
+
+                  setManager(
+                    managerResult.data
+                  );
+                }
+              )
+              .catch(
+                (
+                  error
+                ) =>
+                  notify(
+                    error.message,
+                    'error'
+                  )
+              )
+              .finally(
+                () =>
+                  setLoading(
+                    false
+                  )
+              );
+          },
+          0
         );
-      }
-    );
 
-  useEffect(() => {
-    load().catch((error) =>
-      notify(error.message, 'error')
-    );
-  }, []);
-
-  const activate = async () => {
-    try {
-      await api('/profile-boost', {
-        method: 'POST'
-      });
-
-      await load();
-
-      notify(
-        'Your profile boost is active for 24 hours.'
-      );
-    } catch (error) {
-      notify(error.message, 'error');
-    }
-  };
+      return () =>
+        window.clearTimeout(
+          timer
+        );
+    },
+    [
+      notify
+    ]
+  );
 
   if (
-    !boost ||
-    !manager ||
-    !entitlements
+    loading
   ) {
     return (
       <div className="page-skeleton">
-        Loading membership benefits…
+        Loading membership
+        benefits…
       </div>
     );
   }
 
   return (
     <>
-      <header className="mb-[30px]">
+      <header className="mb-[34px]">
         <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
           Membership benefits
         </p>
 
         <h1 className="mt-3 max-w-[900px] font-['Cormorant_Garamond'] text-[clamp(42px,5vw,66px)] font-medium leading-[0.98] text-[#2c1a18]">
           Put your plan to{' '}
+
           <em className="font-normal text-[#681d25]">
             work.
           </em>
         </h1>
+
+        <p className="mt-5 max-w-[650px] text-[12px] leading-7 text-[#756a60]">
+          Review the benefits
+          currently available to your
+          account and use them from one
+          place.
+        </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-4 max-[767px]:grid-cols-1">
-        <article className="relative border border-[#ddd0c1] bg-[#fffdf8] p-[30px]">
-          <h2 className="font-['Cormorant_Garamond'] text-[34px] font-medium">
+      <div className="grid grid-cols-2 gap-5 max-[850px]:grid-cols-1">
+        {/* Boost */}
+
+        <article className="relative overflow-hidden border border-[#ddd0c1] bg-[#fffdf8] p-[30px]">
+          <div
+            aria-hidden="true"
+            className="absolute -right-12 -top-14 h-44 w-44 rounded-full border border-[#681d2510]"
+          />
+
+          <span className="grid h-11 w-11 place-items-center rounded-full bg-[#681d250a] text-[#681d25]">
+            <Rocket
+              size={
+                19
+              }
+            />
+          </span>
+
+          <p className="mt-6 text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#91683f]">
+            Visibility
+          </p>
+
+          <h2 className="mt-1 font-['Cormorant_Garamond'] text-[36px] font-medium text-[#2c1a18]">
             Profile boost
           </h2>
 
-          <p className="my-5 text-[12px] leading-[1.8] text-[#756a60]">
-            {entitlements.profileBoost
-              ? boost.active
-                ? `Active until ${formatDate(
-                    boost.activeUntil,
-                    undefined,
-                    {
-                      dateStyle: 'medium',
-                      timeStyle: 'short'
-                    }
-                  )}`
-                : boost.nextEligibleAt &&
-                    new Date(
-                      boost.nextEligibleAt
-                    ) > new Date()
-                  ? `Available again ${formatDate(
-                      boost.nextEligibleAt
-                    )}`
-                  : 'Move higher in discovery for 24 hours.'
-              : 'Included with Premium and Assisted membership.'}
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="border border-[#eee4d8] p-4">
+              <span className="text-[8px] font-extrabold uppercase tracking-[0.08em] text-[#8a7e73]">
+                Credits
+              </span>
+
+              <strong className="mt-2 block font-['Cormorant_Garamond'] text-[31px] font-medium text-[#681d25]">
+                {wallet
+                  ?.availableCredits ||
+                  0}
+              </strong>
+            </div>
+
+            <div className="border border-[#eee4d8] p-4">
+              <span className="text-[8px] font-extrabold uppercase tracking-[0.08em] text-[#8a7e73]">
+                Status
+              </span>
+
+              <strong className="mt-2 block text-[11px] font-extrabold text-[#431318]">
+                {wallet?.active
+                  ? 'Active now'
+                  : 'Not active'}
+              </strong>
+            </div>
+          </div>
+
+          <p className="my-5 text-[11px] leading-6 text-[#756a60]">
+            {wallet?.active
+              ? `Your visibility boost is active until ${formatDate(
+                  wallet.activeUntil,
+                  undefined,
+                  {
+                    dateStyle:
+                      'medium',
+
+                    timeStyle:
+                      'short'
+                  }
+                )}.`
+              : wallet
+                    ?.availableCredits >
+                  0
+                ? 'You have boost credits ready to use whenever you want extra profile visibility.'
+                : 'You can receive boosts through eligible memberships or purchase individual boost packs.'}
           </p>
 
-          {entitlements.profileBoost ? (
-            <button
-              disabled={
-                boost.active ||
-                (boost.nextEligibleAt &&
-                  new Date(
-                    boost.nextEligibleAt
-                  ) > new Date())
+          <Link
+            to="/boosts"
+            className={
+              primaryButtonClass
+            }
+          >
+            Manage boosts
+
+            <ArrowRight
+              size={
+                14
               }
-              onClick={activate}
-              className={primaryButtonClass}
-            >
-              {boost.active
-                ? 'Boost active'
-                : 'Activate boost'}
-            </button>
-          ) : (
-            <Link
-              to="/membership"
-              className={outlineButtonClass}
-            >
-              View plans
-            </Link>
-          )}
+            />
+          </Link>
         </article>
 
-        <article className="relative border border-[#ddd0c1] bg-[#fffdf8] p-[30px]">
-          <h2 className="font-['Cormorant_Garamond'] text-[34px] font-medium">
+        {/* Relationship manager */}
+
+        <article className="relative overflow-hidden border border-[#ddd0c1] bg-[#fffdf8] p-[30px]">
+          <span className="grid h-11 w-11 place-items-center rounded-full bg-[#681d250a] text-[#681d25]">
+            <Headphones
+              size={
+                19
+              }
+            />
+          </span>
+
+          <p className="mt-6 text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#91683f]">
+            Assisted service
+          </p>
+
+          <h2 className="mt-1 font-['Cormorant_Garamond'] text-[36px] font-medium text-[#2c1a18]">
             Relationship manager
           </h2>
 
-          {manager.included ? (
+          {manager?.included ? (
             manager.assignment ? (
               <>
-                <p className="my-5 text-[12px] leading-[1.8] text-[#756a60]">
-                  Your assigned relationship
-                  manager:
+                <p className="my-5 text-[11px] leading-6 text-[#756a60]">
+                  Your assigned
+                  relationship manager is
+                  available to assist with
+                  your matrimonial
+                  journey.
                 </p>
 
-                <strong className="block">
-                  {
-                    manager.assignment
-                      .manager?.email
-                  }
-                </strong>
-
-                {manager.assignment.manager
-                  ?.phone && (
-                  <a
-                    href={`tel:${manager.assignment.manager.phone}`}
-                    className="mt-3 inline-block text-[12px] font-extrabold text-[#681d25]"
-                  >
+                <div className="border border-[#eee4d8] bg-[#fcf8f2] p-4">
+                  <strong className="block text-[12px] text-[#431318]">
                     {
                       manager.assignment
-                        .manager.phone
+                        .manager
+                        ?.email
                     }
-                  </a>
-                )}
+                  </strong>
+
+                  {manager.assignment
+                    .manager
+                    ?.phone && (
+                    <a
+                      href={`tel:${manager.assignment.manager.phone}`}
+                      className="mt-2 inline-block text-[11px] font-extrabold text-[#681d25]"
+                    >
+                      {
+                        manager.assignment
+                          .manager
+                          .phone
+                      }
+                    </a>
+                  )}
+                </div>
               </>
             ) : (
-              <p className="my-5 text-[12px] leading-[1.8] text-[#756a60]">
+              <p className="my-5 text-[11px] leading-6 text-[#756a60]">
                 Your Assisted benefit is
-                active. The team will assign
-                your relationship manager
-                shortly.
+                active. The team will
+                assign your relationship
+                manager shortly.
               </p>
             )
           ) : (
             <>
-              <p className="my-5 text-[12px] leading-[1.8] text-[#756a60]">
-                Personal relationship-manager
-                guidance is included with
-                Assisted membership.
+              <p className="my-5 text-[11px] leading-6 text-[#756a60]">
+                Personal relationship
+                manager guidance is
+                available with Assisted
+                membership.
               </p>
 
               <Link
                 to="/membership"
-                className={outlineButtonClass}
+                className={
+                  outlineButtonClass
+                }
               >
                 View Assisted
+
+                <ArrowRight
+                  size={
+                    14
+                  }
+                />
               </Link>
             </>
           )}
         </article>
       </div>
+
+      <section className="mt-6 grid grid-cols-3 gap-4 max-[800px]:grid-cols-1">
+        <div className="border border-[#ddd0c1] bg-[#f4ece3] p-5">
+          <ShieldCheck
+            size={
+              18
+            }
+            className="text-[#681d25]"
+          />
+
+          <h3 className="mt-4 text-[11px] font-extrabold text-[#431318]">
+            Privacy remains protected
+          </h3>
+
+          <p className="mt-2 text-[9px] leading-5 text-[#756a60]">
+            Membership and boost
+            benefits never reveal
+            private contact information
+            automatically.
+          </p>
+        </div>
+
+        <div className="border border-[#ddd0c1] bg-[#f4ece3] p-5">
+          <Sparkles
+            size={
+              18
+            }
+            className="text-[#681d25]"
+          />
+
+          <h3 className="mt-4 text-[11px] font-extrabold text-[#431318]">
+            Compatibility stays real
+          </h3>
+
+          <p className="mt-2 text-[9px] leading-5 text-[#756a60]">
+            Boosting improves exposure,
+            not your calculated
+            matrimonial compatibility.
+          </p>
+        </div>
+
+        <div className="border border-[#ddd0c1] bg-[#f4ece3] p-5">
+          <ShieldCheck
+            size={
+              18
+            }
+            className="text-[#681d25]"
+          />
+
+          <h3 className="mt-4 text-[11px] font-extrabold text-[#431318]">
+            Community rules stay first
+          </h3>
+
+          <p className="mt-2 text-[9px] leading-5 text-[#756a60]">
+            Same surname, blocking and
+            eligibility protections
+            cannot be bypassed by a
+            boost.
+          </p>
+        </div>
+      </section>
     </>
   );
 }

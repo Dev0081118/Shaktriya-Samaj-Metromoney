@@ -5,13 +5,22 @@ import {
 } from 'react';
 
 import {
+  ArrowRight,
+  Check,
   Clock3,
+  Crown,
   Flame,
+  Gem,
   Rocket,
   ShieldCheck,
   Sparkles,
+  TimerReset,
   Zap
 } from 'lucide-react';
+
+import {
+  Link
+} from 'react-router-dom';
 
 import {
   useAuth
@@ -30,10 +39,10 @@ import {
 } from '../utils/formatters';
 
 const primaryButtonClass =
-  'inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full border border-transparent bg-[#681d25] px-6 text-[12px] font-extrabold text-white transition hover:bg-[#431318] disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-transparent bg-[#681d25] px-6 text-[11px] font-extrabold uppercase tracking-[0.06em] text-white transition duration-200 hover:bg-[#431318] disabled:cursor-not-allowed disabled:opacity-45';
 
 const outlineButtonClass =
-  'inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full border border-[#cbb8a4] bg-[#fffdf8] px-6 text-[12px] font-extrabold text-[#431318] transition hover:border-[#681d25] disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-[#cbb8a4] bg-[#fffdf8] px-6 text-[11px] font-extrabold uppercase tracking-[0.05em] text-[#431318] transition duration-200 hover:border-[#681d25] hover:bg-white disabled:cursor-not-allowed disabled:opacity-45';
 
 const loadRazorpay =
   () =>
@@ -152,6 +161,27 @@ const formatRemaining =
     return `${minutes}m ${secondsPart}s`;
   };
 
+const sourceLabel =
+  (
+    source
+  ) => {
+    if (
+      source ===
+      'Subscription'
+    ) {
+      return 'Membership';
+    }
+
+    if (
+      source ===
+      'BoostPack'
+    ) {
+      return 'Purchased pack';
+    }
+
+    return 'Admin credit';
+  };
+
 export default function BoostPage() {
   const [
     wallet,
@@ -202,6 +232,56 @@ export default function BoostPage() {
       wallet?.active
     );
 
+  const subscriptionCredits =
+    (
+      wallet?.grants ||
+      []
+    )
+      .filter(
+        (
+          grant
+        ) =>
+          grant.sourceType ===
+          'Subscription'
+      )
+      .reduce(
+        (
+          total,
+          grant
+        ) =>
+          total +
+          Number(
+            grant.creditsRemaining ||
+              0
+          ),
+        0
+      );
+
+  const purchasedCredits =
+    (
+      wallet?.grants ||
+      []
+    )
+      .filter(
+        (
+          grant
+        ) =>
+          grant.sourceType ===
+          'BoostPack'
+      )
+      .reduce(
+        (
+          total,
+          grant
+        ) =>
+          total +
+          Number(
+            grant.creditsRemaining ||
+              0
+          ),
+        0
+      );
+
   const applyWallet =
     useCallback(
       (
@@ -243,21 +323,12 @@ export default function BoostPage() {
             .packs ||
             []
         );
-
-        return result;
       },
       [
         applyWallet
       ]
     );
 
-  /*
-   * Initial wallet / pack load.
-   *
-   * API request is scheduled after mount so state
-   * updates do not happen synchronously inside the
-   * effect body.
-   */
   useEffect(
     () => {
       const timer =
@@ -294,12 +365,6 @@ export default function BoostPage() {
     ]
   );
 
-  /*
-   * Visible boost countdown.
-   *
-   * The server remains the source of truth for the
-   * actual boost expiry. This timer is only for UI.
-   */
   useEffect(
     () => {
       if (
@@ -314,19 +379,12 @@ export default function BoostPage() {
             setRemainingSeconds(
               (
                 current
-              ) => {
-                if (
-                  current <=
-                  0
-                ) {
-                  return 0;
-                }
-
-                return (
-                  current -
-                  1
-                );
-              }
+              ) =>
+                current <=
+                0
+                  ? 0
+                  : current -
+                    1
             );
           },
           1000
@@ -342,11 +400,6 @@ export default function BoostPage() {
     ]
   );
 
-  /*
-   * Once the local timer reaches zero, refresh the
-   * wallet once so the backend can confirm the boost
-   * has expired.
-   */
   useEffect(
     () => {
       if (
@@ -370,7 +423,7 @@ export default function BoostPage() {
                 )
             );
           },
-          250
+          300
         );
 
       return () =>
@@ -448,7 +501,7 @@ export default function BoostPage() {
 
         if (
           order.provider !==
-            'razorpay'
+          'razorpay'
         ) {
           throw new Error(
             order.notice ||
@@ -484,18 +537,15 @@ export default function BoostPage() {
                   `${order.name} · ${order.credits} boosts`,
 
                 order_id:
-                  order
-                    .providerOrderId,
+                  order.providerOrderId,
 
                 prefill: {
                   email:
-                    user
-                      ?.email ||
+                    user?.email ||
                     '',
 
                   contact:
-                    user
-                      ?.phone ||
+                    user?.phone ||
                     ''
                 },
 
@@ -550,8 +600,7 @@ export default function BoostPage() {
               ) =>
                 reject(
                   new Error(
-                    event
-                      .error
+                    event.error
                       ?.description ||
                       'Payment was not completed.'
                   )
@@ -565,7 +614,7 @@ export default function BoostPage() {
         await load();
 
         notify(
-          `${pack.credits} boost credits added to your account.`
+          `${pack.credits} boost credits added successfully.`
         );
       } catch (
         error
@@ -585,7 +634,7 @@ export default function BoostPage() {
     loading
   ) {
     return (
-      <div className="py-20 text-center text-sm text-[#756a60]">
+      <div className="page-skeleton">
         Loading profile
         boosts…
       </div>
@@ -593,135 +642,223 @@ export default function BoostPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1100px]">
-      <header className="mb-8">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
-          Visibility
-        </p>
+    <div className="mx-auto max-w-[1180px] pb-10">
+      {/* Hero */}
 
-        <h1 className="mt-3 font-['Cormorant_Garamond'] text-[clamp(42px,5vw,64px)] font-medium leading-none text-[#2c1a18]">
-          Profile Boost
-        </h1>
+      <section className="relative overflow-hidden bg-[linear-gradient(125deg,#351012_0%,#681d25_58%,#8b4b43_100%)] px-[clamp(24px,5vw,56px)] py-[clamp(34px,5vw,56px)] text-white">
+        <div
+          aria-hidden="true"
+          className="absolute -right-20 -top-24 h-[340px] w-[340px] rounded-full border border-white/10"
+        />
 
-        <p className="mt-4 max-w-[700px] text-[13px] leading-7 text-[#756a60]">
-          Move your profile higher
-          in eligible discovery
-          results for a limited
-          time. Boosting never
-          changes your compatibility
-          score or bypasses community
-          matching rules.
-        </p>
-      </header>
+        <div
+          aria-hidden="true"
+          className="absolute -right-2 top-8 h-[220px] w-[220px] rounded-full border border-white/10"
+        />
 
-      <section className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
-        <article className="border border-[#ddd0c1] bg-[#fffdf8] p-[clamp(24px,4vw,42px)]">
+        <div className="relative grid grid-cols-[1fr_auto] items-end gap-8 max-[800px]:grid-cols-1">
+          <div className="max-w-[720px]">
+            <div className="flex items-center gap-2 text-[9px] font-extrabold uppercase tracking-[0.24em] text-[#e9cdb1]">
+              <Sparkles
+                size={
+                  14
+                }
+              />
+
+              Profile visibility
+            </div>
+
+            <h1 className="mt-4 font-['Cormorant_Garamond'] text-[clamp(48px,7vw,82px)] font-medium leading-[0.88]">
+              Be seen at the
+              <br />
+
+              <em className="font-normal text-[#f0d6bb]">
+                right moment.
+              </em>
+            </h1>
+
+            <p className="mt-6 max-w-[620px] text-[12px] leading-7 text-white/70">
+              Use one boost credit to
+              increase your profile
+              exposure among eligible
+              Rajput matrimonial
+              members. Your compatibility
+              percentage and community
+              safety rules never change.
+            </p>
+          </div>
+
+          <div className="min-w-[190px] border-l border-white/15 pl-8 max-[800px]:border-l-0 max-[800px]:border-t max-[800px]:pl-0 max-[800px]:pt-6">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/55">
+              Available balance
+            </p>
+
+            <strong className="mt-2 block font-['Cormorant_Garamond'] text-[68px] font-medium leading-none">
+              {wallet
+                ?.availableCredits ||
+                0}
+            </strong>
+
+            <span className="mt-2 block text-[10px] text-white/60">
+              boost credits
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Main status */}
+
+      <section className="mt-6 grid grid-cols-[1.35fr_.65fr] gap-5 max-[900px]:grid-cols-1">
+        <article className="border border-[#d9cbbb] bg-[#fffdf8] p-[clamp(24px,4vw,40px)]">
           <div className="flex flex-wrap items-start justify-between gap-6">
-            <div>
-              <span className="grid h-12 w-12 place-items-center rounded-full bg-[#681d2510] text-[#681d25]">
+            <div className="flex items-start gap-4">
+              <span
+                className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${
+                  boostActive
+                    ? 'bg-[#681d25] text-white'
+                    : 'bg-[#681d250a] text-[#681d25]'
+                }`}
+              >
                 {boostActive ? (
                   <Flame
                     size={
-                      22
+                      21
                     }
                   />
                 ) : (
                   <Rocket
                     size={
-                      22
+                      21
                     }
                   />
                 )}
               </span>
 
-              <h2 className="mt-5 font-['Cormorant_Garamond'] text-[34px] font-medium text-[#2c1a18]">
-                {boostActive
-                  ? 'Boost Active'
-                  : 'Ready to Boost'}
-              </h2>
+              <div>
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[#91683f]">
+                  Current status
+                </p>
 
-              <p className="mt-2 text-[12px] leading-6 text-[#756a60]">
-                {boostActive
-                  ? 'Your profile currently has increased visibility.'
-                  : 'Use one available credit whenever you want extra visibility.'}
-              </p>
-            </div>
+                <h2 className="mt-1 font-['Cormorant_Garamond'] text-[38px] font-medium leading-none text-[#2c1a18]">
+                  {boostActive
+                    ? 'Your boost is live'
+                    : 'Ready when you are'}
+                </h2>
 
-            <div className="min-w-[150px] border-l border-[#ddd0c1] pl-6">
-              <strong className="block font-['Cormorant_Garamond'] text-[46px] font-medium leading-none text-[#681d25]">
-                {wallet
-                  ?.availableCredits ||
-                  0}
-              </strong>
-
-              <span className="mt-2 block text-[9px] font-bold uppercase tracking-[0.15em] text-[#756a60]">
-                Boost credits
-              </span>
+                <p className="mt-3 max-w-[520px] text-[11px] leading-6 text-[#756a60]">
+                  {boostActive
+                    ? 'Your profile currently receives increased exposure in eligible discovery and closely matched recommendation results.'
+                    : 'Activate a boost when you want additional visibility. One activation consumes one credit.'}
+                </p>
+              </div>
             </div>
           </div>
 
           {boostActive && (
-            <div className="mt-8 flex items-center gap-3 border border-[#cbb8a4] bg-[#f8f1e8] p-4">
-              <Clock3
-                size={
-                  18
-                }
-                className="text-[#681d25]"
-              />
+            <div className="mt-7 grid grid-cols-2 gap-3 max-[600px]:grid-cols-1">
+              <div className="border border-[#dfd2c4] bg-[#f8f1e8] p-4">
+                <div className="flex items-center gap-2 text-[#681d25]">
+                  <Clock3
+                    size={
+                      16
+                    }
+                  />
 
-              <div>
-                <strong className="block text-[13px] text-[#431318]">
+                  <span className="text-[9px] font-extrabold uppercase tracking-[0.1em]">
+                    Time remaining
+                  </span>
+                </div>
+
+                <strong className="mt-3 block font-['Cormorant_Garamond'] text-[31px] font-medium text-[#431318]">
                   {formatRemaining(
                     remainingSeconds
-                  )}{' '}
-                  remaining
+                  )}
                 </strong>
+              </div>
 
-                {wallet
-                  ?.activeUntil && (
-                  <small className="text-[10px] text-[#756a60]">
-                    Ends{' '}
-                    {new Date(
-                      wallet.activeUntil
-                    ).toLocaleString(
-                      'en-IN'
-                    )}
-                  </small>
-                )}
+              <div className="border border-[#dfd2c4] bg-[#f8f1e8] p-4">
+                <div className="flex items-center gap-2 text-[#681d25]">
+                  <TimerReset
+                    size={
+                      16
+                    }
+                  />
+
+                  <span className="text-[9px] font-extrabold uppercase tracking-[0.1em]">
+                    Ends at
+                  </span>
+                </div>
+
+                <strong className="mt-3 block text-[12px] font-extrabold leading-5 text-[#431318]">
+                  {wallet
+                    ?.activeUntil
+                    ? new Date(
+                        wallet.activeUntil
+                      ).toLocaleString(
+                        'en-IN',
+                        {
+                          dateStyle:
+                            'medium',
+
+                          timeStyle:
+                            'short'
+                        }
+                      )
+                    : '—'}
+                </strong>
               </div>
             </div>
           )}
 
-          <button
-            type="button"
-            className={`${primaryButtonClass} mt-8`}
-            disabled={
-              activating ||
-              boostActive ||
-              !wallet
-                ?.availableCredits
-            }
-            onClick={
-              activate
-            }
-          >
-            <Zap
-              size={
-                16
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className={
+                primaryButtonClass
               }
-            />
+              disabled={
+                activating ||
+                boostActive ||
+                !wallet
+                  ?.availableCredits
+              }
+              onClick={
+                activate
+              }
+            >
+              <Zap
+                size={
+                  15
+                }
+              />
 
-            {activating
-              ? 'Activating…'
-              : boostActive
-                ? 'Boost currently active'
-                : 'Boost my profile'}
-          </button>
+              {activating
+                ? 'Activating…'
+                : boostActive
+                  ? 'Boost active'
+                  : 'Boost my profile'}
+            </button>
+
+            <Link
+              to="/discover"
+              className={
+                outlineButtonClass
+              }
+            >
+              View discovery
+
+              <ArrowRight
+                size={
+                  14
+                }
+              />
+            </Link>
+          </div>
 
           {!wallet
             ?.availableCredits &&
             !boostActive && (
-              <p className="mt-3 text-[10px] text-[#8a5b44]">
+              <p className="mt-4 text-[10px] leading-5 text-[#8a5b44]">
                 You currently have no
                 boost credits. Purchase
                 a pack below or choose a
@@ -731,129 +868,398 @@ export default function BoostPage() {
             )}
         </article>
 
-        <article className="border border-[#ddd0c1] bg-[#431318] p-[clamp(24px,4vw,38px)] text-white">
-          <ShieldCheck
-            size={
-              25
-            }
-            className="text-[#d5b28c]"
-          />
+        {/* Wallet */}
 
-          <h2 className="mt-5 font-['Cormorant_Garamond'] text-[32px] font-medium">
-            Fair visibility
-          </h2>
+        <article className="border border-[#d9cbbb] bg-[#f1e7dc] p-[clamp(24px,4vw,34px)]">
+          <div className="flex items-center gap-3">
+            <Gem
+              size={
+                20
+              }
+              className="text-[#681d25]"
+            />
 
-          <div className="mt-5 grid gap-4 text-[11px] leading-6 text-white/70">
-            <p>
-              Same surname / Shakh
-              exclusions always remain
-              active.
-            </p>
+            <div>
+              <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#91683f]">
+                Boost wallet
+              </p>
 
-            <p>
-              Blocked, paused or
-              otherwise ineligible
-              profiles remain excluded.
-            </p>
-
-            <p>
-              Compatibility percentages
-              are never increased by a
-              paid boost.
-            </p>
-
-            <p>
-              A boost only increases
-              exposure among profiles
-              that are already eligible
-              to see you.
-            </p>
+              <h2 className="font-['Cormorant_Garamond'] text-[30px] font-medium text-[#2c1a18]">
+                Your credits
+              </h2>
+            </div>
           </div>
+
+          <div className="mt-6 grid gap-3">
+            <div className="flex items-center justify-between border-b border-[#d8c8b8] pb-4">
+              <span className="text-[11px] text-[#66574f]">
+                Membership credits
+              </span>
+
+              <strong className="font-['Cormorant_Garamond'] text-[28px] font-medium text-[#681d25]">
+                {
+                  subscriptionCredits
+                }
+              </strong>
+            </div>
+
+            <div className="flex items-center justify-between border-b border-[#d8c8b8] pb-4">
+              <span className="text-[11px] text-[#66574f]">
+                Purchased credits
+              </span>
+
+              <strong className="font-['Cormorant_Garamond'] text-[28px] font-medium text-[#681d25]">
+                {
+                  purchasedCredits
+                }
+              </strong>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[11px] font-extrabold text-[#431318]">
+                Total available
+              </span>
+
+              <strong className="font-['Cormorant_Garamond'] text-[34px] font-medium text-[#431318]">
+                {wallet
+                  ?.availableCredits ||
+                  0}
+              </strong>
+            </div>
+          </div>
+
+          <p className="mt-6 text-[9px] leading-5 text-[#756a60]">
+            Membership credits are
+            consumed first because they
+            expire with the membership.
+            Purchased credits are kept
+            separately.
+          </p>
         </article>
       </section>
 
-      <section className="mt-12">
-        <div className="mb-6 flex items-end justify-between gap-5">
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#91683f]">
-              Top up
+      {/* Credit sources */}
+
+      {wallet
+        ?.grants
+        ?.length >
+        0 && (
+        <section className="mt-6 border border-[#ddd0c1] bg-[#fffdf8] p-6">
+          <div className="mb-5">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#91683f]">
+              Credit sources
             </p>
 
-            <h2 className="mt-2 font-['Cormorant_Garamond'] text-[38px] font-medium text-[#2c1a18]">
-              Buy Boost Credits
+            <h2 className="mt-1 font-['Cormorant_Garamond'] text-[30px] font-medium text-[#2c1a18]">
+              Where your boosts came
+              from
             </h2>
           </div>
 
-          <Sparkles className="text-[#681d25]" />
+          <div className="grid grid-cols-3 gap-3 max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
+            {wallet.grants.map(
+              (
+                grant
+              ) => (
+                <div
+                  key={
+                    grant.id
+                  }
+                  className="border border-[#e5d9cd] bg-[#fcf8f2] p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[9px] font-extrabold uppercase tracking-[0.08em] text-[#91683f]">
+                      {sourceLabel(
+                        grant.sourceType
+                      )}
+                    </span>
+
+                    <strong className="font-['Cormorant_Garamond'] text-[27px] font-medium text-[#681d25]">
+                      {
+                        grant.creditsRemaining
+                      }
+                    </strong>
+                  </div>
+
+                  <p className="mt-2 text-[10px] text-[#756a60]">
+                    {
+                      grant.durationHours
+                    }
+                    h visibility per
+                    credit
+                  </p>
+
+                  {grant.expiresAt && (
+                    <p className="mt-2 text-[9px] text-[#8a7e73]">
+                      Expires{' '}
+                      {new Date(
+                        grant.expiresAt
+                      ).toLocaleDateString(
+                        'en-IN'
+                      )}
+                    </p>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Fair exposure */}
+
+      <section className="mt-10 grid grid-cols-[.75fr_1.25fr] overflow-hidden border border-[#d9cbbb] max-[850px]:grid-cols-1">
+        <div className="bg-[#431318] p-[clamp(26px,5vw,48px)] text-white">
+          <ShieldCheck
+            size={
+              26
+            }
+            className="text-[#e2c4a5]"
+          />
+
+          <h2 className="mt-5 font-['Cormorant_Garamond'] text-[38px] font-medium leading-none">
+            Visibility,
+            <br />
+
+            not compatibility.
+          </h2>
+
+          <p className="mt-5 text-[11px] leading-6 text-white/65">
+            A paid boost never makes an
+            incompatible profile look
+            like a stronger matrimonial
+            match.
+          </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-px bg-[#ddd0c1] max-[650px]:grid-cols-1">
+          {[
+            [
+              '01',
+              'Community rules stay first',
+              'Same surname / Shakh exclusions remain absolute even during an active boost.'
+            ],
+
+            [
+              '02',
+              'Compatibility stays genuine',
+              'Your percentage is calculated from real preferences and is never increased by payment.'
+            ],
+
+            [
+              '03',
+              'Discovery exposure improves',
+              'Eligible active boosted profiles are surfaced ahead of normal profiles in manual discovery.'
+            ],
+
+            [
+              '04',
+              'Recommendations stay relevant',
+              'Boost gets priority only among already closely matched candidates.'
+            ]
+          ].map(
+            ([
+              number,
+              title,
+              body
+            ]) => (
+              <article
+                key={
+                  number
+                }
+                className="bg-[#fffdf8] p-6"
+              >
+                <span className="font-['Cormorant_Garamond'] text-[24px] text-[#b99a7c]">
+                  {
+                    number
+                  }
+                </span>
+
+                <h3 className="mt-3 text-[12px] font-extrabold text-[#431318]">
+                  {
+                    title
+                  }
+                </h3>
+
+                <p className="mt-2 text-[10px] leading-5 text-[#756a60]">
+                  {
+                    body
+                  }
+                </p>
+              </article>
+            )
+          )}
+        </div>
+      </section>
+
+      {/* Packs */}
+
+      <section className="mt-[58px]">
+        <div className="mb-7 flex items-end justify-between gap-5">
+          <div>
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#91683f]">
+              Individual top-up
+            </p>
+
+            <h2 className="mt-2 font-['Cormorant_Garamond'] text-[clamp(36px,5vw,50px)] font-medium leading-none text-[#2c1a18]">
+              Buy boost credits
+              separately.
+            </h2>
+
+            <p className="mt-3 max-w-[620px] text-[11px] leading-6 text-[#756a60]">
+              You do not need to change
+              your membership. Purchase
+              only the additional
+              visibility credits you
+              need.
+            </p>
+          </div>
+
+          <Crown
+            size={
+              28
+            }
+            className="shrink-0 text-[#681d25]"
+          />
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 max-[1000px]:grid-cols-2 max-[650px]:grid-cols-1">
           {packs.map(
             (
-              pack
+              pack,
+              index
             ) => (
               <article
                 key={
                   pack._id
                 }
-                className="border border-[#ddd0c1] bg-[#fffdf8] p-7"
+                className={`relative overflow-hidden border bg-[#fffdf8] p-7 ${
+                  index ===
+                  1
+                    ? 'border-[#681d25]'
+                    : 'border-[#ddd0c1]'
+                }`}
               >
-                <h3 className="font-['Cormorant_Garamond'] text-[30px] font-medium">
+                {index ===
+                  1 && (
+                  <span className="absolute right-0 top-0 bg-[#681d25] px-3 py-2 text-[8px] font-extrabold uppercase tracking-[0.1em] text-white">
+                    Popular
+                  </span>
+                )}
+
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#91683f]">
+                  Visibility pack
+                </p>
+
+                <h3 className="mt-3 font-['Cormorant_Garamond'] text-[34px] font-medium leading-none text-[#2c1a18]">
                   {
                     pack.name
                   }
                 </h3>
 
-                <strong className="mt-4 block text-[26px] text-[#681d25]">
-                  {
-                    pack.credits
-                  }{' '}
-                  boosts
-                </strong>
+                <div className="mt-6 flex items-end gap-2">
+                  <strong className="font-['Cormorant_Garamond'] text-[52px] font-medium leading-none text-[#681d25]">
+                    {
+                      pack.credits
+                    }
+                  </strong>
 
-                <p className="mt-2 text-[11px] text-[#756a60]">
-                  Each boost stays
-                  active for{' '}
-                  {
-                    pack.durationHours
-                  }{' '}
-                  hours.
-                </p>
+                  <span className="mb-1 text-[10px] font-bold text-[#756a60]">
+                    boosts
+                  </span>
+                </div>
 
-                <p className="my-6 font-['Cormorant_Garamond'] text-[32px] font-medium">
-                  {formatCurrency(
-                    pack.price
-                  )}
-                </p>
+                <ul className="mt-6 grid gap-3 border-y border-[#e8ddd2] py-5">
+                  <li className="flex items-center gap-2 text-[10px] text-[#66574f]">
+                    <Check
+                      size={
+                        14
+                      }
+                      className="text-[#681d25]"
+                    />
 
-                <button
-                  type="button"
-                  className={
-                    outlineButtonClass
-                  }
-                  disabled={
-                    buying ===
+                    {
+                      pack.durationHours
+                    }{' '}
+                    hours per boost
+                  </li>
+
+                  <li className="flex items-center gap-2 text-[10px] text-[#66574f]">
+                    <Check
+                      size={
+                        14
+                      }
+                      className="text-[#681d25]"
+                    />
+
+                    Purchased separately
+                  </li>
+
+                  <li className="flex items-center gap-2 text-[10px] text-[#66574f]">
+                    <Check
+                      size={
+                        14
+                      }
+                      className="text-[#681d25]"
+                    />
+
+                    Does not alter match
+                    score
+                  </li>
+                </ul>
+
+                <div className="mt-6 flex items-center justify-between gap-4">
+                  <strong className="font-['Cormorant_Garamond'] text-[34px] font-medium text-[#2c1a18]">
+                    {formatCurrency(
+                      pack.price
+                    )}
+                  </strong>
+
+                  <button
+                    type="button"
+                    className={
+                      primaryButtonClass
+                    }
+                    disabled={
+                      buying ===
+                      pack.slug
+                    }
+                    onClick={() =>
+                      buy(
+                        pack
+                      )
+                    }
+                  >
+                    {buying ===
                     pack.slug
-                  }
-                  onClick={() =>
-                    buy(
-                      pack
-                    )
-                  }
-                >
-                  {buying ===
-                  pack.slug
-                    ? 'Opening checkout…'
-                    : 'Buy boost pack'}
-                </button>
+                      ? 'Opening…'
+                      : 'Buy pack'}
+                  </button>
+                </div>
               </article>
             )
           )}
 
           {!packs.length && (
-            <div className="col-span-full border border-dashed border-[#cbb8a4] p-8 text-center text-[12px] text-[#756a60]">
-              No individual boost packs
-              are available right now.
+            <div className="col-span-full border border-dashed border-[#cbb8a4] bg-[#fffdf8] p-10 text-center">
+              <Rocket
+                size={
+                  25
+                }
+                className="mx-auto text-[#91683f]"
+              />
+
+              <h3 className="mt-4 font-['Cormorant_Garamond'] text-[30px] font-medium text-[#2c1a18]">
+                No boost packs
+                available
+              </h3>
+
+              <p className="mt-2 text-[10px] text-[#756a60]">
+                Individual boost packs
+                have not been published
+                by the administrator
+                yet.
+              </p>
             </div>
           )}
         </div>

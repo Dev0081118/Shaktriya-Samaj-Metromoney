@@ -46,6 +46,11 @@ import {
   getSystemSettings
 } from '../services/systemService.js';
 
+import {
+  clearExpiredProfileBoosts,
+  isProfileBoostActive
+} from '../services/boostExposureService.js';
+
 const owned =
   async (
     user,
@@ -1294,6 +1299,13 @@ export const discover =
         );
       }
 
+      /*
+       * Expired boost timestamps are cleared before
+       * discovery ordering.
+       */
+      const boostExposureNow =
+        await clearExpiredProfileBoosts();
+
       const myPreference =
         await PartnerPreference.findOne({
           profileId:
@@ -1347,14 +1359,6 @@ export const discover =
               : null
         );
 
-      /*
-       * Same Surname / Shakh is a permanent community
-       * exclusion rule and is independent of user-set
-       * partner preferences.
-       *
-       * This means a member cannot manually search around
-       * the rule using Discover filters either.
-       */
       const query = {
         visibility:
           'active',
@@ -1758,10 +1762,6 @@ export const discover =
               async (
                 profile
               ) => {
-                /*
-                 * Defensive server-side check in addition
-                 * to MongoDB query exclusion.
-                 */
                 if (
                   isSameSurname(
                     mine,
@@ -1792,6 +1792,12 @@ export const discover =
                   ...profileCard(
                     serialized
                   ),
+
+                  boostActive:
+                    isProfileBoostActive(
+                      profile,
+                      boostExposureNow
+                    ),
 
                   shortlisted:
                     shortlistSet.has(
@@ -1901,13 +1907,6 @@ export const getOne =
             req.user.id
         });
 
-      /*
-       * Same Surname / Shakh members must not be able
-       * to view each other's matrimonial profile even
-       * when someone manually knows the profile URL.
-       *
-       * Administrative/moderation access is retained.
-       */
       if (
         !owner &&
         !privileged &&

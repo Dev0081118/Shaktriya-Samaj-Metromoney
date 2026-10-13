@@ -27,6 +27,12 @@ import {
 } from '../services/profilePrivacy.js';
 
 import {
+  clearExpiredProfileBoosts,
+  compareRecommendationExposure,
+  isProfileBoostActive
+} from '../services/boostExposureService.js';
+
+import {
   asyncHandler,
   ok
 } from '../utils/http.js';
@@ -42,13 +48,6 @@ import {
   sameSurnameMongoExclusion
 } from '../utils/communityRules.js';
 
-/*
- * Dashboard is a recommendation surface,
- * not a generic discovery surface.
- *
- * Profiles below this directional preference-fit
- * score are not shown in dashboard recommendations.
- */
 const MIN_RECOMMENDATION_SCORE =
   50;
 
@@ -102,10 +101,6 @@ export const dashboard =
             req.user.id
         });
 
-      /*
-       * Membership information is useful even before
-       * the member creates a matrimonial profile.
-       */
       const entitlements =
         await getUserEntitlements(
           req.user.id
@@ -207,10 +202,6 @@ export const dashboard =
         }
       };
 
-      /*
-       * Member has an account but has not created their
-       * matrimonial profile yet.
-       */
       if (
         !profile
       ) {
@@ -262,12 +253,6 @@ export const dashboard =
               1000
         );
 
-      /*
-       * Blocking must work in both directions.
-       *
-       * 1. Profiles I blocked.
-       * 2. Profiles belonging to users who blocked me.
-       */
       const [
         myBlockedProfileIds,
         usersWhoBlockedMe
@@ -363,14 +348,6 @@ export const dashboard =
           })
         ]);
 
-      /*
-       * Always recalculate completion using the current
-       * profile rules.
-       *
-       * This self-heals records saved before Weight,
-       * Residential Address and Mosal completion rules
-       * were introduced.
-       */
       const profileCompletion =
         completion(
           profile,
@@ -387,13 +364,6 @@ export const dashboard =
         await profile.save();
       }
 
-      /*
-       * Preferred gender comes from explicit partner
-       * preference first.
-       *
-       * Otherwise we retain the current heterosexual
-       * default used by the existing app.
-       */
       const preferred =
         myPref
           ?.preferredGender ||
@@ -408,19 +378,12 @@ export const dashboard =
         );
 
       /*
-       * Pull a reasonable candidate pool first.
-       *
-       * Same Surname / Shakh is a HARD community rule.
-       *
-       * Example:
-       * Rana boy + Rana girl
-       *
-       * They must never enter the recommendation pool,
-       * regardless of compatibility score or boost.
-       *
-       * This rule runs BEFORE boost sorting so a boosted
-       * same-surname profile can never bypass it.
+       * Expired boosts must become normal profiles again
+       * before candidate sorting.
        */
+      const boostRankingNow =
+        await clearExpiredProfileBoosts();
+
       const candidates =
         await MatrimonialProfile.find({
           visibility:
@@ -451,11 +414,6 @@ export const dashboard =
             : {})
         })
           .sort({
-            /*
-             * These fields only choose the initial pool.
-             * Final recommendation ordering happens using
-             * compatibility.rankingScore below.
-             */
             boostedUntil:
               -1,
 
@@ -480,11 +438,6 @@ export const dashboard =
             candidate._id
         );
 
-      /*
-       * Bulk-load related data.
-       *
-       * Avoid one DB request per recommendation.
-       */
       const [
         candidatePreferences,
         sentInterests,
@@ -578,28 +531,12 @@ export const dashboard =
           )
         );
 
-      /*
-       * Recommendations are intentionally built from
-       * RAW server-side candidate documents first.
-       *
-       * That allows private values such as income or
-       * family assets to participate in matching when
-       * appropriate without exposing those raw values
-       * to the frontend.
-       */
       const evaluatedCandidates =
         candidates
           .map(
             (
               candidate
             ) => {
-              /*
-               * Defensive second layer.
-               *
-               * Mongo already excludes the surname, but
-               * keep this check so malformed/legacy data
-               * cannot accidentally enter recommendations.
-               */
               if (
                 isSameSurname(
                   profile,
@@ -625,10 +562,6 @@ export const dashboard =
                   candidatePreference
                 );
 
-              /*
-               * Candidate must pass Must Have criteria
-               * from BOTH directions.
-               */
               if (
                 !compatibility
                   .eligible
@@ -636,13 +569,6 @@ export const dashboard =
                 return null;
               }
 
-              /*
-               * Logged-in member must actually have
-               * evaluatable preference criteria.
-               *
-               * Without preferences we should not show a
-               * fake compatibility percentage.
-               */
               if (
                 !compatibility
                   .viewerHasPreferences
@@ -650,10 +576,6 @@ export const dashboard =
                 return null;
               }
 
-              /*
-               * If no directional score could be
-               * calculated, this is not a recommendation.
-               */
               if (
                 compatibility
                   .score ===
@@ -665,10 +587,6 @@ export const dashboard =
                 return null;
               }
 
-              /*
-               * Dashboard displays only meaningfully
-               * compatible profiles.
-               */
               if (
                 compatibility
                   .score <
@@ -689,89 +607,22 @@ export const dashboard =
           );
 
       /*
-       * Final ranking:
+       * Compatibility remains primary.
        *
-       * compatibility.rankingScore =
-       * 70% viewer preference fit
-       * +
-       * 30% reciprocal mutual compatibility
-       *
-       * A tiny verification/activity tie-breaker is used
-       * only after compatibility.
+       * Boost gets priority only when candidates are
+       * already inside the small quality window defined
+       * by boostExposureService.
        */
       evaluatedCandidates.sort(
         (
           left,
           right
-        ) => {
-          const compatibilityDifference =
-            (
-              right
-                .compatibility
-                .rankingScore ||
-              0
-            ) -
-            (
-              left
-                .compatibility
-                .rankingScore ||
-              0
-            );
-
-          if (
-            compatibilityDifference !==
-            0
-          ) {
-            return compatibilityDifference;
-          }
-
-          const rightVerified =
-            right.candidate
-              .verification
-              ?.adminVerified
-              ? 1
-              : 0;
-
-          const leftVerified =
-            left.candidate
-              .verification
-              ?.adminVerified
-              ? 1
-              : 0;
-
-          if (
-            rightVerified !==
-            leftVerified
-          ) {
-            return (
-              rightVerified -
-              leftVerified
-            );
-          }
-
-          const rightActive =
-            right.candidate
-              .lastActiveAt
-              ? new Date(
-                  right.candidate
-                    .lastActiveAt
-                ).getTime()
-              : 0;
-
-          const leftActive =
-            left.candidate
-              .lastActiveAt
-              ? new Date(
-                  left.candidate
-                    .lastActiveAt
-                ).getTime()
-              : 0;
-
-          return (
-            rightActive -
-            leftActive
-          );
-        }
+        ) =>
+          compareRecommendationExposure(
+            left,
+            right,
+            boostRankingNow
+          )
       );
 
       const topCandidates =
@@ -780,13 +631,6 @@ export const dashboard =
           MAX_RECOMMENDATIONS
         );
 
-      /*
-       * Apply privacy serialization only after the
-       * server-side score has been calculated.
-       *
-       * This ensures private matching inputs never need
-       * to be included in the response payload.
-       */
       const recommended =
         (
           await Promise.all(
@@ -819,6 +663,12 @@ export const dashboard =
                     serialized,
                     compatibility
                   ),
+
+                  boostActive:
+                    isProfileBoostActive(
+                      candidate,
+                      boostRankingNow
+                    ),
 
                   interestSent:
                     interestMap.has(
@@ -866,10 +716,6 @@ export const dashboard =
           recommendedProfiles:
             recommended,
 
-          /*
-           * Useful for the frontend when the member has
-           * not configured preferences yet.
-           */
           recommendationState: {
             hasPreferences:
               !!myPref,
