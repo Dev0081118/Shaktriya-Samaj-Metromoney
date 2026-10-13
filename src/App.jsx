@@ -3,7 +3,11 @@ import {
   Suspense,
   useEffect
 } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import {
+  useTranslation
+} from 'react-i18next';
+
 import {
   Navigate,
   Route,
@@ -12,8 +16,14 @@ import {
 } from 'react-router-dom';
 
 import LanguageSwitcher from './components/LanguageSwitcher';
-import { useAuth } from './context/AuthContext';
-import { getHomeRouteForRole } from './utils/roleRoutes';
+
+import {
+  useAuth
+} from './context/AuthContext';
+
+import {
+  getHomeRouteForRole
+} from './utils/roleRoutes';
 
 /* -------------------------------------------------
    Route-level code splitting
@@ -44,6 +54,13 @@ const BiodataPage = lazy(
   () =>
     import(
       './pages/BiodataPage'
+    )
+);
+
+const BoostPage = lazy(
+  () =>
+    import(
+      './pages/BoostPage'
     )
 );
 
@@ -138,6 +155,13 @@ const StoriesPage = lazy(
     )
 );
 
+const AdminBoostPage = lazy(
+  () =>
+    import(
+      './pages/admin/AdminBoostPage'
+    )
+);
+
 const AdminOperationsPage = lazy(
   () =>
     import(
@@ -185,12 +209,16 @@ const RevenuePage = lazy(
 -------------------------------------------------- */
 
 function RouteLoader() {
-  const { t } =
+  const {
+    t
+  } =
     useTranslation();
 
   return (
     <div className="grid min-h-screen place-items-center bg-[#f5f0e8] font-['Cormorant_Garamond'] text-[28px] font-medium text-[#681d25]">
-      {t('states.loading')}
+      {t(
+        'states.loading'
+      )}
     </div>
   );
 }
@@ -206,13 +234,20 @@ function ProtectedRoute({
   const {
     user,
     loading
-  } = useAuth();
+  } =
+    useAuth();
 
-  if (loading) {
-    return <RouteLoader />;
+  if (
+    loading
+  ) {
+    return (
+      <RouteLoader />
+    );
   }
 
-  if (!user) {
+  if (
+    !user
+  ) {
     return (
       <Navigate
         to="/login"
@@ -223,7 +258,9 @@ function ProtectedRoute({
 
   if (
     roles &&
-    !roles.includes(user.role)
+    !roles.includes(
+      user.role
+    )
   ) {
     return (
       <Navigate
@@ -243,53 +280,88 @@ function ProtectedRoute({
 -------------------------------------------------- */
 
 function DocumentMeta() {
-  const { pathname } =
+  const {
+    pathname
+  } =
     useLocation();
 
   const {
     t,
     i18n
-  } = useTranslation();
+  } =
+    useTranslation();
 
-  useEffect(() => {
-    const labels = {
-      '/':
-        'Kshatriya Matrimonial Society',
+  useEffect(
+    () => {
+      const labels = {
+        '/':
+          'Kshatriya Matrimonial Society',
 
-      '/about':
-        t('nav.about'),
+        '/about':
+          t(
+            'nav.about'
+          ),
 
-      '/how-it-works':
-        t('nav.howItWorks'),
+        '/how-it-works':
+          t(
+            'nav.howItWorks'
+          ),
 
-      '/success-stories':
-        t('nav.stories'),
+        '/success-stories':
+          t(
+            'nav.stories'
+          ),
 
-      '/safety':
-        t('public.safety'),
+        '/safety':
+          t(
+            'public.safety'
+          ),
 
-      '/membership':
-        t('nav.membership'),
+        '/membership':
+          t(
+            'nav.membership'
+          ),
 
-      '/contact':
-        t('public.contact'),
+        '/boosts':
+          t(
+            'membership.features.profileBoost'
+          ),
 
-      '/dashboard':
-        t('nav.dashboard')
-    };
+        '/admin/boosts':
+          t(
+            'membership.features.profileBoost'
+          ),
 
-    document.title =
-      pathname === '/'
-        ? labels['/']
-        : `${
-            labels[pathname] ||
-            'Kshatriya'
-          } | Kshatriya Matrimonial Society`;
-  }, [
-    i18n.language,
-    pathname,
-    t
-  ]);
+        '/contact':
+          t(
+            'public.contact'
+          ),
+
+        '/dashboard':
+          t(
+            'nav.dashboard'
+          )
+      };
+
+      document.title =
+        pathname ===
+          '/'
+          ? labels[
+              '/'
+            ]
+          : `${
+              labels[
+                pathname
+              ] ||
+              'Kshatriya'
+            } | Kshatriya Matrimonial Society`;
+    },
+    [
+      i18n.language,
+      pathname,
+      t
+    ]
+  );
 
   return null;
 }
@@ -303,7 +375,9 @@ export default function App() {
     <>
       <DocumentMeta />
 
-      <LanguageSwitcher global />
+      <LanguageSwitcher
+        global
+      />
 
       <Suspense
         fallback={
@@ -311,9 +385,7 @@ export default function App() {
         }
       >
         <Routes>
-          {/* ---------------------------------------
-              Public
-          ---------------------------------------- */}
+          {/* Public */}
 
           <Route
             path="/"
@@ -325,21 +397,27 @@ export default function App() {
           <Route
             path="/login"
             element={
-              <AuthPage mode="login" />
+              <AuthPage
+                mode="login"
+              />
             }
           />
 
           <Route
             path="/register"
             element={
-              <AuthPage mode="register" />
+              <AuthPage
+                mode="register"
+              />
             }
           />
 
           <Route
             path="/forgot-password"
             element={
-              <AuthPage mode="forgot" />
+              <AuthPage
+                mode="forgot"
+              />
             }
           />
 
@@ -416,9 +494,7 @@ export default function App() {
             }
           />
 
-          {/* ---------------------------------------
-              Member onboarding
-          ---------------------------------------- */}
+          {/* Member onboarding */}
 
           <Route
             path="/onboarding"
@@ -433,9 +509,7 @@ export default function App() {
             }
           />
 
-          {/* ---------------------------------------
-              Member application
-          ---------------------------------------- */}
+          {/* Member application */}
 
           <Route
             element={
@@ -472,7 +546,9 @@ export default function App() {
             <Route
               path="/my-profile"
               element={
-                <ProfilePage own />
+                <ProfilePage
+                  own
+                />
               }
             />
 
@@ -496,6 +572,13 @@ export default function App() {
               path="/benefits"
               element={
                 <MemberBenefitsPage />
+              }
+            />
+
+            <Route
+              path="/boosts"
+              element={
+                <BoostPage />
               }
             />
 
@@ -536,9 +619,7 @@ export default function App() {
             />
           </Route>
 
-          {/* ---------------------------------------
-              Biodata
-          ---------------------------------------- */}
+          {/* Biodata */}
 
           <Route
             path="/my-profile/biodata"
@@ -553,9 +634,7 @@ export default function App() {
             }
           />
 
-          {/* ---------------------------------------
-              Relationship manager
-          ---------------------------------------- */}
+          {/* Relationship manager */}
 
           <Route
             path="/manager/*"
@@ -570,9 +649,7 @@ export default function App() {
             }
           />
 
-          {/* ---------------------------------------
-              Administration
-          ---------------------------------------- */}
+          {/* Administration */}
 
           <Route
             path="/admin/customers/*"
@@ -662,6 +739,19 @@ export default function App() {
           />
 
           <Route
+            path="/admin/boosts"
+            element={
+              <ProtectedRoute
+                roles={[
+                  'super_admin'
+                ]}
+              >
+                <AdminBoostPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/admin/payments"
             element={
               <ProtectedRoute
@@ -722,9 +812,7 @@ export default function App() {
             }
           />
 
-          {/* ---------------------------------------
-              Fallback
-          ---------------------------------------- */}
+          {/* Fallback */}
 
           <Route
             path="*"

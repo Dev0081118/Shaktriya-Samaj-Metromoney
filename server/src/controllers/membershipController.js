@@ -6,6 +6,10 @@ import {
 } from '../models/Platform.js';
 
 import {
+  BoostPlanConfig
+} from '../models/Boost.js';
+
+import {
   paymentService
 } from '../services/paymentService.js';
 
@@ -26,6 +30,11 @@ import {
 import {
   emailUser
 } from '../services/notificationEmailService.js';
+
+import {
+  grantSubscriptionBoosts,
+  processBoostWebhookEvent
+} from '../services/boostService.js';
 
 import {
   asyncHandler,
@@ -125,28 +134,104 @@ export const publicPlans =
     async (
       _req,
       res
-    ) =>
+    ) => {
+      const plans =
+        await Plan.find({
+          active:
+            true,
+
+          price: {
+            $gt:
+              0
+          }
+        })
+          .select(
+            'name slug price durationDays features'
+          )
+          .sort(
+            'price'
+          )
+          .lean();
+
+      const boostConfigs =
+        await BoostPlanConfig.find({
+          active:
+            true,
+
+          plan: {
+            $in:
+              plans.map(
+                (
+                  plan
+                ) =>
+                  plan._id
+              )
+          }
+        }).lean();
+
+      const boostMap =
+        new Map(
+          boostConfigs.map(
+            (
+              config
+            ) => [
+              String(
+                config.plan
+              ),
+
+              config
+            ]
+          )
+        );
+
+      const enrichedPlans =
+        plans.map(
+          (
+            plan
+          ) => {
+            const config =
+              boostMap.get(
+                String(
+                  plan._id
+                )
+              );
+
+            return {
+              ...plan,
+
+              boost: config
+                ? {
+                    includedCredits:
+                      Number(
+                        config.includedCredits ||
+                          0
+                      ),
+
+                    durationHours:
+                      Number(
+                        config.durationHours ||
+                          12
+                      )
+                  }
+                : {
+                    includedCredits:
+                      0,
+
+                    durationHours:
+                      null
+                  }
+            };
+          }
+        );
+
       ok(
         res,
         {
           plans:
-            await Plan.find({
-              active:
-                true,
-
-              price: {
-                $gt:
-                  0
-              }
-            })
-              .select(
-                'name slug price durationDays features'
-              )
-              .sort(
-                'price'
-              )
+            enrichedPlans
         }
-      )
+      );
+    }
   );
 
 export const subscriptionMe =
@@ -526,7 +611,7 @@ export async function activatePayment(
 
     if (
       current?.status ===
-      'Paid'
+        'Paid'
     ) {
       return current;
     }
@@ -708,6 +793,44 @@ export async function activatePayment(
     throw error;
   }
 
+  /*
+   * Boost credits are an additional benefit.
+   *
+   * Membership payment must stay successful even if
+   * boost grant creation temporarily fails.
+   *
+   * getBoostWallet() also self-heals missing grants
+   * later from the active subscription.
+   */
+  try {
+    await grantSubscriptionBoosts({
+      userId:
+        locked.user,
+
+      subscription,
+
+      plan
+    });
+  } catch (error) {
+    console.error(
+      'SUBSCRIPTION BOOST GRANT ERROR:',
+      {
+        subscriptionId:
+          String(
+            subscription._id
+          ),
+
+        userId:
+          String(
+            locked.user
+          ),
+
+        error:
+          error.message
+      }
+    );
+  }
+
   await Notification.create({
     user:
       locked.user,
@@ -830,7 +953,7 @@ export const verify =
 
       if (
         providerPayment.id !==
-        paymentId
+          paymentId
       ) {
         throw new ApiError(
           409,
@@ -840,7 +963,7 @@ export const verify =
 
       if (
         providerPayment.status !==
-        'captured'
+          'captured'
       ) {
         throw new ApiError(
           409,
@@ -954,11 +1077,28 @@ export const razorpayWebhook =
               })
             : null;
 
+      /*
+       * The Razorpay webhook is shared by:
+       *
+       * 1. membership payments
+       * 2. individual boost-pack payments
+       *
+       * If this is not a membership payment, let the
+       * boost service attempt to handle it.
+       */
       if (!payment) {
+        const handledBoostEvent =
+          await processBoostWebhookEvent(
+            event,
+            eventId
+          );
+
         return ok(
           res,
           {},
-          'Webhook accepted.'
+          handledBoostEvent
+            ? 'Boost webhook processed.'
+            : 'Webhook accepted.'
         );
       }
 

@@ -19,60 +19,137 @@ import {
   Stethoscope,
   UserCog,
   UserRound,
-  UsersRound
+  UsersRound,
+  Zap
 } from 'lucide-react';
 
 export const memberNavigation = [
   {
-    to: '/dashboard',
-    labelKey: 'nav.dashboard',
-    icon: LayoutDashboard
+    to:
+      '/dashboard',
+
+    labelKey:
+      'nav.dashboard',
+
+    icon:
+      LayoutDashboard
   },
+
   {
-    to: '/discover',
-    labelKey: 'nav.discover',
-    icon: Compass
+    to:
+      '/discover',
+
+    labelKey:
+      'nav.discover',
+
+    icon:
+      Compass
   },
+
   {
-    to: '/interests',
-    labelKey: 'nav.interests',
-    icon: HeartHandshake
+    to:
+      '/interests',
+
+    labelKey:
+      'nav.interests',
+
+    icon:
+      HeartHandshake
   },
+
   {
-    to: '/matches',
-    labelKey: 'nav.matches',
-    icon: UsersRound
+    to:
+      '/matches',
+
+    labelKey:
+      'nav.matches',
+
+    icon:
+      UsersRound
   },
+
   {
-    to: '/shortlisted',
-    labelKey: 'nav.shortlisted',
-    icon: Bookmark
+    to:
+      '/shortlisted',
+
+    labelKey:
+      'nav.shortlisted',
+
+    icon:
+      Bookmark
   },
+
   {
-    to: '/notifications',
-    labelKey: 'nav.notifications',
-    icon: Bell,
-    badge: 'notifications'
+    to:
+      '/notifications',
+
+    labelKey:
+      'nav.notifications',
+
+    icon:
+      Bell,
+
+    badge:
+      'notifications'
   },
+
   {
-    to: '/my-profile',
-    labelKey: 'nav.myProfile',
-    icon: UserRound
+    to:
+      '/my-profile',
+
+    labelKey:
+      'nav.myProfile',
+
+    icon:
+      UserRound
   },
+
   {
-    to: '/membership',
-    labelKey: 'nav.membership',
-    icon: Crown
+    to:
+      '/membership',
+
+    labelKey:
+      'nav.membership',
+
+    icon:
+      Crown
   },
+
   {
-    to: '/benefits',
-    labelKey: 'nav.benefits',
-    icon: ShieldCheck
+    to:
+      '/boosts',
+
+    /*
+     * Existing EN/GU/HIN translation key,
+     * therefore no locale JSON change is needed.
+     */
+    labelKey:
+      'membership.features.profileBoost',
+
+    icon:
+      Zap
   },
+
   {
-    to: '/settings',
-    labelKey: 'nav.settings',
-    icon: Settings
+    to:
+      '/benefits',
+
+    labelKey:
+      'nav.benefits',
+
+    icon:
+      ShieldCheck
+  },
+
+  {
+    to:
+      '/settings',
+
+    labelKey:
+      'nav.settings',
+
+    icon:
+      Settings
   }
 ];
 
@@ -83,12 +160,17 @@ export const managerNavigation = [
 
     links: [
       {
-        to: '/manager',
+        to:
+          '/manager',
+
         labelKey:
           'manager.assignedTitle',
+
         icon:
           BriefcaseBusiness,
-        end: true
+
+        end:
+          true
       }
     ]
   }
@@ -101,17 +183,23 @@ export const adminNavigation = [
 
     links: [
       {
-        to: '/admin',
+        to:
+          '/admin',
+
         labelKey:
           'admin.overview',
+
         roles: [
           'moderator',
           'admin',
           'super_admin'
         ],
+
         icon:
           CircleGauge,
-        end: true
+
+        end:
+          true
       }
     ]
   },
@@ -301,6 +389,21 @@ export const adminNavigation = [
 
         icon:
           Crown
+      },
+
+      {
+        to:
+          '/admin/boosts',
+
+        labelKey:
+          'membership.features.profileBoost',
+
+        roles: [
+          'super_admin'
+        ],
+
+        icon:
+          Zap
       }
     ]
   },
@@ -376,7 +479,10 @@ export const adminNavigation = [
 export function getNavigationForRole(
   role
 ) {
-  if (role === 'member') {
+  if (
+    role ===
+    'member'
+  ) {
     return [
       {
         links:
@@ -393,19 +499,27 @@ export function getNavigationForRole(
   }
 
   return adminNavigation
-    .map((section) => ({
-      ...section,
+    .map(
+      (
+        section
+      ) => ({
+        ...section,
 
-      links:
-        section.links.filter(
-          (link) =>
-            link.roles.includes(
-              role
-            )
-        )
-    }))
+        links:
+          section.links.filter(
+            (
+              link
+            ) =>
+              link.roles.includes(
+                role
+              )
+          )
+      })
+    )
     .filter(
-      (section) =>
+      (
+        section
+      ) =>
         section.links.length
     );
 }

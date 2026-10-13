@@ -8,6 +8,8 @@ import crypto from 'node:crypto';
 
 import routes from './routes/index.js';
 
+import boostRoutes from './routes/boostRoutes.js';
+
 import {
   razorpayWebhook
 } from './controllers/membershipController.js';
@@ -85,11 +87,6 @@ app.disable(
 
 /*
  * Reverse-proxy handling.
- *
- * Production deployments normally sit behind
- * Render / Railway / Nginx / another HTTPS proxy.
- *
- * Local development does not need proxy trust.
  */
 app.set(
   'trust proxy',
@@ -100,13 +97,6 @@ app.set(
 
 /*
  * Security headers.
- *
- * This process primarily serves a JSON API rather
- * than the React frontend, therefore the safest CSP
- * is intentionally strict.
- *
- * The React/Vite deployment should define its own
- * browser-facing CSP separately.
  */
 app.use(
   helmet({
@@ -133,13 +123,6 @@ app.use(
     crossOriginEmbedderPolicy:
       false,
 
-    /*
-     * Development may still serve /uploads to a
-     * frontend running on port 5173.
-     *
-     * Production photos use authenticated
-     * Cloudinary delivery.
-     */
     crossOriginResourcePolicy: {
       policy:
         'cross-origin'
@@ -176,9 +159,6 @@ app.use(
 
 /*
  * Explicit Permissions Policy.
- *
- * The backend API never needs direct access to
- * browser sensors/devices.
  */
 app.use(
   (
@@ -205,10 +185,6 @@ app.use(
 
 /*
  * CORS.
- *
- * Requests with no Origin header are still allowed
- * because server-to-server calls, webhooks and
- * testing tools commonly omit Origin.
  */
 app.use(
   cors({
@@ -276,9 +252,6 @@ app.use(
 
 /*
  * Request correlation ID.
- *
- * Avoid trusting arbitrarily long values supplied
- * by external clients.
  */
 app.use(
   (
@@ -316,9 +289,6 @@ app.use(
 
 /*
  * Structured HTTP logging.
- *
- * Avoid logging Authorization headers, request
- * bodies, cookies or other secrets.
  */
 if (
   !isTest
@@ -372,10 +342,7 @@ if (
 }
 
 /*
- * Razorpay webhook MUST receive the exact raw body
- * used for Razorpay's HMAC signature.
- *
- * Keep this route BEFORE express.json().
+ * Razorpay webhook MUST receive the exact raw body.
  */
 app.post(
   '/api/webhooks/razorpay',
@@ -393,9 +360,6 @@ app.post(
 
 /*
  * Normal API body parsing.
- *
- * Keep payload limits deliberately small.
- * Images are handled separately through Multer.
  */
 app.use(
   express.json({
@@ -422,10 +386,6 @@ app.use(
 
 /*
  * Local media fallback.
- *
- * Production uses authenticated Cloudinary assets,
- * therefore this should mainly be useful during
- * local development.
  */
 app.use(
   '/uploads',
@@ -450,7 +410,7 @@ app.use(
 );
 
 /*
- * Authentication brute-force protection.
+ * Authentication rate limiter.
  */
 const authLimiter =
   rateLimit({
@@ -481,8 +441,7 @@ const authLimiter =
   });
 
 /*
- * OTP endpoints get a stricter limiter because
- * they may trigger an external SMS provider.
+ * OTP rate limiter.
  */
 const otpLimiter =
   rateLimit({
@@ -559,15 +518,6 @@ const paymentLimiter =
     }
   });
 
-/*
- * Lightweight safety net for the whole API.
- *
- * Endpoint-specific limiters above/below remain
- * stricter where necessary.
- *
- * This limit is intentionally generous so normal
- * member dashboard/discovery usage is unaffected.
- */
 const apiLimiter =
   rateLimit({
     windowMs:
@@ -624,18 +574,21 @@ app.use(
   supportLimiter
 );
 
+/*
+ * Membership + Boost payments use the same provider
+ * safety limiter.
+ */
 app.use(
   [
     '/api/payments/orders',
-    '/api/payments/verify'
+    '/api/payments/verify',
+    '/api/boost-packs'
   ],
   paymentLimiter
 );
 
 /*
  * Liveness probe.
- *
- * Does not expose secrets or database details.
  */
 app.get(
   '/api/health',
@@ -660,9 +613,6 @@ app.get(
 
 /*
  * Readiness probe.
- *
- * Only exposes provider name/configured state,
- * never credentials or missing secret values.
  */
 app.get(
   '/api/ready',
@@ -741,6 +691,18 @@ app.get(
   }
 );
 
+/*
+ * IMPORTANT:
+ *
+ * New credit-based boost routes are mounted before
+ * legacy routes because the old router already has
+ * GET/POST /profile-boost.
+ */
+app.use(
+  '/api',
+  boostRoutes
+);
+
 app.use(
   '/api',
   routes
@@ -765,9 +727,6 @@ app.use(
 
 /*
  * Central error handler.
- *
- * Production responses never expose stack traces,
- * MongoDB internals or provider errors.
  */
 app.use(
   (
