@@ -19,6 +19,8 @@ import {
 
 import FamilyAssetsEditor from '../components/FamilyAssetsEditor';
 
+import PartnerPreferencesForm from '../components/preferences/PartnerPreferencesForm';
+
 import {
   useAuth
 } from '../context/AuthContext';
@@ -39,7 +41,6 @@ import {
   MANGLIK_OPTIONS,
   MARITAL_STATUS_OPTIONS,
   NAKSHATRA_OPTIONS,
-  PREFERRED_SHAKHS,
   RAJPUT_SURNAMES,
   RASHI_OPTIONS,
   SMOKING_OPTIONS,
@@ -392,104 +393,272 @@ const selectedOtherValue =
 const preferenceToForm =
   (
     preferences
-  ) => ({
-    ageMin:
-      preferences
-        ?.ageMin ??
-      '',
-
-    ageMax:
-      preferences
-        ?.ageMax ??
-      '',
-
-    heightMin:
-      preferences
-        ?.heightMin ??
-      '',
-
-    heightMax:
-      preferences
-        ?.heightMax ??
-      '',
-
-    weightMin:
-      preferences
-        ?.weightMin ??
-      '',
-
-    weightMax:
-      preferences
-        ?.weightMax ??
-      '',
-
-    states:
+  ) => {
+    const shakhPreferences =
       Array.isArray(
         preferences
-          ?.states
-      )
-        ? preferences.states
-        : [],
-
-    preferredCountry:
+          ?.shakhPreferences
+      ) &&
       preferences
-        ?.countries?.[0] ||
-      '',
+        .shakhPreferences
+        .length
+        ? preferences
+            .shakhPreferences
+        : Array.isArray(
+            preferences
+              ?.communityPreferences
+          )
+          ? preferences
+              .communityPreferences
+          : [];
 
-    preferredDiet:
-      preferences
-        ?.dietPreferences?.[0] ||
-      '',
-
-    preferredShakh:
-      preferences
-        ?.shakhPreferences?.[0] ||
-      preferences
-        ?.communityPreferences?.[0] ||
-      '',
-
-    preferredMaritalStatus:
-      preferences
-        ?.acceptedMaritalStatuses?.[0] ||
-      '',
-
-    willingForRemarriage:
-      preferences
-        ?.willingForRemarriage ||
-      'Open to Discuss',
-
-    locations:
-      (
+    return {
+      preferredGender:
         preferences
-          ?.locations ||
-        []
-      ).join(
-        ', '
-      ),
+          ?.preferredGender ||
+        '',
 
-    educationPreferences:
-      (
+      ageMin:
         preferences
-          ?.educationPreferences ||
-        []
-      ).join(
-        ', '
-      ),
+          ?.ageMin ??
+        '',
 
-    occupationPreferences:
-      (
+      ageMax:
         preferences
-          ?.occupationPreferences ||
-        []
-      ).join(
-        ', '
-      ),
+          ?.ageMax ??
+        '',
 
-    additionalPreferences:
-      preferences
-        ?.additionalPreferences ||
-      ''
-  });
+      heightMin:
+        preferences
+          ?.heightMin ??
+        '',
+
+      heightMax:
+        preferences
+          ?.heightMax ??
+        '',
+
+      weightMin:
+        preferences
+          ?.weightMin ??
+        '',
+
+      weightMax:
+        preferences
+          ?.weightMax ??
+        '',
+
+      acceptedMaritalStatuses:
+        Array.isArray(
+          preferences
+            ?.acceptedMaritalStatuses
+        )
+          ? preferences
+              .acceptedMaritalStatuses
+          : Array.isArray(
+              preferences
+                ?.maritalStatus
+            )
+            ? preferences
+                .maritalStatus
+            : [],
+
+      willingForRemarriage:
+        preferences
+          ?.willingForRemarriage ||
+        'Open to Discuss',
+
+      locations:
+        Array.isArray(
+          preferences
+            ?.locations
+        )
+          ? preferences
+              .locations
+              .join(
+                ', '
+              )
+          : preferences
+              ?.locations ||
+            '',
+
+      states:
+        Array.isArray(
+          preferences
+            ?.states
+        )
+          ? preferences.states
+          : [],
+
+      countries:
+        Array.isArray(
+          preferences
+            ?.countries
+        )
+          ? preferences
+              .countries
+          : [],
+
+      preferredCountry:
+        preferences
+          ?.countries?.[0] ||
+        '',
+
+      shakhPreferences,
+
+      gotraPreferences:
+        Array.isArray(
+          preferences
+            ?.gotraPreferences
+        )
+          ? preferences
+              .gotraPreferences
+          : [],
+
+      vanshPreferences:
+        Array.isArray(
+          preferences
+            ?.vanshPreferences
+        )
+          ? preferences
+              .vanshPreferences
+          : [],
+
+      educationPreferences:
+        Array.isArray(
+          preferences
+            ?.educationPreferences
+        )
+          ? preferences
+              .educationPreferences
+          : [],
+
+      occupationPreferences:
+        Array.isArray(
+          preferences
+            ?.occupationPreferences
+        )
+          ? preferences
+              .occupationPreferences
+          : [],
+
+      incomePreferences: {
+        min:
+          preferences
+            ?.incomePreferences
+            ?.min ??
+          '',
+
+        max:
+          preferences
+            ?.incomePreferences
+            ?.max ??
+          ''
+      },
+
+      dietPreferences:
+        Array.isArray(
+          preferences
+            ?.dietPreferences
+        )
+          ? preferences
+              .dietPreferences
+          : [],
+
+      familyTypePreferences:
+        Array.isArray(
+          preferences
+            ?.familyTypePreferences
+        )
+          ? preferences
+              .familyTypePreferences
+          : [],
+
+      familyValuePreferences:
+        Array.isArray(
+          preferences
+            ?.familyValuePreferences
+        )
+          ? preferences
+              .familyValuePreferences
+          : [],
+
+      smokingPreferences:
+        Array.isArray(
+          preferences
+            ?.smokingPreferences
+        )
+          ? preferences
+              .smokingPreferences
+          : [],
+
+      drinkingPreferences:
+        Array.isArray(
+          preferences
+            ?.drinkingPreferences
+        )
+          ? preferences
+              .drinkingPreferences
+          : [],
+
+      propertyPreferences: {
+        ownResidence:
+          preferences
+            ?.propertyPreferences
+            ?.ownResidence ||
+          'Any',
+
+        agricultureLand:
+          preferences
+            ?.propertyPreferences
+            ?.agricultureLand ||
+          'Any',
+
+        businessAssets:
+          preferences
+            ?.propertyPreferences
+            ?.businessAssets ||
+          'Any'
+      },
+
+      marriageTimeline:
+        Array.isArray(
+          preferences
+            ?.marriageTimeline
+        )
+          ? preferences
+              .marriageTimeline
+          : [],
+
+      importance: {
+        ...(
+          preferences
+            ?.importance ||
+          {}
+        )
+      },
+
+      additionalPreferences:
+        preferences
+          ?.additionalPreferences ||
+        '',
+
+      preferredDiet:
+        preferences
+          ?.dietPreferences?.[0] ||
+        '',
+
+      preferredShakh:
+        shakhPreferences[0] ||
+        '',
+
+      preferredMaritalStatus:
+        preferences
+          ?.acceptedMaritalStatuses?.[0] ||
+        ''
+    };
+  };
+
 
 const flatten =
   (
@@ -1368,98 +1537,215 @@ const profilePayload =
 const preferencePayload =
   (
     data
-  ) => ({
-    ageMin:
-      optionalNumber(
-        data.ageMin
-      ),
-
-    ageMax:
-      optionalNumber(
-        data.ageMax
-      ),
-
-    heightMin:
-      optionalNumber(
-        data.heightMin
-      ),
-
-    heightMax:
-      optionalNumber(
-        data.heightMax
-      ),
-
-    weightMin:
-      optionalNumber(
-        data.weightMin
-      ),
-
-    weightMax:
-      optionalNumber(
-        data.weightMax
-      ),
-
-    locations:
+  ) => {
+    const shakhPreferences =
       list(
-        data.locations
-      ),
+        data.shakhPreferences
+      );
 
-    states:
-      Array.isArray(
-        data.states
-      )
-        ? data.states
-        : list(
-            data.states
+    const acceptedMaritalStatuses =
+      list(
+        data.acceptedMaritalStatuses
+      );
+
+    const countries =
+      list(
+        data.countries
+      );
+
+    const dietPreferences =
+      list(
+        data.dietPreferences
+      );
+
+    return {
+      preferredGender:
+        data.preferredGender ||
+        (
+          data.gender ===
+            'Male'
+            ? 'Female'
+            : data.gender ===
+                'Female'
+              ? 'Male'
+              : undefined
+        ),
+
+      ageMin:
+        optionalNumber(
+          data.ageMin
+        ),
+
+      ageMax:
+        optionalNumber(
+          data.ageMax
+        ),
+
+      heightMin:
+        optionalNumber(
+          data.heightMin
+        ),
+
+      heightMax:
+        optionalNumber(
+          data.heightMax
+        ),
+
+      weightMin:
+        optionalNumber(
+          data.weightMin
+        ),
+
+      weightMax:
+        optionalNumber(
+          data.weightMax
+        ),
+
+      locations:
+        list(
+          data.locations
+        ),
+
+      states:
+        list(
+          data.states
+        ),
+
+      countries:
+        countries.length
+          ? countries
+          : data.preferredCountry
+            ? [
+                data.preferredCountry
+              ]
+            : [],
+
+      shakhPreferences:
+        shakhPreferences.length
+          ? shakhPreferences
+          : data.preferredShakh &&
+              data.preferredShakh !==
+                'Any'
+            ? [
+                data.preferredShakh
+              ]
+            : [],
+
+      gotraPreferences:
+        list(
+          data.gotraPreferences
+        ),
+
+      vanshPreferences:
+        list(
+          data.vanshPreferences
+        ),
+
+      educationPreferences:
+        list(
+          data.educationPreferences
+        ),
+
+      occupationPreferences:
+        list(
+          data.occupationPreferences
+        ),
+
+      incomePreferences: {
+        min:
+          optionalNumber(
+            data
+              .incomePreferences
+              ?.min
           ),
 
-    countries:
-      data.preferredCountry
-        ? [
-            data.preferredCountry
-          ]
-        : [],
+        max:
+          optionalNumber(
+            data
+              .incomePreferences
+              ?.max
+          )
+      },
 
-    educationPreferences:
-      list(
-        data.educationPreferences
-      ),
+      dietPreferences:
+        dietPreferences.length
+          ? dietPreferences
+          : data.preferredDiet
+            ? [
+                data.preferredDiet
+              ]
+            : [],
 
-    occupationPreferences:
-      list(
-        data.occupationPreferences
-      ),
+      familyTypePreferences:
+        list(
+          data.familyTypePreferences
+        ),
 
-    dietPreferences:
-      data.preferredDiet
-        ? [
-            data.preferredDiet
-          ]
-        : [],
+      familyValuePreferences:
+        list(
+          data.familyValuePreferences
+        ),
 
-    shakhPreferences:
-      data.preferredShakh &&
-      data.preferredShakh !==
-        'Any'
-        ? [
-            data.preferredShakh
-          ]
-        : [],
+      smokingPreferences:
+        list(
+          data.smokingPreferences
+        ),
 
-    acceptedMaritalStatuses:
-      data.preferredMaritalStatus
-        ? [
-            data.preferredMaritalStatus
-          ]
-        : [],
+      drinkingPreferences:
+        list(
+          data.drinkingPreferences
+        ),
 
-    willingForRemarriage:
-      data.willingForRemarriage ||
-      'Open to Discuss',
+      propertyPreferences: {
+        ownResidence:
+          data
+            .propertyPreferences
+            ?.ownResidence ||
+          'Any',
 
-    additionalPreferences:
-      data.additionalPreferences
-  });
+        agricultureLand:
+          data
+            .propertyPreferences
+            ?.agricultureLand ||
+          'Any',
+
+        businessAssets:
+          data
+            .propertyPreferences
+            ?.businessAssets ||
+          'Any'
+      },
+
+      marriageTimeline:
+        list(
+          data.marriageTimeline
+        ),
+
+      acceptedMaritalStatuses:
+        acceptedMaritalStatuses.length
+          ? acceptedMaritalStatuses
+          : data.preferredMaritalStatus
+            ? [
+                data.preferredMaritalStatus
+              ]
+            : [],
+
+      willingForRemarriage:
+        data.willingForRemarriage ||
+        'Open to Discuss',
+
+      importance: {
+        ...(
+          data.importance ||
+          {}
+        )
+      },
+
+      additionalPreferences:
+        data.additionalPreferences
+    };
+  };
+
 
 const validateBasics =
   (
@@ -1563,28 +1849,138 @@ const localCompletion =
   (
     data
   ) => {
+    const hasPreferenceValues =
+      (
+        value
+      ) =>
+        Array.isArray(
+          value
+        )
+          ? value.length >
+            0
+          : typeof value ===
+              'string'
+            ? !!value.trim()
+            : value !==
+                undefined &&
+              value !==
+                null &&
+              value !==
+                '';
+
+    const hasMeaningfulPropertyPreference =
+      [
+        data
+          .propertyPreferences
+          ?.ownResidence,
+        data
+          .propertyPreferences
+          ?.agricultureLand,
+        data
+          .propertyPreferences
+          ?.businessAssets
+      ].some(
+        (
+          value
+        ) =>
+          value &&
+          value !==
+            'Any'
+      );
+
     const hasPreferences =
       Boolean(
-        data.ageMin ||
-        data.ageMax ||
-        data.heightMin ||
-        data.heightMax ||
-        data.weightMin ||
-        data.weightMax ||
-        data.preferredShakh ||
-        data.preferredMaritalStatus ||
-        data.preferredDiet ||
-        data.preferredCountry ||
-        data.locations ||
-        data.educationPreferences ||
-        data.occupationPreferences ||
-        data.additionalPreferences ||
-        (
-          Array.isArray(
-            data.states
-          ) &&
-          data.states.length >
-            0
+        hasPreferenceValues(
+          data.preferredGender
+        ) ||
+        hasPreferenceValues(
+          data.ageMin
+        ) ||
+        hasPreferenceValues(
+          data.ageMax
+        ) ||
+        hasPreferenceValues(
+          data.heightMin
+        ) ||
+        hasPreferenceValues(
+          data.heightMax
+        ) ||
+        hasPreferenceValues(
+          data.weightMin
+        ) ||
+        hasPreferenceValues(
+          data.weightMax
+        ) ||
+        hasPreferenceValues(
+          data.acceptedMaritalStatuses
+        ) ||
+        hasPreferenceValues(
+          data.locations
+        ) ||
+        hasPreferenceValues(
+          data.states
+        ) ||
+        hasPreferenceValues(
+          data.countries
+        ) ||
+        hasPreferenceValues(
+          data.shakhPreferences
+        ) ||
+        hasPreferenceValues(
+          data.gotraPreferences
+        ) ||
+        hasPreferenceValues(
+          data.vanshPreferences
+        ) ||
+        hasPreferenceValues(
+          data.educationPreferences
+        ) ||
+        hasPreferenceValues(
+          data.occupationPreferences
+        ) ||
+        hasPreferenceValues(
+          data
+            .incomePreferences
+            ?.min
+        ) ||
+        hasPreferenceValues(
+          data
+            .incomePreferences
+            ?.max
+        ) ||
+        hasPreferenceValues(
+          data.dietPreferences
+        ) ||
+        hasPreferenceValues(
+          data.familyTypePreferences
+        ) ||
+        hasPreferenceValues(
+          data.familyValuePreferences
+        ) ||
+        hasPreferenceValues(
+          data.smokingPreferences
+        ) ||
+        hasPreferenceValues(
+          data.drinkingPreferences
+        ) ||
+        hasMeaningfulPropertyPreference ||
+        hasPreferenceValues(
+          data.marriageTimeline
+        ) ||
+        hasPreferenceValues(
+          data.additionalPreferences
+        ) ||
+        hasPreferenceValues(
+          data.preferredShakh
+        ) ||
+        hasPreferenceValues(
+          data.preferredMaritalStatus
+        ) ||
+        hasPreferenceValues(
+          data.preferredDiet
+        ) ||
+        hasPreferenceValues(
+          data.preferredCountry
         )
       );
 
@@ -1874,96 +2270,6 @@ function OtherSelectField({
         />
       )}
     </>
-  );
-}
-
-function MultiSelectDropdown({
-  label,
-  values = [],
-  options,
-  onChange,
-  placeholder = 'Select options'
-}) {
-  const selected =
-    Array.isArray(
-      values
-    )
-      ? values
-      : [];
-
-  const toggle =
-    (
-      option
-    ) => {
-      if (
-        selected.includes(
-          option
-        )
-      ) {
-        onChange(
-          selected.filter(
-            (
-              item
-            ) =>
-              item !==
-              option
-          )
-        );
-
-        return;
-      }
-
-      onChange([
-        ...selected,
-        option
-      ]);
-    };
-
-  return (
-    <label className={labelClass}>
-      {label}
-
-      <details className="relative">
-        <summary
-          className={`${fieldClass} cursor-pointer list-none`}
-        >
-          {selected.length
-            ? selected.join(
-                ', '
-              )
-            : placeholder}
-        </summary>
-
-        <div className="absolute z-20 mt-1 max-h-[240px] w-full overflow-y-auto border border-[#ddd0c1] bg-[#fffdf8] p-3 shadow-lg">
-          {options.map(
-            (
-              option
-            ) => (
-              <label
-                key={option}
-                className="flex cursor-pointer items-center gap-3 border-b border-[#eee4d8] py-2 text-[12px] normal-case tracking-normal last:border-b-0"
-              >
-                <input
-                  type="checkbox"
-                  checked={
-                    selected.includes(
-                      option
-                    )
-                  }
-                  onChange={() =>
-                    toggle(
-                      option
-                    )
-                  }
-                />
-
-                {option}
-              </label>
-            )
-          )}
-        </div>
-      </details>
-    </label>
   );
 }
 
@@ -2743,6 +3049,110 @@ export default function OnboardingPage() {
         step ===
           9
       ) {
+        const ageMin =
+          optionalNumber(
+            data.ageMin
+          );
+
+        const ageMax =
+          optionalNumber(
+            data.ageMax
+          );
+
+        const heightMin =
+          optionalNumber(
+            data.heightMin
+          );
+
+        const heightMax =
+          optionalNumber(
+            data.heightMax
+          );
+
+        const weightMin =
+          optionalNumber(
+            data.weightMin
+          );
+
+        const weightMax =
+          optionalNumber(
+            data.weightMax
+          );
+
+        const incomeMin =
+          optionalNumber(
+            data
+              .incomePreferences
+              ?.min
+          );
+
+        const incomeMax =
+          optionalNumber(
+            data
+              .incomePreferences
+              ?.max
+          );
+
+        if (
+          ageMin !==
+            undefined &&
+          ageMax !==
+            undefined &&
+          ageMin >
+            ageMax
+        ) {
+          setError(
+            'Minimum age cannot exceed maximum age.'
+          );
+
+          return;
+        }
+
+        if (
+          heightMin !==
+            undefined &&
+          heightMax !==
+            undefined &&
+          heightMin >
+            heightMax
+        ) {
+          setError(
+            'Minimum height cannot exceed maximum height.'
+          );
+
+          return;
+        }
+
+        if (
+          weightMin !==
+            undefined &&
+          weightMax !==
+            undefined &&
+          weightMin >
+            weightMax
+        ) {
+          setError(
+            'Minimum weight cannot exceed maximum weight.'
+          );
+
+          return;
+        }
+
+        if (
+          incomeMin !==
+            undefined &&
+          incomeMax !==
+            undefined &&
+          incomeMin >
+            incomeMax
+        ) {
+          setError(
+            'Minimum income cannot exceed maximum income.'
+          );
+
+          return;
+        }
+
         if (
           !data.profilePhoto
         ) {
@@ -5005,7 +5415,7 @@ export default function OnboardingPage() {
           9 && (
           <>
             <div className={sectionClass}>
-              <div className="mb-5">
+              <div className="mb-6">
                 <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#91683f]">
                   Match preferences
                 </p>
@@ -5013,253 +5423,30 @@ export default function OnboardingPage() {
                 <h2 className="mt-1 font-['Cormorant_Garamond'] text-[29px] font-medium text-[#431318]">
                   The person you hope to meet
                 </h2>
+
+                <p className="mt-2 max-w-[680px] text-[11px] leading-6 text-[#756a60]">
+                  Your recommendation percentage is directional.
+                  A member can be a stronger match for you than
+                  you are for them because both members&apos;
+                  preferences are evaluated independently.
+                </p>
               </div>
 
-              <div className={gridClass}>
-                <TextField
-                  label="Minimum Age"
-                  type="number"
-                  value={
-                    data.ageMin
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'ageMin',
-                      value
-                    )
-                  }
-                />
+              <PartnerPreferencesForm
+                value={data}
+                onChange={setData}
+              />
 
-                <TextField
-                  label="Maximum Age"
-                  type="number"
-                  value={
-                    data.ageMax
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'ageMax',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Minimum Height"
-                  type="number"
-                  value={
-                    data.heightMin
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'heightMin',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Maximum Height"
-                  type="number"
-                  value={
-                    data.heightMax
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'heightMax',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Minimum Weight (kg)"
-                  type="number"
-                  min="30"
-                  max="250"
-                  value={
-                    data.weightMin
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'weightMin',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Maximum Weight (kg)"
-                  type="number"
-                  min="30"
-                  max="250"
-                  value={
-                    data.weightMax
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'weightMax',
-                      value
-                    )
-                  }
-                />
-
-                <SelectField
-                  label="Preferred Shakh"
-                  value={
-                    data.preferredShakh
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'preferredShakh',
-                      value
-                    )
-                  }
-                  options={PREFERRED_SHAKHS}
-                  placeholder="Select preferred Shakh"
-                />
-
-                <TextField
-                  label="Preferred Education"
-                  value={
-                    data.educationPreferences
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'educationPreferences',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Preferred Profession"
-                  value={
-                    data.occupationPreferences
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'occupationPreferences',
-                      value
-                    )
-                  }
-                />
-
-                <TextField
-                  label="Preferred Location"
-                  value={
-                    data.locations
-                  }
-                  placeholder="City or region"
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'locations',
-                      value
-                    )
-                  }
-                />
-
-                <MultiSelectDropdown
-                  label="Preferred States"
-                  values={
-                    data.states ||
-                    []
-                  }
-                  onChange={(
-                    values
-                  ) =>
-                    update(
-                      'states',
-                      values
-                    )
-                  }
-                  options={INDIA_STATES}
-                  placeholder="Select one or more states"
-                />
-
-                <SelectField
-                  label="Preferred Country"
-                  value={
-                    data.preferredCountry
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'preferredCountry',
-                      value
-                    )
-                  }
-                  options={COUNTRY_OPTIONS}
-                />
-
-                <SelectField
-                  label="Preferred Marital Status"
-                  value={
-                    data.preferredMaritalStatus
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'preferredMaritalStatus',
-                      value
-                    )
-                  }
-                  options={MARITAL_STATUS_OPTIONS}
-                />
-
-                <SelectField
-                  label="Diet Preference"
-                  value={
-                    data.preferredDiet
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'preferredDiet',
-                      value
-                    )
-                  }
-                  options={DIET_OPTIONS}
-                />
-
-                <TextField
-                  label="Other Expectations"
-                  multiline
-                  value={
-                    data.additionalPreferences
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      'additionalPreferences',
-                      value
-                    )
-                  }
-                />
+              <div className="mt-5 border border-[#ddd0c1] bg-[#faf6f0] p-4 text-[10px] leading-5 text-[#756a60]">
+                <strong className="text-[#431318]">
+                  Matching privacy:
+                </strong>{' '}
+                your exact current residential address is never
+                used by the recommendation engine. Native
+                matrimonial location is used instead. Private
+                income and property information may be evaluated
+                securely on the server without exposing the raw
+                values to another member.
               </div>
             </div>
 

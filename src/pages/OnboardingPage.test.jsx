@@ -1462,10 +1462,12 @@ describe(
         ).not.toBeInTheDocument();
 
         expect(
-          screen.getByText(
-            /exact current residential address/i
-          )
-        ).toBeInTheDocument();
+            screen.getAllByText(
+              /exact current residential address/i
+            ).length
+          ).toBeGreaterThanOrEqual(
+            2
+          );
 
         expect(
           screen.getByText(
