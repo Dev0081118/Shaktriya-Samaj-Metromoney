@@ -1,5 +1,4 @@
 import {
-  ArrowUpRight,
   Compass,
   Crown,
   HeartHandshake,
@@ -14,15 +13,17 @@ import {
 } from "react";
 
 import {
-  Link
-} from "react-router-dom";
-
-import {
   useTranslation
 } from "react-i18next";
 
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import FinalCTA from "../components/FinalCTA";
+
+import {
+  BharatKalamCorner,
+  JaliMedallion
+} from "../components/heritage/HeritageOrnaments";
 
 import {
   gsap
@@ -268,18 +269,35 @@ export default function AboutPage() {
                 </div>
               </div>
 
-              {/* RIGHT IMAGE */}
+              {/* =====================================
+                  RIGHT IMAGE
+
+                  IMPORTANT:
+                  SVG artwork is behind the image.
+              ====================================== */}
 
               <div
                 data-about-hero
                 className="relative mx-auto w-full max-w-[510px] lg:mx-0"
               >
-                <div
-                  aria-hidden="true"
-                  className="absolute -left-5 top-8 hidden h-[88%] w-full border border-[#B9966E]/30 sm:block"
+                {/* Back SVG — does not cross over photo */}
+
+                <JaliMedallion
+                  className="pointer-events-none absolute -right-[125px] top-[42px] z-0 hidden w-[440px] text-[#965B31] opacity-[0.24] sm:block lg:w-[500px]"
                 />
 
-                <div className="relative overflow-hidden border border-[#D4C1AB] bg-[#E7D8C7] shadow-[0_35px_90px_rgba(72,44,32,0.16)]">
+                <BharatKalamCorner
+                  className="pointer-events-none absolute -bottom-[110px] -left-[110px] z-0 hidden w-[390px] text-[#92562F] opacity-[0.20] md:block"
+                />
+
+                <div
+                  aria-hidden="true"
+                  className="absolute -left-5 top-8 z-[2] hidden h-[88%] w-full border border-[#B9966E]/35 sm:block"
+                />
+
+                {/* Photo stays above everything */}
+
+                <div className="relative z-10 overflow-hidden border border-[#D4C1AB] bg-[#E7D8C7] shadow-[0_35px_90px_rgba(72,44,32,0.16)]">
                   <div className="relative aspect-[4/5] overflow-hidden">
                     <img
                       ref={heroImageRef}
@@ -631,48 +649,9 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* ========================================
-            CTA
-        ========================================= */}
+        {/* Shared site-wide final CTA */}
 
-        <section className="relative overflow-hidden bg-[#431318] py-24 text-white sm:py-28">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -left-32 bottom-[-180px] h-[420px] w-[420px] rounded-full bg-[#AA7A42]/8 blur-[130px]"
-          />
-
-          <div className="page-container relative z-10">
-            <div className="grid items-center gap-12 lg:grid-cols-[1fr_auto] lg:gap-20">
-              <div data-about-reveal>
-                <p className="text-[9px] font-extrabold uppercase tracking-[0.25em] text-[#D7AD78]">
-                  {t("aboutPage.cta.eyebrow")}
-                </p>
-
-                <h2 className="mt-5 max-w-[760px] font-display text-[48px] leading-[0.96] text-[#FFF9F3] sm:text-[60px]">
-                  {t("aboutPage.cta.title")}
-                </h2>
-
-                <p className="mt-6 max-w-[620px] text-[13px] leading-7 text-white/55">
-                  {t("aboutPage.cta.body")}
-                </p>
-              </div>
-
-              <div data-about-reveal>
-                <Link
-                  to="/register"
-                  className="group inline-flex min-h-[58px] items-center gap-8 bg-[#FFF9F2] px-7 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#32171A] transition hover:bg-white"
-                >
-                  {t("aboutPage.cta.action")}
-
-                  <ArrowUpRight
-                    size={18}
-                    className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                  />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+        <FinalCTA />
       </main>
 
       <Footer />

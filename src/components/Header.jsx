@@ -2,11 +2,27 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 
-import { useAuth } from '../context/AuthContext';
+import {
+  useState
+} from 'react';
+
+import {
+  useTranslation
+} from 'react-i18next';
+
+import {
+  Link,
+  useLocation
+} from 'react-router-dom';
+
+import {
+  useAuth
+} from '../context/AuthContext';
+
+import {
+  PublicHeroOrnaments
+} from './heritage/HeritageOrnaments';
 
 const links = [
   [
@@ -34,14 +50,26 @@ const links = [
 export default function Header({
   solid = false
 }) {
-  const [open, setOpen] =
+  const [
+    open,
+    setOpen
+  ] =
     useState(false);
 
-  const { user } =
+  const {
+    user
+  } =
     useAuth();
 
-  const { t } =
+  const {
+    t
+  } =
     useTranslation();
+
+  const {
+    pathname
+  } =
+    useLocation();
 
   return (
     <header
@@ -51,7 +79,20 @@ export default function Header({
           : 'absolute'
       }`}
     >
-      <div className="page-container flex h-24 items-center justify-between">
+      {/* =====================================
+          ROUTE-SPECIFIC PUBLIC ARTWORK
+
+          This intentionally extends below the header
+          into each public page hero.
+      ====================================== */}
+
+      <PublicHeroOrnaments
+        pathname={
+          pathname
+        }
+      />
+
+      <div className="page-container relative z-10 flex h-24 items-center justify-between">
         <Link
           to="/"
           className="relative z-10"
@@ -61,25 +102,36 @@ export default function Header({
           </div>
 
           <div className="mt-[-3px] text-[9px] font-semibold uppercase tracking-[0.38em] text-white/55">
-            {t('brand.society')}
+            {t(
+              'brand.society'
+            )}
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex">
+        <nav className="relative z-10 hidden items-center gap-8 lg:flex">
           {links.map(
-            ([key, to]) => (
+            ([
+              key,
+              to
+            ]) => (
               <Link
-                to={to}
-                key={to}
+                to={
+                  to
+                }
+                key={
+                  to
+                }
                 className="text-[13px] font-medium text-white/75 transition hover:text-white"
               >
-                {t(key)}
+                {t(
+                  key
+                )}
               </Link>
             )
           )}
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-5 lg:flex">
+        <div className="relative z-10 hidden shrink-0 items-center gap-5 lg:flex">
           {user ? (
             <>
               <Link
@@ -93,9 +145,11 @@ export default function Header({
 
               <Link
                 to="/my-profile"
-                aria-label={t(
-                  'nav.myProfile'
-                )}
+                aria-label={
+                  t(
+                    'nav.myProfile'
+                  )
+                }
                 className="grid h-[38px] w-[38px] place-items-center rounded-full border border-[#ffffff55] font-extrabold text-white"
               >
                 {user.email?.[0]?.toUpperCase()}
@@ -128,11 +182,16 @@ export default function Header({
           type="button"
           onClick={() =>
             setOpen(
-              (current) => !current
+              (
+                current
+              ) =>
+                !current
             )
           }
           aria-label="Toggle navigation"
-          aria-expanded={open}
+          aria-expanded={
+            open
+          }
           className="relative z-10 text-white lg:hidden"
         >
           {open ? (
@@ -144,25 +203,38 @@ export default function Header({
       </div>
 
       {open && (
-        <nav className="grid gap-px border-t border-[#ffffff18] bg-[#241716] px-5 pb-6 pt-3 lg:hidden">
+        <nav className="relative z-20 grid gap-px border-t border-[#ffffff18] bg-[#241716] px-5 pb-6 pt-3 lg:hidden">
           {links.map(
-            ([key, to]) => (
+            ([
+              key,
+              to
+            ]) => (
               <Link
                 onClick={() =>
-                  setOpen(false)
+                  setOpen(
+                    false
+                  )
                 }
-                to={to}
-                key={to}
+                to={
+                  to
+                }
+                key={
+                  to
+                }
                 className="border-b border-[#ffffff0d] p-3 text-[13px] text-white/80"
               >
-                {t(key)}
+                {t(
+                  key
+                )}
               </Link>
             )
           )}
 
           <Link
             onClick={() =>
-              setOpen(false)
+              setOpen(
+                false
+              )
             }
             to={
               user
@@ -183,7 +255,9 @@ export default function Header({
           {!user && (
             <Link
               onClick={() =>
-                setOpen(false)
+                setOpen(
+                  false
+                )
               }
               to="/register"
               className="border-b border-[#ffffff0d] p-3 text-[13px] text-white/80"
