@@ -20,6 +20,8 @@ import {
   useAuth
 } from '../context/AuthContext';
 
+import BrandLogo from './BrandLogo';
+
 import {
   PublicHeroOrnaments
 } from './heritage/HeritageOrnaments';
@@ -79,13 +81,6 @@ export default function Header({
           : 'absolute'
       }`}
     >
-      {/* =====================================
-          ROUTE-SPECIFIC PUBLIC ARTWORK
-
-          This intentionally extends below the header
-          into each public page hero.
-      ====================================== */}
-
       <PublicHeroOrnaments
         pathname={
           pathname
@@ -93,20 +88,24 @@ export default function Header({
       />
 
       <div className="page-container relative z-10 flex h-24 items-center justify-between">
+        {/* =====================================
+            BRAND
+        ====================================== */}
+
         <Link
           to="/"
-          className="relative z-10"
+          aria-label="Royal Rajputana Matrimony home"
+          className="relative z-10 flex shrink-0 items-center"
         >
-          <div className="font-display text-[22px] font-semibold tracking-[0.06em] text-white">
-            KSHATRIYA
-          </div>
-
-          <div className="mt-[-3px] text-[9px] font-semibold uppercase tracking-[0.38em] text-white/55">
-            {t(
-              'brand.society'
-            )}
-          </div>
+          <BrandLogo
+            variant="whiteHorizontal"
+            className="h-[58px] w-auto max-w-[210px] object-contain object-left sm:h-[64px] sm:max-w-[235px]"
+          />
         </Link>
+
+        {/* =====================================
+            DESKTOP NAV
+        ====================================== */}
 
         <nav className="relative z-10 hidden items-center gap-8 lg:flex">
           {links.map(
@@ -130,6 +129,10 @@ export default function Header({
             )
           )}
         </nav>
+
+        {/* =====================================
+            DESKTOP ACTIONS
+        ====================================== */}
 
         <div className="relative z-10 hidden shrink-0 items-center gap-5 lg:flex">
           {user ? (
@@ -178,6 +181,10 @@ export default function Header({
           )}
         </div>
 
+        {/* =====================================
+            MOBILE TOGGLE
+        ====================================== */}
+
         <button
           type="button"
           onClick={() =>
@@ -201,6 +208,10 @@ export default function Header({
           )}
         </button>
       </div>
+
+      {/* =====================================
+          MOBILE NAVIGATION
+      ====================================== */}
 
       {open && (
         <nav className="relative z-20 grid gap-px border-t border-[#ffffff18] bg-[#241716] px-5 pb-6 pt-3 lg:hidden">
