@@ -39,6 +39,10 @@ import {
   getBoostWallet
 } from '../src/services/boostService.js';
 
+import {
+  clearExpiredProfileBoosts
+} from '../src/services/boostExposureService.js';
+
 let database;
 
 before(
@@ -195,6 +199,35 @@ const createMemberProfile =
 
         nativeState:
           'Gujarat'
+      },
+
+      privacy: {
+        fullNameVisibility:
+          'RegisteredMembers',
+
+        photoVisibility:
+          'RegisteredMembers',
+
+        incomeVisibility:
+          'Private',
+
+        familyOverviewVisibility:
+          'AcceptedInterests',
+
+        maternalFamilyVisibility:
+          'AcceptedInterests',
+
+        siblingDetailsVisibility:
+          'AcceptedInterests',
+
+        assetVisibility:
+          'Private',
+
+        astrologyVisibility:
+          'RegisteredMembers',
+
+        contactAddressVisibility:
+          'Private'
       },
 
       ...overrides
@@ -511,9 +544,6 @@ test(
       plan
     );
 
-    /*
-     * Initialize wallet / subscription grant.
-     */
     const before =
       await getBoostWallet(
         member._id
@@ -582,11 +612,6 @@ test(
       savedProfile.lastBoostAt
     );
 
-    /*
-     * Boost should expire roughly 12 hours after
-     * activation. Small test execution tolerance is
-     * allowed around the exact timestamp.
-     */
     const minimumExpected =
       requestStartedAt.getTime() +
       12 *
@@ -654,6 +679,482 @@ test(
       String(
         grant._id
       )
+    );
+  }
+);
+
+test(
+  'boost activation and expiry do not change the organic profile updatedAt timestamp',
+  async () => {
+    const member =
+      await createMember(
+        'boost-timestamp@example.com'
+      );
+
+    const profile =
+      await createMemberProfile(
+        member,
+        {
+          profileId:
+            'KSMBOOST001'
+        }
+      );
+
+    /*
+     * Give the profile an intentionally old organic
+     * update time.
+     *
+     * Boost activity must never replace this timestamp.
+     */
+    const organicUpdatedAt =
+      new Date(
+        Date.now() -
+          14 *
+            864e5
+      );
+
+    await MatrimonialProfile.updateOne(
+      {
+        _id:
+          profile._id
+      },
+
+      {
+        $set: {
+          updatedAt:
+            organicUpdatedAt
+        }
+      },
+
+      {
+        timestamps:
+          false
+      }
+    );
+
+    const plan =
+      await createPlan({
+        slug:
+          'boost-timestamp-plan'
+      });
+
+    await configurePlanBoost(
+      plan,
+      {
+        includedCredits:
+          2,
+
+        durationHours:
+          12
+      }
+    );
+
+    await createActiveSubscription(
+      member,
+      plan
+    );
+
+    const response =
+      await request(
+        app
+      )
+        .post(
+          '/api/profile-boost'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${tokenFor(
+            member
+          )}`
+        );
+
+    assert.equal(
+      response.status,
+      201
+    );
+
+    const afterActivation =
+      await MatrimonialProfile.findById(
+        profile._id
+      );
+
+    assert.ok(
+      afterActivation
+        .boostedUntil
+    );
+
+    /*
+     * Activation is visibility bookkeeping,
+     * not an organic profile update.
+     */
+    assert.equal(
+      afterActivation
+        .updatedAt
+        .getTime(),
+      organicUpdatedAt.getTime()
+    );
+
+    /*
+     * Simulate the configured boost period having ended.
+     *
+     * We move only boostedUntil into the past.
+     * This is equivalent to reaching the real expiry time.
+     */
+    await MatrimonialProfile.updateOne(
+      {
+        _id:
+          profile._id
+      },
+
+      {
+        $set: {
+          boostedUntil:
+            new Date(
+              Date.now() -
+                1000
+            )
+        }
+      },
+
+      {
+        timestamps:
+          false
+      }
+    );
+
+    await clearExpiredProfileBoosts();
+
+    const afterExpiry =
+      await MatrimonialProfile.findById(
+        profile._id
+      );
+
+    assert.equal(
+      afterExpiry
+        .boostedUntil ??
+        null,
+      null
+    );
+
+    /*
+     * Expiry cleanup must also preserve the original
+     * organic profile timestamp.
+     */
+    assert.equal(
+      afterExpiry
+        .updatedAt
+        .getTime(),
+      organicUpdatedAt.getTime()
+    );
+  }
+);
+
+test(
+  'expired boost returns a profile to its normal organic Discover position',
+  async () => {
+    const [
+      viewerUser,
+      organicUser,
+      boostedUser
+    ] =
+      await Promise.all([
+        createMember(
+          'boost-order-viewer@example.com'
+        ),
+
+        createMember(
+          'boost-order-organic@example.com'
+        ),
+
+        createMember(
+          'boost-order-target@example.com'
+        )
+      ]);
+
+    await createMemberProfile(
+      viewerUser,
+      {
+        profileId:
+          'KSMBOOST100',
+
+        firstName:
+          'Viewer',
+
+        lastName:
+          'Rana',
+
+        gender:
+          'Male',
+
+        community: {
+          name:
+            'Rajput / Kshatriya',
+
+          clan:
+            'Rana',
+
+          gotra:
+            'Kashyap',
+
+          vansh:
+            'Suryavanshi'
+        }
+      }
+    );
+
+    /*
+     * This profile should naturally rank first because
+     * it was active more recently.
+     */
+    const organicProfile =
+      await createMemberProfile(
+        organicUser,
+        {
+          profileId:
+            'KSMBOOST101',
+
+          firstName:
+            'Organic',
+
+          lastName:
+            'Gohil',
+
+          gender:
+            'Female',
+
+          lastActiveAt:
+            new Date(),
+
+          community: {
+            name:
+              'Rajput / Kshatriya',
+
+            clan:
+              'Gohil',
+
+            gotra:
+              'Vashishtha',
+
+            vansh:
+              'Suryavanshi'
+          }
+        }
+      );
+
+    /*
+     * This profile is naturally lower because its
+     * lastActiveAt is older.
+     *
+     * While boosted, however, it should temporarily
+     * move above the organic profile.
+     */
+    const boostedProfile =
+      await createMemberProfile(
+        boostedUser,
+        {
+          profileId:
+            'KSMBOOST102',
+
+          firstName:
+            'Boosted',
+
+          lastName:
+            'Jadeja',
+
+          gender:
+            'Female',
+
+          lastActiveAt:
+            new Date(
+              Date.now() -
+                10 *
+                  864e5
+            ),
+
+          boostedUntil:
+            new Date(
+              Date.now() +
+                12 *
+                  60 *
+                  60 *
+                  1000
+            ),
+
+          community: {
+            name:
+              'Rajput / Kshatriya',
+
+            clan:
+              'Jadeja',
+
+            gotra:
+              'Vashishtha',
+
+            vansh:
+              'Suryavanshi'
+          }
+        }
+      );
+
+    const token =
+      tokenFor(
+        viewerUser
+      );
+
+    /*
+     * During the active boost, the boosted profile
+     * should receive temporary visibility priority.
+     */
+    const duringBoost =
+      await request(
+        app
+      )
+        .get(
+          '/api/profiles/discover'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        );
+
+    assert.equal(
+      duringBoost.status,
+      200
+    );
+
+    const duringIds =
+      duringBoost.body
+        .data
+        .profiles.map(
+          (
+            item
+          ) =>
+            item.profileId
+        );
+
+    assert.equal(
+      duringIds[0],
+      boostedProfile.profileId
+    );
+
+    assert.equal(
+      duringBoost.body
+        .data
+        .profiles[0]
+        .boostActive,
+      true
+    );
+
+    /*
+     * Simulate the 12-hour boost ending.
+     *
+     * timestamps:false is intentional: expiry itself
+     * must never become an organic profile edit.
+     */
+    await MatrimonialProfile.updateOne(
+      {
+        _id:
+          boostedProfile._id
+      },
+
+      {
+        $set: {
+          boostedUntil:
+            new Date(
+              Date.now() -
+                1000
+            )
+        }
+      },
+
+      {
+        timestamps:
+          false
+      }
+    );
+
+    /*
+     * Discover itself calls clearExpiredProfileBoosts().
+     *
+     * Therefore this request verifies the real endpoint
+     * behavior instead of only testing a helper.
+     */
+    const afterBoost =
+      await request(
+        app
+      )
+        .get(
+          '/api/profiles/discover'
+        )
+        .set(
+          'Authorization',
+          `Bearer ${token}`
+        );
+
+    assert.equal(
+      afterBoost.status,
+      200
+    );
+
+    const afterIds =
+      afterBoost.body
+        .data
+        .profiles.map(
+          (
+            item
+          ) =>
+            item.profileId
+        );
+
+    /*
+     * The naturally more recently active profile must
+     * return above the expired boosted profile.
+     */
+    assert.equal(
+      afterIds[0],
+      organicProfile.profileId
+    );
+
+    assert.equal(
+      afterIds[1],
+      boostedProfile.profileId
+    );
+
+    const expiredCard =
+      afterBoost.body
+        .data
+        .profiles.find(
+          (
+            item
+          ) =>
+            item.profileId ===
+            boostedProfile.profileId
+        );
+
+    assert.ok(
+      expiredCard
+    );
+
+    assert.equal(
+      expiredCard
+        .boostActive,
+      false
+    );
+
+    const savedBoostedProfile =
+      await MatrimonialProfile.findById(
+        boostedProfile._id
+      );
+
+    /*
+     * Discover cleanup should physically clear the
+     * expired boost timestamp as well.
+     */
+    assert.equal(
+      savedBoostedProfile
+        .boostedUntil ??
+        null,
+      null
     );
   }
 );
@@ -744,9 +1245,6 @@ test(
           member._id
       });
 
-    /*
-     * Only one credit must have been consumed.
-     */
     assert.equal(
       grant.creditsRemaining,
       9
@@ -796,10 +1294,6 @@ test(
       plan
     );
 
-    /*
-     * Create the grant before racing requests so both
-     * requests operate on the same credit wallet.
-     */
     await getBoostWallet(
       member._id
     );
@@ -1154,9 +1648,6 @@ test(
       10
     );
 
-    /*
-     * Purchased credits currently do not expire.
-     */
     assert.equal(
       grants[0]
         .expiresAt,

@@ -12,6 +12,19 @@ import MatrimonialProfile from '../models/MatrimonialProfile.js';
  * - bypass blocks
  * - bypass Must-Have failures
  * - make inactive/paused profiles visible
+ * - change the profile's organic updatedAt timestamp
+ *
+ * Why updatedAt must not change:
+ * --------------------------------------------------
+ * Discover uses normal profile activity/update data as part
+ * of its non-boost ordering.
+ *
+ * If activating or expiring a boost updates updatedAt, the
+ * profile can remain artificially high even after the boost
+ * has expired.
+ *
+ * Therefore all boost-only writes to MatrimonialProfile must
+ * use timestamps: false.
  */
 
 export const BOOST_COMPATIBILITY_WINDOW =
@@ -22,6 +35,16 @@ export const clearExpiredProfileBoosts =
     const now =
       new Date();
 
+    /*
+     * IMPORTANT:
+     *
+     * Clearing an expired boost is system bookkeeping.
+     * It is NOT a real profile edit.
+     *
+     * `timestamps: false` prevents Mongoose from changing
+     * updatedAt. Without this, an expired profile could look
+     * freshly updated and remain higher in Discover.
+     */
     await MatrimonialProfile.updateMany(
       {
         boostedUntil: {
@@ -38,6 +61,11 @@ export const clearExpiredProfileBoosts =
           boostedUntil:
             null
         }
+      },
+
+      {
+        timestamps:
+          false
       }
     );
 
@@ -97,6 +125,14 @@ export const compareRecommendationExposure =
       ) <=
       BOOST_COMPATIBILITY_WINDOW;
 
+    /*
+     * Boost only affects exposure while it is ACTIVE.
+     *
+     * Once boostedUntil is in the past / cleared,
+     * isProfileBoostActive returns false and the profile
+     * immediately goes back to normal recommendation
+     * ordering.
+     */
     if (
       withinBoostWindow
     ) {

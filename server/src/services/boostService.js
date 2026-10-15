@@ -651,10 +651,15 @@ export const activateProfileBoost =
     /*
      * Atomic profile lock.
      *
-     * Two simultaneous clicks may consume two credits
-     * temporarily, but only one request can acquire the
-     * profile boost lock. The losing request restores
-     * its consumed credit below.
+     * IMPORTANT:
+     * A boost activation is NOT an organic profile edit.
+     *
+     * `timestamps: false` prevents Mongoose from changing
+     * profile.updatedAt when the boost begins.
+     *
+     * This means once the boost expires, Discover can sort
+     * the profile exactly according to its normal organic
+     * profile state again.
      */
     const lockedProfile =
       await MatrimonialProfile.findOneAndUpdate(
@@ -696,7 +701,10 @@ export const activateProfileBoost =
 
         {
           returnDocument:
-            'after'
+            'after',
+
+          timestamps:
+            false
         }
       );
 
@@ -741,6 +749,9 @@ export const activateProfileBoost =
           lockedProfile
       };
     } catch (error) {
+      /*
+       * Rollback must also avoid touching updatedAt.
+       */
       await Promise.all([
         restoreCredit(
           grant._id
@@ -760,6 +771,11 @@ export const activateProfileBoost =
               boostedUntil:
                 null
             }
+          },
+
+          {
+            timestamps:
+              false
           }
         )
       ]);
