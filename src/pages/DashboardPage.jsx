@@ -242,7 +242,15 @@ export default function DashboardPage() {
           }
         );
 
+      const realtimeRefresh = () => {
+        if (!active) return;
+        api('/dashboard').then((response) => {
+          if (active) setData(response.data);
+        }).catch(() => {});
+      };
+      window.addEventListener('ksm:realtime', realtimeRefresh);
       return () => {
+        window.removeEventListener('ksm:realtime', realtimeRefresh);
         active =
           false;
       };

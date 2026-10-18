@@ -105,12 +105,22 @@ export default function MemberLayout() {
 
     loadMembership();
 
+    const realtimeRefresh = () => {
+      api('/notifications').then((result) => {
+        setUnread(result.data?.unreadCount ?? 0);
+      }).catch(() => {});
+      api('/profiles/me').then((result) => {
+        setProfile(result.data?.profile ?? null);
+      }).catch(() => {});
+    };
+    window.addEventListener('ksm:realtime', realtimeRefresh);
     window.addEventListener(
       'ksm:entitlements-updated',
       loadMembership
     );
 
     return () => {
+      window.removeEventListener('ksm:realtime', realtimeRefresh);
       window.removeEventListener(
         'ksm:entitlements-updated',
         loadMembership

@@ -1,31 +1,19 @@
 import { StrictMode } from 'react';
-import {
-  createRoot
-} from 'react-dom/client';
-import {
-  BrowserRouter
-} from 'react-router-dom';
-
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
-import {
-  AuthProvider
-} from './context/AuthContext.jsx';
-import {
-  ToastProvider
-} from './context/ToastContext.jsx';
-
+import RealtimeBridge from './components/RealtimeBridge.jsx';
+import { AuthProvider } from './context/AuthContext.jsx';
+import { ToastProvider } from './context/ToastContext.jsx';
 import './i18n/index.js';
 import './index.css';
 
-createRoot(
-  document.getElementById(
-    'root'
-  )
-).render(
+createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
+          <RealtimeBridge />
           <App />
         </ToastProvider>
       </AuthProvider>
