@@ -75,7 +75,7 @@ export default function SubmitStoryPage() {
             <p className="text-xs font-bold uppercase tracking-[.25em] text-[#88603a]">Royal Rajputana Matrimony</p>
             <h1 className="mt-5 font-display text-5xl font-medium leading-tight sm:text-7xl">Share your genuine story</h1>
             <p className="mt-5 max-w-2xl text-sm leading-7 text-[#766358]">Celebrate your journey while keeping your privacy in control. Submissions are never published automatically. Both people must independently consent and our team must approve before publication.</p>
-            <Link to="/success-stories" className="mt-5 inline-flex text-sm font-semibold text-[#681d25] underline underline-offset-4">Back to Success Stories</Link>
+            <Link to="/story-consent" className="mt-5 mr-6 inline-flex text-sm font-semibold text-[#681d25] underline underline-offset-4">Consent centre / Invite partner</Link><Link to="/success-stories" className="mt-5 inline-flex text-sm font-semibold text-[#681d25] underline underline-offset-4">Back to Success Stories</Link>
           </div>
         </section>
         <section className="page-container mx-auto grid max-w-6xl gap-9 py-14 lg:grid-cols-[minmax(0,1fr)_300px]">

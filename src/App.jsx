@@ -150,6 +150,8 @@ const SettingsPage = lazy(
 
 const SubmitStoryPage = lazy(() => import('./pages/SubmitStoryPage'));
 
+const StoryConsentPage = lazy(() => import('./pages/StoryConsentPage'));
+
 const StoriesPage = lazy(
   () =>
     import(
@@ -445,6 +447,8 @@ export default function App() {
               <HowItWorksPage />
             }
           />
+
+          <Route path="/story-consent" element={<ProtectedRoute roles={['member']}><StoryConsentPage /></ProtectedRoute>} />
 
           <Route
             path="/submit-success-story"
