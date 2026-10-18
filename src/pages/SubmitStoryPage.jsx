@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { api } from '../services/api';
 
-const initial = { partnerOneName: '', partnerTwoName: '', city: '', title: '', story: '', marriageDate: '', submitterConsent: false };
+const initial = { city: '', title: '', story: '', marriageDate: '', submitterConsent: false };
 const inputClass = 'w-full rounded-lg border border-[#dcc9b3] bg-white px-4 py-3 text-sm text-[#291c19] outline-none transition focus:border-[#681d25] focus:ring-2 focus:ring-[#681d25]/10';
 const labelClass = 'grid gap-2 text-sm font-semibold text-[#392720]';
 const statusLabel = { AwaitingConsent: 'Awaiting partner consent', PendingReview: 'Awaiting admin review', ChangesRequested: 'Changes requested', Approved: 'Approved', Rejected: 'Rejected', Withdrawn: 'Withdrawn' };
@@ -82,8 +82,8 @@ export default function SubmitStoryPage() {
           <form onSubmit={submit} className="grid gap-6 rounded-xl border border-[#ddc9b2] bg-[#fffdf9] p-6 shadow-sm sm:p-9" aria-label="Share your success story">
             <div className="flex items-center gap-3"><BookHeart className="text-[#681d25]" aria-hidden="true"/><h2 className="font-display text-3xl">Your experience</h2></div>
             <div className="grid gap-5 sm:grid-cols-2">
-              <label className={labelClass}>Your name<input className={inputClass} required minLength={2} maxLength={100} autoComplete="name" value={form.partnerOneName} onChange={(e) => update('partnerOneName', e.target.value)}/></label>
-              <label className={labelClass}>Your partner's name<input className={inputClass} required minLength={2} maxLength={100} value={form.partnerTwoName} onChange={(e) => update('partnerTwoName', e.target.value)}/></label>
+              <p className="text-sm text-[#756a60]">Your identity is taken from your registered matrimonial profile. Your partner’s name is resolved from their verified account when you send the consent invitation.</p>
+              
               <label className={labelClass}>City (optional)<input className={inputClass} maxLength={120} value={form.city} onChange={(e) => update('city', e.target.value)}/></label>
               <label className={labelClass}>Marriage date (optional)<input className={inputClass} type="date" max={new Date().toISOString().slice(0,10)} value={form.marriageDate} onChange={(e) => update('marriageDate', e.target.value)}/></label>
             </div>

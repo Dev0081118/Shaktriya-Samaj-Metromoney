@@ -1,53 +1,57 @@
 import { dispatchStoryEvent, storyAdminIds } from '../services/storyNotificationService.js';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
+import MatrimonialProfile from '../models/MatrimonialProfile.js';
 import SuccessStory from '../models/SuccessStory.js';
 import { ApiError, asyncHandler, ok } from '../utils/http.js';
 
 const text = (value, maxLength) => typeof value === 'string' ? value.trim().slice(0, maxLength + 1) : '';
 
+const profileName = (profile) => [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim();
+const activeStoryStates = ['AwaitingConsent', 'PendingReview', 'ChangesRequested', 'Approved'];
+const storyFields = (body) => ({
+  city: text(body?.city, 120), title: text(body?.title, 140),
+  story: text(body?.story, 3000)
+});
+const parseMarriageDate = (value) => {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new ApiError(400, 'Marriage date must be YYYY-MM-DD.');
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value || date > new Date()) throw new ApiError(400, 'Marriage date is invalid or in the future.');
+  return date;
+};
+const requireOwnProfile = async (userId) => {
+  const profile = await MatrimonialProfile.findOne({ userId }).select('firstName lastName');
+  if (!profile || profileName(profile).length < 2) throw new ApiError(400, 'Complete your registered matrimonial profile before submitting a success story.');
+  return profile;
+};
+
+
 export const submitSuccessStory = asyncHandler(async (req, res) => {
-  const partnerOneName = text(req.body?.partnerOneName, 100);
-  const partnerTwoName = text(req.body?.partnerTwoName, 100);
-  const city = text(req.body?.city, 120);
-  const title = text(req.body?.title, 140);
-  const story = text(req.body?.story, 3000);
-  const marriageDate = req.body?.marriageDate;
-  if (partnerOneName.length < 2 || partnerOneName.length > 100 || partnerTwoName.length < 2 || partnerTwoName.length > 100 || title.length < 8 || title.length > 140 || story.length < 80 || story.length > 3000 || city.length > 120) {
-    throw new ApiError(400, 'Please provide valid names, title (8–140 characters), and story (80–3000 characters).');
+  const ownProfile = await requireOwnProfile(req.user.id);
+  const partnerOneName = profileName(ownProfile);
+  const partnerTwoName = 'Awaiting verified partner';
+  const { city, title, story } = storyFields(req.body);
+  if (title.length < 8 || title.length > 140 || story.length < 80 || story.length > 3000 || city.length > 120) {
+    throw new ApiError(400, 'Provide a title (8–140 characters) and story (80–3000 characters).');
   }
-  if (req.body?.submitterConsent !== true) {
-    throw new ApiError(400, 'Your explicit consent to submit this story is required.');
-  }
-  let validMarriageDate;
-  if (marriageDate !== undefined && marriageDate !== null && marriageDate !== '') {
-    if (typeof marriageDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(marriageDate)) {
-      throw new ApiError(400, 'Marriage date must be YYYY-MM-DD.');
-    }
-    validMarriageDate = new Date(`${marriageDate}T00:00:00.000Z`);
-    if (Number.isNaN(validMarriageDate.getTime()) || validMarriageDate.toISOString().slice(0, 10) !== marriageDate || validMarriageDate > new Date()) {
-      throw new ApiError(400, 'Marriage date is invalid or in the future.');
-    }
-  }
-  // Only explicitly whitelisted fields are persisted; client cannot set status, consent verification or photo.
+  if (req.body?.submitterConsent !== true) throw new ApiError(400, 'Your explicit consent is required.');
+  const marriageDate = parseMarriageDate(req.body?.marriageDate);
+  const existing = await SuccessStory.exists({ submittedBy: req.user.id, status: { $in: activeStoryStates } });
+  if (existing) throw new ApiError(409, 'You already have an active success story. Edit your existing submission or contact support.');
   const record = await SuccessStory.create({
-    submittedBy: req.user.id,
-    partnerOneName, partnerTwoName, city, title, story,
-    ...(validMarriageDate ? { marriageDate: validMarriageDate } : {}),
-    submitterConsent: true,
-    submitterConsentAt: new Date(),
-    partnerConsentStatus: 'NotRequested',
-    status: 'AwaitingConsent',
-    photoConsentVerified: false,
-    photo: ''
+    submittedBy: req.user.id, partnerOneName, partnerTwoName, city, title, story,
+    ...(marriageDate ? { marriageDate } : {}), submitterConsent: true,
+    submitterConsentAt: new Date(), partnerConsentStatus: 'NotRequested', status: 'AwaitingConsent',
+    photoConsentVerified: false, photo: ''
   });
   await dispatchStoryEvent({ userIds: await storyAdminIds(), type: 'STORY_SUBMITTED', title: 'New member success story', message: 'A new story awaits independent partner consent.', storyId: record._id, url: '/admin/success-stories' });
-  ok(res, { story: { id: record.id, status: record.status, title: record.title } }, 'Your story was received. It will not be published without independent consent verification and admin approval.', 201);
+  ok(res, { story: { id: record.id, status: record.status, title: record.title } }, 'Your story was received. Invite your partner to verify their identity and consent.', 201);
 });
 
 export const mySuccessStories = asyncHandler(async (req, res) => {
   const records = await SuccessStory.find({ submittedBy: req.user.id })
-    .select('partnerOneName partnerTwoName city title story marriageDate status createdAt updatedAt moderationNotes')
+    .select('partnerOneName partnerTwoName city title story marriageDate status createdAt updatedAt moderationNotes partnerConsentStatus')
     .sort('-createdAt').limit(50).lean();
   ok(res, { stories: records });
 });
@@ -80,6 +84,11 @@ export const inviteStoryPartner = asyncHandler(async (req, res) => {
   if (record.partnerUser && String(record.partnerUser) !== String(partner._id)) {
     throw new ApiError(409, 'Partner is already assigned. Contact support to correct the submission.');
   }
+  const partnerProfile = await MatrimonialProfile.findOne({ userId: partner._id }).select('firstName lastName');
+  const verifiedPartnerName = profileName(partnerProfile);
+  if (verifiedPartnerName.length < 2) throw new ApiError(400, 'Your partner must complete their registered matrimonial profile first.');
+  record.partnerOneName = profileName(await requireOwnProfile(req.user.id));
+  record.partnerTwoName = verifiedPartnerName;
   record.partnerUser = partner._id;
   record.partnerConsentStatus = 'Pending';
   record.partnerInvitedAt = new Date();
@@ -130,6 +139,32 @@ export const respondStoryConsent = asyncHandler(async (req, res) => {
     decision === 'accept' ? 'Consent recorded. Story awaits admin review.' : 'Story invitation declined.');
 });
 
+export const reviseSuccessStory = asyncHandler(async (req, res) => {
+  validStoryId(req.params.id);
+  const { city, title, story } = storyFields(req.body);
+  if (title.length < 8 || title.length > 140 || story.length < 80 || story.length > 3000 || city.length > 120) {
+    throw new ApiError(400, 'Provide a valid title and story (minimum 80 characters).');
+  }
+  if (req.body?.submitterConsent !== true) throw new ApiError(400, 'Your renewed publication consent is required.');
+  const marriageDate = parseMarriageDate(req.body?.marriageDate);
+  // Compare-and-set prevents unauthorized editing or repeated resubmission.
+  const record = await SuccessStory.findOneAndUpdate({
+    _id: req.params.id, submittedBy: req.user.id, status: 'ChangesRequested'
+  }, { $set: {
+    city, title, story, marriageDate, status: 'AwaitingConsent',
+    submittedBy: req.user.id, submitterConsent: true, submitterConsentAt: new Date(),
+    partnerConsentStatus: 'NotRequested', partnerConsentVerifiedAt: null,
+    partnerInvitedAt: null, partnerInviteExpiresAt: null, partnerConsentWithdrawnAt: null,
+    photoConsentVerified: false, publishedAt: null, moderationNotes: ''
+  } }, { returnDocument: 'after', runValidators: true });
+  if (!record) throw new ApiError(409, 'Only your own ChangesRequested story can be revised.');
+  // Updated narrative requires fresh independent partner consent.
+  await dispatchStoryEvent({ userIds: await storyAdminIds(), type: 'STORY_RESUBMITTED',
+    title: 'Story corrections resubmitted', message: 'A member revised a changes-requested story and must obtain fresh partner consent.',
+    storyId: record._id, url: '/admin/success-stories' });
+  ok(res, { story: { id: record.id, status: record.status } }, 'Corrections saved. Please invite your partner to consent to the revised story.');
+});
+
 export const withdrawStoryConsent = asyncHandler(async (req, res) => {
   validStoryId(req.params.id);
   const now = new Date();
@@ -158,8 +193,15 @@ export const adminListSuccessStories = asyncHandler(async (req, res) => {
   if (status && !allowed.includes(status)) throw new ApiError(400, 'Invalid story status.');
   const stories = await SuccessStory.find(status ? { status } : {})
     .select('partnerOneName partnerTwoName city title story marriageDate status partnerConsentStatus partnerConsentVerifiedAt submitterConsent submitterConsentAt photoConsentVerified moderationNotes publishedAt createdAt updatedAt')
-    .sort('-createdAt').limit(100).lean();
-  ok(res, { stories });
+    .sort('-createdAt').limit(100)
+    .populate({ path: 'submittedBy', select: 'email' }).lean();
+  const ids = stories.map(item => item.submittedBy?._id).filter(Boolean);
+  const profiles = await MatrimonialProfile.find({ userId: { $in: ids } }).select('userId firstName lastName').lean();
+  const names = new Map(profiles.map(p => [String(p.userId), profileName(p)]));
+  const results = stories.map(item => ({ ...item, submittedBy: undefined,
+    submitter: { name: names.get(String(item.submittedBy?._id)) || item.partnerOneName,
+      email: item.submittedBy?.email || 'Unavailable' } }));
+  ok(res, { stories: results });
 });
 
 export const adminModerateSuccessStory = asyncHandler(async (req, res) => {

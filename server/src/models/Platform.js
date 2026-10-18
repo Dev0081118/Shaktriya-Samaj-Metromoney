@@ -35,6 +35,7 @@ const notification = new mongoose.Schema(
         'STORY_APPROVED',
         'STORY_REJECTED',
         'STORY_CHANGES_REQUESTED',
+        'STORY_RESUBMITTED',
         'STORY_WITHDRAWN'
       ]
     },

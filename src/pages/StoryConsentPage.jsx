@@ -15,6 +15,7 @@ export default function StoryConsentPage() {
   const [busyId, setBusyId] = useState('');
   const [photoConsent, setPhotoConsent] = useState({});
   const [partnerEmail, setPartnerEmail] = useState({});
+  const [editing, setEditing] = useState({});
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -73,6 +74,26 @@ export default function StoryConsentPage() {
     }
   };
 
+  const resubmit = async (item) => {
+    const id = item._id || item.id;
+    const revised = editing[id] || {};
+    setBusyId(id); setError(''); setMessage('');
+    try {
+      const response = await api(`/success-stories/${id}/revise`, {
+        method: 'PATCH', body: JSON.stringify({
+          city: revised.city ?? item.city ?? '',
+          title: revised.title ?? item.title,
+          story: revised.story ?? item.story,
+          marriageDate: revised.marriageDate ?? (item.marriageDate ? item.marriageDate.slice(0, 10) : ''),
+          submitterConsent: true
+        })
+      });
+      setMessage(response.message || 'Changes submitted. Invite your partner again.');
+      await reload();
+    } catch (e) { setError(e.message || 'Unable to submit changes.'); }
+    finally { setBusyId(''); }
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f0e8] text-[#281a18]">
       <Header solid />
@@ -105,6 +126,14 @@ export default function StoryConsentPage() {
             const id = item._id || item.id;
             return <article key={id} className="rounded-xl border border-[#d7c5b1] bg-[#fffdf8] p-6">
               <h3 className="font-display text-2xl">{item.title}</h3><p className="mt-1 text-sm text-[#756a60]">Status: {item.status}</p>
+              {item.status === 'ChangesRequested' && <form className="mt-5 grid gap-3" onSubmit={e => { e.preventDefault(); void resubmit(item); }}>
+                <p className="rounded border-l-4 border-[#681d25] bg-[#f7efe3] p-3 text-sm">Admin requested: {item.moderationNotes || 'Please revise this submission.'}</p>
+                <label className="grid gap-1 text-sm font-semibold">Title<input required minLength={8} maxLength={140} className="rounded border p-3" value={editing[id]?.title ?? item.title} onChange={e => setEditing(a => ({ ...a, [id]: { ...a[id], title: e.target.value } }))}/></label>
+                <label className="grid gap-1 text-sm font-semibold">Updated story<textarea required minLength={80} maxLength={3000} rows={7} className="rounded border p-3" value={editing[id]?.story ?? item.story} onChange={e => setEditing(a => ({ ...a, [id]: { ...a[id], story: e.target.value } }))}/></label>
+                <label className="grid gap-1 text-sm font-semibold">City<input maxLength={120} className="rounded border p-3" value={editing[id]?.city ?? item.city ?? ''} onChange={e => setEditing(a => ({ ...a, [id]: { ...a[id], city: e.target.value } }))}/></label>
+                <p className="text-xs text-[#756a60]">Resubmission invalidates earlier partner consent. Invite the same verified partner to approve the updated story.</p>
+                <button disabled={!!busyId} className={`${pill} bg-[#681d25] text-white`} type="submit">Save corrections &amp; request fresh consent</button>
+              </form>}
               {item.status === 'AwaitingConsent' && <form className="mt-5 flex flex-wrap items-end gap-3" onSubmit={(event) => { event.preventDefault(); act(id, `/success-stories/${id}/invite`, { partnerEmail: partnerEmail[id] || '' }); }}><label className="grid min-w-56 flex-1 gap-2 text-sm font-semibold">Partner's verified account email<input type="email" required autoComplete="email" className="w-full rounded-lg border border-[#dcc9b3] p-3 outline-none focus:border-[#681d25]" value={partnerEmail[id] || ''} onChange={(e) => setPartnerEmail((state) => ({ ...state, [id]: e.target.value }))}/></label><button type="submit" disabled={!!busyId} className={`${pill} bg-[#681d25] text-white hover:bg-[#431318]`}>Send in-app invitation</button></form>}
               {item.status !== 'Withdrawn' && <button type="button" disabled={!!busyId} onClick={() => act(id, `/success-stories/${id}/withdraw`, null, 'Withdraw this story? Withdrawal is permanent and removes publication eligibility.')} className="mt-5 text-sm font-semibold text-[#681d25] underline underline-offset-4">Withdraw story and consent</button>}
             </article>;

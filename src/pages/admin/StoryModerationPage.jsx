@@ -5,7 +5,7 @@ const actions = [ ['approve', 'Approve'], ['requestChanges', 'Request changes'],
 
 export default function StoryModerationPage() {
   const [stories, setStories] = useState([]);
-  const [filter, setFilter] = useState('AwaitingConsent');
+  const [filter, setFilter] = useState('');
   const [notes, setNotes] = useState({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState('');
@@ -13,7 +13,7 @@ export default function StoryModerationPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   useEffect(() => {
     let active = true;
-    api(`/admin/success-stories?status=${encodeURIComponent(filter)}`)
+    api(filter ? `/admin/success-stories?status=${encodeURIComponent(filter)}` : '/admin/success-stories')
       .then(result => {
         if (!active) return;
         setStories(result.data?.stories ?? []);
@@ -46,7 +46,7 @@ export default function StoryModerationPage() {
     <div className="flex flex-wrap items-center gap-3">
       <label htmlFor="story-filter" className="text-sm font-semibold">Status</label>
       <select id="story-filter" value={filter} onChange={e => { setLoading(true); setFilter(e.target.value); }} className="rounded border border-[#CBB8A4] bg-white p-3">
-        {['PendingReview','AwaitingConsent','ChangesRequested','Approved','Rejected','Withdrawn'].map(s => <option key={s} value={s}>{s}</option>)}
+        {['','PendingReview','AwaitingConsent','ChangesRequested','Approved','Rejected','Withdrawn'].map(s => <option key={s} value={s}>{s || 'All statuses'}</option>)}
       </select>
       <button type="button" onClick={refreshStories} className="rounded-full border border-[#CBB8A4] px-5 py-3 text-sm">Refresh</button>
     </div>
@@ -56,7 +56,8 @@ export default function StoryModerationPage() {
         <div className="flex flex-wrap justify-between gap-3"><div>
           <p className="text-xs uppercase tracking-widest text-[#91683F]">{item.status} · {item.partnerConsentStatus}</p>
           <h2 className="mt-2 font-display text-3xl text-[#431318]">{item.title}</h2>
-          <p className="mt-1 text-sm text-[#756A60]">{item.partnerOneName} & {item.partnerTwoName} · {item.city || 'Location withheld'}</p>
+          <p className="mt-1 text-sm text-[#756A60]">{item.partnerOneName} &amp; {item.partnerTwoName} · {item.city || 'Location withheld'}</p>
+          <p className="mt-2 text-sm font-semibold">Registered submitter: {item.submitter?.name || 'Unknown'} · {item.submitter?.email || 'Unavailable'}</p>
         </div></div>
         <p className="whitespace-pre-wrap text-sm leading-7 text-[#4D4039]">{item.story}</p>
         <p className="text-xs text-[#756A60]">Submitter consent: {item.submitterConsent ? 'Yes' : 'No'} · Partner verified: {item.partnerConsentStatus === 'Verified' ? 'Yes' : 'No'}</p>
@@ -65,7 +66,7 @@ export default function StoryModerationPage() {
           <label className="block text-sm font-semibold" htmlFor={`notes-${item._id}`}>Decision notes</label>
           <textarea id={`notes-${item._id}`} maxLength={1000} rows={3} value={notes[item._id] || ''} onChange={e => setNotes(n => ({ ...n, [item._id]: e.target.value }))} className="w-full rounded border border-[#DDD0C1] bg-white p-3" placeholder="Reason for rejection or changes requested" />
           <div className="flex flex-wrap gap-3">{actions.map(([key, label]) =>
-            <button key={key} type="button" disabled={busy === item._id || (key === 'approve' && item.partnerConsentStatus !== 'Verified')} onClick={() => void moderate(item._id, key)} className="rounded-full border border-[#681D25] px-5 py-2 text-sm text-[#681D25] disabled:opacity-40">{busy === item._id ? 'Working…' : label}</button>
+            <button key={key} type="button" disabled={busy === item._id || (key === 'approve' && (item.partnerConsentStatus !== 'Verified' || item.status !== 'PendingReview'))} onClick={() => void moderate(item._id, key)} className="rounded-full border border-[#681D25] px-5 py-2 text-sm text-[#681D25] disabled:opacity-40">{busy === item._id ? 'Working…' : label}</button>
           )}</div>
         </div>}
       </article>
