@@ -10,8 +10,12 @@ const successStorySchema = new mongoose.Schema({
   marriageDate: { type: Date },
   submitterConsent: { type: Boolean, required: true, default: false },
   submitterConsentAt: { type: Date, default: null },
-  partnerConsentStatus: { type: String, enum: ['NotRequested', 'Pending', 'Verified'], default: 'NotRequested' },
+  partnerConsentStatus: { type: String, enum: ['NotRequested', 'Pending', 'Verified', 'Declined', 'Withdrawn'], default: 'NotRequested' },
   partnerConsentVerifiedAt: { type: Date, default: null },
+  partnerUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  partnerInvitedAt: { type: Date, default: null },
+  partnerInviteExpiresAt: { type: Date, default: null },
+  partnerConsentWithdrawnAt: { type: Date, default: null },
   status: { type: String, enum: ['AwaitingConsent', 'PendingReview', 'ChangesRequested', 'Approved', 'Rejected', 'Withdrawn'], default: 'AwaitingConsent', index: true },
   publishedAt: { type: Date, default: null },
   photo: { type: String, default: '' },
@@ -20,4 +24,5 @@ const successStorySchema = new mongoose.Schema({
 }, { timestamps: true, strict: 'throw' });
 
 successStorySchema.index({ status: 1, publishedAt: -1 });
+successStorySchema.index({ partnerUser: 1, partnerConsentStatus: 1, createdAt: -1 });
 export default mongoose.models.SuccessStory || mongoose.model('SuccessStory', successStorySchema);

@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+import User from '../models/User.js';
 import SuccessStory from '../models/SuccessStory.js';
 import { ApiError, asyncHandler, ok } from '../utils/http.js';
 
@@ -46,4 +48,98 @@ export const mySuccessStories = asyncHandler(async (req, res) => {
     .select('partnerOneName partnerTwoName city title story marriageDate status createdAt updatedAt moderationNotes')
     .sort('-createdAt').limit(50).lean();
   ok(res, { stories: records });
+});
+
+// TASK-003C-1: consent belongs exclusively to a distinct, verified member account.
+// Never rely on a checkbox submitted by the story's creator as partner approval.
+const validStoryId = (id) => {
+  if (!mongoose.isValidObjectId(id)) throw new ApiError(400, 'Invalid story ID.');
+};
+
+export const inviteStoryPartner = asyncHandler(async (req, res) => {
+  validStoryId(req.params.id);
+  const email = typeof req.body?.partnerEmail === 'string'
+    ? req.body.partnerEmail.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+    throw new ApiError(400, 'Provide your partner’s registered email address.');
+  }
+  const record = await SuccessStory.findOne({ _id: req.params.id, submittedBy: req.user.id });
+  if (!record) throw new ApiError(404, 'Story not found.');
+  if (record.status !== 'AwaitingConsent' || record.partnerConsentStatus === 'Verified') {
+    throw new ApiError(409, 'This story cannot be invited in its current state.');
+  }
+  const partner = await User.findOne({ email, role: 'member', status: 'Active', emailVerified: true })
+    .select('_id');
+  if (!partner || String(partner._id) === String(req.user.id)) {
+    // Avoid exposing whether a registered account exists.
+    throw new ApiError(400, 'Partner must have a separate active, email-verified member account.');
+  }
+  // Prevent silent reassignment to another partner after any response.
+  if (record.partnerUser && String(record.partnerUser) !== String(partner._id)) {
+    throw new ApiError(409, 'Partner is already assigned. Contact support to correct the submission.');
+  }
+  record.partnerUser = partner._id;
+  record.partnerConsentStatus = 'Pending';
+  record.partnerInvitedAt = new Date();
+  record.partnerInviteExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+  record.partnerConsentVerifiedAt = null;
+  record.photoConsentVerified = false;
+  await record.save();
+  ok(res, { story: { id: record.id, partnerConsentStatus: record.partnerConsentStatus, inviteExpiresAt: record.partnerInviteExpiresAt } }, 'Invitation is ready in your partner’s member account.');
+});
+
+export const myStoryConsentInvitations = asyncHandler(async (req, res) => {
+  // Only independently email-verified members see their private invitations.
+  const user = await User.findById(req.user.id).select('emailVerified');
+  if (!user?.emailVerified) throw new ApiError(403, 'Verify your email to review story invitations.');
+  const records = await SuccessStory.find({ partnerUser: req.user.id, partnerConsentStatus: 'Pending', status: 'AwaitingConsent' })
+    .select('partnerOneName partnerTwoName title story city marriageDate partnerInviteExpiresAt createdAt')
+    .sort('-createdAt').limit(30).lean();
+  ok(res, { invitations: records.filter((record) => record.partnerInviteExpiresAt > new Date()) });
+});
+
+export const respondStoryConsent = asyncHandler(async (req, res) => {
+  validStoryId(req.params.id);
+  const decision = req.body?.decision;
+  if (!['accept', 'decline'].includes(decision) || typeof req.body?.photoConsent !== 'boolean') {
+    throw new ApiError(400, 'Provide accept/decline and an explicit photo consent choice.');
+  }
+  const user = await User.findById(req.user.id).select('emailVerified');
+  if (!user?.emailVerified) throw new ApiError(403, 'Verify your email before consenting.');
+  const now = new Date();
+  const update = decision === 'accept' ? {
+    partnerConsentStatus: 'Verified', partnerConsentVerifiedAt: now,
+    status: 'PendingReview', photoConsentVerified: req.body.photoConsent
+  } : {
+    partnerConsentStatus: 'Declined', partnerConsentVerifiedAt: null,
+    status: 'AwaitingConsent', photoConsentVerified: false
+  };
+  // Atomic compare-and-set guarantees only the intended partner can approve once,
+  // only before expiration, and only while the story is awaiting consent.
+  const record = await SuccessStory.findOneAndUpdate({
+    _id: req.params.id, partnerUser: req.user.id, partnerConsentStatus: 'Pending',
+    status: 'AwaitingConsent', partnerInviteExpiresAt: { $gt: now },
+    submittedBy: { $ne: req.user.id }
+  }, { $set: update }, { returnDocument: 'after', runValidators: true });
+  if (!record) throw new ApiError(404, 'No active consent invitation was found.');
+  ok(res, { story: { id: record.id, status: record.status, partnerConsentStatus: record.partnerConsentStatus } },
+    decision === 'accept' ? 'Consent recorded. Story awaits admin review.' : 'Story invitation declined.');
+});
+
+export const withdrawStoryConsent = asyncHandler(async (req, res) => {
+  validStoryId(req.params.id);
+  const now = new Date();
+  // Both original submitter and partner can withdraw. Terminal withdrawal means
+  // even a previously published story is not eligible for public display.
+  const record = await SuccessStory.findOneAndUpdate({
+    _id: req.params.id,
+    $or: [{ submittedBy: req.user.id }, { partnerUser: req.user.id }],
+    status: { $ne: 'Withdrawn' }
+  }, { $set: {
+    status: 'Withdrawn', publishedAt: null, photoConsentVerified: false,
+    partnerConsentStatus: 'Withdrawn', partnerConsentVerifiedAt: null,
+    partnerConsentWithdrawnAt: now
+  } }, { returnDocument: 'after', runValidators: true });
+  if (!record) throw new ApiError(404, 'Active story not found or already withdrawn.');
+  ok(res, { story: { id: record.id, status: record.status } }, 'Story withdrawn and unpublished.');
 });
