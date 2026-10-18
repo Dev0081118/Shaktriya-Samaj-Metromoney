@@ -18,6 +18,8 @@ const successStorySchema = new mongoose.Schema({
   partnerConsentWithdrawnAt: { type: Date, default: null },
   status: { type: String, enum: ['AwaitingConsent', 'PendingReview', 'ChangesRequested', 'Approved', 'Rejected', 'Withdrawn'], default: 'AwaitingConsent', index: true },
   publishedAt: { type: Date, default: null },
+  adminHiddenAt: { type: Date, default: null },
+  adminHiddenReason: { type: String, default: "", maxlength: 1000 },
   photo: { type: String, default: '' },
   photoConsentVerified: { type: Boolean, default: false },
   moderationNotes: { type: String, default: '' }

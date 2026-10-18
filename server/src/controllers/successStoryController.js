@@ -192,7 +192,7 @@ export const adminListSuccessStories = asyncHandler(async (req, res) => {
   const status = typeof req.query.status === 'string' ? req.query.status : '';
   if (status && !allowed.includes(status)) throw new ApiError(400, 'Invalid story status.');
   const stories = await SuccessStory.find(status ? { status } : {})
-    .select('partnerOneName partnerTwoName city title story marriageDate status partnerConsentStatus partnerConsentVerifiedAt submitterConsent submitterConsentAt photoConsentVerified moderationNotes publishedAt createdAt updatedAt')
+    .select('submittedBy partnerUser adminHiddenAt adminHiddenReason partnerOneName partnerTwoName city title story marriageDate status partnerConsentStatus partnerConsentVerifiedAt submitterConsent submitterConsentAt photoConsentVerified moderationNotes publishedAt createdAt updatedAt')
     .sort('-createdAt').limit(100)
     .populate({ path: 'submittedBy', select: 'email' }).lean();
   const ids = stories.map(item => item.submittedBy?._id).filter(Boolean);
@@ -201,7 +201,24 @@ export const adminListSuccessStories = asyncHandler(async (req, res) => {
   const results = stories.map(item => ({ ...item, submittedBy: undefined,
     submitter: { name: names.get(String(item.submittedBy?._id)) || item.partnerOneName,
       email: item.submittedBy?.email || 'Unavailable' } }));
-  ok(res, { stories: results });
+  const partnerIds = [...new Set(stories.map(item => item.partnerUser).filter(Boolean).map(String))];
+  const [partnerAccounts, partnerProfiles] = await Promise.all([
+    User.find({ _id: { $in: partnerIds } }).select('_id email emailVerified status').lean(),
+    MatrimonialProfile.find({ userId: { $in: partnerIds } }).select('userId firstName lastName').lean()
+  ]);
+  const accountMap = new Map(partnerAccounts.map(item => [String(item._id), item]));
+  const profileMap = new Map(partnerProfiles.map(item => [String(item.userId), item]));
+  ok(res, { stories: results.map((item, index) => {
+    const partnerId = String(stories[index].partnerUser || '');
+    const account = accountMap.get(partnerId);
+    const profile = profileMap.get(partnerId);
+    return { ...item, partnerIdentity: account ? {
+      name: [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || 'Profile unavailable',
+      email: account.email || 'Unavailable',
+      emailVerified: account.emailVerified === true,
+      status: account.status || 'Unknown'
+    } : null };
+  }) });
 });
 
 export const adminModerateSuccessStory = asyncHandler(async (req, res) => {
@@ -237,9 +254,39 @@ export const adminModerateSuccessStory = asyncHandler(async (req, res) => {
   ok(res, { story: { id: story.id, status: story.status } }, 'Moderation decision recorded.');
 });
 
+export const setStoryPublicationVisibility = asyncHandler(async (req, res) => {
+  validStoryId(req.params.id);
+  const action = req.body?.action;
+  const reason = text(req.body?.reason, 1000);
+  if (!['hide', 'restore'].includes(action)) throw new ApiError(400, 'Choose hide or restore.');
+  if (action === 'hide' && (reason.length < 10 || reason.length > 1000)) {
+    throw new ApiError(400, 'Provide a takedown reason of 10–1000 characters.');
+  }
+  const filter = {
+    _id: req.params.id, status: 'Approved', publishedAt: { $ne: null },
+    submitterConsent: true, submitterConsentAt: { $ne: null },
+    partnerUser: { $ne: null }, partnerConsentStatus: 'Verified',
+    partnerConsentVerifiedAt: { $ne: null }, partnerConsentWithdrawnAt: null,
+    $expr: { $ne: ['$submittedBy', '$partnerUser'] },
+    ...(action === 'hide' ? { adminHiddenAt: null } : { adminHiddenAt: { $ne: null } })
+  };
+  const story = await SuccessStory.findOneAndUpdate(filter, { $set: action === 'hide'
+    ? { adminHiddenAt: new Date(), adminHiddenReason: reason }
+    : { adminHiddenAt: null, adminHiddenReason: '' }
+  }, { returnDocument: 'after', runValidators: true });
+  if (!story) throw new ApiError(409, 'Story is no longer eligible for this action. Refresh first.');
+  await dispatchStoryEvent({
+    userIds: [story.submittedBy, story.partnerUser], type: 'STORY_VISIBILITY_CHANGED',
+    title: action === 'hide' ? 'Your story was taken down' : 'Your story is visible again',
+    message: action === 'hide' ? `The moderation team took down your story. Reason: ${reason}` : 'Your previously approved story has been restored.',
+    storyId: story._id, url: '/story-consent'
+  });
+  ok(res, { story: { id: story.id, status: story.status, hidden: Boolean(story.adminHiddenAt) } }, 'Story visibility updated.');
+});
+
 export const publicApprovedSuccessStories = asyncHandler(async (_req, res) => {
   const stories = await SuccessStory.find({
-    status: 'Approved', publishedAt: { $ne: null },
+    status: 'Approved', publishedAt: { $ne: null }, adminHiddenAt: null,
     submitterConsent: true, submitterConsentAt: { $ne: null },
     partnerUser: { $ne: null }, partnerConsentStatus: 'Verified',
     partnerConsentVerifiedAt: { $ne: null }, partnerConsentWithdrawnAt: null,
