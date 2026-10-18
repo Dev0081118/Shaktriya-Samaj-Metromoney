@@ -37,8 +37,8 @@ export default function MemberLayout() {
   const syncUnread = useCallback((payload) => {
     const items = payload?.notifications || [];
     setUnread(payload?.unreadCount ?? items.filter((n) => !n.read).length);
-    setInterestUnread(items.filter((n) => !n.read && n.type === 'NEW_INTEREST').length);
-    setMatchUnread(items.filter((n) => !n.read && n.type === 'NEW_MATCH').length);
+    setInterestUnread(payload?.unreadByType?.NEW_INTEREST ?? items.filter((n) => !n.read && n.type === 'NEW_INTEREST').length);
+    setMatchUnread(payload?.unreadByType?.NEW_MATCH ?? items.filter((n) => !n.read && n.type === 'NEW_MATCH').length);
   }, []);
 
   const [profile, setProfile] =

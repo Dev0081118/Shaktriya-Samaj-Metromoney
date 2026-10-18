@@ -232,23 +232,31 @@ export const removeShortlist = asyncHandler(async (req, res) => {
   });
   ok(res, {}, 'Removed from shortlist.');
 });
-export const notifications = asyncHandler(async (req, res) =>
-  ok(res, {
-    notifications: await Notification.find({ user: req.user.id })
-      .sort('-createdAt')
-      .limit(50),
-    unreadCount: await Notification.countDocuments({
-      user: req.user.id,
-      read: false
-    })
-  })
-);
+export const notifications = asyncHandler(async (req, res) => {
+  const user = req.user.id;
+  const [recent, unreadCount, grouped] = await Promise.all([
+    Notification.find({ user }).sort('-createdAt').limit(50),
+    Notification.countDocuments({ user, read: false }),
+    Notification.aggregate([
+      { $match: { user: new mongoose.Types.ObjectId(String(user)), read: false } },
+      { $group: { _id: '$type', count: { $sum: 1 } } }
+    ])
+  ]);
+  const unreadByType = Object.fromEntries(grouped.map(({ _id, count }) => [_id, count]));
+  ok(res, { notifications: recent, unreadCount, unreadByType });
+});
 export const readNotification = asyncHandler(async (req, res) => {
-  const selector =
-    req.params.id === 'all'
-      ? { user: req.user.id, read: false }
+  const category = {
+    'category-interests': 'NEW_INTEREST',
+    'category-matches': 'NEW_MATCH'
+  }[req.params.id];
+  if (req.params.id !== 'all' && !category) validId(req.params.id);
+  const selector = req.params.id === 'all'
+    ? { user: req.user.id, read: false }
+    : category
+      ? { user: req.user.id, read: false, type: category }
       : { _id: req.params.id, user: req.user.id };
-  await Notification.updateMany(selector, { read: true });
+  await Notification.updateMany(selector, { $set: { read: true } });
   publishUserEvent(req.user.id, 'notification:read');
   ok(res, {}, 'Notifications updated.');
 });
