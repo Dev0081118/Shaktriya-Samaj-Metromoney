@@ -12,6 +12,14 @@ function notificationPath(notification) {
     case 'INTEREST_ACCEPTED': return '/interests';
     case 'INTEREST_DECLINED': return '/interests';
     case 'NEW_MATCH': return '/matches';
+    case 'STORY_INVITATION':
+    case 'STORY_CONSENT_DECLINED':
+    case 'STORY_CONSENT_ACCEPTED':
+    case 'STORY_APPROVED':
+    case 'STORY_REJECTED':
+    case 'STORY_CHANGES_REQUESTED':
+    case 'STORY_WITHDRAWN': return '/story-consent';
+    case 'STORY_SUBMITTED': return '/admin/success-stories';
     case 'PROFILE_APPROVED':
     case 'PROFILE_REJECTED': return '/my-profile';
     default: return '/notifications';

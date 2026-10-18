@@ -42,8 +42,15 @@ test('does not offer the Open status as a report update', async () => {
 });
 
 test('keeps the previous status and reports the error when a report update fails', async () => {
-  api.mockResolvedValueOnce({ data: { reports: [report] } });
-  api.mockRejectedValueOnce(new Error('Invalid report status.'));
+  api.mockImplementation((path, options) => {
+    if (path === '/admin/reports' && !options?.method) {
+      return Promise.resolve({ data: { reports: [report] } });
+    }
+    if (path === '/admin/reports/report-1' && options?.method === 'PATCH') {
+      return Promise.reject(new Error('Invalid report status.'));
+    }
+    return Promise.resolve({ data: { notifications: [], unreadCount: 0 } });
+  });
   renderReports();
   const select = await screen.findByDisplayValue('Open');
   fireEvent.change(select, { target: { value: 'Reviewed' } });

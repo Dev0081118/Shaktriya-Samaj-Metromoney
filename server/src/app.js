@@ -1,3 +1,4 @@
+import adminNotificationRoutes from './routes/adminNotificationRoutes.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -705,6 +706,7 @@ app.use(
 );
 
 app.use('/api', successStoryRoutes);
+app.use('/api', adminNotificationRoutes);
 
 app.use(
   '/api',

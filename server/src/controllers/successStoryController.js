@@ -1,3 +1,4 @@
+import { dispatchStoryEvent, storyAdminIds } from '../services/storyNotificationService.js';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 import SuccessStory from '../models/SuccessStory.js';
@@ -40,6 +41,7 @@ export const submitSuccessStory = asyncHandler(async (req, res) => {
     photoConsentVerified: false,
     photo: ''
   });
+  await dispatchStoryEvent({ userIds: await storyAdminIds(), type: 'STORY_SUBMITTED', title: 'New member success story', message: 'A new story awaits independent partner consent.', storyId: record._id, url: '/admin/success-stories' });
   ok(res, { story: { id: record.id, status: record.status, title: record.title } }, 'Your story was received. It will not be published without independent consent verification and admin approval.', 201);
 });
 
@@ -85,6 +87,7 @@ export const inviteStoryPartner = asyncHandler(async (req, res) => {
   record.partnerConsentVerifiedAt = null;
   record.photoConsentVerified = false;
   await record.save();
+  await dispatchStoryEvent({ userIds: [partner._id], type: 'STORY_INVITATION', title: 'Your consent is requested', message: 'A member has privately invited you to review a success story. Please review before consenting.', storyId: record._id, url: '/story-consent' });
   ok(res, { story: { id: record.id, partnerConsentStatus: record.partnerConsentStatus, inviteExpiresAt: record.partnerInviteExpiresAt } }, 'Invitation is ready in your partner’s member account.');
 });
 
@@ -122,6 +125,7 @@ export const respondStoryConsent = asyncHandler(async (req, res) => {
     submittedBy: { $ne: req.user.id }
   }, { $set: update }, { returnDocument: 'after', runValidators: true });
   if (!record) throw new ApiError(404, 'No active consent invitation was found.');
+  await dispatchStoryEvent({ userIds: [record.submittedBy, ...(decision === 'accept' ? await storyAdminIds() : [])], type: decision === 'accept' ? 'STORY_CONSENT_ACCEPTED' : 'STORY_CONSENT_DECLINED', title: decision === 'accept' ? 'Partner consent confirmed' : 'Partner declined story consent', message: decision === 'accept' ? 'Your story is now awaiting admin review.' : 'The partner declined to approve publication.', storyId: record._id, url: decision === 'accept' ? '/admin/success-stories' : '/story-consent' });
   ok(res, { story: { id: record.id, status: record.status, partnerConsentStatus: record.partnerConsentStatus } },
     decision === 'accept' ? 'Consent recorded. Story awaits admin review.' : 'Story invitation declined.');
 });
@@ -141,6 +145,7 @@ export const withdrawStoryConsent = asyncHandler(async (req, res) => {
     partnerConsentWithdrawnAt: now
   } }, { returnDocument: 'after', runValidators: true });
   if (!record) throw new ApiError(404, 'Active story not found or already withdrawn.');
+  await dispatchStoryEvent({ userIds: [record.submittedBy, record.partnerUser, ...(await storyAdminIds())], type: 'STORY_WITHDRAWN', title: 'Story publication withdrawn', message: 'A success story has been withdrawn and is no longer eligible for public display.', storyId: record._id });
   ok(res, { story: { id: record.id, status: record.status } }, 'Story withdrawn and unpublished.');
 });
 
@@ -186,6 +191,7 @@ export const adminModerateSuccessStory = asyncHandler(async (req, res) => {
     $set: { status, moderationNotes: notes, publishedAt: action === 'approve' ? now : null }
   }, { returnDocument: 'after', runValidators: true });
   if (!story) throw new ApiError(409, 'Story status or required consent changed. Refresh before moderating.');
+  await dispatchStoryEvent({ userIds: [story.submittedBy, story.partnerUser], type: action === 'approve' ? 'STORY_APPROVED' : action === 'reject' ? 'STORY_REJECTED' : 'STORY_CHANGES_REQUESTED', title: action === 'approve' ? 'Your success story was approved' : action === 'reject' ? 'Your story was not approved' : 'Changes requested for your story', message: action === 'approve' ? 'Your approved story may now appear publicly.' : 'Please review the moderation decision in your story consent centre.', storyId: story._id });
   ok(res, { story: { id: story.id, status: story.status } }, 'Moderation decision recorded.');
 });
 

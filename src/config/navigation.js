@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 
 export const memberNavigation = [
-  { to: '/story-consent', labelKey: 'nav.storyConsentCentre', icon: ShieldCheck },
   {
     to:
       '/dashboard',
@@ -146,6 +145,7 @@ export const memberNavigation = [
       ShieldCheck
   },
 
+  { to: '/story-consent', labelKey: 'nav.storyConsentCentre', icon: ShieldCheck },
   {
     to:
       '/settings',
@@ -188,6 +188,7 @@ export const adminNavigation = [
       'admin.overview',
 
     links: [
+      { to: '/admin/notifications', labelKey: 'nav.notifications', roles: ['admin', 'super_admin'], icon: Bell, badge: 'notifications' },
       {
         to:
           '/admin',

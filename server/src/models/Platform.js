@@ -27,7 +27,15 @@ const notification = new mongoose.Schema(
         'PROFILE_REJECTED',
         'PROFILE_VIEW',
         'SUBSCRIPTION',
-        'SYSTEM'
+        'SYSTEM',
+        'STORY_SUBMITTED',
+        'STORY_INVITATION',
+        'STORY_CONSENT_ACCEPTED',
+        'STORY_CONSENT_DECLINED',
+        'STORY_APPROVED',
+        'STORY_REJECTED',
+        'STORY_CHANGES_REQUESTED',
+        'STORY_WITHDRAWN'
       ]
     },
 
