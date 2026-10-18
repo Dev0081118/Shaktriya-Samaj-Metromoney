@@ -143,3 +143,61 @@ export const withdrawStoryConsent = asyncHandler(async (req, res) => {
   if (!record) throw new ApiError(404, 'Active story not found or already withdrawn.');
   ok(res, { story: { id: record.id, status: record.status } }, 'Story withdrawn and unpublished.');
 });
+
+
+// TASK-003C-3: admin-only moderation. Public output must never contain
+// partner account identifiers, email addresses, or unpublished story content.
+export const adminListSuccessStories = asyncHandler(async (req, res) => {
+  const allowed = ['AwaitingConsent', 'PendingReview', 'ChangesRequested', 'Approved', 'Rejected', 'Withdrawn'];
+  const status = typeof req.query.status === 'string' ? req.query.status : '';
+  if (status && !allowed.includes(status)) throw new ApiError(400, 'Invalid story status.');
+  const stories = await SuccessStory.find(status ? { status } : {})
+    .select('partnerOneName partnerTwoName city title story marriageDate status partnerConsentStatus partnerConsentVerifiedAt submitterConsent submitterConsentAt photoConsentVerified moderationNotes publishedAt createdAt updatedAt')
+    .sort('-createdAt').limit(100).lean();
+  ok(res, { stories });
+});
+
+export const adminModerateSuccessStory = asyncHandler(async (req, res) => {
+  validStoryId(req.params.id);
+  const action = req.body?.action;
+  const notes = text(req.body?.notes, 1000);
+  if (!['approve', 'reject', 'requestChanges'].includes(action)) {
+    throw new ApiError(400, 'Choose approve, reject or requestChanges.');
+  }
+  if (notes.length > 1000 || (action !== 'approve' && notes.length < 10)) {
+    throw new ApiError(400, 'Provide a moderation reason of 10–1000 characters.');
+  }
+  const now = new Date();
+  const allowedStatus = action === 'approve' ? 'PendingReview' : { $in: ['PendingReview', 'AwaitingConsent', 'ChangesRequested'] };
+  const filter = { _id: req.params.id, status: allowedStatus };
+  if (action === 'approve') {
+    Object.assign(filter, {
+      submitterConsent: true,
+      submitterConsentAt: { $ne: null },
+      partnerUser: { $ne: null },
+      partnerConsentStatus: 'Verified',
+      partnerConsentVerifiedAt: { $ne: null },
+      partnerConsentWithdrawnAt: null,
+      $expr: { $ne: ['$submittedBy', '$partnerUser'] }
+    });
+  }
+  const status = action === 'approve' ? 'Approved' : action === 'reject' ? 'Rejected' : 'ChangesRequested';
+  const story = await SuccessStory.findOneAndUpdate(filter, {
+    $set: { status, moderationNotes: notes, publishedAt: action === 'approve' ? now : null }
+  }, { returnDocument: 'after', runValidators: true });
+  if (!story) throw new ApiError(409, 'Story status or required consent changed. Refresh before moderating.');
+  ok(res, { story: { id: story.id, status: story.status } }, 'Moderation decision recorded.');
+});
+
+export const publicApprovedSuccessStories = asyncHandler(async (_req, res) => {
+  const stories = await SuccessStory.find({
+    status: 'Approved', publishedAt: { $ne: null },
+    submitterConsent: true, submitterConsentAt: { $ne: null },
+    partnerUser: { $ne: null }, partnerConsentStatus: 'Verified',
+    partnerConsentVerifiedAt: { $ne: null }, partnerConsentWithdrawnAt: null,
+    $expr: { $ne: ['$submittedBy', '$partnerUser'] }
+  }).select('partnerOneName partnerTwoName city title story marriageDate publishedAt -_id')
+    .sort('-publishedAt').limit(30).lean();
+  // No images are returned: submitter's separate photo consent is not yet implemented.
+  ok(res, { stories });
+});

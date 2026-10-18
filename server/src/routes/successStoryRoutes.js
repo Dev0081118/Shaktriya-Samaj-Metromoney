@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import { protect, permit, maintenanceGuard } from '../middleware/auth.js';
-import { submitSuccessStory, mySuccessStories, inviteStoryPartner, myStoryConsentInvitations, respondStoryConsent, withdrawStoryConsent } from '../controllers/successStoryController.js';
+import { adminListSuccessStories, adminModerateSuccessStory, publicApprovedSuccessStories, submitSuccessStory, mySuccessStories, inviteStoryPartner, myStoryConsentInvitations, respondStoryConsent, withdrawStoryConsent } from '../controllers/successStoryController.js';
 
 const router = Router();
+router.get('/public/success-stories', publicApprovedSuccessStories);
+router.get('/admin/success-stories', protect, permit('admin', 'super_admin'), adminListSuccessStories);
+router.patch('/admin/success-stories/:id', protect, permit('admin', 'super_admin'), adminModerateSuccessStory);
 router.post('/success-stories', protect, permit('member'), maintenanceGuard, submitSuccessStory);
 router.get('/success-stories/mine', protect, permit('member'), maintenanceGuard, mySuccessStories);
 router.get('/success-stories/consent-invitations', protect, permit('member'), maintenanceGuard, myStoryConsentInvitations);
