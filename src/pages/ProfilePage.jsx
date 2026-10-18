@@ -371,38 +371,32 @@ function MatchSummary({
           compatibility.mutualScore
         );
 
-  const confidence =
-    compatibility.confidence ===
-      null ||
-    compatibility.confidence ===
-      undefined
-      ? null
-      : Math.round(
-          compatibility.confidence
-        );
 
-  const label =
-    score >=
-      85
-      ? 'Excellent Match'
-      : score >=
-          70
-        ? 'Strong Match'
-        : score >=
-            50
-          ? 'Compatible'
-          : 'Low Match';
+
+  const hasMutual = mutualScore !== null &&
+    compatibility.candidateHasPreferences &&
+    compatibility.reverseFitScore !== null &&
+    compatibility.reverseFitScore !== undefined;
+  const primaryScore = hasMutual ? mutualScore : score;
+  const reciprocalEligible = hasMutual && compatibility.eligible === true;
+  const label = !hasMutual
+    ? 'One-sided score'
+    : !reciprocalEligible
+      ? 'Requirements unmet'
+      : primaryScore >= 85 ? 'Excellent mutual match'
+        : primaryScore >= 70 ? 'Strong mutual match'
+          : primaryScore >= 50 ? 'Good mutual match' : 'Low mutual match';
 
   return (
     <div className="mt-6 max-w-[520px] border border-[#c49b70] bg-[#c49b7010] p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#91683f]">
-            Your preference match
+            {hasMutual ? 'Common match (both sides)' : 'Your preference match (one side)'}
           </p>
 
           <p className="mt-1 font-['Cormorant_Garamond'] text-[30px] font-medium leading-none text-[#681d25]">
-            {score}%
+            {primaryScore}%
           </p>
         </div>
 
@@ -412,9 +406,11 @@ function MatchSummary({
       </div>
 
       <p className="mt-3 text-[10px] leading-5 text-[#756a60]">
-        This percentage is calculated from your saved partner
-        preferences. The same profile can have a different
-        percentage for another member.
+        {hasMutual
+          ? `Common match combines both members' saved partner preferences. Your fit: ${score}%. Their fit: ${Math.round(compatibility.reverseFitScore)}%.`
+          : 'Only your preference fit is available. A genuine common score needs saved preferences on both sides.'}
+        {hasMutual && !reciprocalEligible &&
+          ' One or more Must Have requirements are not met. This is preference overlap, not an eligible reciprocal recommendation.'}
       </p>
 
       <div className="mt-4 grid grid-cols-2 gap-3 max-[500px]:grid-cols-1">
@@ -422,24 +418,11 @@ function MatchSummary({
           null && (
           <div className="border border-[#ded0c1] bg-[#fffdf8] p-3">
             <p className={labelClass}>
-              Mutual compatibility
+              Your preference fit
             </p>
 
             <p className="mt-1 text-[15px] font-extrabold text-[#431318]">
-              {mutualScore}%
-            </p>
-          </div>
-        )}
-
-        {confidence !==
-          null && (
-          <div className="border border-[#ded0c1] bg-[#fffdf8] p-3">
-            <p className={labelClass}>
-              Match confidence
-            </p>
-
-            <p className="mt-1 text-[15px] font-extrabold text-[#431318]">
-              {confidence}%
+              {score}%
             </p>
           </div>
         )}

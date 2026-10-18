@@ -63,9 +63,19 @@ export default function ProfileCard({
   } =
     useTranslation();
 
-  const score =
-    profile.compatibility
-      ?.score;
+  const compatibility = profile.compatibility;
+  const mutualAvailable = compatibility?.scoreType === 'mutual' ||
+    (compatibility?.candidateHasPreferences &&
+      compatibility?.mutualScore !== null && compatibility?.mutualScore !== undefined &&
+      compatibility?.reverseFitScore !== null && compatibility?.reverseFitScore !== undefined);
+  const score = mutualAvailable
+    ? (compatibility?.commonScore ?? compatibility?.mutualScore)
+    : compatibility?.score;
+  const scoreLabel = mutualAvailable ? 'Common match' : 'Your preference fit';
+  const reciprocalEligible = compatibility?.eligible === true;
+  const scoreStatus = mutualAvailable
+    ? reciprocalEligible ? 'Eligible mutual match' : 'Preference overlap · requirements unmet'
+    : 'One-sided score · mutual match unavailable';
 
   const shortlisted =
     !!profile.shortlisted;
@@ -217,15 +227,22 @@ export default function ProfileCard({
               </strong>
 
               <small className="mt-1 block text-[7px] font-extrabold uppercase tracking-[0.1em] text-[#756a60]">
-                {t(
-                  'profile.match'
-                )}
+{scoreLabel}
               </small>
             </div>
           )}
       </div>
 
       <div className="p-5">
+        {compatibility && (
+          <div className="mb-3 rounded border border-[#e9dfd4] bg-[#f8f2eb] px-3 py-2 text-[10px] text-[#681d25]">
+            Your fit: {compatibility.score == null ? 'Unavailable' : `${Math.round(compatibility.preferenceFitScore ?? compatibility.score)}%`}
+            {' · '}Their fit: {mutualAvailable ? `${Math.round(compatibility.reverseFitScore)}%` : 'Not available'}
+            <span className={`mt-1 block ${reciprocalEligible ? 'text-[#416c4e]' : 'text-[#876039]'}`}>
+              {scoreStatus}
+            </span>
+          </div>
+        )}
         <div className="flex items-start justify-between gap-4">
           <h3 className="font-['Cormorant_Garamond'] text-[31px] font-medium leading-none text-[#2c1a18]">
             {name}

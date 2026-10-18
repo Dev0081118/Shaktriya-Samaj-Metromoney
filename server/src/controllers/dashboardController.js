@@ -564,13 +564,6 @@ export const dashboard =
 
               if (
                 !compatibility
-                  .eligible
-              ) {
-                return null;
-              }
-
-              if (
-                !compatibility
                   .viewerHasPreferences
               ) {
                 return null;
@@ -587,18 +580,31 @@ export const dashboard =
                 return null;
               }
 
-              if (
-                compatibility
-                  .score <
-                MIN_RECOMMENDATION_SCORE
-              ) {
+              // Only a genuine two-sided preference score is a Common Match.
+              // Without candidate preferences, show a clearly labelled one-sided fit.
+              const hasTwoSidedScore =
+                compatibility.candidateHasPreferences &&
+                compatibility.reverseFitScore !== null &&
+                compatibility.reverseFitScore !== undefined &&
+                compatibility.mutualScore !== null &&
+                compatibility.mutualScore !== undefined;
+
+              const displayedScore = hasTwoSidedScore
+                ? compatibility.mutualScore
+                : compatibility.score;
+
+              if (displayedScore < MIN_RECOMMENDATION_SCORE) {
                 return null;
               }
 
               return {
                 candidate,
-
-                compatibility
+                compatibility: {
+                  ...compatibility,
+                  commonScore: hasTwoSidedScore ? compatibility.mutualScore : null,
+                  scoreType: hasTwoSidedScore ? 'mutual' : 'one_sided',
+                  reciprocalEligible: Boolean(compatibility.eligible)
+                }
               };
             }
           )
@@ -613,17 +619,23 @@ export const dashboard =
        * already inside the small quality window defined
        * by boostExposureService.
        */
-      evaluatedCandidates.sort(
-        (
-          left,
-          right
-        ) =>
-          compareRecommendationExposure(
-            left,
-            right,
-            boostRankingNow
-          )
-      );
+      evaluatedCandidates.sort((left, right) => {
+        // Common Match always ranks above a one-sided score.
+        const leftMutual = left.compatibility.scoreType === 'mutual';
+        const rightMutual = right.compatibility.scoreType === 'mutual';
+        if (leftMutual !== rightMutual) return leftMutual ? -1 : 1;
+
+        const leftScore = left.compatibility.commonScore ?? left.compatibility.score;
+        const rightScore = right.compatibility.commonScore ?? right.compatibility.score;
+        if (leftScore !== rightScore) return rightScore - leftScore;
+
+        // At equal percentages prefer genuinely reciprocal eligibility.
+        if (left.compatibility.reciprocalEligible !== right.compatibility.reciprocalEligible) {
+          return left.compatibility.reciprocalEligible ? -1 : 1;
+        }
+        // Boost is only a tie-breaker; it must not override a higher match score.
+        return compareRecommendationExposure(left, right, boostRankingNow);
+      });
 
       const topCandidates =
         evaluatedCandidates.slice(
