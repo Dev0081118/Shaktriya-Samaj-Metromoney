@@ -815,40 +815,18 @@ export default function SettingsPage({
             'weightMax'
           ];
 
-          numericFields.forEach(
-            (
-              key
-            ) => {
-              if (
-                payload[
-                  key
-                ] ===
-                  '' ||
-                payload[
-                  key
-                ] ===
-                  null
-              ) {
-                delete payload[
-                  key
-                ];
-              } else if (
-                payload[
-                  key
-                ] !==
-                undefined
-              ) {
-                payload[
-                  key
-                ] =
-                  Number(
-                    payload[
-                      key
-                    ]
-                  );
-              }
+          numericFields.forEach((key) => {
+            if (
+              payload[key] === '' ||
+              payload[key] === null ||
+              payload[key] === undefined
+            ) {
+              // Null means intentionally cleared. Do not drop this field.
+              payload[key] = null;
+            } else {
+              payload[key] = Number(payload[key]);
             }
-          );
+          });
 
           if (
             payload.incomePreferences

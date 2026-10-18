@@ -2214,6 +2214,41 @@ export const savePreferences =
           ]
         );
 
+      /*
+       * Explicitly cleared numeric fields must be removed from MongoDB.
+       * Omitting a field is not equivalent to clearing it.
+       */
+      const unsetFields = {};
+
+      const numericFields = [
+        'ageMin',
+        'ageMax',
+        'heightMin',
+        'heightMax',
+        'weightMin',
+        'weightMax'
+      ];
+
+      for (const key of numericFields) {
+        if (
+          Object.prototype.hasOwnProperty.call(req.body, key) &&
+          (req.body[key] === null || req.body[key] === '')
+        ) {
+          unsetFields[key] = 1;
+          delete safe[key];
+          continue;
+        }
+
+        if (safe[key] !== undefined) {
+          const numericValue = optionalNumber(safe[key]);
+          if (numericValue === undefined) {
+            delete safe[key];
+          } else {
+            safe[key] = numericValue;
+          }
+        }
+      }
+
       validateRange(
         safe.ageMin,
         safe.ageMax,
@@ -2239,36 +2274,6 @@ export const savePreferences =
           ?.max,
         'Minimum income cannot exceed maximum income.'
       );
-
-      const numericFields = [
-        'ageMin',
-        'ageMax',
-        'heightMin',
-        'heightMax',
-        'weightMin',
-        'weightMax'
-      ];
-
-      for (
-        const key of
-        numericFields
-      ) {
-        if (
-          safe[
-            key
-          ] !==
-          undefined
-        ) {
-          safe[
-            key
-          ] =
-            optionalNumber(
-              safe[
-                key
-              ]
-            );
-        }
-      }
 
       if (
         safe.ageMin !==
@@ -2581,6 +2586,17 @@ export const savePreferences =
         }
       }
 
+      const update = {
+        $set: {
+          ...safe,
+          profileId: profile._id
+        }
+      };
+
+      if (Object.keys(unsetFields).length > 0) {
+        update.$unset = unsetFields;
+      }
+
       const preferences =
         await PartnerPreference.findOneAndUpdate(
           {
@@ -2588,14 +2604,7 @@ export const savePreferences =
               profile._id
           },
 
-          {
-            $set: {
-              ...safe,
-
-              profileId:
-                profile._id
-            }
-          },
+          update,
 
           {
             upsert:

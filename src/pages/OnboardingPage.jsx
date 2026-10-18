@@ -1534,6 +1534,14 @@ const profilePayload =
     };
   };
 
+const preferenceNumber = (value) => {
+  if (value === '' || value === null || value === undefined) {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const preferencePayload =
   (
     data
@@ -1572,32 +1580,32 @@ const preferencePayload =
         ),
 
       ageMin:
-        optionalNumber(
+        preferenceNumber(
           data.ageMin
         ),
 
       ageMax:
-        optionalNumber(
+        preferenceNumber(
           data.ageMax
         ),
 
       heightMin:
-        optionalNumber(
+        preferenceNumber(
           data.heightMin
         ),
 
       heightMax:
-        optionalNumber(
+        preferenceNumber(
           data.heightMax
         ),
 
       weightMin:
-        optionalNumber(
+        preferenceNumber(
           data.weightMin
         ),
 
       weightMax:
-        optionalNumber(
+        preferenceNumber(
           data.weightMax
         ),
 

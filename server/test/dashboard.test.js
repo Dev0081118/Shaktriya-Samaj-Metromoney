@@ -1002,3 +1002,61 @@ test(
     );
   }
 );
+
+test(
+  'clearing numeric preferences persists and changes dashboard recommendations',
+  async () => {
+    const [member, candidateUser] = await User.create([
+      { email: 'clear-pref-viewer@example.com', password: 'Password123!', role: 'member' },
+      { email: 'clear-pref-candidate@example.com', password: 'Password123!', role: 'member' }
+    ]);
+
+    const viewer = await MatrimonialProfile.create({
+      userId: member._id, profileFor: 'Self', firstName: 'Raj', lastName: 'Rana',
+      gender: 'Male', dateOfBirth: new Date('1997-01-01'), height: 178,
+      weight: 76, maritalStatus: 'Never Married', visibility: 'active',
+      lifecycleStatus: 'Active',
+      community: { clan: 'Rana', gotra: 'Kashyap', vansh: 'Suryavanshi' },
+      location: { nativePlace: 'Rajkot', nativeDistrict: 'Rajkot', nativeState: 'Gujarat' }
+    });
+    const candidate = await MatrimonialProfile.create({
+      userId: candidateUser._id, profileFor: 'Self', firstName: 'Priya',
+      lastName: 'Jadeja', gender: 'Female', dateOfBirth: new Date('1999-01-01'),
+      height: 163, weight: 55, maritalStatus: 'Never Married',
+      visibility: 'active', lifecycleStatus: 'Active',
+      community: { clan: 'Jadeja', gotra: 'Vashishtha', vansh: 'Suryavanshi' },
+      location: { nativePlace: 'Ahmedabad', nativeDistrict: 'Ahmedabad', nativeState: 'Gujarat' }
+    });
+    await PartnerPreference.create({
+      profileId: viewer._id, preferredGender: 'Female', ageMin: 35, ageMax: 40,
+      states: ['Gujarat'], importance: { age: 'Must Have' }
+    });
+    await PartnerPreference.create({
+      profileId: candidate._id, preferredGender: 'Male', ageMin: 25, ageMax: 35,
+      states: ['Gujarat']
+    });
+    const token = tokenFor(member);
+    const before = await request(app).get('/api/dashboard')
+      .set('Authorization', `Bearer ${token}`);
+    assert.equal(before.status, 200);
+    assert.equal(before.body.data.recommendedProfiles.some(
+      (item) => item.profileId === candidate.profileId
+    ), false);
+
+    const update = await request(app).put('/api/preferences')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ preferredGender: 'Female', ageMin: null, ageMax: null,
+        states: ['Gujarat'], importance: { age: 'Medium', location: 'Medium' } });
+    assert.equal(update.status, 200);
+    const stored = await PartnerPreference.findOne({ profileId: viewer._id }).lean();
+    assert.equal(stored.ageMin, undefined);
+    assert.equal(stored.ageMax, undefined);
+
+    const after = await request(app).get('/api/dashboard')
+      .set('Authorization', `Bearer ${token}`);
+    assert.equal(after.status, 200);
+    assert.equal(after.body.data.recommendedProfiles.some(
+      (item) => item.profileId === candidate.profileId
+    ), true);
+  }
+);
