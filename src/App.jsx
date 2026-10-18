@@ -148,6 +148,8 @@ const SettingsPage = lazy(
     )
 );
 
+const SubmitStoryPage = lazy(() => import('./pages/SubmitStoryPage'));
+
 const StoriesPage = lazy(
   () =>
     import(
@@ -442,6 +444,11 @@ export default function App() {
             element={
               <HowItWorksPage />
             }
+          />
+
+          <Route
+            path="/submit-success-story"
+            element={<ProtectedRoute roles={['member']}><SubmitStoryPage /></ProtectedRoute>}
           />
 
           <Route

@@ -44,6 +44,7 @@ export default function StoriesPage() {
               <p className="mx-auto mt-5 max-w-[680px] text-[13px] leading-7 text-[#756A60]">Once a couple voluntarily shares their experience, both parties consent to publication, and our team approves the submission, it may be featured here. No fictional couples or sample testimonials are presented as real success stories.</p>
               <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
                 <Link to="/how-it-works" className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#681D25] px-6 text-[12px] font-bold text-white transition hover:bg-[#431318]">How it works</Link>
+                <Link to="/submit-success-story" className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-[#C6B199] px-6 text-[12px] font-bold text-[#681D25] transition hover:bg-[#F5F0E8]">Share your story</Link>
                 <Link to="/contact" className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-[#C6B199] px-6 text-[12px] font-bold text-[#681D25] transition hover:bg-[#F5F0E8]">Contact our team</Link>
               </div>
             </div>

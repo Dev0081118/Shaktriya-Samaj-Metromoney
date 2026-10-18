@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import crypto from 'node:crypto';
 
 import routes from './routes/index.js';
+import successStoryRoutes from './routes/successStoryRoutes.js';
 
 import boostRoutes from './routes/boostRoutes.js';
 
@@ -702,6 +703,8 @@ app.use(
   '/api',
   boostRoutes
 );
+
+app.use('/api', successStoryRoutes);
 
 app.use(
   '/api',
