@@ -98,11 +98,38 @@ export default function CollectionPage({
   };
 
   useEffect(() => {
+    let cancelled = false;
+    // Category notifications are persisted, so reopening on another device
+    // doesn't resurrect a dot that the member already acknowledged.
+    const acknowledgeSection = async () => {
+      if (type !== 'interests' && type !== 'matches') return;
+      if (type === 'interests' && tab !== 'incoming') return;
+      try {
+        const response = await api('/notifications');
+        if (cancelled) return;
+        const notificationType = type === 'interests' ? 'NEW_INTEREST' : 'NEW_MATCH';
+        const pending = (response.data?.notifications || []).filter(
+          (entry) => !entry.read && entry.type === notificationType
+        );
+        // Existing authenticated API enforces ownership for every read.
+        // Sequential updates keep this compatible with existing endpoints.
+        for (const entry of pending) {
+          if (cancelled) return;
+          await api(`/notifications/${entry._id}/read`, { method: 'PATCH' });
+        }
+      } catch {
+        // A transient API failure must not block the activity page itself.
+      }
+    };
     load();
-  }, [
-    type,
-    tab
-  ]);
+    acknowledgeSection();
+    const refresh = () => { if (!cancelled) load(); };
+    window.addEventListener('ksm:realtime', refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('ksm:realtime', refresh);
+    };
+  }, [type, tab]);
 
   const interestAction =
     async (id, action) => {

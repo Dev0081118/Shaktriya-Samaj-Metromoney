@@ -876,6 +876,116 @@ function Queue() {
   );
 }
 
+/* TASK-002E: submitted profile review, independent from public privacy cards. */
+const reviewSectionTitles = {
+  education: 'Education', career: 'Career and occupation', community: 'Rajput community',
+  location: 'Native location', family: 'Family information',
+  paternalFamily: 'Paternal family and heritage', maternalFamily: 'Maternal family',
+  maternalLineage: 'Mosal and maternal lineage', familyAssets: 'Family assets',
+  birthDetails: 'Birth details', astrology: 'Astrology',
+  contactDetails: 'Contact and address', maritalHistory: 'Marriage history',
+  lifestyle: 'Lifestyle', gallery: 'Photos', galleryAssets: 'Photo gallery',
+  siblings: 'Siblings', verification: 'Verification',
+  biodata: 'Biodata', preferences: 'Preferences'
+};
+
+const reviewExcludedKeys = new Set([
+  '_id', 'id', '__v', 'userId', 'createdBy', 'updatedBy',
+  'password', 'passwordHash', 'tokenVersion', 'resetToken',
+  'profilePhotoPublicId', 'publicId', 'cloudinaryPublicId',
+  'privacy', 'biodataPrivacy', 'moderatedBy', 'moderationNotes',
+  'createdAt', 'updatedAt', 'moderatedAt', 'lastActiveAt',
+  'completionPercentage', 'profileId', 'visibility',
+  'lifecycleStatus', 'profilePhoto', 'gallery', 'galleryAssets',
+  'aboutMe', 'firstName', 'middleName', 'lastName'
+]);
+
+const reviewLabel = (key) =>
+  key.replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .replace(/^./, (character) => character.toUpperCase());
+
+const isReviewImage = (value) =>
+  typeof value === 'string' &&
+  (/^https?:\/\//i.test(value) || value.startsWith('/uploads/')) &&
+  /\.(png|jpe?g|webp|gif)(?:\?|$)/i.test(value);
+
+function ReviewValue({ value, depth = 0 }) {
+  if (value === null || value === undefined || value === '') {
+    return <span className="text-[#9b8b7c]">Not provided</span>;
+  }
+  if (typeof value === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
+  if (typeof value === 'number') return <span>{value}</span>;
+  if (typeof value === 'string') {
+    if (isReviewImage(value)) {
+      return <img src={assetUrl(value)} alt="Submitted profile attachment" className="max-h-64 max-w-full rounded border border-[#ddd0c1] object-contain" loading="lazy" />;
+    }
+    return <span className="break-words whitespace-pre-wrap">{value}</span>;
+  }
+  if (depth > 5) return <span>Nested details available</span>;
+  if (Array.isArray(value)) {
+    if (!value.length) return <span className="text-[#9b8b7c]">Not provided</span>;
+    return (
+      <div className="grid gap-2">
+        {value.map((entry, index) => (
+          <div key={index} className="rounded border border-[#eadfd2] bg-[#fffdf8] p-3">
+            <span className="mb-2 block text-[10px] font-bold text-[#91683f]">Item {index + 1}</span>
+            <ReviewValue value={entry} depth={depth + 1} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value).filter(([key]) =>
+      !reviewExcludedKeys.has(key) && !key.startsWith('$')
+    );
+    if (!entries.length) return <span className="text-[#9b8b7c]">Not provided</span>;
+    return (
+      <dl className="grid gap-3 sm:grid-cols-2">
+        {entries.map(([key, detail]) => (
+          <div key={key} className="min-w-0 border-b border-[#eee5d9] pb-2">
+            <dt className="text-[10px] font-bold uppercase tracking-wide text-[#91683f]">{reviewLabel(key)}</dt>
+            <dd className="mt-1 text-[13px] leading-6 text-[#2c1a18]">
+              <ReviewValue value={detail} depth={depth + 1} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+    );
+  }
+  return null;
+}
+
+function FullProfileReview({ profile }) {
+  const entries = Object.entries(profile || {}).filter(([key, value]) =>
+    !reviewExcludedKeys.has(key) &&
+    !key.startsWith('$') &&
+    value !== null && value !== undefined
+  );
+  return (
+    <section className="mt-8" aria-label="Complete submitted matrimonial profile">
+      <div className="mb-5 border-b border-[#ddd0c1] pb-4">
+        <h2 className="font-['Cormorant_Garamond'] text-[32px] font-medium text-[#2c1a18]">Complete submitted profile</h2>
+        <p className="mt-2 text-[12px] leading-6 text-[#756a60]">
+          Review all submitted biodata sections before making a moderation decision.
+          Blank fields are shown as Not provided. This information is for authorized staff review only.
+        </p>
+      </div>
+      <div className="grid gap-4">
+        {entries.map(([key, value]) => (
+          <div key={key} className="border border-[#ddd0c1] bg-[#fdfaf5] p-5">
+            <h3 className="mb-4 font-['Cormorant_Garamond'] text-[25px] font-medium text-[#431318]">
+              {reviewSectionTitles[key] || reviewLabel(key)}
+            </h3>
+            <ReviewValue value={value} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Review() {
   const {
     id
@@ -1255,6 +1365,8 @@ function Review() {
                 </p>
               </div>
             </section>
+
+            <FullProfileReview profile={profile} />
 
             <label className="mt-8 grid gap-2 text-[10px] font-bold uppercase tracking-[0.1em]">
               Moderation notes

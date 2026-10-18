@@ -53,6 +53,8 @@ export const memberNavigation = [
     labelKey:
       'nav.interests',
 
+    badge: 'interests',
+
     icon:
       HeartHandshake
   },
@@ -63,6 +65,8 @@ export const memberNavigation = [
 
     labelKey:
       'nav.matches',
+
+    badge: 'matches',
 
     icon:
       UsersRound

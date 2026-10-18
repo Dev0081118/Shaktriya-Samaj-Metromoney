@@ -421,6 +421,7 @@ export default function AppSidebar({
                           0 && (
                           <b
                             className="app-sidebar-badge"
+                            style={{ backgroundColor: '#c49b70', color: '#291817' }}
                             aria-label={
                               t(
                                 'sidebar.unread',

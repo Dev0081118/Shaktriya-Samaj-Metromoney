@@ -31,6 +31,16 @@ export default function MemberLayout() {
   const [unread, setUnread] =
     useState(0);
 
+  const [interestUnread, setInterestUnread] = useState(0);
+  const [matchUnread, setMatchUnread] = useState(0);
+
+  const syncUnread = useCallback((payload) => {
+    const items = payload?.notifications || [];
+    setUnread(payload?.unreadCount ?? items.filter((n) => !n.read).length);
+    setInterestUnread(items.filter((n) => !n.read && n.type === 'NEW_INTEREST').length);
+    setMatchUnread(items.filter((n) => !n.read && n.type === 'NEW_MATCH').length);
+  }, []);
+
   const [profile, setProfile] =
     useState(null);
 
@@ -85,10 +95,7 @@ export default function MemberLayout() {
           notifications.status ===
           'fulfilled'
         ) {
-          setUnread(
-            notifications.value.data
-              .unreadCount
-          );
+          syncUnread(notifications.value.data);
         }
 
         if (
@@ -107,7 +114,7 @@ export default function MemberLayout() {
 
     const realtimeRefresh = () => {
       api('/notifications').then((result) => {
-        setUnread(result.data?.unreadCount ?? 0);
+        syncUnread(result.data);
       }).catch(() => {});
       api('/profiles/me').then((result) => {
         setProfile(result.data?.profile ?? null);
@@ -126,7 +133,7 @@ export default function MemberLayout() {
         loadMembership
       );
     };
-  }, [loadMembership]);
+  }, [loadMembership, syncUnread]);
 
   const signOut = async () => {
     await logout();
@@ -199,7 +206,9 @@ export default function MemberLayout() {
           'member'
         )}
         badges={{
-          notifications: unread
+          notifications: unread,
+          interests: interestUnread,
+          matches: matchUnread
         }}
         identity={{
           image:
@@ -258,7 +267,7 @@ export default function MemberLayout() {
               <Bell size={18} />
 
               {unread > 0 && (
-                <i className="absolute -right-[2px] -top-px h-[6px] w-[6px] rounded-full bg-[#681d25]" />
+                <i className="absolute -right-[2px] -top-px h-[7px] w-[7px] rounded-full bg-[#c49b70]" />
               )}
             </NavLink>
 
