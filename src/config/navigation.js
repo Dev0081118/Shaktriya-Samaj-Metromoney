@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 
 export const memberNavigation = [
+  { to: '/story-consent', labelKey: 'nav.storyConsentCentre', icon: ShieldCheck },
   {
     to:
       '/dashboard',
@@ -181,6 +182,7 @@ export const managerNavigation = [
 ];
 
 export const adminNavigation = [
+  
   {
     groupKey:
       'admin.overview',
@@ -251,8 +253,15 @@ export const adminNavigation = [
   {
     groupKey:
       'admin.groups.matrimonial',
-
+    
     links: [
+      {
+      to: '/admin/success-stories',
+      labelKey: 'nav.storyApprovals',
+      roles: ['admin', 'super_admin'],
+      icon: ClipboardCheck
+    },
+
       {
         to:
           '/admin/profiles',

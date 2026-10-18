@@ -5,7 +5,7 @@ const actions = [ ['approve', 'Approve'], ['requestChanges', 'Request changes'],
 
 export default function StoryModerationPage() {
   const [stories, setStories] = useState([]);
-  const [filter, setFilter] = useState('PendingReview');
+  const [filter, setFilter] = useState('AwaitingConsent');
   const [notes, setNotes] = useState({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState('');

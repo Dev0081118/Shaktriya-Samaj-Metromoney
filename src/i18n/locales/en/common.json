@@ -1,297 +1,592 @@
 {
-  "language": { "label": "Language", "english": "English", "gujarati": "Gujarati", "hindi": "Hindi", "select": "Select language" },
-  "brand": { "society": "Matrimonial Society", "administration": "Administration", "relationshipDesk": "Relationship Desk" },
-  "sidebar": { "navigation": "Application navigation", "open": "Open navigation menu", "close": "Close navigation menu", "pin": "Pin expanded sidebar", "unpin": "Unpin expanded sidebar", "unread": "{{count}} unread notifications" },
-  "actions": { "signIn": "Sign in", "signOut": "Sign out", "createProfile": "Create Profile", "continue": "Continue", "back": "Back", "save": "Save", "cancel": "Cancel", "submit": "Submit", "viewAll": "View all", "viewProfile": "View profile", "expressInterest": "Express interest", "shortlist": "Shortlist", "search": "Search", "apply": "Apply filters", "reset": "Reset", "previous": "Previous", "next": "Next", "activate": "Activate", "confirm": "Confirm" },
-  "nav": { "discover": "Discover", "howItWorks": "How It Works", "stories": "Stories", "membership": "Membership", "about": "About", "dashboard": "Dashboard", "interests": "Interests", "matches": "Matches", "shortlisted": "Shortlisted", "notifications": "Notifications", "myProfile": "My Profile", "benefits": "Plan benefits", "settings": "Settings" },
-  "states": { "loading": "Loading…", "noResults": "No results", "unavailable": "Unavailable", "yes": "Yes", "no": "No" },
+  "language": {
+    "label": "Language",
+    "english": "English",
+    "gujarati": "Gujarati",
+    "hindi": "Hindi",
+    "select": "Select language"
+  },
+  "brand": {
+    "society": "Matrimonial Society",
+    "administration": "Administration",
+    "relationshipDesk": "Relationship Desk"
+  },
+  "sidebar": {
+    "navigation": "Application navigation",
+    "open": "Open navigation menu",
+    "close": "Close navigation menu",
+    "pin": "Pin expanded sidebar",
+    "unpin": "Unpin expanded sidebar",
+    "unread": "{{count}} unread notifications"
+  },
+  "actions": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "createProfile": "Create Profile",
+    "continue": "Continue",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "viewAll": "View all",
+    "viewProfile": "View profile",
+    "expressInterest": "Express interest",
+    "shortlist": "Shortlist",
+    "search": "Search",
+    "apply": "Apply filters",
+    "reset": "Reset",
+    "previous": "Previous",
+    "next": "Next",
+    "activate": "Activate",
+    "confirm": "Confirm"
+  },
+  "nav": {
+    "discover": "Discover",
+    "howItWorks": "How It Works",
+    "stories": "Stories",
+    "membership": "Membership",
+    "about": "About",
+    "dashboard": "Dashboard",
+    "interests": "Interests",
+    "matches": "Matches",
+    "shortlisted": "Shortlisted",
+    "notifications": "Notifications",
+    "myProfile": "My Profile",
+    "benefits": "Plan benefits",
+    "settings": "Settings",
+    "storyConsentCentre": "Story consent centre",
+    "storyApprovals": "Success story approvals"
+  },
+  "states": {
+    "loading": "Loading…",
+    "noResults": "No results",
+    "unavailable": "Unavailable",
+    "yes": "Yes",
+    "no": "No"
+  },
   "status": {
-    "Active": "Active", "Suspended": "Suspended", "Blocked": "Blocked", "Deleted": "Deleted", "Paused": "Paused", "Married": "Married",
-    "Pending": "Pending", "Accepted": "Accepted", "Declined": "Declined", "Withdrawn": "Withdrawn", "Resolved": "Resolved", "Open": "Open", "Closed": "Closed",
-    "draft": "Draft", "pending_review": "Pending review", "active": "Active", "changes_required": "Changes required", "rejected": "Rejected", "paused": "Paused", "hidden": "Hidden"
+    "Active": "Active",
+    "Suspended": "Suspended",
+    "Blocked": "Blocked",
+    "Deleted": "Deleted",
+    "Paused": "Paused",
+    "Married": "Married",
+    "Pending": "Pending",
+    "Accepted": "Accepted",
+    "Declined": "Declined",
+    "Withdrawn": "Withdrawn",
+    "Resolved": "Resolved",
+    "Open": "Open",
+    "Closed": "Closed",
+    "draft": "Draft",
+    "pending_review": "Pending review",
+    "active": "Active",
+    "changes_required": "Changes required",
+    "rejected": "Rejected",
+    "paused": "Paused",
+    "hidden": "Hidden"
   },
-  "roles": { "member": "Member", "admin": "Admin", "super_admin": "Super admin", "moderator": "Moderator", "relationship_manager": "Relationship manager" },
-  "profileFor": { "Self": "Self", "Son": "Son", "Daughter": "Daughter", "Brother": "Brother", "Sister": "Sister", "Relative": "Relative" },
-  "gender": { "Male": "Male", "Female": "Female" },
-  "public": { "heroEyebrow": "A modern home for meaningful unions", "heroTitle": "Where heritage meets a new beginning.", "heroBody": "A private matrimonial community thoughtfully created for Kshatriya and Rajput families seeking meaningful, family-oriented relationships.", "beginJourney": "Begin Your Journey", "exploreMatches": "Explore Matches", "privacyNote": "Privacy-first profiles • family friendly • moderated community", "finderProfileFor": "Profile created for", "finderLookingFor": "Looking for", "finderAge": "Age range", "finderLocation": "Location", "finderSubmit": "Find Matches", "minimumAge": "Minimum age", "maximumAge": "Maximum age", "footerBody": "A private matrimonial community built around family, dignity, meaningful compatibility and trust.", "company": "Company", "legal": "Legal", "contact": "Contact", "safety": "Safety", "privacy": "Privacy", "terms": "Terms", "refunds": "Refunds", "deleteAccount": "Delete Account", "footerValues": "Heritage • Trust • Connection" },
-  "home": { "heritageAccent": "Heritage & Connection", "heritageEyebrow": "Beyond a matrimonial listing", "heritageTitle": "Families deserve something more thoughtful than a database.", "heritageBody1": "We are building a curated environment where genuine matrimonial intent, family participation and privacy come before endless browsing.", "heritageBody2": "Every profile tells more than basic information—education, career, family, values and partner preferences together create a more meaningful introduction.", "approach": "Our approach", "showcaseTitle": "Profiles with intention.", "previousProfiles": "Browse previous profiles", "moreProfiles": "Browse more profiles", "verified": "Verified", "viewMatches": "View all matches", "howTitle": "Simple enough for everyone in the family.", "steps": { "createTitle": "Create", "createBody": "Build a meaningful profile for yourself, your son, daughter or family member.", "discoverTitle": "Discover", "discoverBody": "Explore people whose preferences and background meaningfully align.", "expressTitle": "Express", "expressBody": "Show matrimonial interest privately instead of exposing your contact information.", "connectTitle": "Connect", "connectBody": "When interest is mutual, families can comfortably take the conversation forward." }, "privacyEyebrow": "Privacy is not premium.", "privacyTitle": "Your story. Your control.", "privacyBody": "Matrimonial information is deeply personal. Our platform is designed so that privacy is part of the foundation—not an afterthought.", "privacyItems": { "photosTitle": "Control your photographs", "photosBody": "Decide who can view personal photos instead of showing everything publicly.", "contactTitle": "Keep contact details private", "contactBody": "Mobile and WhatsApp details stay protected until the appropriate stage.", "verifiedTitle": "Verified membership", "verifiedBody": "Verification and moderation help maintain a more trustworthy community." }, "biodataEyebrow": "Digital Biodata", "biodataTitle": "A matrimonial biodata worth sharing.", "biodataBody": "Create a beautifully designed matrimonial biodata automatically from the information in your profile and share it securely with families.", "biodataAction": "Explore digital biodata", "registrationFree": "Registration is free", "ctaTitle": "Perhaps someone’s beginning starts here.", "ctaBody": "Create a profile, tell us what truly matters to you, and discover suitable matrimonial connections in a private environment.", "ctaAction": "Create Free Profile" },
-  "auth": { "privateBeginning": "A private beginning", "visualTitle": "Meaningful introductions, thoughtfully made.", "visualBody": "Your information stays protected throughout the journey.", "welcomeBack": "Welcome back", "createAccount": "Create your account", "accountRecovery": "Account recovery", "signInTitle": "Sign in privately", "registerTitle": "Begin your journey", "resetTitle": "Reset your password", "email": "Email address", "phone": "Mobile number", "password": "Password", "resetCode": "Reset code", "newPassword": "New password", "forgot": "Forgot password?", "security": "Secure access. We never show your contact details publicly." },
-  "member": { "searchCommunity": "Search the community", "exploreMembership": "Explore membership", "completeProfile": "Complete your profile", "memberAccount": "Member account", "scheduledCare": "Scheduled care", "maintenanceTitle": "is briefly unavailable.", "maintenanceBody": "We are completing maintenance to keep your private member experience dependable. Please return shortly.", "dashboardLoading": "Preparing your dashboard…", "dashboardUnavailable": "Dashboard unavailable", "beginProfile": "Begin your matrimonial profile", "beginProfileBody": "Your account is ready. Create the profile your family will share.", "startOnboarding": "Start onboarding", "greeting": "Good to see you, {{name}}.", "greetingEmphasis": "Meaningful introductions await.", "recommendationBody": "Here are a few thoughtful recommendations selected around your preferences.", "profileStrength": "Profile strength", "profileIncomplete": "A few details will make your profile stand out.", "profileReady": "Your introduction is ready.", "keepCurrent": "Keep your information and partner preferences current.", "completeProfileAction": "Complete profile", "newInterests": "New interests", "mutualMatches": "Mutual matches", "unread": "Unread", "profileViews": "Profile views", "selectedForYou": "Selected for you", "recommended": "Recommended profiles", "noRecommendations": "We’re still looking for profiles aligned with your preferences.", "nextSteps": "Suggested next steps", "addPhoto": "Add a recent photograph", "reviewPreferences": "Review partner preferences", "reviewPrivacy": "Review privacy", "interestSent": "Interest sent.", "shortlistedToast": "Profile shortlisted." },
-  "admin": { "overview": "Overview", "customers": "Customers", "profiles": "Profiles", "moderation": "Moderation", "reports": "Reports", "support": "Support", "subscriptions": "Subscriptions", "payments": "Payments", "revenue": "Revenue", "plans": "Plans", "staffRoles": "Staff & Roles", "relationshipManagers": "Relationship Managers", "systemSettings": "System Settings", "auditLogs": "Audit Logs", "systemHealth": "System Health", "groups": { "customers": "Customers", "matrimonial": "Matrimonial Operations", "customerOps": "Customer Operations", "business": "Business", "platform": "Platform" }, "logout": "Log out" },
-  "manager": { "workspace": "Relationship Manager Workspace", "operations": "Assisted member operations", "assignedTitle": "Your assigned clients", "assigned": "Assigned clients", "activeAssisted": "Active Assisted members", "expiring": "Expiring in 7 days", "loading": "Loading clients…", "none": "No clients are assigned to you.", "noProfile": "Profile not created", "noPhone": "No phone", "noSubscription": "No active subscription", "expires": "Expires {{date}}" },
-  "profile": { "verified": "Verified", "years": "years", "match": "match", "educationMissing": "Education not shared", "professionMissing": "Profession not shared", "notShared": "Not shared", "personalDetails": "Personal Details", "education": "Education", "career": "Career", "family": "Family", "about": "About", "height": "Height", "profession": "Profession", "location": "Location", "biodataLoading": "Preparing biodata…", "print": "Print / Save as PDF", "privateBiodata": "Private family biodata" },
-  "membership": { "title": "Membership", "heading": "Choose the support your journey needs.", "body": "Every account includes Free access. Paid membership begins only after verified payment.", "loading": "Loading membership plans…", "free": "Free", "days": "days", "currentPlan": "Current plan", "choosePlan": "Choose plan", "included": "Included", "opening": "Opening checkout…", "mostConsidered": "Most considered", "daysRemaining": "{{count}} days remaining", "features": { "interestLimit": "Interest introductions", "contactViewLimit": "Contact unlocks", "messageLimit": "Messages", "advancedSearch": "Advanced search", "profileBoost": "Profile boost", "prioritySupport": "Priority support", "relationshipManager": "Relationship manager" } },
-  "errors": { "NETWORK_ERROR": "Unable to connect. Please try again.", "AUTH_INVALID_CREDENTIALS": "Email/phone or password is incorrect.", "ACCOUNT_SUSPENDED": "This account is not active.", "REGISTRATION_DISABLED": "New registrations are temporarily paused.", "MAINTENANCE_MODE": "The member portal is temporarily unavailable.", "PAYMENTS_DISABLED": "Membership payments are temporarily unavailable.", "PROFILE_REQUIRED": "Create your profile first.", "fallback": "Something went wrong. Please try again." }
-  ,"howPage": {
-  "hero": {
-    "eyebrow": "A considered journey",
-    "title": "From a family profile to a conversation that feels right.",
-    "body": "Matrimonial introductions deserve more care than endless swiping. Our process keeps the journey clear, private and respectful—from creating a profile to the moment families choose to speak.",
-    "summaryLabel": "The journey at a glance",
-    "steps": "thoughtful steps",
-    "stages": "meaningful stages",
-    "note": "Nothing moves forward without member choice. Interest, contact and family involvement happen gradually."
+  "roles": {
+    "member": "Member",
+    "admin": "Admin",
+    "super_admin": "Super admin",
+    "moderator": "Moderator",
+    "relationship_manager": "Relationship manager"
   },
-  "process": {
-    "eyebrow": "How the journey unfolds",
-    "title": "Technology guides the process. People decide the pace.",
-    "body": "Each stage has a clear purpose. You always know what happens next, what the platform does and what remains private.",
-    "stepsLabel": "steps"
+  "profileFor": {
+    "Self": "Self",
+    "Son": "Son",
+    "Daughter": "Daughter",
+    "Brother": "Brother",
+    "Sister": "Sister",
+    "Relative": "Relative"
   },
-  "steps": {
+  "gender": {
+    "Male": "Male",
+    "Female": "Female"
+  },
+  "public": {
+    "heroEyebrow": "A modern home for meaningful unions",
+    "heroTitle": "Where heritage meets a new beginning.",
+    "heroBody": "A private matrimonial community thoughtfully created for Kshatriya and Rajput families seeking meaningful, family-oriented relationships.",
+    "beginJourney": "Begin Your Journey",
+    "exploreMatches": "Explore Matches",
+    "privacyNote": "Privacy-first profiles • family friendly • moderated community",
+    "finderProfileFor": "Profile created for",
+    "finderLookingFor": "Looking for",
+    "finderAge": "Age range",
+    "finderLocation": "Location",
+    "finderSubmit": "Find Matches",
+    "minimumAge": "Minimum age",
+    "maximumAge": "Maximum age",
+    "footerBody": "A private matrimonial community built around family, dignity, meaningful compatibility and trust.",
+    "company": "Company",
+    "legal": "Legal",
+    "contact": "Contact",
+    "safety": "Safety",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "refunds": "Refunds",
+    "deleteAccount": "Delete Account",
+    "footerValues": "Heritage • Trust • Connection"
+  },
+  "home": {
+    "heritageAccent": "Heritage & Connection",
+    "heritageEyebrow": "Beyond a matrimonial listing",
+    "heritageTitle": "Families deserve something more thoughtful than a database.",
+    "heritageBody1": "We are building a curated environment where genuine matrimonial intent, family participation and privacy come before endless browsing.",
+    "heritageBody2": "Every profile tells more than basic information—education, career, family, values and partner preferences together create a more meaningful introduction.",
+    "approach": "Our approach",
+    "showcaseTitle": "Profiles with intention.",
+    "previousProfiles": "Browse previous profiles",
+    "moreProfiles": "Browse more profiles",
+    "verified": "Verified",
+    "viewMatches": "View all matches",
+    "howTitle": "Simple enough for everyone in the family.",
+    "steps": {
+      "createTitle": "Create",
+      "createBody": "Build a meaningful profile for yourself, your son, daughter or family member.",
+      "discoverTitle": "Discover",
+      "discoverBody": "Explore people whose preferences and background meaningfully align.",
+      "expressTitle": "Express",
+      "expressBody": "Show matrimonial interest privately instead of exposing your contact information.",
+      "connectTitle": "Connect",
+      "connectBody": "When interest is mutual, families can comfortably take the conversation forward."
+    },
+    "privacyEyebrow": "Privacy is not premium.",
+    "privacyTitle": "Your story. Your control.",
+    "privacyBody": "Matrimonial information is deeply personal. Our platform is designed so that privacy is part of the foundation—not an afterthought.",
+    "privacyItems": {
+      "photosTitle": "Control your photographs",
+      "photosBody": "Decide who can view personal photos instead of showing everything publicly.",
+      "contactTitle": "Keep contact details private",
+      "contactBody": "Mobile and WhatsApp details stay protected until the appropriate stage.",
+      "verifiedTitle": "Verified membership",
+      "verifiedBody": "Verification and moderation help maintain a more trustworthy community."
+    },
+    "biodataEyebrow": "Digital Biodata",
+    "biodataTitle": "A matrimonial biodata worth sharing.",
+    "biodataBody": "Create a beautifully designed matrimonial biodata automatically from the information in your profile and share it securely with families.",
+    "biodataAction": "Explore digital biodata",
+    "registrationFree": "Registration is free",
+    "ctaTitle": "Perhaps someone’s beginning starts here.",
+    "ctaBody": "Create a profile, tell us what truly matters to you, and discover suitable matrimonial connections in a private environment.",
+    "ctaAction": "Create Free Profile"
+  },
+  "auth": {
+    "privateBeginning": "A private beginning",
+    "visualTitle": "Meaningful introductions, thoughtfully made.",
+    "visualBody": "Your information stays protected throughout the journey.",
+    "welcomeBack": "Welcome back",
     "createAccount": "Create your account",
-    "verifyMobile": "Verify your mobile number",
-    "buildProfile": "Build your matrimonial profile",
-    "submitReview": "Submit your profile for review",
-    "discoverProfiles": "Discover suitable profiles",
-    "expressInterest": "Express matrimonial interest",
-    "acceptMutually": "Accept interest mutually",
-    "requestContact": "Request contact details",
-    "familyConversation": "Continue the family conversation safely"
+    "accountRecovery": "Account recovery",
+    "signInTitle": "Sign in privately",
+    "registerTitle": "Begin your journey",
+    "resetTitle": "Reset your password",
+    "email": "Email address",
+    "phone": "Mobile number",
+    "password": "Password",
+    "resetCode": "Reset code",
+    "newPassword": "New password",
+    "forgot": "Forgot password?",
+    "security": "Secure access. We never show your contact details publicly."
   },
-  "stages": {
-    "begin": {
-      "eyebrow": "Begin privately",
-      "title": "Tell your story with context.",
-      "body": "Create a profile that reflects more than basic information—education, profession, family background, values and partner preferences.",
-      "userDoes": "You create the account, verify your mobile and complete the matrimonial profile.",
-      "platformDoes": "We organise your information into a structured profile and prepare it for review.",
-      "private": "Your contact information and sensitive details are not openly exposed."
+  "member": {
+    "searchCommunity": "Search the community",
+    "exploreMembership": "Explore membership",
+    "completeProfile": "Complete your profile",
+    "memberAccount": "Member account",
+    "scheduledCare": "Scheduled care",
+    "maintenanceTitle": "is briefly unavailable.",
+    "maintenanceBody": "We are completing maintenance to keep your private member experience dependable. Please return shortly.",
+    "dashboardLoading": "Preparing your dashboard…",
+    "dashboardUnavailable": "Dashboard unavailable",
+    "beginProfile": "Begin your matrimonial profile",
+    "beginProfileBody": "Your account is ready. Create the profile your family will share.",
+    "startOnboarding": "Start onboarding",
+    "greeting": "Good to see you, {{name}}.",
+    "greetingEmphasis": "Meaningful introductions await.",
+    "recommendationBody": "Here are a few thoughtful recommendations selected around your preferences.",
+    "profileStrength": "Profile strength",
+    "profileIncomplete": "A few details will make your profile stand out.",
+    "profileReady": "Your introduction is ready.",
+    "keepCurrent": "Keep your information and partner preferences current.",
+    "completeProfileAction": "Complete profile",
+    "newInterests": "New interests",
+    "mutualMatches": "Mutual matches",
+    "unread": "Unread",
+    "profileViews": "Profile views",
+    "selectedForYou": "Selected for you",
+    "recommended": "Recommended profiles",
+    "noRecommendations": "We’re still looking for profiles aligned with your preferences.",
+    "nextSteps": "Suggested next steps",
+    "addPhoto": "Add a recent photograph",
+    "reviewPreferences": "Review partner preferences",
+    "reviewPrivacy": "Review privacy",
+    "interestSent": "Interest sent.",
+    "shortlistedToast": "Profile shortlisted."
+  },
+  "admin": {
+    "overview": "Overview",
+    "customers": "Customers",
+    "profiles": "Profiles",
+    "moderation": "Moderation",
+    "reports": "Reports",
+    "support": "Support",
+    "subscriptions": "Subscriptions",
+    "payments": "Payments",
+    "revenue": "Revenue",
+    "plans": "Plans",
+    "staffRoles": "Staff & Roles",
+    "relationshipManagers": "Relationship Managers",
+    "systemSettings": "System Settings",
+    "auditLogs": "Audit Logs",
+    "systemHealth": "System Health",
+    "groups": {
+      "customers": "Customers",
+      "matrimonial": "Matrimonial Operations",
+      "customerOps": "Customer Operations",
+      "business": "Business",
+      "platform": "Platform"
     },
-    "discover": {
-      "eyebrow": "Be seen with intention",
-      "title": "Discover people, not endless cards.",
-      "body": "Once the profile is ready, discovery becomes more focused. Background, preferences and meaningful context help narrow the search.",
-      "userDoes": "You explore profiles and decide which introductions feel worth considering.",
-      "platformDoes": "The platform uses preferences and available profile context to support discovery.",
-      "private": "Browsing does not automatically reveal phone numbers or private details."
-    },
-    "interest": {
-      "eyebrow": "Interest, not pressure",
-      "title": "An introduction begins only when someone chooses it.",
-      "body": "Instead of immediately sharing contact information, members can express matrimonial interest privately and wait for a response.",
-      "userDoes": "You express interest, accept, decline or take time before deciding.",
-      "platformDoes": "We record and communicate interest without forcing a direct contact exchange.",
-      "private": "A one-sided interest never becomes an automatic match or contact unlock."
-    },
-    "connect": {
-      "eyebrow": "Families take it forward",
-      "title": "Mutual interest opens the next conversation.",
-      "body": "Once interest is mutual, the journey can move from the platform toward direct and family-led conversation.",
-      "userDoes": "You decide whether to request contact details and involve your family.",
-      "platformDoes": "We support the transition from mutual interest to the next stage of communication.",
-      "private": "Contact details stay protected until the relevant stage and permission."
+    "logout": "Log out"
+  },
+  "manager": {
+    "workspace": "Relationship Manager Workspace",
+    "operations": "Assisted member operations",
+    "assignedTitle": "Your assigned clients",
+    "assigned": "Assigned clients",
+    "activeAssisted": "Active Assisted members",
+    "expiring": "Expiring in 7 days",
+    "loading": "Loading clients…",
+    "none": "No clients are assigned to you.",
+    "noProfile": "Profile not created",
+    "noPhone": "No phone",
+    "noSubscription": "No active subscription",
+    "expires": "Expires {{date}}"
+  },
+  "profile": {
+    "verified": "Verified",
+    "years": "years",
+    "match": "match",
+    "educationMissing": "Education not shared",
+    "professionMissing": "Profession not shared",
+    "notShared": "Not shared",
+    "personalDetails": "Personal Details",
+    "education": "Education",
+    "career": "Career",
+    "family": "Family",
+    "about": "About",
+    "height": "Height",
+    "profession": "Profession",
+    "location": "Location",
+    "biodataLoading": "Preparing biodata…",
+    "print": "Print / Save as PDF",
+    "privateBiodata": "Private family biodata"
+  },
+  "membership": {
+    "title": "Membership",
+    "heading": "Choose the support your journey needs.",
+    "body": "Every account includes Free access. Paid membership begins only after verified payment.",
+    "loading": "Loading membership plans…",
+    "free": "Free",
+    "days": "days",
+    "currentPlan": "Current plan",
+    "choosePlan": "Choose plan",
+    "included": "Included",
+    "opening": "Opening checkout…",
+    "mostConsidered": "Most considered",
+    "daysRemaining": "{{count}} days remaining",
+    "features": {
+      "interestLimit": "Interest introductions",
+      "contactViewLimit": "Contact unlocks",
+      "messageLimit": "Messages",
+      "advancedSearch": "Advanced search",
+      "profileBoost": "Profile boost",
+      "prioritySupport": "Priority support",
+      "relationshipManager": "Relationship manager"
     }
   },
-  "details": {
-    "you": "You",
-    "platform": "Platform",
-    "private": "Privacy"
+  "errors": {
+    "NETWORK_ERROR": "Unable to connect. Please try again.",
+    "AUTH_INVALID_CREDENTIALS": "Email/phone or password is incorrect.",
+    "ACCOUNT_SUSPENDED": "This account is not active.",
+    "REGISTRATION_DISABLED": "New registrations are temporarily paused.",
+    "MAINTENANCE_MODE": "The member portal is temporarily unavailable.",
+    "PAYMENTS_DISABLED": "Membership payments are temporarily unavailable.",
+    "PROFILE_REQUIRED": "Create your profile first.",
+    "fallback": "Something went wrong. Please try again."
   },
-  "control": {
-    "eyebrow": "You stay in control",
-    "title": "Privacy is part of the journey, not a premium extra.",
-    "body": "Matrimonial information is personal. The process should give members room to decide what becomes visible and when.",
-    "photos": {
-      "title": "Photographs",
-      "body": "Personal photographs can be handled with visibility controls instead of being treated as public content."
+  "howPage": {
+    "hero": {
+      "eyebrow": "A considered journey",
+      "title": "From a family profile to a conversation that feels right.",
+      "body": "Matrimonial introductions deserve more care than endless swiping. Our process keeps the journey clear, private and respectful—from creating a profile to the moment families choose to speak.",
+      "summaryLabel": "The journey at a glance",
+      "steps": "thoughtful steps",
+      "stages": "meaningful stages",
+      "note": "Nothing moves forward without member choice. Interest, contact and family involvement happen gradually."
     },
-    "contact": {
-      "title": "Contact details",
-      "body": "Mobile and WhatsApp information stay protected until the appropriate stage of the journey."
+    "process": {
+      "eyebrow": "How the journey unfolds",
+      "title": "Technology guides the process. People decide the pace.",
+      "body": "Each stage has a clear purpose. You always know what happens next, what the platform does and what remains private.",
+      "stepsLabel": "steps"
     },
-    "interest": {
-      "title": "Matrimonial interest",
-      "body": "Interest is private and intentional. A request does not create an obligation to respond or accept."
+    "steps": {
+      "createAccount": "Create your account",
+      "verifyMobile": "Verify your mobile number",
+      "buildProfile": "Build your matrimonial profile",
+      "submitReview": "Submit your profile for review",
+      "discoverProfiles": "Discover suitable profiles",
+      "expressInterest": "Express matrimonial interest",
+      "acceptMutually": "Accept interest mutually",
+      "requestContact": "Request contact details",
+      "familyConversation": "Continue the family conversation safely"
     },
-    "family": {
-      "title": "Family involvement",
-      "body": "Families can support the process while the person represented by the profile remains central to every decision."
-    }
-  },
-  "journey": {
-    "eyebrow": "A typical journey",
-    "title": "There is a process. There is no rush.",
-    "body": "Every profile moves differently. This is an example of how the journey can progress—not a deadline or promise.",
-    "items": {
-      "profile": {
-        "time": "Beginning",
-        "title": "Profile created",
-        "body": "You add personal, professional and family context at your own pace."
-      },
-      "review": {
-        "time": "After submission",
-        "title": "Review & verification",
-        "body": "The profile can be reviewed and prepared for appropriate discovery."
+    "stages": {
+      "begin": {
+        "eyebrow": "Begin privately",
+        "title": "Tell your story with context.",
+        "body": "Create a profile that reflects more than basic information—education, profession, family background, values and partner preferences.",
+        "userDoes": "You create the account, verify your mobile and complete the matrimonial profile.",
+        "platformDoes": "We organise your information into a structured profile and prepare it for review.",
+        "private": "Your contact information and sensitive details are not openly exposed."
       },
       "discover": {
-        "time": "Whenever ready",
-        "title": "Discover",
-        "body": "Explore suitable profiles without being pushed toward immediate contact."
+        "eyebrow": "Be seen with intention",
+        "title": "Discover people, not endless cards.",
+        "body": "Once the profile is ready, discovery becomes more focused. Background, preferences and meaningful context help narrow the search.",
+        "userDoes": "You explore profiles and decide which introductions feel worth considering.",
+        "platformDoes": "The platform uses preferences and available profile context to support discovery.",
+        "private": "Browsing does not automatically reveal phone numbers or private details."
       },
-      "mutual": {
-        "time": "When mutual",
-        "title": "Interest aligns",
-        "body": "When both sides are comfortable, the introduction can move forward."
+      "interest": {
+        "eyebrow": "Interest, not pressure",
+        "title": "An introduction begins only when someone chooses it.",
+        "body": "Instead of immediately sharing contact information, members can express matrimonial interest privately and wait for a response.",
+        "userDoes": "You express interest, accept, decline or take time before deciding.",
+        "platformDoes": "We record and communicate interest without forcing a direct contact exchange.",
+        "private": "A one-sided interest never becomes an automatic match or contact unlock."
+      },
+      "connect": {
+        "eyebrow": "Families take it forward",
+        "title": "Mutual interest opens the next conversation.",
+        "body": "Once interest is mutual, the journey can move from the platform toward direct and family-led conversation.",
+        "userDoes": "You decide whether to request contact details and involve your family.",
+        "platformDoes": "We support the transition from mutual interest to the next stage of communication.",
+        "private": "Contact details stay protected until the relevant stage and permission."
+      }
+    },
+    "details": {
+      "you": "You",
+      "platform": "Platform",
+      "private": "Privacy"
+    },
+    "control": {
+      "eyebrow": "You stay in control",
+      "title": "Privacy is part of the journey, not a premium extra.",
+      "body": "Matrimonial information is personal. The process should give members room to decide what becomes visible and when.",
+      "photos": {
+        "title": "Photographs",
+        "body": "Personal photographs can be handled with visibility controls instead of being treated as public content."
+      },
+      "contact": {
+        "title": "Contact details",
+        "body": "Mobile and WhatsApp information stay protected until the appropriate stage of the journey."
+      },
+      "interest": {
+        "title": "Matrimonial interest",
+        "body": "Interest is private and intentional. A request does not create an obligation to respond or accept."
       },
       "family": {
-        "time": "After that",
-        "title": "Families decide what comes next",
-        "body": "The platform supports the introduction. The people and families decide the relationship."
+        "title": "Family involvement",
+        "body": "Families can support the process while the person represented by the profile remains central to every decision."
       }
+    },
+    "journey": {
+      "eyebrow": "A typical journey",
+      "title": "There is a process. There is no rush.",
+      "body": "Every profile moves differently. This is an example of how the journey can progress—not a deadline or promise.",
+      "items": {
+        "profile": {
+          "time": "Beginning",
+          "title": "Profile created",
+          "body": "You add personal, professional and family context at your own pace."
+        },
+        "review": {
+          "time": "After submission",
+          "title": "Review & verification",
+          "body": "The profile can be reviewed and prepared for appropriate discovery."
+        },
+        "discover": {
+          "time": "Whenever ready",
+          "title": "Discover",
+          "body": "Explore suitable profiles without being pushed toward immediate contact."
+        },
+        "mutual": {
+          "time": "When mutual",
+          "title": "Interest aligns",
+          "body": "When both sides are comfortable, the introduction can move forward."
+        },
+        "family": {
+          "time": "After that",
+          "title": "Families decide what comes next",
+          "body": "The platform supports the introduction. The people and families decide the relationship."
+        }
+      }
+    },
+    "cta": {
+      "eyebrow": "Begin when it feels right",
+      "title": "There is no rush. Start when your family is ready.",
+      "body": "Create your profile, share what matters to you and move through the process at a pace that feels comfortable.",
+      "action": "Create free profile"
     }
   },
-  "cta": {
-    "eyebrow": "Begin when it feels right",
-    "title": "There is no rush. Start when your family is ready.",
-    "body": "Create your profile, share what matters to you and move through the process at a pace that feels comfortable.",
-    "action": "Create free profile"
-  }
-},
-"storiesPage": {
-  "hero": {
-    "eyebrow": "Shared beginnings",
-    "title": "Some beginnings are quiet. Some become a lifetime.",
-    "body": "No two matrimonial journeys unfold in exactly the same way. These editorial stories show how thoughtful introductions can grow through patience, mutual interest and family conversation.",
-    "quote": "The best stories do not always begin dramatically. Sometimes they begin with one respectful introduction.",
-    "note": "Illustrative editorial stories"
-  },
-  "featured": {
-    "eyebrow": "Featured journey",
-    "title": "A story, one thoughtful step at a time.",
-    "previous": "Previous story",
-    "next": "Next story",
-    "goTo": "Go to story"
-  },
-  "chapters": {
-    "eyebrow": "What changes the journey",
-    "title": "Three moments often matter more than the first impression.",
-    "first": {
-      "title": "The first introduction feels comfortable.",
-      "body": "A thoughtful profile gives enough context to understand the person without forcing immediate direct contact. Curiosity begins before pressure does."
+  "storiesPage": {
+    "hero": {
+      "eyebrow": "Shared beginnings",
+      "title": "Some beginnings are quiet. Some become a lifetime.",
+      "body": "No two matrimonial journeys unfold in exactly the same way. These editorial stories show how thoughtful introductions can grow through patience, mutual interest and family conversation.",
+      "quote": "The best stories do not always begin dramatically. Sometimes they begin with one respectful introduction.",
+      "note": "Illustrative editorial stories"
     },
-    "family": {
-      "title": "Families begin to speak.",
-      "body": "Once interest is mutual, the journey can move from profile discovery to family conversation. Context, expectations and values become clearer."
+    "featured": {
+      "eyebrow": "Featured journey",
+      "title": "A story, one thoughtful step at a time.",
+      "previous": "Previous story",
+      "next": "Next story",
+      "goTo": "Go to story"
     },
-    "decision": {
-      "title": "A decision starts taking shape.",
-      "body": "There is rarely one single moment of certainty. Trust usually develops through time, repeated conversation and the freedom to move at a comfortable pace."
-    }
-  },
-  "scrapbook": {
-    "eyebrow": "Small moments, remembered",
-    "title": "A matrimonial journey is more than one match.",
-    "body": "The real story sits between the milestones: the first profile someone pauses on, a family conversation that lasts longer than expected, or a decision that slowly begins to feel natural."
-  },
-  "values": {
-    "eyebrow": "What we believe",
-    "title": "A meaningful story should never need pressure.",
-    "mutual": {
-      "title": "Mutual interest comes first.",
-      "body": "An introduction only becomes meaningful when both sides choose to continue."
+    "chapters": {
+      "eyebrow": "What changes the journey",
+      "title": "Three moments often matter more than the first impression.",
+      "first": {
+        "title": "The first introduction feels comfortable.",
+        "body": "A thoughtful profile gives enough context to understand the person without forcing immediate direct contact. Curiosity begins before pressure does."
+      },
+      "family": {
+        "title": "Families begin to speak.",
+        "body": "Once interest is mutual, the journey can move from profile discovery to family conversation. Context, expectations and values become clearer."
+      },
+      "decision": {
+        "title": "A decision starts taking shape.",
+        "body": "There is rarely one single moment of certainty. Trust usually develops through time, repeated conversation and the freedom to move at a comfortable pace."
+      }
     },
-    "family": {
-      "title": "Family involvement has its own pace.",
-      "body": "Families can support the journey without replacing the voice of the person at the centre of the profile."
+    "scrapbook": {
+      "eyebrow": "Small moments, remembered",
+      "title": "A matrimonial journey is more than one match.",
+      "body": "The real story sits between the milestones: the first profile someone pauses on, a family conversation that lasts longer than expected, or a decision that slowly begins to feel natural."
     },
-    "pace": {
-      "title": "Slow is not the same as uncertain.",
-      "body": "Taking time to understand someone can be part of a healthy matrimonial process."
-    }
-  },
-  "cta": {
-    "eyebrow": "Your story will be different",
-    "title": "Your story does not need to look like theirs. It only needs to begin honestly.",
-    "body": "Create a thoughtful profile, discover people at your own pace and let the next conversation happen when it feels right.",
-    "action": "Create free profile"
-  }
-},
-"aboutPage": {
-  "hero": {
-    "eyebrow": "Why we exist",
-    "title": "Marriage deserves more than an algorithm and a profile card.",
-    "body": "Kshatriya Matrimonial Society was created around a simple belief: technology should help families discover thoughtfully, without turning one of life's most personal decisions into an endless marketplace.",
-    "imageAlt": "A family gathered in a heritage setting",
-    "imageEyebrow": "Our belief",
-    "imageQuote": "A meaningful introduction should feel considered before it ever feels convenient.",
-    "trustNote": "Profiles, photographs and contact details are designed to move gradually—not automatically.",
     "values": {
-      "heritage": "Heritage",
-      "choice": "Personal choice",
-      "dignity": "Dignity"
+      "eyebrow": "What we believe",
+      "title": "A meaningful story should never need pressure.",
+      "mutual": {
+        "title": "Mutual interest comes first.",
+        "body": "An introduction only becomes meaningful when both sides choose to continue."
+      },
+      "family": {
+        "title": "Family involvement has its own pace.",
+        "body": "Families can support the journey without replacing the voice of the person at the centre of the profile."
+      },
+      "pace": {
+        "title": "Slow is not the same as uncertain.",
+        "body": "Taking time to understand someone can be part of a healthy matrimonial process."
+      }
+    },
+    "cta": {
+      "eyebrow": "Your story will be different",
+      "title": "Your story does not need to look like theirs. It only needs to begin honestly.",
+      "body": "Create a thoughtful profile, discover people at your own pace and let the next conversation happen when it feels right.",
+      "action": "Create free profile"
     }
   },
-  "manifesto": {
-    "eyebrow": "Our manifesto",
-    "intro": "We do not believe better matrimonial technology means making the human decision faster.",
-    "line1": "Technology can narrow the search.",
-    "line2": "Families can provide context.",
-    "line3": "But people must decide what comes next."
-  },
-  "why": {
-    "eyebrow": "The reason behind the platform",
-    "title": "A calmer way to begin something important.",
-    "body1": "Many matrimonial platforms are built around volume: more profiles, more visibility, more messages and more urgency. We wanted to begin somewhere else—with enough information to make a thoughtful choice, and enough privacy to let trust develop at its own pace.",
-    "body2": "Our role is not to predict a marriage or promise compatibility. Our role is to create a respectful environment where members and families can discover, express interest, mutually accept and reveal contact only when both sides are ready."
-  },
-  "principles": {
-    "eyebrow": "What guides us",
-    "title": "Four principles shape every product decision.",
-    "memberLed": {
-      "title": "Member-led, even when family is involved.",
-      "body": "Parents and families may support the journey, but the person represented by the profile remains at the centre of every introduction."
+  "aboutPage": {
+    "hero": {
+      "eyebrow": "Why we exist",
+      "title": "Marriage deserves more than an algorithm and a profile card.",
+      "body": "Kshatriya Matrimonial Society was created around a simple belief: technology should help families discover thoughtfully, without turning one of life's most personal decisions into an endless marketplace.",
+      "imageAlt": "A family gathered in a heritage setting",
+      "imageEyebrow": "Our belief",
+      "imageQuote": "A meaningful introduction should feel considered before it ever feels convenient.",
+      "trustNote": "Profiles, photographs and contact details are designed to move gradually—not automatically.",
+      "values": {
+        "heritage": "Heritage",
+        "choice": "Personal choice",
+        "dignity": "Dignity"
+      }
     },
-    "familyContext": {
-      "title": "Family context without removing individuality.",
-      "body": "Shared cultural context can make introductions more meaningful, but every person, household and expectation remains distinct."
+    "manifesto": {
+      "eyebrow": "Our manifesto",
+      "intro": "We do not believe better matrimonial technology means making the human decision faster.",
+      "line1": "Technology can narrow the search.",
+      "line2": "Families can provide context.",
+      "line3": "But people must decide what comes next."
     },
-    "privacy": {
-      "title": "Privacy should be a product behaviour.",
-      "body": "Contact information and sensitive profile details should not become public simply because someone created an account."
+    "why": {
+      "eyebrow": "The reason behind the platform",
+      "title": "A calmer way to begin something important.",
+      "body1": "Many matrimonial platforms are built around volume: more profiles, more visibility, more messages and more urgency. We wanted to begin somewhere else—with enough information to make a thoughtful choice, and enough privacy to let trust develop at its own pace.",
+      "body2": "Our role is not to predict a marriage or promise compatibility. Our role is to create a respectful environment where members and families can discover, express interest, mutually accept and reveal contact only when both sides are ready."
     },
-    "intent": {
-      "title": "Intent matters more than endless engagement.",
-      "body": "The platform should help people move toward respectful introductions—not keep them scrolling for the sake of activity."
+    "principles": {
+      "eyebrow": "What guides us",
+      "title": "Four principles shape every product decision.",
+      "memberLed": {
+        "title": "Member-led, even when family is involved.",
+        "body": "Parents and families may support the journey, but the person represented by the profile remains at the centre of every introduction."
+      },
+      "familyContext": {
+        "title": "Family context without removing individuality.",
+        "body": "Shared cultural context can make introductions more meaningful, but every person, household and expectation remains distinct."
+      },
+      "privacy": {
+        "title": "Privacy should be a product behaviour.",
+        "body": "Contact information and sensitive profile details should not become public simply because someone created an account."
+      },
+      "intent": {
+        "title": "Intent matters more than endless engagement.",
+        "body": "The platform should help people move toward respectful introductions—not keep them scrolling for the sake of activity."
+      }
+    },
+    "balance": {
+      "eyebrow": "Tradition meets technology",
+      "title": "Modern tools. Human pace.",
+      "body1": "Discovery, preference filtering, moderation, privacy controls and structured contact requests can remove friction from the process.",
+      "body2": "But software should never replace judgement, family conversations, independent verification or the time people need to understand one another.",
+      "tech": {
+        "title": "Technology does",
+        "body": "Organise information, protect access, narrow discovery and make the journey clearer."
+      },
+      "people": {
+        "title": "People decide",
+        "body": "Who feels right, when to speak, how families meet and whether a relationship should move forward."
+      }
+    },
+    "refuse": {
+      "eyebrow": "What we refuse to become",
+      "title": "Growth should not cost the platform its character.",
+      "body": "As the society grows, these are boundaries we want the product to remember.",
+      "items": {
+        "swipe": "An endless swipe feed designed only to maximise screen time.",
+        "directory": "A public biodata directory where private information is easy to collect.",
+        "pressure": "A system that pressures members to reveal contact details before they are ready.",
+        "promises": "A platform that presents algorithms, badges or cultural similarity as a guarantee of compatibility."
+      }
+    },
+    "founder": {
+      "eyebrow": "A note from the people building it",
+      "quote": "We want the product to feel modern without asking our community to leave its dignity, family context or traditions behind.",
+      "body": "The ambition is not simply to build another matrimonial website. It is to build a platform our own families would feel comfortable using—clear enough for a new generation, respectful enough for the generation that guides them.",
+      "signature": "The Kshatriya Matrimonial Society team",
+      "role": "Built for the community"
+    },
+    "cta": {
+      "eyebrow": "Begin thoughtfully",
+      "title": "Create a profile when the journey feels right.",
+      "body": "Registration begins free. You remain in control of how your profile, interests and contact details move through the platform.",
+      "action": "Create your profile"
     }
-  },
-  "balance": {
-    "eyebrow": "Tradition meets technology",
-    "title": "Modern tools. Human pace.",
-    "body1": "Discovery, preference filtering, moderation, privacy controls and structured contact requests can remove friction from the process.",
-    "body2": "But software should never replace judgement, family conversations, independent verification or the time people need to understand one another.",
-    "tech": {
-      "title": "Technology does",
-      "body": "Organise information, protect access, narrow discovery and make the journey clearer."
-    },
-    "people": {
-      "title": "People decide",
-      "body": "Who feels right, when to speak, how families meet and whether a relationship should move forward."
-    }
-  },
-  "refuse": {
-    "eyebrow": "What we refuse to become",
-    "title": "Growth should not cost the platform its character.",
-    "body": "As the society grows, these are boundaries we want the product to remember.",
-    "items": {
-      "swipe": "An endless swipe feed designed only to maximise screen time.",
-      "directory": "A public biodata directory where private information is easy to collect.",
-      "pressure": "A system that pressures members to reveal contact details before they are ready.",
-      "promises": "A platform that presents algorithms, badges or cultural similarity as a guarantee of compatibility."
-    }
-  },
-  "founder": {
-    "eyebrow": "A note from the people building it",
-    "quote": "We want the product to feel modern without asking our community to leave its dignity, family context or traditions behind.",
-    "body": "The ambition is not simply to build another matrimonial website. It is to build a platform our own families would feel comfortable using—clear enough for a new generation, respectful enough for the generation that guides them.",
-    "signature": "The Kshatriya Matrimonial Society team",
-    "role": "Built for the community"
-  },
-  "cta": {
-    "eyebrow": "Begin thoughtfully",
-    "title": "Create a profile when the journey feels right.",
-    "body": "Registration begins free. You remain in control of how your profile, interests and contact details move through the platform.",
-    "action": "Create your profile"
   }
-}
 }

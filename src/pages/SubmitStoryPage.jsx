@@ -57,7 +57,7 @@ export default function SubmitStoryPage() {
     try {
       await api('/success-stories', { method: 'POST', body: JSON.stringify(form) });
       setForm(initial);
-      setSuccess('Your story has been received. It will remain private until independent consent verification and admin approval are completed.');
+      setSuccess('Story submitted privately. NEXT STEP: Open Story Consent Centre and invite your partner using their verified account email. After they consent, an admin can review the story.');
       await loadStories();
     } catch (e) {
       setError(e.message || 'Unable to submit your story.');

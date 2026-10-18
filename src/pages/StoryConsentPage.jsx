@@ -100,6 +100,7 @@ export default function StoryConsentPage() {
         </section>
         <section className="mt-14" aria-labelledby="story-own">
           <h2 id="story-own" className="font-display text-3xl">Your submitted stories</h2>
+          <p className="mt-2 text-sm text-[#756a60]">Invite your partner using their registered, email-verified account. Your submission will remain private until partner consent and admin approval.</p>
           {loading ? <p className="mt-4 text-sm">Loading…</p> : own.length === 0 ? <p className="mt-5 text-sm text-[#756a60]">You have not submitted a story yet.</p> : <div className="mt-5 grid gap-4">{own.map((item) => {
             const id = item._id || item.id;
             return <article key={id} className="rounded-xl border border-[#d7c5b1] bg-[#fffdf8] p-6">
