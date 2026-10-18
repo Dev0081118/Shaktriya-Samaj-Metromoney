@@ -191,34 +191,40 @@ export const adminListSuccessStories = asyncHandler(async (req, res) => {
   const allowed = ['AwaitingConsent', 'PendingReview', 'ChangesRequested', 'Approved', 'Rejected', 'Withdrawn'];
   const status = typeof req.query.status === 'string' ? req.query.status : '';
   if (status && !allowed.includes(status)) throw new ApiError(400, 'Invalid story status.');
+
+  // Both references must be explicitly selected; otherwise Mongoose omits them.
   const stories = await SuccessStory.find(status ? { status } : {})
-    .select('submittedBy partnerUser adminHiddenAt adminHiddenReason partnerOneName partnerTwoName city title story marriageDate status partnerConsentStatus partnerConsentVerifiedAt submitterConsent submitterConsentAt photoConsentVerified moderationNotes publishedAt createdAt updatedAt')
-    .sort('-createdAt').limit(100)
-    .populate({ path: 'submittedBy', select: 'email' }).lean();
-  const ids = stories.map(item => item.submittedBy?._id).filter(Boolean);
-  const profiles = await MatrimonialProfile.find({ userId: { $in: ids } }).select('userId firstName lastName').lean();
-  const names = new Map(profiles.map(p => [String(p.userId), profileName(p)]));
-  const results = stories.map(item => ({ ...item, submittedBy: undefined,
-    submitter: { name: names.get(String(item.submittedBy?._id)) || item.partnerOneName,
-      email: item.submittedBy?.email || 'Unavailable' } }));
-  const partnerIds = [...new Set(stories.map(item => item.partnerUser).filter(Boolean).map(String))];
-  const [partnerAccounts, partnerProfiles] = await Promise.all([
-    User.find({ _id: { $in: partnerIds } }).select('_id email emailVerified status').lean(),
-    MatrimonialProfile.find({ userId: { $in: partnerIds } }).select('userId firstName lastName').lean()
+    .select('submittedBy partnerUser partnerOneName partnerTwoName city title story marriageDate status partnerConsentStatus partnerConsentVerifiedAt submitterConsent submitterConsentAt photoConsentVerified moderationNotes publishedAt adminHiddenAt adminHiddenReason createdAt updatedAt')
+    .sort('-createdAt').limit(100).lean();
+
+  // Never trust a submitted name/email. Resolve each account from User, and
+  // its display name from the associated MatrimonialProfile.
+  const ids = [...new Set(stories.flatMap(item => [item.submittedBy, item.partnerUser]
+    .filter(Boolean).map(String)))];
+  const [accounts, profiles] = await Promise.all([
+    User.find({ _id: { $in: ids } }).select('_id email emailVerified status').lean(),
+    MatrimonialProfile.find({ userId: { $in: ids } }).select('userId firstName lastName').lean()
   ]);
-  const accountMap = new Map(partnerAccounts.map(item => [String(item._id), item]));
-  const profileMap = new Map(partnerProfiles.map(item => [String(item.userId), item]));
-  ok(res, { stories: results.map((item, index) => {
-    const partnerId = String(stories[index].partnerUser || '');
-    const account = accountMap.get(partnerId);
-    const profile = profileMap.get(partnerId);
-    return { ...item, partnerIdentity: account ? {
+  const accountsById = new Map(accounts.map(item => [String(item._id), item]));
+  const profilesById = new Map(profiles.map(item => [String(item.userId), item]));
+  const identity = (id) => {
+    const key = String(id || '');
+    const account = accountsById.get(key);
+    if (!account) return null;
+    const profile = profilesById.get(key);
+    return {
       name: [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || 'Profile unavailable',
       email: account.email || 'Unavailable',
       emailVerified: account.emailVerified === true,
       status: account.status || 'Unknown'
-    } : null };
-  }) });
+    };
+  };
+
+  ok(res, { stories: stories.map(({ submittedBy, partnerUser, ...item }) => ({
+    ...item,
+    submitterIdentity: identity(submittedBy),
+    partnerIdentity: identity(partnerUser)
+  })) });
 });
 
 export const adminModerateSuccessStory = asyncHandler(async (req, res) => {
