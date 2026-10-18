@@ -1,3 +1,4 @@
+import { publishUserEvent } from '../realtime/socketServer.js';
 import mongoose from 'mongoose';
 
 import User from '../models/User.js';
@@ -2148,6 +2149,9 @@ export const moderate =
           }
         )
       ]);
+
+      publishUserEvent(record.userId, 'profile:status', { status });
+      publishUserEvent(record.userId, 'notification:new');
 
       ok(
         res,

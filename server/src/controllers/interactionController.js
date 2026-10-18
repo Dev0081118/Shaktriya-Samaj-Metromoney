@@ -6,6 +6,7 @@ import { Notification, Report, Block } from '../models/Platform.js';
 import { asyncHandler, ApiError, ok } from '../utils/http.js';
 import { calculateCompatibility, profileCard } from '../utils/profile.js';
 import { emailUser } from '../services/notificationEmailService.js';
+import { publishUserEvent } from '../realtime/socketServer.js';
 import { consumeEntitlement } from '../services/entitlementService.js';
 const own = async (u) => {
   const p = await MatrimonialProfile.findOne({ userId: u });
@@ -57,6 +58,8 @@ export const createInterest = asyncHandler(async (req, res) => {
     relatedProfile: sender._id,
     relatedRecord: interest._id
   });
+  publishUserEvent(receiver.userId, 'notification:new');
+  publishUserEvent(receiver.userId, 'interest:updated');
   await emailUser(receiver.userId, {
     category: 'interest',
     subject: 'You received a matrimonial interest',
@@ -148,6 +151,11 @@ export const updateInterest = asyncHandler(async (req, res) => {
         relatedRecord: match._id
       }
     ]);
+    for (const userId of [sender.userId, receiver.userId]) {
+      publishUserEvent(userId, 'notification:new');
+      publishUserEvent(userId, 'interest:updated');
+      publishUserEvent(userId, 'match:updated');
+    }
   } else if (interest.status === 'Declined')
     await Notification.create({
       user: sender.userId,
@@ -157,6 +165,11 @@ export const updateInterest = asyncHandler(async (req, res) => {
       relatedProfile: receiver._id,
       relatedRecord: interest._id
     });
+  if (interest.status !== 'Accepted') {
+    if (interest.status === 'Declined') publishUserEvent(sender.userId, 'notification:new');
+    publishUserEvent(sender.userId, 'interest:updated');
+    publishUserEvent(receiver.userId, 'interest:updated');
+  }
   ok(res, { interest }, `Interest ${interest.status.toLowerCase()}.`);
 });
 export const listMatches = asyncHandler(async (req, res) => {
@@ -236,6 +249,7 @@ export const readNotification = asyncHandler(async (req, res) => {
       ? { user: req.user.id, read: false }
       : { _id: req.params.id, user: req.user.id };
   await Notification.updateMany(selector, { read: true });
+  publishUserEvent(req.user.id, 'notification:read');
   ok(res, {}, 'Notifications updated.');
 });
 export const report = asyncHandler(async (req, res) => {
