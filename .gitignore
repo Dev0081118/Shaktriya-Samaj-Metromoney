@@ -16,6 +16,8 @@ server/uploads/*
 dist
 dist-ssr
 *.local
+test-results/
+playwright-report/
 
 # Editor directories and files
 .vscode/*

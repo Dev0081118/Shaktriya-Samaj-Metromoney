@@ -13,8 +13,10 @@ import mongoose from 'mongoose';
 import request from 'supertest';
 
 import {
-  MongoMemoryServer
-} from 'mongodb-memory-server';
+  setupTestDatabase,
+  safeCleanupDatabase,
+  safeTeardownDatabase
+} from './testDbSafety.js';
 
 import app from '../src/app.js';
 
@@ -53,46 +55,22 @@ before(
     process.env.NODE_ENV =
       'test';
 
-    if (process.env.TEST_MONGO_URI) {
-      await mongoose.connect(process.env.TEST_MONGO_URI);
-    } else {
-      database =
-        await MongoMemoryServer.create({
-          instance: {
-            ip:
-              '127.0.0.1'
-          }
-        });
-
-      await mongoose.connect(
-        database.getUri()
-      );
-    }
+    const res = await setupTestDatabase(mongoose, {
+      defaultDbPrefix: 'ksm_boost'
+    });
+    database = res.database;
   }
 );
 
 afterEach(
   async () => {
-    for (
-      const collection of Object.values(
-        mongoose.connection
-          .collections
-      )
-    ) {
-      await collection.deleteMany(
-        {}
-      );
-    }
+    await safeCleanupDatabase(mongoose);
   }
 );
 
 after(
   async () => {
-    await mongoose.disconnect();
-
-    if (database) {
-      await database.stop();
-    }
+    await safeTeardownDatabase(mongoose, database);
   }
 );
 

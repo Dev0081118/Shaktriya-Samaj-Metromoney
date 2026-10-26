@@ -9,8 +9,10 @@ import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
 
 import {
-  MongoMemoryServer
-} from 'mongodb-memory-server';
+  setupTestDatabase,
+  safeCleanupDatabase,
+  safeTeardownDatabase
+} from './testDbSafety.js';
 
 import User from '../src/models/User.js';
 
@@ -29,47 +31,22 @@ let database;
 
 before(
   async () => {
-    if (process.env.TEST_MONGO_URI) {
-      await mongoose.connect(process.env.TEST_MONGO_URI);
-    } else {
-      database =
-        await MongoMemoryServer.create({
-          instance: {
-            ip:
-              '127.0.0.1'
-          }
-        });
-
-      await mongoose.connect(
-        database.getUri()
-      );
-    }
+    const res = await setupTestDatabase(mongoose, {
+      defaultDbPrefix: 'ksm_refund'
+    });
+    database = res.database;
   }
 );
 
 afterEach(
   async () => {
-    for (
-      const collection
-      of Object.values(
-        mongoose.connection
-          .collections
-      )
-    ) {
-      await collection.deleteMany(
-        {}
-      );
-    }
+    await safeCleanupDatabase(mongoose);
   }
 );
 
 after(
   async () => {
-    await mongoose.disconnect();
-
-    if (database) {
-      await database.stop();
-    }
+    await safeTeardownDatabase(mongoose, database);
   }
 );
 
