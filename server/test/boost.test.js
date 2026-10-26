@@ -53,17 +53,21 @@ before(
     process.env.NODE_ENV =
       'test';
 
-    database =
-      await MongoMemoryServer.create({
-        instance: {
-          ip:
-            '127.0.0.1'
-        }
-      });
+    if (process.env.TEST_MONGO_URI) {
+      await mongoose.connect(process.env.TEST_MONGO_URI);
+    } else {
+      database =
+        await MongoMemoryServer.create({
+          instance: {
+            ip:
+              '127.0.0.1'
+          }
+        });
 
-    await mongoose.connect(
-      database.getUri()
-    );
+      await mongoose.connect(
+        database.getUri()
+      );
+    }
   }
 );
 
@@ -86,7 +90,9 @@ after(
   async () => {
     await mongoose.disconnect();
 
-    await database.stop();
+    if (database) {
+      await database.stop();
+    }
   }
 );
 

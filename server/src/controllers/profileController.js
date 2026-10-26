@@ -1389,6 +1389,21 @@ export const discover =
       if (
         req.query.search
       ) {
+        const searchStr =
+          String(
+            req.query.search
+          ).trim();
+
+        if (
+          searchStr.length >
+          100
+        ) {
+          throw new ApiError(
+            400,
+            'Search query must not exceed 100 characters.'
+          );
+        }
+
         query.$or = [
           'firstName',
           'middleName',
@@ -1411,7 +1426,7 @@ export const discover =
               key
             ]:
               escapedRegex(
-                req.query.search
+                searchStr
               )
           })
         );
@@ -1459,13 +1474,28 @@ export const discover =
             param
           ]
         ) {
+          const filterStr =
+            String(
+              req.query[
+                param
+              ]
+            ).trim();
+
+          if (
+            filterStr.length >
+            100
+          ) {
+            throw new ApiError(
+              400,
+              `Filter for ${param} must not exceed 100 characters.`
+            );
+          }
+
           query[
             fieldPath
           ] =
             escapedRegex(
-              req.query[
-                param
-              ]
+              filterStr
             );
         }
       }

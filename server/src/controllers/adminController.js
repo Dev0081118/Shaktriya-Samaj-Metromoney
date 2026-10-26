@@ -942,21 +942,52 @@ export const customers =
           'member'
       };
 
+      const allowedStatuses = [
+        'Active',
+        'Suspended',
+        'Blocked',
+        'Deleted'
+      ];
+
       if (
         req.query.status
       ) {
-        query.status =
-          String(
+        if (
+          !allowedStatuses.includes(
             req.query.status
+          )
+        ) {
+          throw new ApiError(
+            400,
+            'Invalid status filter.'
           );
+        }
+
+        query.status =
+          req.query.status;
       }
 
       if (
         req.query.search
       ) {
+        const searchStr =
+          String(
+            req.query.search
+          ).trim();
+
+        if (
+          searchStr.length >
+          100
+        ) {
+          throw new ApiError(
+            400,
+            'Search query must not exceed 100 characters.'
+          );
+        }
+
         const re =
           escapedRegex(
-            req.query.search
+            searchStr
           );
 
         const profiles =
@@ -1534,6 +1565,16 @@ export const search =
           req.query.q ||
             ''
         ).trim();
+
+      if (
+        q.length >
+        100
+      ) {
+        throw new ApiError(
+          400,
+          'Search query must not exceed 100 characters.'
+        );
+      }
 
       if (
         q.length <
@@ -2200,38 +2241,86 @@ export const users =
     ) => {
       const query = {};
 
+      const allowedStatuses = [
+        'Active',
+        'Suspended',
+        'Blocked',
+        'Deleted'
+      ];
+
       if (
         req.query.status
       ) {
-        query.status =
-          String(
+        if (
+          !allowedStatuses.includes(
             req.query.status
+          )
+        ) {
+          throw new ApiError(
+            400,
+            'Invalid status filter.'
           );
+        }
+
+        query.status =
+          req.query.status;
       }
+
+      const allowedRoles = [
+        'member',
+        'admin',
+        'moderator',
+        'relationship_manager',
+        'super_admin'
+      ];
 
       if (
         req.query.role
       ) {
-        query.role =
-          String(
+        if (
+          !allowedRoles.includes(
             req.query.role
+          )
+        ) {
+          throw new ApiError(
+            400,
+            'Invalid role filter.'
           );
+        }
+
+        query.role =
+          req.query.role;
       }
 
       if (
         req.query.search
       ) {
+        const searchStr =
+          String(
+            req.query.search
+          ).trim();
+
+        if (
+          searchStr.length >
+          100
+        ) {
+          throw new ApiError(
+            400,
+            'Search query must not exceed 100 characters.'
+          );
+        }
+
         query.$or = [
           {
             email:
               escapedRegex(
-                req.query.search
+                searchStr
               )
           },
           {
             phone:
               escapedRegex(
-                req.query.search
+                searchStr
               )
           }
         ];

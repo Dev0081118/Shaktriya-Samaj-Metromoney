@@ -11,7 +11,7 @@
     "plans:setup": "node src/scripts/setupMembershipPlans.js",
     "admin:create": "node src/scripts/createSuperAdmin.js",
     "check": "find src -name '*.js' -exec node --check {} + && node --check server.js && NODE_ENV=test JWT_SECRET=test-secret node -e \"import('./src/app.js')\"",
-    "test": "node --test"
+    "test": "node --test --test-concurrency=1"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

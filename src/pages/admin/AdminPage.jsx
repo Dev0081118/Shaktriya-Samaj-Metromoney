@@ -22,7 +22,6 @@ import {
 import AdminNav from '../../components/AdminNav';
 import StoryModerationPage from './StoryModerationPage';
 import AdminNotificationsPage from './AdminNotificationsPage';
-import { Link } from 'react-router-dom';
 
 import {
   useAuth
@@ -2245,7 +2244,6 @@ export default function AdminPage() {
       <AdminNav />
 
       <main className="min-w-0 p-[55px] max-[767px]:px-[15px] max-[767px]:py-[30px]">
-        <Link to="/admin/success-stories" className="mb-5 inline-flex rounded-full border border-[#CBB8A4] px-5 py-2 text-sm text-[#681D25]">Review success stories</Link>
         <Routes>
           <Route path="success-stories" element={<StoryModerationPage />} />
           <Route path="notifications" element={<AdminNotificationsPage />} />

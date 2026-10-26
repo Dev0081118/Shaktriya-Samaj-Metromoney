@@ -53,17 +53,21 @@ before(async () => {
   process.env.OTP_PROVIDER =
     'development';
 
-  database =
-    await MongoMemoryServer.create({
-      instance: {
-        ip:
-          '127.0.0.1'
-      }
-    });
+  if (process.env.TEST_MONGO_URI) {
+    await mongoose.connect(process.env.TEST_MONGO_URI);
+  } else {
+    database =
+      await MongoMemoryServer.create({
+        instance: {
+          ip:
+            '127.0.0.1'
+        }
+      });
 
-  await mongoose.connect(
-    database.getUri()
-  );
+    await mongoose.connect(
+      database.getUri()
+    );
+  }
 });
 
 afterEach(async () => {
@@ -83,7 +87,9 @@ afterEach(async () => {
 after(async () => {
   await mongoose.disconnect();
 
-  await database.stop();
+  if (database) {
+    await database.stop();
+  }
 });
 
 /* -------------------------------------------------------------------------- */

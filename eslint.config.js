@@ -19,7 +19,7 @@ export default defineConfig([
     }
   },
   {
-    files: ['server/**/*.js'],
+    files: ['server/**/*.js', 'scripts/**/*.js', 'playwright.config.js'],
     languageOptions: { globals: globals.node },
     rules: { 'no-unused-vars': ['error', { argsIgnorePattern: '^_' }] }
   }
