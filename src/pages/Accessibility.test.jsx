@@ -45,7 +45,18 @@ describe('Automated Accessibility Verification (axe-core)', () => {
   });
 
   test('OnboardingPage step forms maintain accessible controls and structure', async () => {
-    apiMock.mockResolvedValueOnce({ data: {} }); // /api/profiles/me
+    apiMock.mockImplementation((path) => {
+      if (path.includes('/profiles/me')) {
+        return Promise.resolve({ data: { profile: null } });
+      }
+      if (path.includes('/preferences')) {
+        return Promise.resolve({ data: { preferences: null } });
+      }
+      if (path.includes('/family-assets')) {
+        return Promise.resolve({ data: { familyAssets: null } });
+      }
+      return Promise.resolve({ data: {} });
+    });
 
     const { container } = render(
       <MemoryRouter initialEntries={['/onboarding']}>
@@ -56,8 +67,9 @@ describe('Automated Accessibility Verification (axe-core)', () => {
     );
 
     // Wait for step 1 to render
-    await waitFor(() => {
-      expect(screen.getByText(/personal & basic details/i)).toBeInTheDocument();
+    await screen.findByRole('heading', {
+      level: 1,
+      name: /let us begin with the essentials/i
     });
 
     const results = await axe.run(container, {
@@ -74,30 +86,37 @@ describe('Automated Accessibility Verification (axe-core)', () => {
       if (path.includes('/entitlements')) {
         return Promise.resolve({
           data: {
-            features: { advancedSearch: true }
+            entitlements: { advancedSearch: true }
           }
         });
       }
-      return Promise.resolve({
-        data: {
-          items: [
-            {
-              _id: 'candidate-1',
-              profileId: 'KSM100001',
-              firstName: 'Meera',
-              age: 25,
-              height: 162,
-              location: { nativeState: 'Rajasthan', nativeDistrict: 'Jaipur' },
-              education: { highestEducation: 'B.Tech' },
-              career: { occupation: 'Software Engineer' },
-              community: { clan: 'Rathore' }
+      if (path.includes('/profiles/discover')) {
+        return Promise.resolve({
+          data: {
+            profiles: [
+              {
+                _id: 'candidate-1',
+                profileId: 'KSM100001',
+                firstName: 'Meera',
+                lastName: 'Rathore',
+                age: 25,
+                height: 162,
+                location: { nativeState: 'Rajasthan', nativeDistrict: 'Jaipur' },
+                education: { highestEducation: 'B.Tech' },
+                career: { occupation: 'Software Engineer' },
+                community: { clan: 'Rathore' }
+              }
+            ],
+            pagination: {
+              total: 1,
+              page: 1,
+              limit: 12,
+              pages: 1
             }
-          ],
-          total: 1,
-          page: 1,
-          limit: 12
-        }
-      });
+          }
+        });
+      }
+      return Promise.resolve({ data: {} });
     });
 
     const { container } = render(
@@ -126,38 +145,46 @@ describe('Automated Accessibility Verification (axe-core)', () => {
       if (path.includes('/profiles/me')) {
         return Promise.resolve({
           data: {
-            profileId: 'KSM200002',
-            firstName: 'Karan',
-            lastName: 'Rathore',
-            gender: 'Male',
-            dateOfBirth: '1996-05-15',
-            height: 178,
-            maritalStatus: 'Never Married',
-            location: {
-              nativePlace: 'Jodhpur',
-              nativeDistrict: 'Jodhpur',
-              nativeState: 'Rajasthan'
-            },
-            community: {
-              kuldevi: 'Chamunda Mata',
-              gotra: 'Kashyap',
-              clan: 'Rathore'
-            },
-            education: {
-              highestEducation: 'Master of Technology',
-              degree: 'M.Tech Computer Science'
-            },
-            career: {
-              occupation: 'Tech Lead',
-              annualIncome: 3500000,
-              incomeCurrency: 'INR'
-            },
-            family: {
-              fatherName: 'Vikram Singh Rathore',
-              fatherOccupation: 'Government Officer',
-              motherName: 'Sunita Kanwar',
-              familyType: 'Nuclear',
-              familyValues: 'Moderate'
+            profile: {
+              profileId: 'KSM200002',
+              firstName: 'Karan',
+              lastName: 'Rathore',
+              gender: 'Male',
+              dateOfBirth: '1996-05-15',
+              height: 178,
+              maritalStatus: 'Never Married',
+              location: {
+                nativePlace: 'Jodhpur',
+                nativeDistrict: 'Jodhpur',
+                nativeState: 'Rajasthan'
+              },
+              community: {
+                kuldevi: 'Chamunda Mata',
+                gotra: 'Kashyap',
+                clan: 'Rathore'
+              },
+              education: {
+                highestEducation: 'Master of Technology',
+                degree: 'M.Tech Computer Science'
+              },
+              career: {
+                occupation: 'Tech Lead',
+                annualIncome: 3500000,
+                incomeCurrency: 'INR'
+              },
+              family: {
+                fatherName: 'Vikram Singh Rathore',
+                fatherOccupation: 'Government Officer',
+                motherName: 'Sunita Kanwar',
+                familyType: 'Nuclear',
+                familyValues: 'Moderate'
+              },
+              biodataPrivacy: {
+                includeSensitiveFamilyDetailsInBiodata: true,
+                includeAstrologyInBiodata: true,
+                includeContactDetailsInBiodata: true,
+                includeAssetsInBiodata: true
+              }
             }
           }
         });
@@ -174,7 +201,7 @@ describe('Automated Accessibility Verification (axe-core)', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Karan Rathore/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Karan Rathore/i)[0]).toBeInTheDocument();
     });
 
     const results = await axe.run(container, {

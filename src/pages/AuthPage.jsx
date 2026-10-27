@@ -204,7 +204,7 @@ export default function AuthPage({ mode }) {
 
       <section className="grid place-items-center bg-[#f7f2ea] px-[clamp(28px,6vw,105px)] py-[70px] max-[767px]:px-[22px] max-[767px]:pb-[100px] max-[767px]:pt-[50px]">
         <div className="w-full max-w-[480px]">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#7d552a]">
             {forgot
               ? t(
                   'auth.accountRecovery'

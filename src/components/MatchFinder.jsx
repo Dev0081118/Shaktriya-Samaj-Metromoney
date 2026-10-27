@@ -252,7 +252,7 @@ function Finder({
 }) {
   return (
     <label className="min-h-[104px] border-r border-[#dfd3c6] px-[26px] py-[25px] max-[767px]:min-h-[86px] max-[767px]:border-b max-[767px]:border-r-0">
-      <span className="block text-[9px] font-extrabold uppercase tracking-[0.17em] text-[#9a816c]">
+      <span className="block text-[9px] font-extrabold uppercase tracking-[0.17em] text-[#6e5033]">
         {label}
       </span>
 

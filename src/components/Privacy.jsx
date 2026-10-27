@@ -108,11 +108,11 @@ export default function Privacy() {
                 </span>
 
                 <div>
-                  <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#91683F]">
+                  <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#7a5228]">
                     {t("home.privacyEyebrow")}
                   </p>
 
-                  <p className="mt-2 text-[12px] leading-6 text-[#756A60]">
+                  <p className="mt-2 text-[12px] leading-6 text-[#5a4e44]">
                     {t("home.privacyBody")}
                   </p>
                 </div>
@@ -125,7 +125,7 @@ export default function Privacy() {
               <div className="flex items-center gap-4">
                 <span className="h-px w-10 bg-[#AA7A42]" />
 
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683F]">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#7a5228]">
                   {t("home.privacyEyebrow")}
                 </p>
               </div>
@@ -134,7 +134,7 @@ export default function Privacy() {
                 {t("home.privacyTitle")}
               </h2>
 
-              <p className="mt-7 max-w-[560px] text-[14px] leading-8 text-[#756A60]">
+              <p className="mt-7 max-w-[560px] text-[14px] leading-8 text-[#5a4e44]">
                 {t("home.privacyBody")}
               </p>
             </div>
@@ -159,12 +159,12 @@ export default function Privacy() {
                         {title}
                       </h3>
 
-                      <p className="mt-3 max-w-[470px] text-[13px] leading-7 text-[#756A60]">
+                      <p className="mt-3 max-w-[470px] text-[13px] leading-7 text-[#5a4e44]">
                         {body}
                       </p>
                     </div>
 
-                    <span className="pt-1 font-display text-[18px] italic text-[#B28A5E]">
+                    <span className="pt-1 font-display text-[18px] italic text-[#754e26]">
                       {number}
                     </span>
                   </article>

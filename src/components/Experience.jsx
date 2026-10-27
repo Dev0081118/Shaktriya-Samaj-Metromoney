@@ -415,7 +415,7 @@ export default function Experience() {
           <div className="flex items-center gap-4">
             <span className="h-px w-10 bg-[#AA7A42]" />
 
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683F]">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#7a5228]">
               {t("nav.howItWorks")}
             </p>
           </div>
@@ -529,7 +529,7 @@ export default function Experience() {
                           : "border-[#D8CABB]"
                       ].join(" ")}
                     >
-                      <span className="font-display text-[18px] italic text-[#A57C51]">
+                      <span className="font-display text-[18px] italic text-[#754e26]">
                         {step.number}
                       </span>
 
@@ -549,7 +549,7 @@ export default function Experience() {
                           "mt-5 max-w-[460px] text-[13px] leading-7 transition-colors duration-500",
                           active
                             ? "text-[#66564D]"
-                            : "text-[#897970]"
+                            : "text-[#5e4f45]"
                         ].join(" ")}
                       >
                         {step.body}
@@ -663,7 +663,7 @@ export default function Experience() {
 
                 <span
                   aria-hidden="true"
-                  className="absolute -right-7 top-7 hidden font-display text-[78px] italic leading-none text-[#681D25]/8 xl:block"
+                  className="absolute -right-7 top-7 hidden font-display text-[78px] italic leading-none text-[#681D25]/55 xl:block"
                 >
                   {currentStep.number}
                 </span>

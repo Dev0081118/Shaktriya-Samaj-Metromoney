@@ -15,45 +15,58 @@ async function injectAndRunAxe(page, options = {}) {
 }
 
 test.describe('Automated Browser Accessibility Scans (axe-core)', () => {
-  test('homepage has no critical structural accessibility violations', async ({ page }) => {
+  test('homepage has no critical accessibility violations', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    const results = await injectAndRunAxe(page, {
-      rules: {
-        'color-contrast': { enabled: false }
-      }
-    });
+    await page.waitForTimeout(1000);
+    const results = await injectAndRunAxe(page);
     const criticalViolations = results.violations.filter(
       (v) => v.impact === 'critical' || v.impact === 'serious'
     );
+    if (criticalViolations.length > 0) {
+      console.log('Homepage violations:', JSON.stringify(criticalViolations.map(v => ({
+        id: v.id,
+        help: v.help,
+        nodes: v.nodes.map(n => ({ html: n.html, target: n.target, failureSummary: n.failureSummary }))
+      })), null, 2));
+    }
     expect(criticalViolations).toEqual([]);
   });
 
-  test('login page has no critical structural accessibility violations', async ({ page }) => {
+  test('login page has no critical accessibility violations', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
-    const results = await injectAndRunAxe(page, {
-      rules: {
-        'color-contrast': { enabled: false }
-      }
-    });
+    const results = await injectAndRunAxe(page);
     const criticalViolations = results.violations.filter(
       (v) => v.impact === 'critical' || v.impact === 'serious'
     );
+    if (criticalViolations.length > 0) {
+      console.log('Login page violations:', JSON.stringify(criticalViolations.map(v => ({
+        id: v.id,
+        help: v.help,
+        nodes: v.nodes.map(n => ({ html: n.html, target: n.target, failureSummary: n.failureSummary }))
+      })), null, 2));
+    }
     expect(criticalViolations).toEqual([]);
   });
 
-  test('registration page has no critical structural accessibility violations', async ({ page }) => {
+  test('registration page has no critical accessibility violations', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/register');
     await page.waitForLoadState('networkidle');
-    const results = await injectAndRunAxe(page, {
-      rules: {
-        'color-contrast': { enabled: false }
-      }
-    });
+    const results = await injectAndRunAxe(page);
     const criticalViolations = results.violations.filter(
       (v) => v.impact === 'critical' || v.impact === 'serious'
     );
+    if (criticalViolations.length > 0) {
+      console.log('Registration page violations:', JSON.stringify(criticalViolations.map(v => ({
+        id: v.id,
+        help: v.help,
+        nodes: v.nodes.map(n => ({ html: n.html, target: n.target, failureSummary: n.failureSummary }))
+      })), null, 2));
+    }
     expect(criticalViolations).toEqual([]);
   });
 });

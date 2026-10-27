@@ -33,7 +33,7 @@ export default function BiodataShowcase() {
             <div className="flex items-center gap-3 sm:gap-4">
               <span className="h-px w-8 bg-[#AA7A42] sm:w-10" />
 
-              <p className="text-[9px] font-extrabold uppercase tracking-[0.22em] text-[#91683F] sm:text-[10px] sm:tracking-[0.25em]">
+              <p className="text-[9px] font-extrabold uppercase tracking-[0.22em] text-[#7a5228] sm:text-[10px] sm:tracking-[0.25em]">
                 {t(
                   'home.biodataEyebrow'
                 )}
@@ -101,7 +101,7 @@ export default function BiodataShowcase() {
 
             <article className="relative min-h-0 border border-[#d5c5b3] bg-[#fffdf9] px-5 py-7 shadow-[0_20px_50px_rgba(54,34,25,.14)] sm:min-h-[560px] sm:px-7 sm:py-8 md:px-9 md:py-10 md:shadow-[0_25px_60px_rgba(54,34,25,.16)]">
               <div className="text-center">
-                <p className="text-[7px] font-bold uppercase tracking-[0.28em] text-[#9b7a5b] sm:text-[8px] sm:tracking-[0.35em]">
+                <p className="text-[7px] font-bold uppercase tracking-[0.28em] text-[#6e5033] sm:text-[8px] sm:tracking-[0.35em]">
                   {t(
                     'homeExtra:matrimonialProfile'
                   )}
@@ -111,7 +111,7 @@ export default function BiodataShowcase() {
                   Devika Jadeja
                 </h3>
 
-                <p className="mt-2 text-[9px] uppercase tracking-[0.14em] text-[#927d6d] sm:text-[10px] sm:tracking-[0.16em]">
+                <p className="mt-2 text-[9px] uppercase tracking-[0.14em] text-[#6e5033] sm:text-[10px] sm:tracking-[0.16em]">
                   Ahmedabad • Gujarat
                 </p>
               </div>
@@ -173,7 +173,7 @@ export default function BiodataShowcase() {
                 />
               </div>
 
-              <div className="mt-8 border-t border-[#decfbe] pt-4 text-center text-[8px] uppercase tracking-[0.16em] text-[#9b8776] sm:mt-10 sm:pt-5 sm:text-[9px] sm:tracking-[0.2em]">
+              <div className="mt-8 border-t border-[#decfbe] pt-4 text-center text-[8px] uppercase tracking-[0.16em] text-[#6e5b4b] sm:mt-10 sm:pt-5 sm:text-[9px] sm:tracking-[0.2em]">
                 Kshatriya Matrimonial
                 Society
               </div>
@@ -225,7 +225,7 @@ function Info({
 }) {
   return (
     <div>
-      <span className="block text-[7px] font-bold uppercase tracking-[0.12em] text-[#a28e7d] sm:text-[8px] sm:tracking-[0.14em]">
+      <span className="block text-[7px] font-bold uppercase tracking-[0.12em] text-[#6e5b4b] sm:text-[8px] sm:tracking-[0.14em]">
         {label}
       </span>
 

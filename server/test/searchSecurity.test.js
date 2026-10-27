@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import mongoose from 'mongoose';
@@ -233,6 +233,6 @@ test('source invariants: adminController enforces bounded schema enums and lengt
   );
 });
 
-test.after(async () => {
+after(async () => {
   await mongoose.disconnect();
 });

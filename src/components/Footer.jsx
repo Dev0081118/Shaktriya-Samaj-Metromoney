@@ -256,7 +256,7 @@ export default function Footer() {
             BOTTOM
         ====================================== */}
 
-        <div className="flex flex-col gap-3 py-7 text-[7px] font-semibold uppercase tracking-[0.15em] text-white/25 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+        <div className="flex flex-col gap-3 py-7 text-[7px] font-semibold uppercase tracking-[0.15em] text-white/70 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           <span>
             ©{' '}
             {new Date().getFullYear()}{' '}
@@ -299,7 +299,7 @@ function FooterBlock({
               key={
                 link
               }
-              className="w-fit text-[10px] text-white/40 transition duration-200 hover:translate-x-0.5 hover:text-[#D3A66F]"
+              className="w-fit text-[10px] text-white/75 transition duration-200 hover:translate-x-0.5 hover:text-[#D3A66F]"
             >
               {label}
             </Link>

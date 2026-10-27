@@ -383,7 +383,7 @@ export default function MatchShowcase() {
                   </div>
                 </div>
 
-                <div className="pt-1 font-display text-[20px] italic text-white/30">
+                <div className="pt-1 font-display text-[20px] italic text-white/70">
                   {String(
                     activeIndex + 1
                   ).padStart(
@@ -598,8 +598,8 @@ export default function MatchShowcase() {
 
             {/* oversized index */}
 
-            <div className="absolute bottom-[-6px] left-[4%] z-20 hidden md:block">
-              <span className="font-display text-[92px] italic leading-none text-[#C99F72]/10">
+            <div aria-hidden="true" className="absolute bottom-[-6px] left-[4%] z-20 hidden md:block">
+              <span className="font-display text-[92px] italic leading-none text-[#C99F72]/55">
                 {String(
                   activeIndex + 1
                 ).padStart(

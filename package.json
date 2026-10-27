@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --pool=threads",
     "test:e2e": "playwright test",
     "sitemap": "node scripts/generate-sitemap.js",
     "preview": "vite preview"

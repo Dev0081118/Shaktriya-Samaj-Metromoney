@@ -98,7 +98,7 @@ export default function HeritageIntro() {
             data-reveal
             className="relative max-w-[680px]"
           >
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#7a5228]">
               {t(
                 'home.heritageEyebrow'
               )}

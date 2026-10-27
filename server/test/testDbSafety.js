@@ -32,6 +32,17 @@ const FORBIDDEN_SUBSTRINGS = [
 ];
 
 /**
+ * Allowed hostnames/IPs for test execution.
+ * Connections must be strictly restricted to local loopback or in-memory MongoDB.
+ */
+export const ALLOWED_LOOPBACK_HOSTS = new Set([
+  '127.0.0.1',
+  'localhost',
+  '::1',
+  '[::1]'
+]);
+
+/**
  * Mask credentials from any MongoDB connection string for safe error reporting.
  * Never leaks passwords or auth tokens in logs or errors.
  */
@@ -41,6 +52,75 @@ export function redactMongoUri(uri) {
     /(mongodb(?:\+srv)?:\/\/)(?:[^:]+:[^@]+@|[^@]+@)/,
     '$1[REDACTED_CREDENTIALS]@'
   );
+}
+
+/**
+ * Extract and normalize host list from a MongoDB URI.
+ * Rejects mongodb+srv:// immediately because SRV resolves remote DNS records.
+ */
+export function extractHosts(uri) {
+  if (typeof uri !== 'string' || !uri.trim()) {
+    throw new Error('Database safety violation: MongoDB URI is missing or empty.');
+  }
+
+  const trimmed = uri.trim();
+
+  if (trimmed.startsWith('mongodb+srv://')) {
+    throw new Error(
+      'Database safety violation: "mongodb+srv://" URIs are forbidden for test databases. Only local loopback connections are permitted.'
+    );
+  }
+
+  if (!trimmed.startsWith('mongodb://')) {
+    throw new Error('Database safety violation: Invalid MongoDB URI scheme. Must start with "mongodb://".');
+  }
+
+  const withoutScheme = trimmed.slice('mongodb://'.length);
+  const hostPartMatch = withoutScheme.match(/^([^/?]+)/);
+  if (!hostPartMatch || !hostPartMatch[1]) {
+    throw new Error('Database safety violation: Could not extract host from MongoDB URI.');
+  }
+
+  let hostSection = hostPartMatch[1];
+  if (hostSection.includes('@')) {
+    hostSection = hostSection.split('@').slice(1).join('@');
+  }
+
+  if (!hostSection.trim()) {
+    throw new Error('Database safety violation: No host specified in MongoDB URI.');
+  }
+
+  const entries = hostSection.split(',').map((e) => e.trim()).filter(Boolean);
+  if (entries.length === 0) {
+    throw new Error('Database safety violation: No valid host entries found.');
+  }
+
+  return entries.map((entry) => {
+    if (entry.startsWith('[')) {
+      const closingBracket = entry.indexOf(']');
+      if (closingBracket !== -1) {
+        return entry.slice(1, closingBracket).toLowerCase();
+      }
+    }
+    const colonIdx = entry.lastIndexOf(':');
+    const host = colonIdx !== -1 ? entry.slice(0, colonIdx) : entry;
+    return host.toLowerCase();
+  });
+}
+
+/**
+ * Assert that all hosts targeted by the test URI are local loopback hosts.
+ */
+export function assertSafeHosts(uri) {
+  const hosts = extractHosts(uri);
+  for (const host of hosts) {
+    if (!ALLOWED_LOOPBACK_HOSTS.has(host)) {
+      throw new Error(
+        `Database safety violation: Host "${host}" is not an allowed local loopback host. Test database connections are strictly restricted to local loopback (127.0.0.1, localhost, [::1]).`
+      );
+    }
+  }
+  return hosts;
 }
 
 /**
@@ -104,9 +184,12 @@ export function assertSafeDatabaseName(dbName) {
 }
 
 /**
- * Validate a full MongoDB URI before connection.
+ * Validate a full MongoDB URI before connection:
+ * 1. Checks host policy (fail-closed, local loopback only).
+ * 2. Checks database name safety policy (must contain test, no production keywords).
  */
 export function assertSafeTestUri(uri) {
+  assertSafeHosts(uri);
   const dbName = extractDatabaseName(uri);
   assertSafeDatabaseName(dbName);
   return dbName;
@@ -121,8 +204,8 @@ export function assertSafeTestUri(uri) {
  */
 export async function setupTestDatabase(mongoose, { defaultDbPrefix = 'ksm_test' } = {}) {
   let database = null;
-  let connectionUri = '';
-  let dbName = '';
+  let connectionUri;
+  let dbName;
 
   if (process.env.TEST_MONGO_URI) {
     const rawUri = process.env.TEST_MONGO_URI;
@@ -131,7 +214,8 @@ export async function setupTestDatabase(mongoose, { defaultDbPrefix = 'ksm_test'
     } catch (err) {
       // Never log full raw URI with credentials
       throw new Error(
-        `Test aborted by safety guard: ${err.message} (Target: ${redactMongoUri(rawUri)})`
+        `Test aborted by safety guard: ${err.message} (Target: ${redactMongoUri(rawUri)})`,
+        { cause: err }
       );
     }
     connectionUri = rawUri;

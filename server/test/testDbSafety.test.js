@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  ALLOWED_LOOPBACK_HOSTS,
   assertSafeDatabaseName,
+  assertSafeHosts,
   assertSafeTestUri,
   extractDatabaseName,
+  extractHosts,
   redactMongoUri,
   safeCleanupDatabase
 } from './testDbSafety.js';
@@ -94,6 +97,62 @@ test('assertSafeTestUri validates full URIs and rejects production targets', () 
   assert.equal(
     assertSafeTestUri('mongodb://127.0.0.1:27017/ksm_test_isolated'),
     'ksm_test_isolated'
+  );
+});
+
+test('ALLOWED_LOOPBACK_HOSTS contains valid loopback definitions', () => {
+  assert.equal(ALLOWED_LOOPBACK_HOSTS.has('127.0.0.1'), true);
+  assert.equal(ALLOWED_LOOPBACK_HOSTS.has('localhost'), true);
+  assert.equal(ALLOWED_LOOPBACK_HOSTS.has('::1'), true);
+});
+
+test('extractHosts extracts loopback and host lists correctly', () => {
+  assert.deepEqual(extractHosts('mongodb://127.0.0.1:27017/ksm_test'), ['127.0.0.1']);
+  assert.deepEqual(extractHosts('mongodb://localhost:27017/ksm_test'), ['localhost']);
+  assert.deepEqual(extractHosts('mongodb://[::1]:27017/ksm_test'), ['::1']);
+  assert.deepEqual(extractHosts('mongodb://admin:pass@127.0.0.1:27017,localhost:27018/ksm_test'), ['127.0.0.1', 'localhost']);
+});
+
+test('assertSafeHosts accepts local loopback hosts', () => {
+  assert.doesNotThrow(() => assertSafeHosts('mongodb://127.0.0.1:27017/ksm_test'));
+  assert.doesNotThrow(() => assertSafeHosts('mongodb://localhost:27017/ksm_test'));
+  assert.doesNotThrow(() => assertSafeHosts('mongodb://[::1]:27017/ksm_test'));
+  assert.doesNotThrow(() => assertSafeHosts('mongodb://127.0.0.1:27017,localhost:27018/ksm_test'));
+});
+
+test('assertSafeHosts strictly rejects remote, staging, and production hosts', () => {
+  const remoteUris = [
+    'mongodb+srv://cluster0.mongodb.net/ksm_test',
+    'mongodb://atlas.mongodb.net:27017/ksm_test',
+    'mongodb://staging.internal:27017/ksm_test',
+    'mongodb://192.168.1.10:27017/ksm_test',
+    'mongodb://10.0.0.5:27017/ksm_test',
+    'mongodb://production.db.com:27017/ksm_test',
+    'mongodb://user:pass@remotehost:27017/ksm_test',
+    'mongodb://127.0.0.1:27017,remote.domain.com:27017/ksm_test'
+  ];
+
+  for (const uri of remoteUris) {
+    assert.throws(
+      () => assertSafeHosts(uri),
+      /Database safety violation/,
+      `Expected URI "${uri}" to be rejected by host safety guard.`
+    );
+  }
+});
+
+test('assertSafeTestUri rejects remote URIs even if the database name contains "test"', () => {
+  assert.throws(
+    () => assertSafeTestUri('mongodb://remote-server.com:27017/ksm_test'),
+    /Database safety violation: Host "remote-server.com" is not an allowed local loopback host/
+  );
+  assert.throws(
+    () => assertSafeTestUri('mongodb+srv://admin:pass@cluster0.mongodb.net/ksm_test'),
+    /Database safety violation: "mongodb\+srv:\/\/" URIs are forbidden/
+  );
+  assert.throws(
+    () => assertSafeTestUri('mongodb://192.168.0.100:27017/ksm_test_isolated'),
+    /Database safety violation: Host "192.168.0.100" is not an allowed local loopback host/
   );
 });
 
