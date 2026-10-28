@@ -1,13 +1,22 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
 
-import sharp from 'sharp';
 import { v2 as cloudinary } from 'cloudinary';
 
 import {
   ApiError
 } from '../utils/http.js';
+
+const require = createRequire(import.meta.url);
+let sharpInstance = null;
+function getSharp() {
+  if (!sharpInstance) {
+    sharpInstance = require('sharp');
+  }
+  return sharpInstance;
+}
 
 const UPLOAD_DIRECTORY =
   path.resolve(
@@ -309,6 +318,7 @@ export async function optimizeImage(
   }
 
   try {
+    const sharp = getSharp();
     const {
       data,
       info

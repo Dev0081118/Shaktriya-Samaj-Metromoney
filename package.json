@@ -8,6 +8,9 @@
   },
   "scripts": {
     "dev": "vite",
+    "server": "cd server && npm run dev",
+    "server:stable": "cd server && npm run dev:stable",
+    "free-port": "lsof -ti :3001 | xargs kill -9 2>/dev/null || true",
     "build": "vite build",
     "lint": "eslint .",
     "test": "vitest run --pool=threads",

@@ -1,14 +1,18 @@
 {
   "watch": [
-    "src",
-    "server.js",
-    ".env"
+    "src"
   ],
-  "ext": "js,json",
+  "ext": "js",
   "ignore": [
-    "node_modules/**",
-    "uploads/**",
-    "test/**"
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/uploads/**",
+    "**/test/**",
+    "**/dist/**",
+    "**/*.log",
+    "**/*.tmp",
+    "**/.system_generated/**"
   ],
-  "delay": 200
+  "delay": 2000,
+  "verbose": true
 }

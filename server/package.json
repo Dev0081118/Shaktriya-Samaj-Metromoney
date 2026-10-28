@@ -4,8 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nodemon server.js",
+    "predev": "lsof -ti :3001 | xargs kill -9 2>/dev/null || true",
+    "dev": "node dev.js",
+    "dev:stable": "node server.js",
     "start": "node server.js",
+    "free-port": "lsof -ti :3001 | xargs kill -9 2>/dev/null || true",
     "seed": "node src/seed.js",
     "subscriptions:expire": "node src/scripts/checkSubscriptions.js",
     "plans:setup": "node src/scripts/setupMembershipPlans.js",
