@@ -30,8 +30,8 @@ export default function Hero() {
         {/* Background image */}
         <img
           data-hero-image
-          src="/assets/public/profile-creation-heritage.webp"
-          alt="Rajput heritage architecture"
+          src="/assets/rajput-hero.webp"
+          alt="Authentic Rajput Kshatriya cultural heritage"
           fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -104,18 +104,18 @@ export default function Hero() {
         {/* =========================
             HERITAGE NOTE
         ========================== */}
-        <div className="absolute bottom-[125px] right-[4%] z-20 hidden w-[245px] border border-white/15 bg-[#eee2d2]/95 px-8 py-8 shadow-[0_20px_50px_rgba(20,10,10,.15)] 2xl:block">
-          <div className="font-display text-[42px] leading-none text-[#291918]">
+        <div className="absolute bottom-[125px] right-[4%] z-20 hidden w-[245px] border border-[#d5a76e]/25 bg-[#201011]/90 px-8 py-8 shadow-[0_20px_50px_rgba(0,0,0,.35)] backdrop-blur-md 2xl:block">
+          <div className="font-display text-[42px] leading-none text-[#f5ede4]">
             {t('homeExtra:one')}
           </div>
 
-          <div className="my-6 h-px w-full bg-[#cdbda9]" />
+          <div className="my-6 h-px w-full bg-[#d5a76e]/30" />
 
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.24em] text-[#8e7561]">
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.24em] text-[#d5a76e]">
             {t('homeExtra:meaningfulBeginning')}
           </p>
 
-          <p className="mt-4 text-[13px] leading-6 text-[#66544a]">
+          <p className="mt-4 text-[13px] leading-6 text-white/70">
             {t('homeExtra:compatibilityNote')}
           </p>
         </div>

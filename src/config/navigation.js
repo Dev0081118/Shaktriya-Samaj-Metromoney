@@ -2,7 +2,6 @@ import {
   BadgeIndianRupee,
   Bell,
   Bookmark,
-  BriefcaseBusiness,
   CircleGauge,
   ClipboardCheck,
   Compass,
@@ -158,28 +157,6 @@ export const memberNavigation = [
   }
 ];
 
-export const managerNavigation = [
-  {
-    groupKey:
-      'manager.operations',
-
-    links: [
-      {
-        to:
-          '/manager',
-
-        labelKey:
-          'manager.assignedTitle',
-
-        icon:
-          BriefcaseBusiness,
-
-        end:
-          true
-      }
-    ]
-  }
-];
 
 export const adminNavigation = [
   
@@ -318,22 +295,6 @@ export const adminNavigation = [
 
         icon:
           Headphones
-      },
-
-      {
-        to:
-          '/admin/relationship-managers',
-
-        labelKey:
-          'admin.relationshipManagers',
-
-        roles: [
-          'admin',
-          'super_admin'
-        ],
-
-        icon:
-          HeartHandshake
       }
     ]
   },
@@ -503,13 +464,6 @@ export function getNavigationForRole(
           memberNavigation
       }
     ];
-  }
-
-  if (
-    role ===
-    'relationship_manager'
-  ) {
-    return managerNavigation;
   }
 
   return adminNavigation

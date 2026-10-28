@@ -108,7 +108,7 @@ export default function BiodataShowcase() {
                 </p>
 
                 <h3 className="mt-3 font-display text-[30px] text-[#521a20] sm:text-[35px]">
-                  Devika Jadeja
+                  Devika Ba Jadeja
                 </h3>
 
                 <p className="mt-2 text-[9px] uppercase tracking-[0.14em] text-[#6e5033] sm:text-[10px] sm:tracking-[0.16em]">

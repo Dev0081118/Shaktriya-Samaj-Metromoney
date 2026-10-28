@@ -4,7 +4,7 @@ import { getHomeRouteForRole } from './roleRoutes';
 describe('getHomeRouteForRole', () => {
   it.each([
     ['member', '/dashboard'],
-    ['relationship_manager', '/manager'],
+    ['relationship_manager', '/admin'],
     ['moderator', '/admin'],
     ['admin', '/admin'],
     ['super_admin', '/admin']

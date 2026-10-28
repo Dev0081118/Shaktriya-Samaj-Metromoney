@@ -24,17 +24,13 @@ const renderSidebar = ({
   const variant =
     role === 'member'
       ? 'member'
-      : role === 'relationship_manager'
-        ? 'manager'
-        : 'admin';
+      : 'admin';
 
   const initialPath =
     path ||
     (role === 'member'
       ? '/dashboard'
-      : role === 'relationship_manager'
-        ? '/manager'
-        : '/admin');
+      : '/admin');
 
   return render(
     <MemoryRouter
@@ -166,19 +162,17 @@ test.each([
 );
 
 test(
-  'relationship manager receives the assigned-client workspace link only',
+  'moderator receives staff admin links without manager workspace',
   () => {
     renderSidebar({
-      role:
-        'relationship_manager'
+      role: 'moderator'
     });
 
     expect(
       screen.getByRole(
         'link',
         {
-          name:
-            'Your assigned clients'
+          name: /overview/i
         }
       )
     ).toBeInTheDocument();
@@ -187,7 +181,7 @@ test(
       screen.queryByRole(
         'link',
         {
-          name: 'Customers'
+          name: 'Your assigned clients'
         }
       )
     ).not.toBeInTheDocument();

@@ -312,116 +312,79 @@ function Overview() {
             </button>
           </header>
 
-          <div className="grid grid-cols-4 gap-[15px] max-[1100px]:grid-cols-3 max-[767px]:grid-cols-2">
+          <div className="grid grid-cols-3 gap-[18px] max-[900px]:grid-cols-1">
+            <article className="border-2 border-[#681d25] bg-[#fffdf8] p-6 shadow-sm">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[#91683f]">
+                Total Customers
+              </span>
+              <strong className="mt-2 block font-['Cormorant_Garamond'] text-[42px] font-medium leading-none text-[#2c1a18]">
+                {data.customers?.total || 0}
+              </strong>
+              <small className="mt-2 block text-[11px] text-[#756a60]">
+                {data.customers?.verified || 0} verified across platform
+              </small>
+            </article>
+
+            <article className="border-2 border-[#aa7a42] bg-[#fffdf8] p-6 shadow-sm">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[#91683f]">
+                Active Accounts
+              </span>
+              <strong className="mt-2 block font-['Cormorant_Garamond'] text-[42px] font-medium leading-none text-[#2c1a18]">
+                {data.customers?.active || 0}
+              </strong>
+              <small className="mt-2 block text-[11px] text-[#756a60]">
+                {data.profiles?.active || 0} live searchable profiles
+              </small>
+            </article>
+
+            <article className="border-2 border-[#431318] bg-[#fffdf8] p-6 shadow-sm">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[#91683f]">
+                Captured Revenue
+              </span>
+              <strong className="mt-2 block font-['Cormorant_Garamond'] text-[42px] font-medium leading-none text-[#681d25]">
+                {formatCurrency(data.finance?.capturedRevenue || 0)}
+              </strong>
+              <small className="mt-2 block text-[11px] text-[#756a60]">
+                Net total including Membership & Boost Packs
+              </small>
+            </article>
+          </div>
+
+          <div className="mt-5 grid grid-cols-4 gap-[15px] max-[1100px]:grid-cols-3 max-[767px]:grid-cols-2">
             {[
               [
-                data.customers
-                  ?.total ||
-                  0,
-
-                'Total customers'
-              ],
-
-              [
-                data.customers
-                  ?.active ||
-                  0,
-
-                'Active accounts'
-              ],
-
-              [
-                data.profiles
-                  ?.active ||
-                  0,
-
-                'Active profiles'
-              ],
-
-              [
-                data.subscriptions
-                  ?.active ||
-                  0,
-
+                data.subscriptions?.active || 0,
                 'Paid members'
               ],
-
-              ...(data.finance
-                ? [
-                    [
-                      formatCurrency(
-                        data.finance
-                          .capturedRevenue ||
-                          0
-                      ),
-
-                      'Captured revenue'
-                    ]
-                  ]
-                : []),
-
               [
-                data.supportSafety
-                  ?.pendingModeration ||
-                  0,
-
+                data.supportSafety?.pendingModeration || 0,
                 'Pending moderation'
               ],
-
               [
-                data.supportSafety
-                  ?.openReports ||
-                  0,
-
+                data.supportSafety?.openReports || 0,
                 'Open reports'
               ],
-
               [
-                data.supportSafety
-                  ?.openSupport ||
-                  0,
-
+                data.supportSafety?.openSupport || 0,
                 'Support tickets'
               ],
-
               [
-                data.subscriptions
-                  ?.expiringIn7Days ||
-                  0,
-
+                data.subscriptions?.expiringIn7Days || 0,
                 'Expiring in 7 days'
               ]
-            ].map(
-              ([
-                value,
-                label
-              ]) => (
-                <article
-                  className={
-                    metricCardClass
-                  }
-                  key={
-                    label
-                  }
-                >
-                  <strong
-                    className={
-                      metricValueClass
-                    }
-                  >
-                    {value}
-                  </strong>
-
-                  <span
-                    className={
-                      metricLabelClass
-                    }
-                  >
-                    {label}
-                  </span>
-                </article>
-              )
-            )}
+            ].map(([value, label]) => (
+              <article
+                className={metricCardClass}
+                key={label}
+              >
+                <strong className={metricValueClass}>
+                  {value}
+                </strong>
+                <span className={metricLabelClass}>
+                  {label}
+                </span>
+              </article>
+            ))}
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-[18px] max-[767px]:grid-cols-1">

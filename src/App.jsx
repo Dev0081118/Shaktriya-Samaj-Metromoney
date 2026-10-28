@@ -187,19 +187,6 @@ const CustomerOperationsPage = lazy(
     )
 );
 
-const ManagerOperationsPage = lazy(
-  () =>
-    import(
-      './pages/admin/ManagerOperationsPage'
-    )
-);
-
-const ManagerWorkspacePage = lazy(
-  () =>
-    import(
-      './pages/admin/ManagerWorkspacePage'
-    )
-);
 
 const RevenuePage = lazy(
   () =>
@@ -645,18 +632,15 @@ export default function App() {
             }
           />
 
-          {/* Relationship manager */}
+          {/* Relationship manager redirect to admin */}
 
           <Route
             path="/manager/*"
             element={
-              <ProtectedRoute
-                roles={[
-                  'relationship_manager'
-                ]}
-              >
-                <ManagerWorkspacePage />
-              </ProtectedRoute>
+              <Navigate
+                to="/admin"
+                replace
+              />
             }
           />
 
@@ -723,14 +707,10 @@ export default function App() {
           <Route
             path="/admin/relationship-managers"
             element={
-              <ProtectedRoute
-                roles={[
-                  'admin',
-                  'super_admin'
-                ]}
-              >
-                <ManagerOperationsPage />
-              </ProtectedRoute>
+              <Navigate
+                to="/admin/support"
+                replace
+              />
             }
           />
 

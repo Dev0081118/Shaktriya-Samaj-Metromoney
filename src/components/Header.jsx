@@ -12,8 +12,7 @@ import {
 } from 'react-i18next';
 
 import {
-  Link,
-  useLocation
+  Link
 } from 'react-router-dom';
 
 import {
@@ -21,10 +20,6 @@ import {
 } from '../context/AuthContext';
 
 import BrandLogo from './BrandLogo';
-
-import {
-  PublicHeroOrnaments
-} from './heritage/HeritageOrnaments';
 
 const links = [
   [
@@ -68,10 +63,6 @@ export default function Header({
   } =
     useTranslation();
 
-  const {
-    pathname
-  } =
-    useLocation();
 
   return (
     <header
@@ -81,11 +72,6 @@ export default function Header({
           : 'absolute'
       }`}
     >
-      <PublicHeroOrnaments
-        pathname={
-          pathname
-        }
-      />
 
       <div className="page-container relative z-10 flex h-24 items-center justify-between">
         {/* =====================================

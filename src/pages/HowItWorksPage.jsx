@@ -513,7 +513,7 @@ export default function HowItWorksPage() {
             JOURNEY
         ========================================== */}
 
-        <section className="relative overflow-hidden bg-[#211716] py-20 text-white sm:py-24 lg:py-32">
+        <section className="relative overflow-hidden bg-texture-dark py-20 text-white sm:py-24 lg:py-32 border-y border-[#3d2422]">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -left-52 top-40 h-[520px] w-[520px] rounded-full bg-[#681D25]/25 blur-[140px]"
@@ -794,7 +794,7 @@ export default function HowItWorksPage() {
             CONTROL SECTION
         ========================================== */}
 
-        <section className="bg-[#E8DCCB] py-20 sm:py-24 lg:py-28">
+        <section className="bg-subtle-texture py-20 sm:py-24 lg:py-28 border-y border-[#e6dac9]">
           <div className="page-container">
             <div
               data-hiw-reveal
@@ -902,7 +902,7 @@ export default function HowItWorksPage() {
             TYPICAL JOURNEY
         ========================================== */}
 
-        <section className="bg-[#F5F0E8] py-20 sm:py-24 lg:py-32">
+        <section className="bg-subtle-texture py-20 sm:py-24 lg:py-32">
           <div className="page-container">
             <div
               data-hiw-reveal

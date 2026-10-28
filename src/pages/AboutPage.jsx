@@ -179,6 +179,26 @@ export default function AboutPage() {
             }
           );
         });
+
+      gsap.utils.toArray("[data-tech-card]").forEach((card, idx) => {
+        gsap.fromTo(
+          card,
+          { autoAlpha: 0, y: 30, scale: 0.96 },
+          {
+            autoAlpha: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.8,
+            delay: idx * 0.15,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: card,
+              start: "top 88%",
+              once: true
+            }
+          }
+        );
+      });
     }, rootRef);
 
     return () => context.revert();
@@ -187,7 +207,7 @@ export default function AboutPage() {
   return (
     <div
       ref={rootRef}
-      className="min-h-screen overflow-x-hidden bg-[#F5F0E8] text-[#191614]"
+      className="min-h-screen overflow-x-hidden bg-subtle-texture text-[#191614]"
     >
       <Header solid />
 
@@ -196,7 +216,7 @@ export default function AboutPage() {
             HERO
         ========================================= */}
 
-        <section className="relative overflow-hidden bg-[#F0E4D6] pt-28 sm:pt-32 lg:pt-36">
+        <section className="relative overflow-hidden bg-subtle-texture pt-28 sm:pt-32 lg:pt-36">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -left-40 top-20 h-[460px] w-[460px] rounded-full bg-[#C49B70]/15 blur-[140px]"
@@ -364,9 +384,9 @@ export default function AboutPage() {
 
                 <p
                   data-manifesto-line
-                  className="mt-3 font-display text-[42px] leading-[1.02] tracking-[-0.025em] text-[#2B1A18] sm:text-[54px] lg:text-[64px]"
+                  className="mt-6 border-l-2 border-[#AA7A42] pl-6 font-display text-[26px] italic leading-[1.3] tracking-[-0.015em] text-[#2B1A18] sm:text-[32px] lg:text-[38px]"
                 >
-                  {t("aboutPage.manifesto.line3")}
+                  &ldquo;{t("aboutPage.manifesto.line3")}&rdquo;
                 </p>
               </div>
             </div>
@@ -377,7 +397,7 @@ export default function AboutPage() {
             WHY WE EXIST
         ========================================= */}
 
-        <section className="bg-[#EDE2D4] py-24 sm:py-28 lg:py-36">
+        <section className="bg-subtle-texture py-24 sm:py-28 lg:py-36">
           <div className="page-container">
             <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24">
               <div data-about-reveal>
@@ -469,7 +489,7 @@ export default function AboutPage() {
             TRADITION + TECHNOLOGY
         ========================================= */}
 
-        <section className="relative overflow-hidden bg-[#431318] py-24 text-white sm:py-28 lg:py-36">
+        <section className="relative overflow-hidden bg-texture-dark py-24 text-white sm:py-28 lg:py-36 border-y border-[#3d2422]">
           <div
             aria-hidden="true"
             className="absolute -right-52 top-1/2 h-[520px] w-[520px] -translate-y-1/2 rounded-full bg-[#C49B70]/10 blur-[140px]"
@@ -506,7 +526,7 @@ export default function AboutPage() {
                 </p>
 
                 <div className="mt-10 grid gap-4 sm:grid-cols-2">
-                  <div className="border border-white/10 bg-white/[0.03] p-6">
+                  <div data-tech-card className="border border-white/10 bg-white/[0.03] p-6 transition duration-300 hover:border-[#DAB47E]/40 hover:bg-white/[0.06]">
                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#DAB47E]">
                       {t("aboutPage.balance.tech.title")}
                     </p>
@@ -516,7 +536,7 @@ export default function AboutPage() {
                     </p>
                   </div>
 
-                  <div className="border border-white/10 bg-white/[0.03] p-6">
+                  <div data-tech-card className="border border-white/10 bg-white/[0.03] p-6 transition duration-300 hover:border-[#DAB47E]/40 hover:bg-white/[0.06]">
                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#DAB47E]">
                       {t("aboutPage.balance.people.title")}
                     </p>

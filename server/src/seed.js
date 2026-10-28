@@ -122,7 +122,7 @@ for (
  */
 const profileDefs = [
   [
-    'Rajveer',
+    'Rajveer Sinh',
     'Male',
     'Rajkot',
     'Entrepreneur',
@@ -131,7 +131,7 @@ const profileDefs = [
   ],
 
   [
-    'Devika',
+    'Devika Ba',
     'Female',
     'Ahmedabad',
     'Architect',
@@ -140,7 +140,7 @@ const profileDefs = [
   ],
 
   [
-    'Nandini',
+    'Nandini Ba',
     'Female',
     'Udaipur',
     'Doctor',
@@ -311,7 +311,7 @@ const pendingValues = {
     'Self',
 
   firstName:
-    'Aditi',
+    'Aditi Ba',
 
   lastName:
     'Rathore',

@@ -1565,125 +1565,18 @@ function CustomerDetail() {
               operationTitleClass
             }
           >
-            Relationship manager
+            Live Chat & Support
           </h2>
 
-          {data.assignment ? (
-            <dl
-              className={
-                dlClass
-              }
-            >
-              <div
-                className={
-                  detailRowClass
-                }
-              >
-                <dt
-                  className={
-                    dtClass
-                  }
-                >
-                  Manager
-                </dt>
-
-                <dd
-                  className={
-                    ddClass
-                  }
-                >
-                  {data.assignment
-                    .manager
-                    ?.email ||
-                    'Unavailable'}
-                </dd>
-              </div>
-
-              <div
-                className={
-                  detailRowClass
-                }
-              >
-                <dt
-                  className={
-                    dtClass
-                  }
-                >
-                  Phone
-                </dt>
-
-                <dd
-                  className={
-                    ddClass
-                  }
-                >
-                  {data.assignment
-                    .manager
-                    ?.phone ||
-                    '—'}
-                </dd>
-              </div>
-
-              <div
-                className={
-                  detailRowClass
-                }
-              >
-                <dt
-                  className={
-                    dtClass
-                  }
-                >
-                  Status
-                </dt>
-
-                <dd
-                  className={
-                    ddClass
-                  }
-                >
-                  {data.assignment
-                    .status}
-                </dd>
-              </div>
-
-              <div
-                className={
-                  detailRowClass
-                }
-              >
-                <dt
-                  className={
-                    dtClass
-                  }
-                >
-                  Assigned
-                </dt>
-
-                <dd
-                  className={
-                    ddClass
-                  }
-                >
-                  {date(
-                    data.assignment
-                      .assignedAt
-                  )}
-                </dd>
-              </div>
-            </dl>
-          ) : (
-            <p className="text-[11px] text-[#756a60]">
-              No relationship
-              manager assigned.
-            </p>
-          )}
+          <p className="text-[11px] text-[#756a60]">
+            Direct concierge assistance operated by platform administration.
+          </p>
 
           <Link
-            to="/admin/relationship-managers"
+            to="/admin/support"
             className={`${outlineButtonClass} mt-5 no-underline`}
           >
-            Manage assignment
+            View support inquiries
           </Link>
         </section>
 
