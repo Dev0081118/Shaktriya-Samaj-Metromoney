@@ -1,7 +1,6 @@
 import {
   Bell,
   LogOut,
-  Search,
   Wrench
 } from 'lucide-react';
 import {
@@ -17,6 +16,7 @@ import {
 } from 'react-router-dom';
 
 import AppSidebar from '../components/ui/AppSidebar';
+import LiveChatWidget from '../components/LiveChatWidget';
 import { getNavigationForRole } from '../config/navigation';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -240,21 +240,11 @@ export default function MemberLayout() {
 
       <div className="member-main">
         <header className="member-topbar flex h-[78px] items-center justify-between border-b border-[#e4dacf] bg-[#fffdf8] px-[clamp(20px,4vw,60px)]">
-          <button
-            type="button"
-            className="flex items-center gap-[10px] text-[11px] text-[#756a60] max-[1024px]:ml-5"
-            onClick={() =>
-              navigate('/discover')
-            }
-          >
-            <Search size={16} />
-
-            <span className="max-[767px]:hidden">
-              {t(
-                'member.searchCommunity'
-              )}
+          <div className="flex items-center gap-2 max-[1024px]:ml-5">
+            <span className="font-display text-[20px] font-medium text-[#291717]">
+              Royal Rajputana Matrimony
             </span>
-          </button>
+          </div>
 
           <div className="ml-auto flex items-center gap-[18px] max-[767px]:gap-3">
             <NavLink
@@ -288,6 +278,8 @@ export default function MemberLayout() {
           <Outlet />
         </main>
       </div>
+
+      <LiveChatWidget />
     </div>
   );
 }

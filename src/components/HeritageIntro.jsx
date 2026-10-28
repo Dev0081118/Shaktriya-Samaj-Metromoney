@@ -18,12 +18,6 @@ import {
   useGsapReveal
 } from '../motion/useGsapReveal';
 
-import {
-  FloralDivider,
-  HeritageArch,
-  HeritagePillar
-} from './heritage/HeritageOrnaments';
-
 export default function HeritageIntro() {
   const {
     t
@@ -42,16 +36,8 @@ export default function HeritageIntro() {
       ref={
         root
       }
-      className="relative overflow-hidden bg-[#f4efe8] pb-28 pt-20 lg:pb-36 lg:pt-28"
+      className="relative overflow-hidden bg-subtle-texture pb-28 pt-20 lg:pb-36 lg:pt-28 border-b border-[#ebdccb]"
     >
-      {/* =====================================
-          CUSTOM VECTOR ARCHITECTURE
-      ====================================== */}
-
-      <HeritageArch className="pointer-events-none absolute -left-[145px] top-[70px] hidden h-[760px] text-[#9B6D42] opacity-[0.055] lg:block" />
-
-      <HeritagePillar className="pointer-events-none absolute -right-[22px] bottom-[-90px] hidden h-[720px] text-[#8F6038] opacity-[0.07] xl:block" />
-
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-[42%] top-[-150px] h-[420px] w-[420px] rounded-full bg-[#C49B70]/10 blur-[130px]"
@@ -63,11 +49,7 @@ export default function HeritageIntro() {
             data-reveal
             className="relative mx-auto w-full max-w-[500px] lg:mx-0"
           >
-            {/* arch echo behind photography */}
-
-            <HeritageArch className="pointer-events-none absolute -left-9 -top-10 hidden h-[690px] text-[#AA7A42] opacity-[0.18] sm:block" />
-
-            <div className="relative z-10 overflow-hidden rounded-[230px_230px_2px_2px]">
+            <div className="relative z-10 overflow-hidden rounded-[230px_230px_2px_2px] shadow-[0_20px_50px_rgba(40,20,15,0.08)]">
               <img
                 src="/assets/public/heritage-arches.webp"
                 loading="lazy"
@@ -110,7 +92,7 @@ export default function HeritageIntro() {
               )}
             </h2>
 
-            <FloralDivider className="mt-9 h-auto w-full max-w-[560px] text-[#A57847] opacity-60" />
+            <div className="mt-7 h-px w-24 bg-[#c89d6e]" />
 
             <div className="mt-8 grid gap-8 sm:grid-cols-2">
               <p className="text-[14px] leading-7 text-[#77675e]">

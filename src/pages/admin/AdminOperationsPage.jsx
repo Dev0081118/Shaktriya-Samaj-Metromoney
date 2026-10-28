@@ -1202,7 +1202,7 @@ export default function AdminOperationsPage({
 
                         [
                           'relationshipManager',
-                          'Relationship manager'
+                          'Live Chat Concierge'
                         ]
                       ].map(
                         ([

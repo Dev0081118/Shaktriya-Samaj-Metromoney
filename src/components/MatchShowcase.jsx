@@ -32,128 +32,36 @@ import {
   getHomeRouteForRole
 } from "../utils/roleRoutes";
 
-import {
-  FloralDivider,
-  HeritageArch,
-  HeritageCorner
-} from "./heritage/HeritageOrnaments";
-
 const profiles = [
   {
-    name: "Rajveer",
+    name: "Rajveer Sinh Jadeja",
     age: 28,
     city: "Rajkot",
     work: "Entrepreneur",
     image: "/assets/member/profile-rajveer.webp"
   },
   {
-    name: "Devika",
+    name: "Devika Ba",
     age: 26,
     city: "Ahmedabad",
     work: "Architect",
     image: "/assets/member/profile-devika.webp"
   },
   {
-    name: "Nandini",
+    name: "Nandini Ba",
     age: 29,
     city: "Udaipur",
     work: "Doctor",
     image: "/assets/member/profile-nandini.webp"
   },
   {
-    name: "Yuvraj",
+    name: "Yuvraj Sinh Parmar",
     age: 29,
     city: "Vadodara",
     work: "Business Owner",
     image: "/assets/member/profile-yuvraj.webp"
   }
 ];
-
-function LotusSeal({
-  className = ""
-}) {
-  return (
-    <svg
-      viewBox="0 0 220 220"
-      aria-hidden="true"
-      className={className}
-      fill="none"
-    >
-      <circle
-        cx="110"
-        cy="110"
-        r="96"
-        stroke="currentColor"
-        strokeWidth="1"
-        opacity=".45"
-      />
-
-      <circle
-        cx="110"
-        cy="110"
-        r="77"
-        stroke="currentColor"
-        strokeWidth=".8"
-        opacity=".22"
-      />
-
-      <path
-        d="M110 49
-           C92 66 88 83 110 105
-           C132 83 128 66 110 49Z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-      />
-
-      <path
-        d="M110 105
-           C85 82 65 83 53 99
-           C72 108 89 111 110 105Z"
-        stroke="currentColor"
-        strokeWidth="1.2"
-      />
-
-      <path
-        d="M110 105
-           C135 82 155 83 167 99
-           C148 108 131 111 110 105Z"
-        stroke="currentColor"
-        strokeWidth="1.2"
-      />
-
-      <path
-        d="M110 105
-           C91 119 84 139 91 158
-           C103 146 108 128 110 105Z"
-        stroke="currentColor"
-        strokeWidth="1.1"
-      />
-
-      <path
-        d="M110 105
-           C129 119 136 139 129 158
-           C117 146 112 128 110 105Z"
-        stroke="currentColor"
-        strokeWidth="1.1"
-      />
-
-      <path
-        d="M73 163
-           C88 171 132 171 147 163"
-        stroke="currentColor"
-        strokeWidth="1.1"
-      />
-
-      <path
-        d="M83 177
-           C97 182 123 182 137 177"
-        stroke="currentColor"
-        strokeWidth=".8"
-        opacity=".7"
-      />
-    </svg>
-  );
-}
 
 export default function MatchShowcase() {
   const {
@@ -245,7 +153,7 @@ export default function MatchShowcase() {
   return (
     <section
       ref={root}
-      className="relative overflow-hidden bg-[#211716] py-20 text-white sm:py-24 lg:py-32"
+      className="relative overflow-hidden bg-texture-dark py-20 text-white sm:py-24 lg:py-32"
     >
       {/* =====================================
           ATMOSPHERE
@@ -264,23 +172,6 @@ export default function MatchShowcase() {
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C99F72]/35 to-transparent"
-      />
-
-      {/* =====================================
-          DECORATIVE LOTUS DETAILS
-      ====================================== */}
-
-      <LotusSeal
-        className="pointer-events-none absolute -left-[78px] top-[170px] hidden w-[260px] text-[#C99F72] opacity-[0.07] lg:block"
-      />
-
-      <LotusSeal
-        className="pointer-events-none absolute -right-[90px] bottom-[40px] hidden w-[320px] rotate-12 text-[#C99F72] opacity-[0.06] xl:block"
-      />
-
-      <HeritageCorner
-        mirror
-        className="pointer-events-none absolute -right-[155px] -top-[165px] hidden w-[480px] text-[#C99F72] opacity-[0.075] xl:block"
       />
 
       <div className="page-container relative z-10">
@@ -316,9 +207,7 @@ export default function MatchShowcase() {
               )}
             </p>
 
-            <FloralDivider
-              className="mt-8 h-auto w-full max-w-[450px] text-[#C99F72] opacity-40"
-            />
+            <div className="mt-8 h-px w-20 bg-[#C99F72]/40" />
 
             {/* =================================
                 ACTIVE PROFILE INFORMATION
@@ -484,12 +373,6 @@ export default function MatchShowcase() {
             data-reveal
             className="relative mx-auto w-full max-w-[720px]"
           >
-            {/* Arch is now framing only */}
-
-            <HeritageArch
-              className="pointer-events-none absolute -right-[65px] -top-[82px] hidden h-[770px] text-[#C99F72] opacity-[0.11] md:block"
-            />
-
             {/* decorative vertical line */}
 
             <div

@@ -106,6 +106,22 @@ a {
 }
 
 /* -------------------------------------------------
+   Subtle textured backgrounds
+-------------------------------------------------- */
+
+.bg-subtle-texture {
+  background-color: #f7f3ec;
+  background-image: radial-gradient(rgba(175, 135, 90, 0.09) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+.bg-texture-dark {
+  background-color: #171110;
+  background-image: radial-gradient(rgba(213, 167, 110, 0.08) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+/* -------------------------------------------------
    Global loading state
 -------------------------------------------------- */
 

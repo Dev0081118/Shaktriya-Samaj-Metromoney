@@ -22,7 +22,7 @@ export default function Hero() {
     return () => ctx.revert();
   }, [reduced]);
   return (
-    <section ref={root} className="relative bg-[#f4efe8]">
+    <section ref={root} className="relative bg-[#1c0c0d]">
       {/* =========================
           HERO VISUAL
       ========================== */}
@@ -30,20 +30,20 @@ export default function Hero() {
         {/* Background image */}
         <img
           data-hero-image
-          src="/assets/rajput-hero.webp"
+          src="/assets/public/profile-creation-heritage.webp"
           alt="Rajput heritage architecture"
           fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
         />
 
         {/* Main dark overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(28,12,13,.94)_0%,rgba(34,14,15,.78)_37%,rgba(25,10,11,.32)_72%,rgba(25,10,11,.18)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(28,12,13,.92)_0%,rgba(34,14,15,.76)_37%,rgba(25,10,11,.32)_72%,rgba(25,10,11,.18)_100%)]" />
 
         {/* Bottom depth */}
-        <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(25,10,11,.78)_0%,rgba(25,10,11,.16)_38%,transparent_60%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(25,10,11,.82)_0%,rgba(25,10,11,.2)_38%,transparent_60%)]" />
 
         {/* Top nav readability */}
-        <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/35 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/40 to-transparent" />
 
         {/* =========================
             HERO CONTENT

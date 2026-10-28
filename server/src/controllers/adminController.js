@@ -19,6 +19,10 @@ import {
 } from '../models/Platform.js';
 
 import {
+  BoostOrder
+} from '../models/Boost.js';
+
+import {
   AuditLog,
   ContactRequest,
   CustomerNote,
@@ -317,6 +321,7 @@ export const dashboard =
         expiredSubscriptions,
         planDistribution,
         revenue,
+        boostRevenue,
         successfulPayments,
         failedPayments,
         refunded,
@@ -486,6 +491,22 @@ export const dashboard =
             }
           ]),
 
+          BoostOrder.aggregate([
+            {
+              $match: {
+                status: 'Paid'
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                total: {
+                  $sum: '$amount'
+                }
+              }
+            }
+          ]),
+
           Payment.countDocuments(
             revenueMatch
           ),
@@ -626,9 +647,8 @@ export const dashboard =
       ) {
         data.finance = {
           capturedRevenue:
-            revenue[0]
-              ?.total ||
-            0,
+            (revenue[0]?.total || 0) +
+            (boostRevenue[0]?.total || 0),
 
           successfulPayments,
 

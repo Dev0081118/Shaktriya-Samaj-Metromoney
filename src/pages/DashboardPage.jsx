@@ -901,7 +901,7 @@ export default function DashboardPage() {
               ?.features
               ?.relationshipManager && (
               <span className="rounded-full border border-[#ddd0c1] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.08em] text-[#5e4e46]">
-                Relationship Manager
+                Live Concierge
               </span>
             )}
 

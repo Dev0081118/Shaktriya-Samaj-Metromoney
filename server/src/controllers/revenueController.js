@@ -4,6 +4,10 @@ import {
 } from '../models/Platform.js';
 
 import {
+  BoostOrder
+} from '../models/Boost.js';
+
+import {
   paymentService
 } from '../services/paymentService.js';
 
@@ -215,6 +219,7 @@ const buildRevenue =
      */
     const [
       capturedPayments,
+      capturedBoostOrders,
       processedRefunds,
       legacyRefundedPayments,
       failedCount
@@ -244,6 +249,14 @@ const buildRevenue =
             'verifiedAt'
           )
           .lean(),
+
+        BoostOrder.find({
+          status: 'Paid',
+          $or: [
+            { verifiedAt: { $gte: from, $lte: to } },
+            { createdAt: { $gte: from, $lte: to } }
+          ]
+        }).sort('createdAt').lean(),
 
         /*
          * Modern refund accounting:
@@ -451,6 +464,56 @@ const buildRevenue =
 
       planRow.gatewayTaxPaise +=
         tax;
+
+      planRow.capturedCount +=
+        1;
+    }
+
+    for (
+      const order
+      of (capturedBoostOrders || [])
+    ) {
+      const gross =
+        toPaise(
+          order.amount
+        );
+
+      grossCapturedPaise +=
+        gross;
+
+      const key =
+        dateKey(
+          order.verifiedAt ||
+            order.createdAt
+        );
+
+      if (key) {
+        const row =
+          ensureDaily(
+            daily,
+            key
+          );
+
+        row.grossPaise +=
+          gross;
+
+        row.capturedCount +=
+          1;
+      }
+
+      const planName =
+        order.packNameSnapshot
+          ? `Boost Pack: ${order.packNameSnapshot}`
+          : 'Boost Pack';
+
+      const planRow =
+        ensurePlan(
+          byPlan,
+          planName
+        );
+
+      planRow.grossPaise +=
+        gross;
 
       planRow.capturedCount +=
         1;
@@ -835,7 +898,7 @@ const buildRevenue =
         ),
 
       paymentCount:
-        capturedPayments.length,
+        capturedPayments.length + (capturedBoostOrders?.length || 0),
 
       refundCount:
         processedRefunds.length,

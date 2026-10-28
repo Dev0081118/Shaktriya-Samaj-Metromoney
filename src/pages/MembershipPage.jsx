@@ -478,7 +478,7 @@ export default function MembershipPage({
           )}
         </header>
 
-        <div className="mx-auto grid max-w-[760px] grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mx-auto grid max-w-[1180px] grid-cols-1 gap-6 md:grid-cols-3">
           {plans.map(
             (
               plan
@@ -664,50 +664,6 @@ export default function MembershipPage({
             }
           )}
         </div>
-
-        {user && (
-          <section className="mx-auto mt-9 max-w-[760px] border border-[#ddd0c1] bg-[#fffdf8] p-[28px] text-center">
-            <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-[#681d2510] text-[#681d25]">
-              <Zap
-                size={
-                  19
-                }
-              />
-            </span>
-
-            <h3 className="mt-4 font-['Cormorant_Garamond'] text-[30px] font-medium text-[#2c1a18]">
-              Need more profile
-              visibility?
-            </h3>
-
-            <p className="mx-auto mt-2 max-w-[500px] text-[11px] leading-6 text-[#756a60]">
-              View your included
-              boost credits, activate
-              a profile boost, or buy
-              additional boost packs
-              without changing your
-              membership.
-            </p>
-
-            <button
-              type="button"
-              className={`${outlineButtonClass} mt-5`}
-              onClick={() =>
-                navigate(
-                  '/boosts'
-                )
-              }
-            >
-              <Zap
-                size={
-                  15
-                }
-              />
-
-              Manage profile boosts
-            </button>
-          </section>
-        )}
       </>
     );
 

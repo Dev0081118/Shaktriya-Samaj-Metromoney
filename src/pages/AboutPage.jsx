@@ -21,11 +21,6 @@ import Footer from "../components/Footer";
 import FinalCTA from "../components/FinalCTA";
 
 import {
-  BharatKalamCorner,
-  JaliMedallion
-} from "../components/heritage/HeritageOrnaments";
-
-import {
   gsap
 } from "../motion/gsap";
 
@@ -280,16 +275,6 @@ export default function AboutPage() {
                 data-about-hero
                 className="relative mx-auto w-full max-w-[510px] lg:mx-0"
               >
-                {/* Back SVG — does not cross over photo */}
-
-                <JaliMedallion
-                  className="pointer-events-none absolute -right-[125px] top-[42px] z-0 hidden w-[440px] text-[#965B31] opacity-[0.24] sm:block lg:w-[500px]"
-                />
-
-                <BharatKalamCorner
-                  className="pointer-events-none absolute -bottom-[110px] -left-[110px] z-0 hidden w-[390px] text-[#92562F] opacity-[0.20] md:block"
-                />
-
                 <div
                   aria-hidden="true"
                   className="absolute -left-5 top-8 z-[2] hidden h-[88%] w-full border border-[#B9966E]/35 sm:block"
@@ -425,7 +410,7 @@ export default function AboutPage() {
             PRINCIPLES
         ========================================= */}
 
-        <section className="bg-[#F5F0E8] py-24 sm:py-28 lg:py-36">
+        <section className="bg-subtle-texture py-24 sm:py-28 lg:py-36">
           <div className="page-container">
             <div
               data-about-reveal

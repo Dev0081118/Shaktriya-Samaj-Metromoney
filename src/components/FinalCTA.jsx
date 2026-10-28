@@ -19,151 +19,6 @@ import {
   useGsapReveal
 } from "../motion/useGsapReveal";
 
-import {
-  FloralDivider,
-  HeritageCorner
-} from "./heritage/HeritageOrnaments";
-
-function LotusEmblem({
-  className = ""
-}) {
-  return (
-    <svg
-      viewBox="0 0 360 360"
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <circle
-        cx="180"
-        cy="180"
-        r="148"
-        stroke="currentColor"
-        strokeWidth="1"
-        opacity=".42"
-      />
-
-      <circle
-        cx="180"
-        cy="180"
-        r="126"
-        stroke="currentColor"
-        strokeWidth=".8"
-        opacity=".22"
-      />
-
-      <circle
-        cx="180"
-        cy="180"
-        r="104"
-        stroke="currentColor"
-        strokeWidth=".7"
-        opacity=".15"
-      />
-
-      <path
-        d="
-          M180 79
-          C151 106 148 137 180 166
-          C212 137 209 106 180 79Z
-        "
-        stroke="currentColor"
-        strokeWidth="1.7"
-      />
-
-      <path
-        d="
-          M180 165
-          C145 129 111 130 94 153
-          C119 169 147 174 180 165Z
-        "
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-
-      <path
-        d="
-          M180 165
-          C215 129 249 130 266 153
-          C241 169 213 174 180 165Z
-        "
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-
-      <path
-        d="
-          M180 166
-          C148 181 132 210 137 239
-          C160 226 174 204 180 166Z
-        "
-        stroke="currentColor"
-        strokeWidth="1.4"
-      />
-
-      <path
-        d="
-          M180 166
-          C212 181 228 210 223 239
-          C200 226 186 204 180 166Z
-        "
-        stroke="currentColor"
-        strokeWidth="1.4"
-      />
-
-      <path
-        d="
-          M137 239
-          C151 261 166 271 180 274
-          C194 271 209 261 223 239
-        "
-        stroke="currentColor"
-        strokeWidth="1.2"
-      />
-
-      <path
-        d="
-          M114 261
-          C136 281 158 291 180 292
-          C202 291 224 281 246 261
-        "
-        stroke="currentColor"
-        strokeWidth="1"
-        opacity=".65"
-      />
-
-      <path
-        d="M86 180H45"
-        stroke="currentColor"
-        strokeWidth=".9"
-        opacity=".5"
-      />
-
-      <path
-        d="M315 180H274"
-        stroke="currentColor"
-        strokeWidth=".9"
-        opacity=".5"
-      />
-
-      <path
-        d="M180 70V37"
-        stroke="currentColor"
-        strokeWidth=".9"
-        opacity=".5"
-      />
-
-      <path
-        d="M180 323V290"
-        stroke="currentColor"
-        strokeWidth=".9"
-        opacity=".5"
-      />
-    </svg>
-  );
-}
-
 export default function FinalCTA() {
   const {
     t
@@ -182,7 +37,7 @@ export default function FinalCTA() {
       ref={
         root
       }
-      className="relative overflow-hidden bg-[#2a1715] text-white"
+      className="relative overflow-hidden bg-texture-dark text-white"
     >
       {/* =====================================
           BACKGROUND IMAGE
@@ -198,36 +53,10 @@ export default function FinalCTA() {
           className="h-full w-full object-cover object-center"
         />
 
-        {/*
-          Much lighter overlay than before.
-
-          Left side stays readable while the image remains
-          clearly visible through the center and right side.
-        */}
-
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(27,13,10,0.88)_0%,rgba(40,19,16,0.68)_42%,rgba(50,23,18,0.42)_72%,rgba(35,16,13,0.24)_100%)]" />
-
-        {/* Soft bottom readability */}
 
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04)_0%,rgba(0,0,0,0.02)_50%,rgba(17,8,6,0.30)_100%)]" />
       </div>
-
-      {/* =====================================
-          SUBTLE SVG ARTWORK
-      ====================================== */}
-
-      <LotusEmblem
-        className="pointer-events-none absolute -right-[115px] top-1/2 hidden w-[470px] -translate-y-1/2 text-[#e1b774] opacity-[0.12] lg:block"
-      />
-
-      <HeritageCorner
-        className="pointer-events-none absolute -bottom-[285px] -left-[190px] hidden w-[520px] text-[#d6a866] opacity-[0.075] xl:block"
-      />
-
-      <HeritageCorner
-        mirror
-        className="pointer-events-none absolute -right-[210px] -top-[270px] hidden w-[520px] text-[#d6a866] opacity-[0.065] xl:block"
-      />
 
       {/* fine top line */}
 
@@ -273,9 +102,7 @@ export default function FinalCTA() {
               )}
             </p>
 
-            <FloralDivider
-              className="mt-8 h-auto w-full max-w-[520px] text-[#d9b177] opacity-45"
-            />
+            <div className="mt-8 h-px w-24 bg-[#d2a66f]/40" />
 
             <div className="mt-7 flex flex-wrap gap-x-8 gap-y-4">
               <div className="flex items-center gap-2 text-[9px] font-extrabold uppercase tracking-[0.1em] text-white/60">

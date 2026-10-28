@@ -267,24 +267,6 @@ export default function RevenuePage() {
       );
     };
 
-  const maximum =
-    Math.max(
-      1,
-
-      ...(
-        data?.daily ||
-        []
-      ).map(
-        (
-          item
-        ) =>
-          Math.max(
-            0,
-            item.gross
-          )
-      )
-    );
-
   return (
     <div className="admin-shell min-h-screen bg-[#f5f0e8]">
       <AdminNav />
@@ -578,83 +560,6 @@ export default function RevenuePage() {
                 )
               )}
             </div>
-
-            <section className="mt-6 border border-[#ddd0c1] bg-[#fffdf8] p-6">
-              <div>
-                <h2 className="font-['Cormorant_Garamond'] text-[28px] font-medium">
-                  Captured revenue
-                  over time
-                </h2>
-
-                <p className="mt-1 text-[10px] leading-5 text-[#756a60]">
-                  Bar height
-                  represents gross
-                  captured amount.
-                  Hover each day to
-                  see refunds and net
-                  collection.
-                </p>
-              </div>
-
-              <div className="flex h-[260px] items-end gap-[5px] overflow-x-auto border-b border-[#ddd0c1] pt-5">
-                {data.daily.map(
-                  (
-                    point
-                  ) => (
-                    <div
-                      key={
-                        point.date
-                      }
-                      title={`${point.date}
-Gross: ${money(
-                        point.gross
-                      )}
-Refunded: ${money(
-                        point.refunded
-                      )}
-Net: ${money(
-                        point.net
-                      )}
-Gateway fee: ${money(
-                        point.gatewayFee
-                      )}`}
-                      className="flex h-full min-w-[20px] flex-1 flex-col items-center justify-end gap-[5px]"
-                    >
-                      <span
-                        className="min-h-[4px] w-full max-w-[30px] bg-[linear-gradient(#8d2638,#4b1520)]"
-                        style={{
-                          height:
-                            `${Math.max(
-                              4,
-
-                              (
-                                point.gross /
-                                maximum
-                              ) *
-                                100
-                            )}%`
-                        }}
-                      />
-
-                      <small className="-mb-4 rotate-[-45deg] text-[7px] text-[#756a60]">
-                        {point.date.slice(
-                          5
-                        )}
-                      </small>
-                    </div>
-                  )
-                )}
-              </div>
-
-              {!data.daily
-                .length && (
-                <p className="p-[25px] text-[12px] text-[#756a60]">
-                  No captured
-                  payments in this
-                  period.
-                </p>
-              )}
-            </section>
 
             <section className="mt-10 border border-[#ddd0c1] bg-[#fffdf8] px-[25px] pb-[15px]">
               <div className="py-6">

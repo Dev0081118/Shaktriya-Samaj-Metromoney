@@ -393,7 +393,7 @@ export default function HowItWorksPage() {
       ref={
         root
       }
-      className="min-h-screen bg-[#F5F0E8]"
+      className="min-h-screen bg-subtle-texture"
     >
       <Header solid />
 
@@ -402,7 +402,7 @@ export default function HowItWorksPage() {
             HERO WITH BACKGROUND IMAGE
         ========================================== */}
 
-        <section className="relative overflow-hidden bg-[#F5F0E8]">
+        <section className="relative overflow-hidden bg-subtle-texture">
           <div
             aria-hidden="true"
             className="absolute inset-0"

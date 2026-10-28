@@ -183,9 +183,15 @@
 }
 
 .app-sidebar.is-expanded
+  .app-sidebar-mark {
+  display: none;
+}
+
+.app-sidebar.is-expanded
   .app-sidebar-brand-copy {
   opacity: 1;
   transform: none;
+  padding-left: 16px;
 }
 
 .app-sidebar-pin {

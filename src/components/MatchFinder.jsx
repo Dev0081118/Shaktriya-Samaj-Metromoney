@@ -218,11 +218,9 @@ export default function MatchFinder() {
           {[
             'Gujarat',
             'Rajasthan',
-            'Maharashtra',
-            'Delhi',
             'Madhya Pradesh',
-            'Uttar Pradesh',
-            'Other'
+            'Maharashtra',
+            'Uttar Pradesh'
           ].map((state) => (
             <option key={state}>
               {state}

@@ -510,7 +510,7 @@ export async function serializeProfileForViewer(
     if (
       !allowed(
         privacy.assetVisibility ||
-          'Private',
+          'AcceptedInterests',
         context
       )
     ) {
@@ -520,12 +520,16 @@ export async function serializeProfileForViewer(
     if (
       !allowed(
         privacy.astrologyVisibility ||
-          'RegisteredMembers',
+          'AcceptedInterests',
         context
       )
     ) {
       delete p.birthDetails;
       delete p.astrology;
+      delete p.horoscope;
+    } else if (p.birthDetails) {
+      delete p.birthDetails.dateOfBirth;
+      delete p.birthDetails.exactDob;
     }
 
     delete p.dateOfBirth;

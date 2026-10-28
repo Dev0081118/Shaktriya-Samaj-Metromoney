@@ -2078,7 +2078,7 @@ function CustomerDetail() {
               'Safety',
               'Payment',
               'Verification',
-              'Relationship Manager'
+              'Live Chat'
             ].map(
               (
                 option
