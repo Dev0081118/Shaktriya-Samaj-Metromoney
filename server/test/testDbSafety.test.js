@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ALLOWED_LOOPBACK_HOSTS,
+  assertSafeConnectionHost,
   assertSafeDatabaseName,
   assertSafeHosts,
   assertSafeTestUri,
@@ -176,4 +177,70 @@ test('safeCleanupDatabase refuses to delete collections if active connection is 
     /Database safety violation/,
     'Expected safeCleanupDatabase to refuse deletion on production DB.'
   );
+});
+
+test('assertSafeConnectionHost accepts loopback connection hosts', () => {
+  assert.equal(assertSafeConnectionHost({ host: '127.0.0.1' }), true);
+  assert.equal(assertSafeConnectionHost({ host: 'localhost' }), true);
+  assert.equal(assertSafeConnectionHost({ host: '::1' }), true);
+  assert.equal(assertSafeConnectionHost({ host: '[::1]' }), true);
+});
+
+test('assertSafeConnectionHost strictly rejects remote connection hosts', () => {
+  assert.throws(
+    () => assertSafeConnectionHost({ host: 'cluster0.mongodb.net' }),
+    /Database safety violation: Active connection host "cluster0.mongodb.net" is not an allowed local loopback host/
+  );
+  assert.throws(
+    () => assertSafeConnectionHost({ host: '192.168.1.50' }),
+    /Database safety violation: Active connection host "192.168.1.50" is not an allowed local loopback host/
+  );
+  assert.throws(
+    () => assertSafeConnectionHost(null),
+    /Database safety violation: No active database connection to validate/
+  );
+});
+
+test('safeCleanupDatabase refuses to delete collections if connection host is remote, even with test database name', async () => {
+  const fakeRemoteMongoose = {
+    connection: {
+      readyState: 1,
+      name: 'ksm_test_database',
+      host: 'remote-database.production.internal',
+      collections: {
+        users: {
+          deleteMany: async () => {
+            throw new Error('Should NEVER be called on remote host!');
+          }
+        }
+      }
+    }
+  };
+
+  await assert.rejects(
+    () => safeCleanupDatabase(fakeRemoteMongoose),
+    /Database safety violation: Active connection host "remote-database.production.internal" is not an allowed local loopback host/,
+    'Expected safeCleanupDatabase to refuse deletion on remote host even with test db name.'
+  );
+});
+
+test('safeCleanupDatabase cleans collections when both host and database name are valid', async () => {
+  let deleted = false;
+  const fakeSafeMongoose = {
+    connection: {
+      readyState: 1,
+      name: 'ksm_test_safe',
+      host: '127.0.0.1',
+      collections: {
+        users: {
+          deleteMany: async () => {
+            deleted = true;
+          }
+        }
+      }
+    }
+  };
+
+  await safeCleanupDatabase(fakeSafeMongoose);
+  assert.equal(deleted, true);
 });

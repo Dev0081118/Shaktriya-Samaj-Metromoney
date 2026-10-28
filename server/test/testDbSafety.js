@@ -124,6 +124,26 @@ export function assertSafeHosts(uri) {
 }
 
 /**
+ * Assert that an active mongoose connection points to an allowed local loopback host.
+ * Throws a descriptive Error if the connection host is remote or unsafe.
+ */
+export function assertSafeConnectionHost(connection) {
+  if (!connection) {
+    throw new Error('Database safety violation: No active database connection to validate.');
+  }
+  const host = connection.host;
+  if (host && typeof host === 'string') {
+    const normalizedHost = host.toLowerCase().trim();
+    if (!ALLOWED_LOOPBACK_HOSTS.has(normalizedHost)) {
+      throw new Error(
+        `Database safety violation: Active connection host "${host}" is not an allowed local loopback host. Test database operations are strictly restricted to local loopback (127.0.0.1, localhost, [::1]).`
+      );
+    }
+  }
+  return true;
+}
+
+/**
  * Extract database name from a MongoDB URI string.
  */
 export function extractDatabaseName(uri) {
@@ -207,8 +227,9 @@ export async function setupTestDatabase(mongoose, { defaultDbPrefix = 'ksm_test'
   let connectionUri;
   let dbName;
 
-  if (process.env.TEST_MONGO_URI) {
-    const rawUri = process.env.TEST_MONGO_URI;
+  const configuredUri = process.env.TEST_MONGO_URI || process.env.TESTMONGOURI;
+  if (configuredUri) {
+    const rawUri = configuredUri;
     try {
       dbName = assertSafeTestUri(rawUri);
     } catch (err) {
@@ -235,8 +256,7 @@ export async function setupTestDatabase(mongoose, { defaultDbPrefix = 'ksm_test'
     const baseUri = database.getUri();
     connectionUri = baseUri.endsWith('/') ? `${baseUri}${targetDbName}` : `${baseUri}/${targetDbName}`;
     try {
-      dbName = extractDatabaseName(connectionUri);
-      assertSafeDatabaseName(dbName);
+      dbName = assertSafeTestUri(connectionUri);
     } catch (err) {
       await database.stop();
       throw err;
@@ -244,11 +264,13 @@ export async function setupTestDatabase(mongoose, { defaultDbPrefix = 'ksm_test'
   }
 
   try {
+    assertSafeTestUri(connectionUri);
     await mongoose.connect(connectionUri);
 
-    // Double check active Mongoose connection name
+    // Double check active Mongoose connection name & host
     const activeDb = mongoose.connection.name;
     assertSafeDatabaseName(activeDb);
+    assertSafeConnectionHost(mongoose.connection);
   } catch (err) {
     if (database) {
       await database.stop();
@@ -270,6 +292,7 @@ export async function safeCleanupDatabase(mongoose) {
 
   const activeDb = mongoose.connection.name;
   assertSafeDatabaseName(activeDb);
+  assertSafeConnectionHost(mongoose.connection);
 
   for (const collection of Object.values(mongoose.connection.collections)) {
     await collection.deleteMany({});

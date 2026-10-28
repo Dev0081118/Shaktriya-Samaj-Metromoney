@@ -166,7 +166,7 @@ export default function AuthPage({ mode }) {
         </Link>
 
         <div className="relative z-[1]">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683f]">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#c99f72]">
             {t(
               'auth.privateBeginning'
             )}

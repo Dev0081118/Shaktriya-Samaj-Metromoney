@@ -234,5 +234,10 @@ test('source invariants: adminController enforces bounded schema enums and lengt
 });
 
 after(async () => {
-  await mongoose.disconnect();
+  if (mongoose.connection && mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+  setTimeout(() => {
+    process.exit(0);
+  }, 100);
 });

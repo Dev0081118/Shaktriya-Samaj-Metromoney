@@ -6,7 +6,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const axePath = path.resolve(__dirname, '../node_modules/axe-core/axe.min.js');
 
-async function injectAndRunAxe(page, options = {}) {
+const WCAG_AA_OPTIONS = {
+  runOnly: {
+    type: 'tag',
+    values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
+  },
+  rules: {
+    // Enforce strict WCAG 2.1 AA color contrast (min 4.5:1 ratio for normal text)
+    'color-contrast': { enabled: true }
+  }
+};
+
+async function injectAndRunAxe(page, options = WCAG_AA_OPTIONS) {
   await page.addScriptTag({ path: axePath });
   const results = await page.evaluate(async (opts) => {
     return window.axe.run(document, opts);
