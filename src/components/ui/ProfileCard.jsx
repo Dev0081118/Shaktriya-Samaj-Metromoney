@@ -17,6 +17,9 @@ import {
 import {
   assetUrl
 } from '../../services/api';
+import {
+  formatCulturalName
+} from '../../utils/formatters';
 
 const displayLocation =
   (
@@ -96,6 +99,7 @@ export default function ProfileCard({
     );
 
   const name =
+    formatCulturalName(profile) ||
     profile.firstName ||
     'Member';
 

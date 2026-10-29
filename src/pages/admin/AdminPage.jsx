@@ -858,11 +858,7 @@ const reviewExcludedKeys = new Set([
   '_id', 'id', '__v', 'userId', 'createdBy', 'updatedBy',
   'password', 'passwordHash', 'tokenVersion', 'resetToken',
   'profilePhotoPublicId', 'publicId', 'cloudinaryPublicId',
-  'privacy', 'biodataPrivacy', 'moderatedBy', 'moderationNotes',
-  'createdAt', 'updatedAt', 'moderatedAt', 'lastActiveAt',
-  'completionPercentage', 'profileId', 'visibility',
-  'lifecycleStatus', 'profilePhoto', 'gallery', 'galleryAssets',
-  'aboutMe', 'firstName', 'middleName', 'lastName'
+  'moderatedBy', 'moderatedAt'
 ]);
 
 const reviewLabel = (key) =>

@@ -30,10 +30,7 @@ const subtitles = {
     'brand.society',
 
   admin:
-    'brand.administration',
-
-  manager:
-    'brand.relationshipDesk'
+    'brand.administration'
 };
 
 export default function AppSidebar({
@@ -264,35 +261,34 @@ export default function AppSidebar({
             }
             aria-label="Royal Rajputana Matrimony"
           >
-            {/* Collapsed sidebar */}
+            {/* Collapsed vs Expanded sidebar mark */}
+            {!(expanded || mobileOpen) ? (
+              <span
+                className="app-sidebar-mark"
+                aria-hidden="true"
+              >
+                <BrandLogo
+                  variant="whiteEmblem"
+                  alt=""
+                  className="mx-auto h-[48px] w-[48px] object-contain"
+                />
+              </span>
+            ) : (
+              <span className="app-sidebar-brand-copy">
+                <BrandLogo
+                  variant="whiteHorizontal"
+                  className="h-[40px] w-[168px] object-contain object-left"
+                />
 
-            <span
-              className="app-sidebar-mark"
-              aria-hidden="true"
-            >
-              <BrandLogo
-                variant="whiteEmblem"
-                alt=""
-                className="mx-auto h-[48px] w-[48px] object-contain"
-              />
-            </span>
-
-            {/* Expanded sidebar */}
-
-            <span className="app-sidebar-brand-copy">
-              <BrandLogo
-                variant="whiteHorizontal"
-                className="h-[40px] w-[168px] object-contain object-left"
-              />
-
-              <small>
-                {t(
-                  subtitles[
-                    variant
-                  ]
-                )}
-              </small>
-            </span>
+                <small>
+                  {t(
+                    subtitles[
+                      variant
+                    ]
+                  )}
+                </small>
+              </span>
+            )}
           </NavLink>
 
           <button

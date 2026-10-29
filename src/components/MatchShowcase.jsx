@@ -153,27 +153,8 @@ export default function MatchShowcase() {
   return (
     <section
       ref={root}
-      className="relative overflow-hidden bg-texture-dark py-20 text-white sm:py-24 lg:py-32"
+      className="relative overflow-hidden bg-parchment-texture border-y border-[#dfd4c4] py-20 text-[#2C1814] sm:py-24 lg:py-32"
     >
-      {/* =====================================
-          ATMOSPHERE
-      ====================================== */}
-
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-[220px] top-[-260px] h-[620px] w-[620px] rounded-full bg-[#681D25]/20 blur-[150px]"
-      />
-
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-[250px] right-[-180px] h-[620px] w-[620px] rounded-full bg-[#AA7A42]/10 blur-[150px]"
-      />
-
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C99F72]/35 to-transparent"
-      />
-
       <div className="page-container relative z-10">
         <div className="grid gap-16 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:gap-24">
 
@@ -186,28 +167,28 @@ export default function MatchShowcase() {
             className="relative max-w-[520px]"
           >
             <div className="flex items-center gap-4">
-              <span className="h-px w-10 bg-[#C49B70]" />
+              <span className="h-px w-10 bg-[#9B6F3E]" />
 
-              <p className="text-[10px] font-bold uppercase tracking-[0.27em] text-[#C99F72]">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.27em] text-[#9B6F3E]">
                 {t(
                   "nav.discover"
                 )}
               </p>
             </div>
 
-            <h2 className="mt-6 max-w-[500px] font-display text-[54px] font-medium leading-[0.92] tracking-[-0.035em] text-white sm:text-[66px] lg:text-[76px]">
+            <h2 className="mt-6 max-w-[500px] font-display text-[54px] font-medium leading-[0.92] tracking-[-0.035em] text-[#3D1418] sm:text-[66px] lg:text-[76px]">
               {t(
                 "home.showcaseTitle"
               )}
             </h2>
 
-            <p className="mt-7 max-w-[470px] text-[13px] leading-7 text-white/55 sm:text-[14px]">
+            <p className="mt-7 max-w-[470px] text-[13px] leading-7 text-[#5C4A42] sm:text-[14px]">
               {t(
                 "home.heritageBody2"
               )}
             </p>
 
-            <div className="mt-8 h-px w-20 bg-[#C99F72]/40" />
+            <div className="mt-8 h-px w-20 bg-[#9B6F3E]/60" />
 
             {/* =================================
                 ACTIVE PROFILE INFORMATION
@@ -219,11 +200,12 @@ export default function MatchShowcase() {
             >
               <div className="flex items-start justify-between gap-5">
                 <div>
-                  <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.17em] text-[#D6AC78]">
+                  <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.17em] text-[#8E5E2C]">
                     <BadgeCheck
                       size={
                         14
                       }
+                      className="text-[#8E5E2C]"
                     />
 
                     {t(
@@ -231,19 +213,19 @@ export default function MatchShowcase() {
                     )}
                   </div>
 
-                  <h3 className="mt-3 font-display text-[40px] font-medium leading-none text-white">
+                  <h3 className="mt-3 font-display text-[40px] font-medium leading-none text-[#2A1517]">
                     {
                       activeProfile.name
                     }
                   </h3>
 
-                  <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-white/55">
+                  <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[12px] font-medium text-[#65534A]">
                     <span className="flex items-center gap-2">
                       <MapPin
                         size={
                           13
                         }
-                        className="text-[#C99F72]"
+                        className="text-[#9B6F3E]"
                       />
 
                       {
@@ -262,7 +244,7 @@ export default function MatchShowcase() {
                         size={
                           13
                         }
-                        className="text-[#C99F72]"
+                        className="text-[#9B6F3E]"
                       />
 
                       {
@@ -272,7 +254,7 @@ export default function MatchShowcase() {
                   </div>
                 </div>
 
-                <div className="pt-1 font-display text-[20px] italic text-white/70">
+                <div className="pt-1 font-display text-[20px] italic text-[#8E5E2C]">
                   {String(
                     activeIndex + 1
                   ).padStart(
@@ -296,7 +278,7 @@ export default function MatchShowcase() {
 
             {/* Divider */}
 
-            <div className="mt-8 h-px w-full bg-gradient-to-r from-[#C99F72]/45 via-white/10 to-transparent" />
+            <div className="mt-8 h-px w-full bg-[#DFD3C3]" />
 
             {/* =================================
                 CONTROLS
@@ -313,7 +295,7 @@ export default function MatchShowcase() {
                     "home.previousProfiles"
                   )
                 }
-                className="group flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white transition duration-200 hover:border-[#C99F72] hover:bg-[#C99F72] hover:text-[#211716]"
+                className="group flex h-12 w-12 items-center justify-center rounded-full border border-[#D5C2AF] bg-[#FFFDF9] text-[#431318] shadow-sm transition duration-200 hover:border-[#681D25] hover:bg-[#681D25] hover:text-white"
               >
                 <ArrowLeft
                   size={
@@ -333,7 +315,7 @@ export default function MatchShowcase() {
                     "home.moreProfiles"
                   )
                 }
-                className="group flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white transition duration-200 hover:border-[#C99F72] hover:bg-[#C99F72] hover:text-[#211716]"
+                className="group flex h-12 w-12 items-center justify-center rounded-full border border-[#D5C2AF] bg-[#FFFDF9] text-[#431318] shadow-sm transition duration-200 hover:border-[#681D25] hover:bg-[#681D25] hover:text-white"
               >
                 <ArrowRight
                   size={
@@ -343,14 +325,14 @@ export default function MatchShowcase() {
                 />
               </button>
 
-              <div className="ml-3 h-px flex-1 bg-white/10" />
+              <div className="ml-3 h-px flex-1 bg-[#DFD3C3]" />
             </div>
 
             <Link
               to={
                 matchesPath
               }
-              className="group mt-10 inline-flex items-center gap-4 border-b border-[#C99F72] pb-2 text-[10px] font-bold uppercase tracking-[0.19em] text-[#D9B17F] transition hover:text-white"
+              className="group mt-10 inline-flex items-center gap-4 border-b-2 border-[#681D25] pb-2 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#681D25] transition hover:border-[#3D1418] hover:text-[#3D1418]"
             >
               {t(
                 "home.viewMatches"
@@ -377,12 +359,12 @@ export default function MatchShowcase() {
 
             <div
               aria-hidden="true"
-              className="absolute left-[10%] top-[3%] hidden h-[88%] w-px bg-gradient-to-b from-transparent via-[#C99F72]/30 to-transparent md:block"
+              className="absolute left-[10%] top-[3%] hidden h-[88%] w-px bg-[#DFD3C3] md:block"
             />
 
             {/* previous image */}
 
-            <div className="absolute left-0 top-[13%] hidden h-[65%] w-[52%] overflow-hidden border border-white/[0.06] opacity-25 md:block">
+            <div className="absolute left-0 top-[13%] hidden h-[65%] w-[52%] overflow-hidden border border-[#D5C2AF] opacity-35 md:block">
               <img
                 src={
                   profiles[
@@ -398,7 +380,7 @@ export default function MatchShowcase() {
                 className="h-full w-full object-cover object-top grayscale"
               />
 
-              <div className="absolute inset-0 bg-[#431318]/70" />
+              <div className="absolute inset-0 bg-[#431318]/40" />
             </div>
 
             {/* main card */}
@@ -408,15 +390,15 @@ export default function MatchShowcase() {
 
               <div
                 aria-hidden="true"
-                className="absolute -right-5 -top-5 h-full w-full border border-[#C99F72]/25"
+                className="absolute -right-5 -top-5 h-full w-full border border-[#C49B70]/40"
               />
 
               <div
                 aria-hidden="true"
-                className="absolute -bottom-4 -left-4 h-[72%] w-[72%] border border-white/[0.07]"
+                className="absolute -bottom-4 -left-4 h-[72%] w-[72%] border border-[#681D25]/15"
               />
 
-              <div className="relative overflow-hidden border border-[#C99F72]/35 bg-[#2A1B19] shadow-[0_40px_100px_rgba(0,0,0,0.34)]">
+              <div className="relative overflow-hidden border border-[#C99F72]/40 bg-[#1F1012] shadow-[0_24px_60px_rgba(40,20,15,0.16)]">
                 <div className="relative aspect-[3/4] overflow-hidden">
                   <img
                     key={
@@ -455,7 +437,7 @@ export default function MatchShowcase() {
                       }
                     </h3>
 
-                    <p className="mt-3 text-[12px] text-white/55">
+                    <p className="mt-3 text-[12px] text-white/70">
                       {
                         activeProfile.age
                       }
@@ -466,7 +448,7 @@ export default function MatchShowcase() {
                         activeProfile.city
                       }
 
-                      <span className="mx-2 text-white/25">
+                      <span className="mx-2 text-white/40">
                         •
                       </span>
 
@@ -482,7 +464,7 @@ export default function MatchShowcase() {
             {/* oversized index */}
 
             <div aria-hidden="true" className="absolute bottom-[-6px] left-[4%] z-20 hidden md:block">
-              <span className="font-display text-[92px] italic leading-none text-[#C99F72]/55">
+              <span className="font-display text-[108px] italic leading-none text-[#C49B70]/30 select-none">
                 {String(
                   activeIndex + 1
                 ).padStart(

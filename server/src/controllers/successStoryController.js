@@ -30,7 +30,9 @@ const requireOwnProfile = async (userId) => {
 export const submitSuccessStory = asyncHandler(async (req, res) => {
   const ownProfile = await requireOwnProfile(req.user.id);
   const partnerOneName = profileName(ownProfile);
-  const partnerTwoName = 'Awaiting verified partner';
+  let partnerTwoName = typeof req.body?.partnerName === 'string' && req.body.partnerName.trim().length >= 2
+    ? req.body.partnerName.trim().slice(0, 100)
+    : 'Awaiting verified partner';
   const { city, title, story } = storyFields(req.body);
   if (title.length < 8 || title.length > 140 || story.length < 80 || story.length > 3000 || city.length > 120) {
     throw new ApiError(400, 'Provide a title (8–140 characters) and story (80–3000 characters).');
@@ -39,14 +41,42 @@ export const submitSuccessStory = asyncHandler(async (req, res) => {
   const marriageDate = parseMarriageDate(req.body?.marriageDate);
   const existing = await SuccessStory.exists({ submittedBy: req.user.id, status: { $in: activeStoryStates } });
   if (existing) throw new ApiError(409, 'You already have an active success story. Edit your existing submission or contact support.');
+
+  const partnerEmail = typeof req.body?.partnerEmail === 'string'
+    ? req.body.partnerEmail.trim().toLowerCase() : '';
+  let partnerUser = null;
+  let partnerConsentStatus = 'NotRequested';
+  let partnerInvitedAt = null;
+  let partnerInviteExpiresAt = null;
+
+  if (partnerEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(partnerEmail)) {
+    const partner = await User.findOne({ email: partnerEmail, role: 'member', status: 'Active', emailVerified: true }).select('_id');
+    if (partner && String(partner._id) !== String(req.user.id)) {
+      const partnerProfile = await MatrimonialProfile.findOne({ userId: partner._id }).select('firstName lastName');
+      const verifiedPartnerName = profileName(partnerProfile);
+      if (verifiedPartnerName.length >= 2) {
+        partnerTwoName = verifiedPartnerName;
+      }
+      partnerUser = partner._id;
+      partnerConsentStatus = 'Pending';
+      partnerInvitedAt = new Date();
+      partnerInviteExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    }
+  }
+
   const record = await SuccessStory.create({
     submittedBy: req.user.id, partnerOneName, partnerTwoName, city, title, story,
     ...(marriageDate ? { marriageDate } : {}), submitterConsent: true,
-    submitterConsentAt: new Date(), partnerConsentStatus: 'NotRequested', status: 'AwaitingConsent',
+    submitterConsentAt: new Date(), partnerConsentStatus,
+    ...(partnerUser ? { partnerUser, partnerInvitedAt, partnerInviteExpiresAt } : {}),
+    status: 'AwaitingConsent',
     photoConsentVerified: false, photo: ''
   });
   await dispatchStoryEvent({ userIds: await storyAdminIds(), type: 'STORY_SUBMITTED', title: 'New member success story', message: 'A new story awaits independent partner consent.', storyId: record._id, url: '/admin/success-stories' });
-  ok(res, { story: { id: record.id, status: record.status, title: record.title } }, 'Your story was received. Invite your partner to verify their identity and consent.', 201);
+  if (partnerUser) {
+    await dispatchStoryEvent({ userIds: [partnerUser], type: 'STORY_INVITATION', title: 'Your consent is requested', message: 'A member has privately invited you to review a success story. Please review before consenting.', storyId: record._id, url: '/story-consent' });
+  }
+  ok(res, { story: { id: record.id, status: record.status, title: record.title } }, 'Your story was received. It is awaiting partner consent before admin review.', 201);
 });
 
 export const mySuccessStories = asyncHandler(async (req, res) => {

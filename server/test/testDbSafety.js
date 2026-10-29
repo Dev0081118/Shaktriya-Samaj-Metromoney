@@ -1,3 +1,13 @@
+import fs from 'node:fs';
+
+if (!process.env.MONGOMS_SYSTEM_BINARY) {
+  if (fs.existsSync('/opt/homebrew/bin/mongod')) {
+    process.env.MONGOMS_SYSTEM_BINARY = '/opt/homebrew/bin/mongod';
+  } else if (fs.existsSync('/usr/local/bin/mongod')) {
+    process.env.MONGOMS_SYSTEM_BINARY = '/usr/local/bin/mongod';
+  }
+}
+
 /**
  * Known system, default, or production-sensitive database names/patterns
  * that must NEVER be touched by any test execution.
@@ -246,6 +256,14 @@ export async function setupTestDatabase(mongoose, { defaultDbPrefix = 'ksm_test'
       ? defaultDbPrefix
       : `${defaultDbPrefix}_test`;
     const targetDbName = `${prefix}_mem_${Date.now()}`;
+    if (!process.env.MONGOMS_SYSTEM_BINARY) {
+      const fs = await import('node:fs');
+      if (fs.existsSync('/opt/homebrew/bin/mongod')) {
+        process.env.MONGOMS_SYSTEM_BINARY = '/opt/homebrew/bin/mongod';
+      } else if (fs.existsSync('/usr/local/bin/mongod')) {
+        process.env.MONGOMS_SYSTEM_BINARY = '/usr/local/bin/mongod';
+      }
+    }
     const { MongoMemoryServer } = await import('mongodb-memory-server');
     database = await MongoMemoryServer.create({
       instance: {

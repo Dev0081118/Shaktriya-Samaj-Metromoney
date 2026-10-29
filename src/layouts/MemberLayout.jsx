@@ -23,6 +23,7 @@ import {
   api,
   assetUrl
 } from '../services/api';
+import { formatCulturalName } from '../utils/formatters';
 
 const outlineButtonClass =
   'inline-flex min-h-[45px] items-center justify-center gap-[10px] rounded-[99px] border border-[#cbb8a4] bg-transparent px-5 text-[12px] font-extrabold text-[#431318] transition duration-200 hover:bg-white';
@@ -223,6 +224,7 @@ export default function MemberLayout() {
             user?.email?.[0]?.toUpperCase(),
 
           primary:
+            formatCulturalName(profile) ||
             profile?.firstName ||
             t(
               'member.completeProfile'

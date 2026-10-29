@@ -15,6 +15,7 @@ import {
 } from 'react-router-dom';
 
 import FamilyAssetsDisplay from '../components/FamilyAssetsDisplay';
+import { formatCulturalName } from '../utils/formatters';
 
 import {
   api,
@@ -401,6 +402,7 @@ export default function BiodataPage() {
 
         return {
           fullName:
+            formatCulturalName(profile) ||
             joinValues(
               [
                 profile.firstName,

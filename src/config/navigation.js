@@ -16,7 +16,6 @@ import {
   Settings,
   ShieldCheck,
   Stethoscope,
-  UserCog,
   UserRound,
   UsersRound,
   Zap
@@ -388,21 +387,6 @@ export const adminNavigation = [
       'admin.groups.platform',
 
     links: [
-      {
-        to:
-          '/admin/users',
-
-        labelKey:
-          'admin.staffRoles',
-
-        roles: [
-          'super_admin'
-        ],
-
-        icon:
-          UserCog
-      },
-
       {
         to:
           '/admin/settings',

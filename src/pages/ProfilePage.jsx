@@ -21,6 +21,7 @@ import {
 } from 'react-router-dom';
 
 import FamilyAssetsDisplay from '../components/FamilyAssetsDisplay';
+import { formatCulturalName } from '../utils/formatters';
 
 import {
   useToast
@@ -1011,6 +1012,7 @@ export default function ProfilePage({
     ]);
 
   const fullName =
+    formatCulturalName(profile) ||
     joinValues(
       [
         profile.firstName,

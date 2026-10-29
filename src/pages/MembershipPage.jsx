@@ -479,7 +479,7 @@ export default function MembershipPage({
         </header>
 
         <div className="mx-auto grid max-w-[1180px] grid-cols-1 gap-6 md:grid-cols-3">
-          {plans.map(
+          {plans.slice(0, 3).map(
             (
               plan
             ) => {
@@ -543,9 +543,10 @@ export default function MembershipPage({
                     )
                       .filter(
                         ([
-                          ,
+                          key,
                           value
                         ]) =>
+                          key !== 'relationshipManager' &&
                           value !==
                             false &&
                           value !==

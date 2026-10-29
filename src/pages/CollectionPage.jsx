@@ -12,7 +12,7 @@ import {
   api,
   assetUrl
 } from '../services/api';
-import { formatDate } from '../utils/formatters';
+import { formatDate, formatCulturalName } from '../utils/formatters';
 
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
@@ -327,12 +327,7 @@ export default function CollectionPage({
                   {profile ? (
                     <>
                       <strong className="block font-['Cormorant_Garamond'] text-[22px] font-medium">
-                        {
-                          profile.firstName
-                        }{' '}
-                        {
-                          profile.lastName
-                        }
+                        {formatCulturalName(profile) || `${profile.firstName} ${profile.lastName || ''}`}
                       </strong>
 
                       <small className="mt-[3px] block text-[10px] text-[#756a60]">

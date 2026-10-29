@@ -32,6 +32,12 @@ export default function LiveChatWidget() {
     }
   }, [messages, open]);
 
+  useEffect(() => {
+    const handleOpen = () => setOpen(true);
+    window.addEventListener('ksm:open-live-chat', handleOpen);
+    return () => window.removeEventListener('ksm:open-live-chat', handleOpen);
+  }, []);
+
   const sendLiveMessage = async (textToSend) => {
     const text = (textToSend || message).trim();
     if (!text || sending) return;
@@ -95,6 +101,7 @@ export default function LiveChatWidget() {
       {!open && (
         <button
           type="button"
+          data-live-chat-trigger
           onClick={() => setOpen(true)}
           aria-label="Open Live Chat Concierge"
           className="group flex items-center gap-2.5 rounded-full bg-[#681d25] px-4 py-3.5 text-white shadow-[0_12px_28px_rgba(104,29,37,0.38)] transition-all duration-300 hover:bg-[#52161d] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#c99f72]"

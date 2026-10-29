@@ -64,3 +64,39 @@ export const formatCurrency = (
     Number(value || 0)
   );
 };
+
+export const formatCulturalName = (profile = {}) => {
+  if (!profile) return '';
+  const first = (profile.firstName || profile.name || '').trim();
+  const middle = (profile.middleName || '').trim();
+  const last = (profile.lastName || '').trim();
+
+  if (!first) return last || '';
+
+  const gender = (profile.gender || profile.basicDetails?.gender || '').toLowerCase();
+  const profileFor = (profile.profileFor || profile.basicDetails?.profileFor || '').toLowerCase();
+  const isFemale = gender === 'female' || profileFor === 'daughter' || profileFor === 'sister';
+  const isMale = gender === 'male' || profileFor === 'son' || profileFor === 'brother';
+
+  if (isFemale) {
+    let formattedFirst = first;
+    if (!/\bba\b/i.test(first) && !first.toLowerCase().endsWith('ba')) {
+      formattedFirst = `${first} Ba`;
+    }
+    const parts = [formattedFirst, middle, last].filter(Boolean);
+    return parts.join(' ');
+  }
+
+  if (isMale) {
+    let formattedFirst = first;
+    const hasSinh = /\b(sinh|singh)\b/i.test(`${first} ${middle} ${last}`);
+    if (!hasSinh) {
+      formattedFirst = `${first} Sinh`;
+    }
+    const parts = [formattedFirst, middle, last].filter(Boolean);
+    return parts.join(' ');
+  }
+
+  const parts = [first, middle, last].filter(Boolean);
+  return parts.join(' ');
+};

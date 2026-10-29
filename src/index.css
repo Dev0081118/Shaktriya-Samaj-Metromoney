@@ -121,6 +121,16 @@ a {
   background-size: 20px 20px;
 }
 
+.bg-parchment-texture {
+  background-color: #f7f1e7;
+  background-image:
+    linear-gradient(rgba(247, 241, 231, 0.38), rgba(247, 241, 231, 0.38)),
+    url('/assets/royal-sandstone-parchment.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 /* -------------------------------------------------
    Global loading state
 -------------------------------------------------- */

@@ -482,39 +482,47 @@ export async function serializeProfileForViewer(
     ) {
       delete p.family;
       delete p.paternalFamily;
-    } else if (
-      p.family &&
-      !allowed(
-        privacy
-          .siblingDetailsVisibility ||
-          'AcceptedInterests',
-        context
-      )
-    ) {
-      delete p.family
-        .siblingDetails;
     }
 
-    if (
-      !allowed(
-        privacy
-          .maternalFamilyVisibility ||
-          'AcceptedInterests',
-        context
-      )
-    ) {
+    if (!context.accepted && !context.matched) {
+      delete p.familyAssets;
       delete p.maternalFamily;
       delete p.maternalLineage;
-    }
+      if (p.family) {
+        delete p.family.siblingDetails;
+      }
+    } else {
+      if (
+        !allowed(
+          privacy.assetVisibility ||
+            'AcceptedInterests',
+          context
+        )
+      ) {
+        delete p.familyAssets;
+      }
 
-    if (
-      !allowed(
-        privacy.assetVisibility ||
-          'AcceptedInterests',
-        context
-      )
-    ) {
-      delete p.familyAssets;
+      if (
+        !allowed(
+          privacy.maternalFamilyVisibility ||
+            'AcceptedInterests',
+          context
+        )
+      ) {
+        delete p.maternalFamily;
+        delete p.maternalLineage;
+      }
+
+      if (
+        p.family &&
+        !allowed(
+          privacy.siblingDetailsVisibility ||
+            'AcceptedInterests',
+          context
+        )
+      ) {
+        delete p.family.siblingDetails;
+      }
     }
 
     if (
@@ -530,9 +538,11 @@ export async function serializeProfileForViewer(
     } else if (p.birthDetails) {
       delete p.birthDetails.dateOfBirth;
       delete p.birthDetails.exactDob;
+      delete p.birthDetails.horoscope;
     }
 
     delete p.dateOfBirth;
+    delete p.horoscope;
 
     if (
       !context.accepted &&

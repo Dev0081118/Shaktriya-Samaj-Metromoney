@@ -728,7 +728,10 @@ export const revenue =
       const [
         summary,
         daily,
-        byPlan
+        byPlan,
+        boostSummary,
+        boostDaily,
+        byBoostPack
       ] =
         await Promise.all([
           Payment.aggregate([
@@ -844,11 +847,118 @@ export const revenue =
                   'plan'
               }
             }
+          ]),
+
+          BoostOrder.aggregate([
+            {
+              $match:
+                base
+            },
+            {
+              $group: {
+                _id:
+                  '$status',
+
+                amount: {
+                  $sum:
+                    '$amount'
+                },
+
+                count: {
+                  $sum:
+                    1
+                }
+              }
+            }
+          ]),
+
+          BoostOrder.aggregate([
+            {
+              $match: {
+                ...base,
+
+                status:
+                  'Paid',
+
+                verifiedAt: {
+                  $ne:
+                    null
+                }
+              }
+            },
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format:
+                      '%Y-%m-%d',
+
+                    date:
+                      '$createdAt'
+                  }
+                },
+
+                amount: {
+                  $sum:
+                    '$amount'
+                },
+
+                count: {
+                  $sum:
+                    1
+                }
+              }
+            },
+            {
+              $sort: {
+                _id:
+                  1
+              }
+            }
+          ]),
+
+          BoostOrder.aggregate([
+            {
+              $match: {
+                ...base,
+
+                status:
+                  'Paid',
+
+                verifiedAt: {
+                  $ne:
+                    null
+                }
+              }
+            },
+            {
+              $group: {
+                _id:
+                  '$packNameSnapshot',
+
+                amount: {
+                  $sum:
+                    '$amount'
+                },
+
+                count: {
+                  $sum:
+                    1
+                }
+              }
+            }
           ])
         ]);
 
-      const paid =
+      const paidPayment =
         summary.find(
+          (item) =>
+            item._id ===
+            'Paid'
+        );
+
+      const paidBoost =
+        boostSummary.find(
           (item) =>
             item._id ===
             'Paid'
@@ -861,12 +971,76 @@ export const revenue =
             'Refunded'
         );
 
-      const failed =
+      const failedPayment =
         summary.find(
           (item) =>
             item._id ===
             'Failed'
         );
+
+      const failedBoost =
+        boostSummary.find(
+          (item) =>
+            item._id ===
+            'Failed'
+        );
+
+      const totalCaptured =
+        (paidPayment?.amount || 0) + (paidBoost?.amount || 0);
+
+      const totalRefunded =
+        refunded?.amount || 0;
+
+      const netCaptured =
+        totalCaptured - totalRefunded;
+
+      const paymentCount =
+        (paidPayment?.count || 0) + (paidBoost?.count || 0);
+
+      const failedCount =
+        (failedPayment?.count || 0) + (failedBoost?.count || 0);
+
+      const dailyMap = new Map();
+      for (const item of daily) {
+        dailyMap.set(item._id, {
+          date: item._id,
+          amount: item.amount,
+          count: item.count
+        });
+      }
+      for (const item of boostDaily) {
+        if (dailyMap.has(item._id)) {
+          const existing = dailyMap.get(item._id);
+          existing.amount += item.amount;
+          existing.count += item.count;
+        } else {
+          dailyMap.set(item._id, {
+            date: item._id,
+            amount: item.amount,
+            count: item.count
+          });
+        }
+      }
+      const combinedDaily = Array.from(dailyMap.values()).sort((a, b) =>
+        a.date.localeCompare(b.date)
+      );
+
+      const planRevenue = byPlan.map((item) => ({
+        plan:
+          item.plan[0]?.name ||
+          'Historical plan',
+        amount:
+          item.amount,
+        count:
+          item.count
+      }));
+      for (const b of byBoostPack) {
+        planRevenue.push({
+          plan: b._id ? `Boost Pack: ${b._id}` : 'Boost Pack',
+          amount: b.amount,
+          count: b.count
+        });
+      }
 
       ok(
         res,
@@ -876,63 +1050,13 @@ export const revenue =
           to:
             now,
 
-          totalCaptured:
-            paid?.amount ||
-            0,
-
-          totalRefunded:
-            refunded
-              ?.amount ||
-            0,
-
-          netCaptured:
-            (
-              paid?.amount ||
-              0
-            ) -
-            (
-              refunded
-                ?.amount ||
-              0
-            ),
-
-          paymentCount:
-            paid?.count ||
-            0,
-
-          failedCount:
-            failed?.count ||
-            0,
-
-          daily:
-            daily.map(
-              (item) => ({
-                date:
-                  item._id,
-
-                amount:
-                  item.amount,
-
-                count:
-                  item.count
-              })
-            ),
-
-          revenueByPlan:
-            byPlan.map(
-              (item) => ({
-                plan:
-                  item.plan[0]
-                    ?.name ||
-                  'Historical plan',
-
-                amount:
-                  item.amount,
-
-                count:
-                  item.count
-              })
-            )
+          totalCaptured,
+          totalRefunded,
+          netCaptured,
+          paymentCount,
+          failedCount,
+          daily: combinedDaily,
+          revenueByPlan: planRevenue
         }
       );
     }
@@ -2098,6 +2222,16 @@ export const moderate =
             )
           : '';
 
+      if (
+        req.params.action === 'changes' &&
+        (!notes || notes.trim().length < 5)
+      ) {
+        throw new ApiError(
+          400,
+          'Moderation notes explaining the required changes are required.'
+        );
+      }
+
       const record =
         await MatrimonialProfile.findByIdAndUpdate(
           req.params.id,
@@ -2201,11 +2335,14 @@ export const moderate =
               title,
 
             template:
-              'profile-moderation',
+              status === 'changes_required'
+                ? 'changes-requested'
+                : 'profile-moderation',
 
             data: {
               status,
-              notes
+              notes,
+              reason: notes
             }
           }
         )

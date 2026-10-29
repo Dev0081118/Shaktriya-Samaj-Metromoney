@@ -17,8 +17,8 @@ import BrandLogo from './BrandLogo';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const legalLinks = [
-  { to: '/safety', labelKey: 'public.safety', defaultLabel: 'Safety' },
   { to: '/privacy', labelKey: 'public.privacy', defaultLabel: 'Privacy Policy' },
+  { to: '/safety', labelKey: 'public.safety', defaultLabel: 'Safety' },
   { to: '/terms', labelKey: 'public.terms', defaultLabel: 'Terms & Conditions' },
   { to: '/refunds', labelKey: 'public.refunds', defaultLabel: 'Refund Policy' },
   { to: '/submit-success-story', labelKey: 'public.tellStory', defaultLabel: 'Tell Your Success Story' }

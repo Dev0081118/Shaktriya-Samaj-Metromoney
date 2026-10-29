@@ -885,7 +885,7 @@ export default function DiscoverPage() {
       <header className="relative -mx-3 -mt-3 mb-8 overflow-hidden border-b border-[#d8c8b7] bg-subtle-texture max-[767px]:mx-0">
         <div
           aria-hidden="true"
-          className="absolute inset-y-0 right-0 w-[46%] bg-[linear-gradient(90deg,#f7f3ec,transparent),url('/assets/member/discover-header.webp')] bg-cover bg-center max-[767px]:w-full max-[767px]:opacity-20"
+          className="absolute inset-y-0 right-0 w-[46%] bg-[url('/assets/member/discover-header.webp')] bg-cover bg-center max-[767px]:w-full max-[767px]:hidden rounded-l-3xl border-l border-[#ddd0c1]"
         />
 
         <div className="relative max-w-[780px] px-[clamp(24px,5vw,48px)] py-[clamp(40px,6vw,68px)]">

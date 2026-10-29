@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { api } from '../services/api';
 
-const initial = { city: '', title: '', story: '', marriageDate: '', submitterConsent: false };
+const initial = { city: '', title: '', story: '', marriageDate: '', partnerName: '', partnerEmail: '', submitterConsent: false };
 const inputClass = 'w-full rounded-lg border border-[#dcc9b3] bg-white px-4 py-3 text-sm text-[#291c19] outline-none transition focus:border-[#681d25] focus:ring-2 focus:ring-[#681d25]/10';
 const labelClass = 'grid gap-2 text-sm font-semibold text-[#392720]';
 const statusLabel = { AwaitingConsent: 'Awaiting partner consent', PendingReview: 'Awaiting admin review', ChangesRequested: 'Changes requested', Approved: 'Approved', Rejected: 'Rejected', Withdrawn: 'Withdrawn' };
@@ -82,10 +82,37 @@ export default function SubmitStoryPage() {
           <form onSubmit={submit} className="grid gap-6 rounded-xl border border-[#ddc9b2] bg-[#fffdf9] p-6 shadow-sm sm:p-9" aria-label="Share your success story">
             <div className="flex items-center gap-3"><BookHeart className="text-[#681d25]" aria-hidden="true"/><h2 className="font-display text-3xl">Your experience</h2></div>
             <div className="grid gap-5 sm:grid-cols-2">
-              <p className="text-sm text-[#756a60]">Your identity is taken from your registered matrimonial profile. Your partner’s name is resolved from their verified account when you send the consent invitation.</p>
-              
               <label className={labelClass}>City (optional)<input className={inputClass} maxLength={120} value={form.city} onChange={(e) => update('city', e.target.value)}/></label>
               <label className={labelClass}>Marriage date (optional)<input className={inputClass} type="date" max={new Date().toISOString().slice(0,10)} value={form.marriageDate} onChange={(e) => update('marriageDate', e.target.value)}/></label>
+            </div>
+            <div className="rounded-lg border border-[#ddc9b2]/80 bg-[#fdf9f4] p-5">
+              <h3 className="font-display text-xl text-[#431318]">Partner Details</h3>
+              <p className="mt-1 text-xs text-[#756a60]">
+                Enter your partner's name and registered email to connect their account for private consent.
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className={labelClass}>
+                  Partner's Full Name
+                  <input
+                    className={inputClass}
+                    maxLength={100}
+                    placeholder="e.g. Rajveer Sinh Jadeja / Nandini Ba"
+                    value={form.partnerName}
+                    onChange={(e) => update('partnerName', e.target.value)}
+                  />
+                </label>
+                <label className={labelClass}>
+                  Partner's Registered Email
+                  <input
+                    className={inputClass}
+                    type="email"
+                    maxLength={120}
+                    placeholder="partner@example.com"
+                    value={form.partnerEmail}
+                    onChange={(e) => update('partnerEmail', e.target.value)}
+                  />
+                </label>
+              </div>
             </div>
             <label className={labelClass}>Story headline<input className={inputClass} required minLength={8} maxLength={140} placeholder="How our families came together" value={form.title} onChange={(e) => update('title', e.target.value)}/><span className="text-xs font-normal text-[#796b62]">8–140 characters</span></label>
             <label className={labelClass}>Tell us your genuine story<textarea className={`${inputClass} min-h-48 resize-y`} required minLength={80} maxLength={3000} value={form.story} onChange={(e) => update('story', e.target.value)} placeholder="Share your experience in your own words, including how your introduction happened and what mattered to both families."/><span className="text-xs font-normal text-[#796b62]">{form.story.length}/3000 characters (minimum 80)</span></label>

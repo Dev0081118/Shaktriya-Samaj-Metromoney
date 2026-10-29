@@ -5,7 +5,7 @@ import {
 
 import {
   ArrowRight,
-  Headphones,
+  MessageCircle,
   Rocket,
   ShieldCheck,
   Sparkles
@@ -41,12 +41,6 @@ export default function MemberBenefitsPage() {
     useState(null);
 
   const [
-    manager,
-    setManager
-  ] =
-    useState(null);
-
-  const [
     loading,
     setLoading
   ] =
@@ -60,27 +54,14 @@ export default function MemberBenefitsPage() {
       const timer =
         window.setTimeout(
           () => {
-            Promise.all([
-              api(
-                '/profile-boost'
-              ),
-
-              api(
-                '/relationship-manager'
-              )
-            ])
+            api(
+              '/profile-boost'
+            )
               .then(
-                ([
-                  boostResult,
-                  managerResult
-                ]) => {
+                (boostResult) => {
                   setWallet(
                     boostResult.data
                       .wallet
-                  );
-
-                  setManager(
-                    managerResult.data
                   );
                 }
               )
@@ -234,94 +215,35 @@ export default function MemberBenefitsPage() {
           </Link>
         </article>
 
-        {/* Relationship manager */}
+        {/* Live Support & Concierge */}
 
         <article className="relative overflow-hidden border border-[#ddd0c1] bg-[#fffdf8] p-[30px]">
           <span className="grid h-11 w-11 place-items-center rounded-full bg-[#681d250a] text-[#681d25]">
-            <Headphones
-              size={
-                19
-              }
+            <MessageCircle
+              size={19}
             />
           </span>
 
           <p className="mt-6 text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#91683f]">
-            Assisted service
+            Direct assistance
           </p>
 
           <h2 className="mt-1 font-['Cormorant_Garamond'] text-[36px] font-medium text-[#2c1a18]">
-            Relationship manager
+            Live Concierge Support
           </h2>
 
-          {manager?.included ? (
-            manager.assignment ? (
-              <>
-                <p className="my-5 text-[11px] leading-6 text-[#756a60]">
-                  Your assigned
-                  relationship manager is
-                  available to assist with
-                  your matrimonial
-                  journey.
-                </p>
+          <p className="my-5 text-[11px] leading-6 text-[#756a60]">
+            Connect directly with platform administration for personalized guidance on profile verification, Gotra consultation, and priority member support.
+          </p>
 
-                <div className="border border-[#eee4d8] bg-[#fcf8f2] p-4">
-                  <strong className="block text-[12px] text-[#431318]">
-                    {
-                      manager.assignment
-                        .manager
-                        ?.email
-                    }
-                  </strong>
-
-                  {manager.assignment
-                    .manager
-                    ?.phone && (
-                    <a
-                      href={`tel:${manager.assignment.manager.phone}`}
-                      className="mt-2 inline-block text-[11px] font-extrabold text-[#681d25]"
-                    >
-                      {
-                        manager.assignment
-                          .manager
-                          .phone
-                      }
-                    </a>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="my-5 text-[11px] leading-6 text-[#756a60]">
-                Your Assisted benefit is
-                active. The team will
-                assign your relationship
-                manager shortly.
-              </p>
-            )
-          ) : (
-            <>
-              <p className="my-5 text-[11px] leading-6 text-[#756a60]">
-                Personal relationship
-                manager guidance is
-                available with Assisted
-                membership.
-              </p>
-
-              <Link
-                to="/membership"
-                className={
-                  outlineButtonClass
-                }
-              >
-                View Assisted
-
-                <ArrowRight
-                  size={
-                    14
-                  }
-                />
-              </Link>
-            </>
-          )}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('ksm:open-live-chat'))}
+            className={outlineButtonClass}
+          >
+            Open Live Concierge
+            <ArrowRight size={14} />
+          </button>
         </article>
       </div>
 

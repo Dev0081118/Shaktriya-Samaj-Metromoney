@@ -38,7 +38,8 @@ import {
 } from '../services/api';
 
 import {
-  formatDate
+  formatDate,
+  formatCulturalName
 } from '../utils/formatters';
 
 import {
@@ -606,6 +607,7 @@ export default function DashboardPage() {
               'member.greeting',
               {
                 name:
+                  formatCulturalName(data.profile) ||
                   data.profile
                     .firstName
               }

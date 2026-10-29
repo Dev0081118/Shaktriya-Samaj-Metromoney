@@ -434,7 +434,7 @@ export default function AboutPage() {
           <div className="page-container">
             <div
               data-about-reveal
-              className="max-w-[760px]"
+              className="max-w-[820px]"
             >
               <p className="text-[9px] font-extrabold uppercase tracking-[0.25em] text-[#91683F]">
                 {t("aboutPage.principles.eyebrow")}
@@ -443,6 +443,10 @@ export default function AboutPage() {
               <h2 className="mt-5 font-display text-[50px] font-medium leading-[0.95] tracking-[-0.03em] text-[#2B1A18] sm:text-[62px] lg:text-[70px]">
                 {t("aboutPage.principles.title")}
               </h2>
+
+              <p className="mt-6 border-l-2 border-[#AA7A42] pl-6 font-display text-[20px] italic leading-[1.4] text-[#681D25]">
+                Modern tools, human pace. Software should never replace judgement, family, conversation or independent verification.
+              </p>
             </div>
 
             <div className="mt-16 border-t border-[#D6C8B8]">
@@ -509,19 +513,23 @@ export default function AboutPage() {
                 </p>
 
                 <h2 className="mt-5 max-w-[580px] font-display text-[50px] leading-[0.96] tracking-[-0.03em] text-[#FFF9F3] sm:text-[62px]">
-                  {t("aboutPage.balance.title")}
+                  Modern tools, human pace.
                 </h2>
+
+                <p className="mt-6 border-l-2 border-[#DAB47E] pl-6 font-display text-[22px] italic leading-[1.4] text-[#E7D6BE]">
+                  Technology does, people decide.
+                </p>
               </div>
 
               <div
                 data-about-reveal
                 className="lg:border-l lg:border-white/15 lg:pl-12"
               >
-                <p className="max-w-[610px] text-[14px] leading-8 text-white/65">
+                <p className="max-w-[610px] text-[15px] leading-8 text-white/80">
                   {t("aboutPage.balance.body1")}
                 </p>
 
-                <p className="mt-7 max-w-[610px] text-[14px] leading-8 text-white/65">
+                <p className="mt-7 max-w-[610px] text-[15px] leading-8 text-[#E2BB86]">
                   {t("aboutPage.balance.body2")}
                 </p>
 
