@@ -141,6 +141,16 @@ a {
   background-position: center top;
 }
 
+.bg-parchment-lotus {
+  background-color: #f5eedf;
+  background-image:
+    radial-gradient(circle at center, rgba(250, 246, 238, 0.45) 0%, rgba(242, 232, 218, 0.20) 100%),
+    url('/assets/royal-parchment-lotus-frame.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .bg-parchment-texture {
   background-color: #f7f1e7;
   background-image:
