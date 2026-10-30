@@ -201,6 +201,19 @@ a {
   }
 }
 
+@keyframes typewriter-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-typewriter-cursor {
+  animation: typewriter-blink 0.8s steps(2, start) infinite;
+}
+
 /* -------------------------------------------------
    Accessibility / reduced motion
 -------------------------------------------------- */
@@ -213,7 +226,8 @@ a {
     scroll-behavior: auto;
   }
 
-  .page-skeleton {
+  .page-skeleton,
+  .animate-typewriter-cursor {
     animation: none;
   }
 }

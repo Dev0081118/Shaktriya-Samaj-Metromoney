@@ -8,8 +8,10 @@ import {
 } from "lucide-react";
 
 import {
+  useEffect,
   useLayoutEffect,
-  useRef
+  useRef,
+  useState
 } from "react";
 
 import {
@@ -27,6 +29,79 @@ import {
 import {
   useReducedMotion
 } from "../motion/useReducedMotion";
+
+function TypewriterManifestoQuote({ text, triggerRef, reducedMotion }) {
+  const [charIndex, setCharIndex] = useState(reducedMotion ? text.length : 0);
+  const [hasTriggered, setHasTriggered] = useState(false);
+
+  useEffect(() => {
+    if (reducedMotion) {
+      setCharIndex(text.length);
+      return;
+    }
+
+    setCharIndex(0);
+
+    if (!hasTriggered) return;
+
+    let animationFrameId;
+
+    const startDelay = setTimeout(() => {
+      let lastTime = performance.now();
+      let current = 0;
+      const charDelay = 36; // Buttery smooth, slightly slower dignified pace
+
+      const tick = (now) => {
+        const delta = now - lastTime;
+        if (delta >= charDelay) {
+          const advance = Math.min(1, Math.floor(delta / charDelay));
+          current = Math.min(text.length, current + advance);
+          setCharIndex(current);
+          lastTime = now;
+        }
+
+        if (current < text.length) {
+          animationFrameId = requestAnimationFrame(tick);
+        }
+      };
+
+      animationFrameId = requestAnimationFrame(tick);
+    }, 450);
+
+    return () => {
+      clearTimeout(startDelay);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+  }, [text, hasTriggered, reducedMotion]);
+
+  useEffect(() => {
+    if (reducedMotion || hasTriggered || !triggerRef?.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setHasTriggered(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.25 }
+    );
+
+    observer.observe(triggerRef.current);
+    return () => observer.disconnect();
+  }, [triggerRef, hasTriggered, reducedMotion]);
+
+  const displayed = text.slice(0, charIndex);
+
+  return (
+    <span className="relative">
+      <span className="sr-only">&ldquo;{text}&rdquo;</span>
+      <span aria-hidden="true">
+        &ldquo;{displayed}&rdquo;
+      </span>
+    </span>
+  );
+}
 
 export default function AboutPage() {
   const rootRef = useRef(null);
@@ -209,137 +284,113 @@ export default function AboutPage() {
       ref={rootRef}
       className="min-h-screen overflow-x-hidden bg-subtle-texture text-[#191614]"
     >
-      <Header solid />
+      <Header />
 
       <main>
         {/* ========================================
-            HERO
+            HERO: MINIMALIST CINEMATIC PALACE VISTA
         ========================================= */}
+        <section className="relative overflow-hidden h-screen min-h-[640px] max-h-[1050px] flex flex-col justify-between text-white border-b border-[#C5A059]/40 bg-[#0a0507]">
+          {/* Panoramic Rajput Kingdom Background with Subtle Parallax */}
+          <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
+            <img
+              ref={heroImageRef}
+              src="/assets/about-panoramic-hero.jpg"
+              alt="Panoramic Royal Rajput Kingdom at Twilight"
+              className="h-full w-full object-cover object-center scale-105 will-change-transform"
+            />
 
-        <section className="relative overflow-hidden bg-subtle-texture pt-28 sm:pt-32 lg:pt-36">
+            {/* Ultra-Light Cinematic Vignettes (Pure Vista Visibility) */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.4)_100%)]" />
+          </div>
+
+          {/* Top Gold Hairline Border */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -left-40 top-20 h-[460px] w-[460px] rounded-full bg-[#C49B70]/15 blur-[140px]"
+            className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#D5A76E]/50 to-transparent"
           />
 
+          {/* Bottom Gold Hairline Border */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -right-44 bottom-[-180px] h-[520px] w-[520px] rounded-full bg-[#681D25]/7 blur-[150px]"
+            className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#D5A76E]/50 to-transparent"
           />
 
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-0 top-0 h-px bg-[#D8C4AD]"
-          />
+          {/* Top spacer to balance floating Header */}
+          <div className="h-20 sm:h-24 shrink-0" aria-hidden="true" />
 
-          <div className="page-container relative z-10">
-            <div className="grid min-h-[690px] items-center gap-14 pb-20 lg:grid-cols-[1fr_0.92fr] lg:gap-24 lg:pb-28">
-              {/* LEFT */}
-
-              <div className="max-w-[760px]">
-                <div
-                  data-about-hero
-                  className="flex items-center gap-4"
-                >
-                  <span className="h-px w-10 bg-[#AA7A42]" />
-
-                  <p className="text-[9px] font-extrabold uppercase tracking-[0.3em] text-[#91683F]">
-                    {t("aboutPage.hero.eyebrow")}
-                  </p>
-                </div>
-
-                <h1
-                  data-about-hero
-                  className="mt-7 max-w-[760px] font-display text-[52px] font-medium leading-[0.92] tracking-[-0.035em] text-[#2B1A18] sm:text-[68px] lg:text-[82px]"
-                >
-                  {t("aboutPage.hero.title")}
-                </h1>
-
-                <p
-                  data-about-hero
-                  className="mt-8 max-w-[620px] text-[14px] leading-8 text-[#6D5D54] sm:text-[15px]"
-                >
-                  {t("aboutPage.hero.body")}
-                </p>
-
-                <div
-                  data-about-hero
-                  className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-4 border-t border-[#D7C5B4] pt-7"
-                >
-                  <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#91683F]">
-                    {t("aboutPage.hero.values.heritage")}
-                  </span>
-
-                  <span className="h-1 w-1 rounded-full bg-[#AA7A42]/50" />
-
-                  <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#91683F]">
-                    {t("aboutPage.hero.values.choice")}
-                  </span>
-
-                  <span className="h-1 w-1 rounded-full bg-[#AA7A42]/50" />
-
-                  <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#91683F]">
-                    {t("aboutPage.hero.values.dignity")}
-                  </span>
-                </div>
-              </div>
-
-              {/* =====================================
-                  RIGHT IMAGE
-
-                  IMPORTANT:
-                  SVG artwork is behind the image.
-              ====================================== */}
-
-              <div
-                data-about-hero
-                className="relative mx-auto w-full max-w-[510px] lg:mx-0"
-              >
-                <div
-                  aria-hidden="true"
-                  className="absolute -left-5 top-8 z-[2] hidden h-[88%] w-full border border-[#B9966E]/35 sm:block"
-                />
-
-                {/* Photo stays above everything */}
-
-                <div className="relative z-10 overflow-hidden border border-[#D4C1AB] bg-[#E7D8C7] shadow-[0_35px_90px_rgba(72,44,32,0.16)]">
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <img
-                      ref={heroImageRef}
-                      src="/assets/public/about-family.webp"
-                      alt={t("aboutPage.hero.imageAlt")}
-                      className="h-full w-full object-cover object-center"
-                    />
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#2A1818]/70 via-transparent to-transparent" />
-
-                    <div className="absolute inset-x-0 bottom-0 p-7 sm:p-9">
-                      <p className="text-[9px] font-extrabold uppercase tracking-[0.22em] text-[#E4BD86]">
-                        {t("aboutPage.hero.imageEyebrow")}
-                      </p>
-
-                      <p className="mt-3 max-w-[390px] font-display text-[31px] leading-[1.05] text-white sm:text-[36px]">
-                        {t("aboutPage.hero.imageQuote")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative z-20 -mt-7 ml-auto mr-4 max-w-[330px] border border-[#D4C1AB] bg-[#FFFDF8] p-5 text-[#2B1A18] shadow-[0_20px_50px_rgba(66,37,27,0.12)] sm:-mt-10 sm:mr-[-24px]">
-                  <div className="flex items-start gap-4">
-                    <ShieldCheck
-                      size={20}
-                      strokeWidth={1.4}
-                      className="mt-0.5 shrink-0 text-[#681D25]"
-                    />
-
-                    <p className="text-[11px] leading-6 text-[#756A60]">
-                      {t("aboutPage.hero.trustNote")}
-                    </p>
-                  </div>
-                </div>
-              </div>
+          {/* Center Main Stage: Pure Cinematic Typography */}
+          <div className="page-container relative z-10 mx-auto w-full max-w-4xl text-center px-4 sm:px-6 my-auto flex flex-col items-center">
+            {/* Subtle Royal Eyebrow with Filigree Flourish */}
+            <div
+              data-about-hero
+              className="inline-flex items-center gap-3 text-[#E5C384]"
+            >
+              <span className="h-px w-8 sm:w-16 bg-gradient-to-r from-transparent to-[#E5C384]/70" />
+              <Crown size={14} className="text-[#E5C384]" />
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.35em] text-[#E5C384]">
+                {t("aboutPage.hero.eyebrow")}
+              </span>
+              <Crown size={14} className="text-[#E5C384]" />
+              <span className="h-px w-8 sm:w-16 bg-gradient-to-l from-transparent to-[#E5C384]/70" />
             </div>
+
+            {/* Grand Headline in Royal Serif */}
+            <h1
+              data-about-hero
+              className="mt-6 sm:mt-8 font-display text-[clamp(34px,5.8vw,74px)] font-normal leading-[1.06] tracking-[-0.025em] text-[#FFFDF8] drop-shadow-[0_4px_30px_rgba(0,0,0,0.95)] max-w-4xl mx-auto"
+            >
+              {t("aboutPage.hero.title")}
+            </h1>
+
+            {/* Grand Poetic Proclamation Quote */}
+            <p
+              data-about-hero
+              className="mt-6 sm:mt-8 max-w-2xl mx-auto font-serif text-lg sm:text-2xl italic text-[#FFEAD0] drop-shadow-[0_2px_18px_rgba(0,0,0,0.9)] leading-relaxed"
+            >
+              “{t("aboutPage.hero.imageQuote")}”
+            </p>
+
+            {/* Refined Philosophy Body */}
+            <p
+              data-about-hero
+              className="mt-5 max-w-xl mx-auto text-xs sm:text-sm text-[#E2D5C3]/90 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] font-light leading-relaxed"
+            >
+              {t("aboutPage.hero.body")}
+            </p>
+
+            {/* Minimalist Ethos Inscription */}
+            <div
+              data-about-hero
+              className="mt-8 flex items-center justify-center gap-4 sm:gap-8 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-[#E5C384]/85"
+            >
+              <span>{t("aboutPage.hero.values.heritage")}</span>
+              <span className="text-[#E5C384]/40 select-none">✦</span>
+              <span>{t("aboutPage.hero.values.choice")}</span>
+              <span className="text-[#E5C384]/40 select-none">✦</span>
+              <span>{t("aboutPage.hero.values.dignity")}</span>
+            </div>
+          </div>
+
+          {/* Bottom: Elegant Subtle Scroll Cue */}
+          <div
+            data-about-hero
+            className="relative z-10 w-full text-center pb-6 sm:pb-8 shrink-0"
+          >
+            <a
+              href="#manifesto"
+              onClick={(e) => {
+                e.preventDefault();
+                manifestoRef.current?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="inline-flex flex-col items-center gap-2 text-white/50 hover:text-[#E5C384] transition-colors duration-300"
+            >
+              <span className="text-[9px] uppercase tracking-[0.3em] font-medium text-[#E5C384]/80">
+                Explore Our Story
+              </span>
+              <span className="animate-bounce text-[#E5C384]/80 text-sm">↓</span>
+            </a>
           </div>
         </section>
 
@@ -386,7 +437,11 @@ export default function AboutPage() {
                   data-manifesto-line
                   className="mt-6 border-l-2 border-[#AA7A42] pl-6 font-display text-[26px] italic leading-[1.3] tracking-[-0.015em] text-[#2B1A18] sm:text-[32px] lg:text-[38px]"
                 >
-                  &ldquo;{t("aboutPage.manifesto.line3")}&rdquo;
+                  <TypewriterManifestoQuote
+                    text={t("aboutPage.manifesto.line3")}
+                    triggerRef={manifestoRef}
+                    reducedMotion={reducedMotion}
+                  />
                 </p>
               </div>
             </div>
