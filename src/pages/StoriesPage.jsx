@@ -1,34 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, HeartHandshake, RefreshCw, ShieldCheck, UsersRound, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, HeartHandshake, RefreshCw, ShieldCheck, UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { api } from '../services/api';
-
-const sampleStories = [
-  {
-    partnerOneName: 'Rajveer Jadeja',
-    partnerTwoName: 'Devika',
-    city: 'Rajkot',
-    title: 'Rajveer Jadeja & Devika',
-    story: 'We connected through our families with mutual respect and complete transparency. What began as traditional introductions quickly blossomed into deep mutual understanding, honouring our royal Kshatriya heritage while embracing our personal aspirations.'
-  },
-  {
-    partnerOneName: 'Yuvraj Singh Rathore',
-    partnerTwoName: 'Meenakshi Kumari',
-    city: 'Jaipur',
-    title: 'Yuvraj Singh & Meenakshi',
-    story: 'Finding a life partner who deeply understands our heritage, customs, and Rajput traditions was paramount for both our families. The verified consent process gave us complete peace of mind, privacy, and dignity throughout our journey.'
-  },
-  {
-    partnerOneName: 'Digvijay Gohil',
-    partnerTwoName: 'Shivangi',
-    city: 'Bhavnagar',
-    title: 'Digvijay Gohil & Shivangi',
-    story: 'Our union was rooted in mutual consent and complete family alignment from day one. Truly grateful for a platform that upholds the nobility, cultural sanctity, and privacy of our community with utmost integrity and royal grace.'
-  }
-];
 
 const copy = {
   en: { hero:'Real stories. Shared with respect.', intro:'Genuine member experiences, published after independent consent and team review.', section:'Stories shared with permission', eyebrow:'Member experiences', share:'Share your story', verified:'Reviewed & consented', loading:'Loading member stories…', error:'Stories are temporarily unavailable.', retry:'Try again', empty:'Stories of Royal Unions — Be the first to share your journey.', emptyInfo:'Only verified and consented member stories appear here. We never publish fictional testimonials as real stories.', disclosure:'These are voluntarily shared experiences, not guarantees of a match or marriage. Photos are not displayed.', previous:'Previous story', next:'Next story', principles:[['Verified before publishing','Every story is reviewed before publication.'],['Consent from both people','Independent consent from each member is mandatory.'],['Respecting every journey','Stories are shared without promising any matrimonial outcome.']] },
@@ -40,38 +16,12 @@ export default function StoriesPage() {
   const { i18n } = useTranslation();
   const language = i18n.resolvedLanguage?.split('-')[0] || i18n.language?.split('-')[0] || 'en';
   const t = copy[language] || copy.en;
-  const [stories, setStories] = useState([]);
-  const [selectedStory, setSelectedStory] = useState(null);
-  const [status, setStatus] = useState('loading');
-  const [retry, setRetry] = useState(0);
+  const [stories,setStories] = useState([]);
+  const [status,setStatus] = useState('loading');
+  const [retry,setRetry] = useState(0);
   const scrollRef = useRef(null);
-  const scroll = direction => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const card = el.querySelector('article');
-    el.scrollBy({ left: direction * (card?.getBoundingClientRect().width || el.clientWidth) + direction * 24, behavior: 'smooth' });
-  };
-  useEffect(() => {
-    let active = true;
-    const controller = new AbortController();
-    api('/public/success-stories', { signal: controller.signal })
-      .then(result => {
-        if (!active) return;
-        const received = result?.data?.stories;
-        if (!Array.isArray(received)) throw new Error('Invalid response');
-        setStories(received);
-        setStatus('success');
-      })
-      .catch(() => {
-        if (active) setStatus('error');
-      });
-    return () => {
-      active = false;
-      controller.abort();
-    };
-  }, [retry]);
-
-  const displayStories = stories.length > 0 ? stories : sampleStories;
+  const scroll = direction => { const el=scrollRef.current; if(!el)return; const card=el.querySelector('article'); el.scrollBy({ left:direction*(card?.getBoundingClientRect().width || el.clientWidth)+direction*24, behavior:'smooth' }); };
+  useEffect(() => { let active=true; const controller=new AbortController(); api('/public/success-stories',{signal:controller.signal}).then(result=>{if(!active)return; const received=result?.data?.stories;if(!Array.isArray(received))throw new Error('Invalid response');setStories(received);setStatus('success');}).catch(()=>{if(active)setStatus('error');});return()=>{active=false;controller.abort();};},[retry]);
   return (
     <div className="min-h-screen bg-subtle-texture text-[#281A18]">
       <Header />
@@ -124,11 +74,61 @@ export default function StoriesPage() {
           {/* Double Gold Line Scroll Margin Frame */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-4 inset-x-4 sm:inset-x-8 lg:inset-x-12 border-2 border-[#C5A059]/50 rounded-xl"
+            className="pointer-events-none absolute inset-y-4 inset-x-8 sm:inset-x-16 lg:inset-x-24 border-2 border-[#C5A059]/50 rounded-xl"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-6 inset-x-6 sm:inset-x-10 lg:inset-x-16 border border-[#AA7A42]/30 rounded-lg"
+            className="pointer-events-none absolute inset-y-6 inset-x-10 sm:inset-x-20 lg:inset-x-28 border border-[#AA7A42]/30 rounded-lg"
+          />
+
+          {/* LEFT SCROLL BORDER SYSTEM */}
+          {/* 1. Left Rolled Scroll Spindle Cylinder */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-0 top-0 bottom-0 w-7 sm:w-11 lg:w-13 bg-[url('/assets/scroll-roll-vertical.png')] bg-repeat-y bg-left-top shadow-[4px_0_12px_rgba(30,15,5,0.22)] z-20"
+          />
+          {/* 2. Left Top & Bottom Carved Gold Finials */}
+          <img
+            src="/assets/scroll-finial-gold.png"
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-3 -left-1 w-9 sm:w-13 lg:w-15 z-30 select-none drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]"
+          />
+          <img
+            src="/assets/scroll-finial-gold.png"
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute -bottom-3 -left-1 w-9 sm:w-13 lg:w-15 -scale-y-100 z-30 select-none drop-shadow-[0_-4px_8px_rgba(0,0,0,0.35)]"
+          />
+          {/* 3. Left Running Rajasthani Gold Lotus Filigree Vine */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-7 sm:left-11 lg:left-13 top-0 bottom-0 w-12 sm:w-16 lg:w-20 bg-[url('/assets/lotus-border-vertical.png')] bg-repeat-y bg-left-top opacity-85 select-none drop-shadow-[0_1px_3px_rgba(150,100,30,0.2)] z-10"
+          />
+
+          {/* RIGHT SCROLL BORDER SYSTEM */}
+          {/* 1. Right Rolled Scroll Spindle Cylinder */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-0 top-0 bottom-0 w-7 sm:w-11 lg:w-13 bg-[url('/assets/scroll-roll-vertical.png')] bg-repeat-y bg-right-top -scale-x-100 shadow-[-4px_0_12px_rgba(30,15,5,0.22)] z-20"
+          />
+          {/* 2. Right Top & Bottom Carved Gold Finials */}
+          <img
+            src="/assets/scroll-finial-gold.png"
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-3 -right-1 w-9 sm:w-13 lg:w-15 -scale-x-100 z-30 select-none drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]"
+          />
+          <img
+            src="/assets/scroll-finial-gold.png"
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute -bottom-3 -right-1 w-9 sm:w-13 lg:w-15 -scale-x-100 -scale-y-100 z-30 select-none drop-shadow-[0_-4px_8px_rgba(0,0,0,0.35)]"
+          />
+          {/* 3. Right Running Rajasthani Gold Lotus Filigree Vine */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-7 sm:right-11 lg:right-13 top-0 bottom-0 w-12 sm:w-16 lg:w-20 bg-[url('/assets/lotus-border-vertical.png')] bg-repeat-y bg-right-top -scale-x-100 opacity-85 select-none drop-shadow-[0_1px_3px_rgba(150,100,30,0.2)] z-10"
           />
 
           {/* 4 Grand Golden Lotus Filigree Corners */}
@@ -191,12 +191,58 @@ export default function StoriesPage() {
               </div>
             )}
 
-            {status === 'success' && (
+            {status === 'success' && stories.length === 0 && (
+              <div className="relative overflow-hidden rounded-2xl border-2 border-[#C5A059]/60 bg-gradient-to-b from-[#FAF5EB] via-[#F4EDE0] to-[#EFE5D2] p-12 sm:p-16 text-center shadow-[0_20px_50px_rgba(80,40,15,0.08)] max-w-2xl mx-auto">
+                {/* Ornate Gold Filigree Corners */}
+                <img
+                  src="/assets/lotus-corner-hd.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-0 left-0 w-24 sm:w-32 select-none opacity-85"
+                />
+                <img
+                  src="/assets/lotus-corner-hd.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-0 right-0 w-24 sm:w-32 -scale-x-100 select-none opacity-85"
+                />
+                <img
+                  src="/assets/lotus-corner-hd.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none absolute bottom-0 left-0 w-24 sm:w-32 -scale-y-100 select-none opacity-85"
+                />
+                <img
+                  src="/assets/lotus-corner-hd.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none absolute bottom-0 right-0 w-24 sm:w-32 -scale-x-100 -scale-y-100 select-none opacity-85"
+                />
+
+                <span className="relative z-10 mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#681d25]/10 text-[#681d25]">
+                  <HeartHandshake size={32} />
+                </span>
+                <h2 className="relative z-10 mt-6 font-display text-3xl sm:text-4xl text-[#392019]">
+                  {t.empty}
+                </h2>
+                <p className="relative z-10 mx-auto mt-4 max-w-md text-sm leading-7 text-[#736359]">
+                  {t.emptyInfo}
+                </p>
+                <Link
+                  className="relative z-10 mt-8 inline-flex items-center gap-2 rounded-full bg-[#681D25] px-7 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#52161d]"
+                  to="/submit-success-story"
+                >
+                  {t.share}
+                </Link>
+              </div>
+            )}
+
+            {status === 'success' && stories.length > 0 && (
               <>
                 <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-[#91683F]">{t.eyebrow}</p>
-                    <h2 className="mt-3 font-display text-4xl sm:text-5xl text-[#341d17]">{t.section}</h2>
+                    <h2 className="mt-3 font-display text-4xl sm:text-5xl">{t.section}</h2>
                   </div>
                   <div className="flex items-center gap-3">
                     <Link
@@ -226,100 +272,35 @@ export default function StoriesPage() {
                   </div>
                 </div>
 
-                {/* Horizontal Scroll Carousel with Royal Parchment Cards */}
                 <div
                   ref={scrollRef}
                   aria-label={t.section}
                   role="region"
                   tabIndex={0}
-                  className="flex snap-x snap-mandatory gap-6 sm:gap-8 overflow-x-auto overscroll-x-contain scroll-smooth pb-8 pt-2 [scrollbar-width:thin]"
+                  className="flex snap-x snap-mandatory gap-6 overflow-x-auto overscroll-x-contain scroll-smooth pb-6 [scrollbar-width:thin]"
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
-                  {displayStories.map((story, index) => (
+                  {stories.map((story, index) => (
                     <article
                       key={`${story.publishedAt || ''}-${index}`}
-                      onClick={() => setSelectedStory(story)}
-                      className="group relative w-[min(94vw,560px)] sm:w-[540px] md:w-[580px] shrink-0 snap-start select-none cursor-pointer transition-all duration-300 hover:-translate-y-1.5"
+                      className="relative overflow-hidden w-[min(86vw,510px)] shrink-0 snap-start self-stretch rounded-xl border border-[#D7C5B1] bg-gradient-to-b from-[#FFFDF8] to-[#FBF6EE] p-7 shadow-sm sm:p-10"
                     >
-                      <div className="relative w-full aspect-[1376/768] drop-shadow-[0_16px_32px_rgba(45,20,5,0.22)]">
-                        {/* High-Resolution Royal Parchment Scroll Template Asset */}
-                        <img
-                          src="/assets/royal-scroll-card.png"
-                          alt="Royal member story scroll"
-                          className="pointer-events-none absolute inset-0 h-full w-full object-contain"
-                        />
-
-                        {/* Content Area Matching Uploaded Mockup */}
-                        <div className="absolute inset-0 flex flex-col justify-start pl-[14%] pr-[19%] pt-[29%] pb-[8%]">
-                          <h3 className="font-sans font-bold text-base sm:text-xl md:text-[22px] leading-tight text-[#171310] tracking-tight group-hover:text-[#681D25] transition-colors">
-                            {[story.partnerOneName, story.partnerTwoName].filter(Boolean).join(' & ') || story.title}
-                          </h3>
-                          {story.city && (
-                            <p className="mt-1 font-sans text-xs sm:text-sm font-semibold text-[#6e5d50]">
-                              {story.city}
-                            </p>
-                          )}
-                          <div className="mt-2 sm:mt-3 overflow-hidden">
-                            <p className="font-serif text-[11px] sm:text-[13px] md:text-sm leading-relaxed sm:leading-6 text-[#38281d] line-clamp-4 sm:line-clamp-5">
-                              {story.story}
-                            </p>
-                          </div>
-                        </div>
+                      <div className="flex items-center gap-2 text-[#91683F]">
+                        <ShieldCheck size={17} aria-hidden="true" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">{t.verified}</span>
                       </div>
+                      <h3 className="mt-5 font-display text-3xl text-[#431318]">{story.title}</h3>
+                      <p className="mt-3 text-sm font-semibold text-[#681D25]">
+                        {[story.partnerOneName, story.partnerTwoName].filter(Boolean).join(' & ')}
+                      </p>
+                      {story.city && <p className="mt-1 text-xs text-[#756A60]">{story.city}</p>}
+                      <p className="mt-6 whitespace-pre-line break-words text-sm leading-8 text-[#574A42]">{story.story}</p>
                     </article>
                   ))}
                 </div>
 
                 <p className="mt-5 text-xs leading-6 text-[#756A60]">{t.disclosure}</p>
               </>
-            )}
-
-            {/* Modal for Reading Full Story */}
-            {selectedStory && (
-              <div
-                role="dialog"
-                aria-modal="true"
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
-                onClick={() => setSelectedStory(null)}
-              >
-                <div
-                  className="relative max-w-xl w-full rounded-2xl border-2 border-[#C5A059]/70 bg-gradient-to-b from-[#FAF5EC] via-[#F4EDE0] to-[#EFE4D0] p-8 sm:p-10 shadow-[0_25px_60px_rgba(0,0,0,0.4)] text-[#2b1810]"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    aria-label="Close"
-                    onClick={() => setSelectedStory(null)}
-                    className="absolute top-5 right-5 p-2 rounded-full border border-[#C5A059]/50 text-[#681D25] hover:bg-[#681d25] hover:text-white transition"
-                  >
-                    <X size={18} />
-                  </button>
-
-                  <div className="flex items-center gap-2 text-[#91683F]">
-                    <ShieldCheck size={18} />
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest">{t.verified}</span>
-                  </div>
-
-                  <h3 className="mt-4 font-sans font-bold text-2xl sm:text-3xl text-[#1a120c]">
-                    {[selectedStory.partnerOneName, selectedStory.partnerTwoName].filter(Boolean).join(' & ') || selectedStory.title}
-                  </h3>
-                  {selectedStory.city && (
-                    <p className="mt-1 font-sans text-sm font-semibold text-[#6e5d50]">
-                      {selectedStory.city}
-                    </p>
-                  )}
-
-                  <div className="mt-6 border-t border-[#C5A059]/40 pt-5 max-h-[60vh] overflow-y-auto pr-2">
-                    <p className="font-serif text-sm sm:text-base leading-8 text-[#3d2c20] whitespace-pre-line">
-                      {selectedStory.story}
-                    </p>
-                  </div>
-
-                  <p className="mt-6 text-[11px] text-[#786b62] italic">
-                    {t.disclosure}
-                  </p>
-                </div>
-              </div>
             )}
 
             <div className="mt-16 grid gap-6 md:grid-cols-3">
