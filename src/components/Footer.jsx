@@ -31,7 +31,7 @@ export default function Footer() {
     useTranslation();
 
   return (
-    <footer className="bg-texture-dark border-t border-[#3d2422] text-white">
+    <footer className="relative overflow-hidden bg-footer-damask border-t border-[#3d2422] text-white">
       <div className="page-container">
         {/* =====================================
             TOP

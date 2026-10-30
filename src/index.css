@@ -131,6 +131,16 @@ a {
   background-position: center top;
 }
 
+.bg-footer-damask {
+  background-color: #080709;
+  background-image:
+    linear-gradient(180deg, rgba(8, 7, 9, 0.65) 0%, rgba(8, 7, 9, 0.52) 50%, rgba(8, 7, 9, 0.70) 100%),
+    url('/assets/footer-damask-dark.jpg');
+  background-repeat: repeat;
+  background-size: 688px auto;
+  background-position: center top;
+}
+
 .bg-parchment-texture {
   background-color: #f7f1e7;
   background-image:
