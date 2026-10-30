@@ -742,7 +742,7 @@ export default function HowItWorksPage() {
             CONTROL SECTION
         ========================================== */}
 
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#F9F5EC] via-[#F3ECE0] to-[#ECE2D2] py-20 sm:py-24 lg:py-28 border-y-2 border-[#C5A059]/70 shadow-[inset_0_20px_40px_rgba(100,50,20,0.04),inset_0_-20px_40px_rgba(100,50,20,0.04)]">
+        <section className="relative overflow-hidden bg-parchment-texture py-20 sm:py-24 lg:py-28 border-y-2 border-[#C5A059]/70 shadow-[inset_0_20px_40px_rgba(100,50,20,0.04),inset_0_-20px_40px_rgba(100,50,20,0.04)]">
           {/* Outer fine gold border line around entire section */}
           <div
             aria-hidden="true"
@@ -755,30 +755,30 @@ export default function HowItWorksPage() {
             className="pointer-events-none absolute inset-4 sm:inset-7 lg:inset-9 rounded-xl border border-[#C5A059]/30"
           />
 
-          {/* 4 Golden Lotus Corners - Authentic Indian Royal Design */}
+          {/* 4 Golden Lotus Corners - Authentic Indian Royal Design (Zero Paper, Pure Gold) */}
           <img
             src="/assets/lotus-corner-hd.png"
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-0 w-36 sm:w-48 lg:w-60 select-none drop-shadow-[0_2px_4px_rgba(90,60,20,0.08)]"
+            className="pointer-events-none absolute left-0 top-0 w-36 sm:w-48 lg:w-60 select-none drop-shadow-[0_2px_4px_rgba(90,60,20,0.12)]"
           />
           <img
             src="/assets/lotus-corner-hd.png"
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute right-0 top-0 w-36 sm:w-48 lg:w-60 -scale-x-100 select-none drop-shadow-[0_2px_4px_rgba(90,60,20,0.08)]"
+            className="pointer-events-none absolute right-0 top-0 w-36 sm:w-48 lg:w-60 -scale-x-100 select-none drop-shadow-[0_2px_4px_rgba(90,60,20,0.12)]"
           />
           <img
             src="/assets/lotus-corner-hd.png"
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 left-0 w-36 sm:w-48 lg:w-60 -scale-y-100 select-none drop-shadow-[0_2px_4px_rgba(90,60,20,0.08)]"
+            className="pointer-events-none absolute bottom-0 left-0 w-36 sm:w-48 lg:w-60 -scale-y-100 select-none drop-shadow-[0_2px_4px_rgba(90,60,20,0.12)]"
           />
           <img
             src="/assets/lotus-corner-hd.png"
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 right-0 w-36 sm:w-48 lg:w-60 -scale-x-100 -scale-y-100 select-none drop-shadow-[0_2px_4px_rgba(90,60,20,0.08)]"
+            className="pointer-events-none absolute bottom-0 right-0 w-36 sm:w-48 lg:w-60 -scale-x-100 -scale-y-100 select-none drop-shadow-[0_2px_4px_rgba(90,60,20,0.12)]"
           />
 
           {/* Top & Bottom Running Golden Lotus Garland Trims */}
@@ -792,7 +792,7 @@ export default function HowItWorksPage() {
           />
 
           {/* Centered Content Framed Inside the Golden Lotus Design */}
-          <div className="page-container relative z-10 px-4 sm:px-8 lg:px-12">
+          <div className="page-container relative z-10 px-6 sm:px-10 lg:px-16">
             <div
               data-hiw-reveal
               className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20"

@@ -141,12 +141,10 @@ a {
   background-position: center top;
 }
 
-.bg-parchment-lotus {
-  background-color: #f5eedf;
-  background-image:
-    radial-gradient(circle at center, rgba(250, 246, 238, 0.45) 0%, rgba(242, 232, 218, 0.20) 100%),
-    url('/assets/royal-parchment-lotus-frame.jpg');
-  background-size: cover;
+.bg-control-parchment-frame {
+  background-color: #f2ebd9;
+  background-image: url('/assets/royal-control-bg-consistent.jpg');
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
