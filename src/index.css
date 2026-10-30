@@ -121,6 +121,16 @@ a {
   background-size: 20px 20px;
 }
 
+.bg-damask-maroon {
+  background-color: #1a080b;
+  background-image:
+    linear-gradient(180deg, rgba(20, 6, 8, 0.35) 0%, rgba(20, 6, 8, 0.15) 50%, rgba(20, 6, 8, 0.40) 100%),
+    url('/assets/royal-damask-maroon.jpg');
+  background-repeat: repeat;
+  background-size: 512px 512px;
+  background-position: center top;
+}
+
 .bg-parchment-texture {
   background-color: #f7f1e7;
   background-image:

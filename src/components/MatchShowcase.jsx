@@ -34,28 +34,28 @@ import {
 
 const profiles = [
   {
-    name: "Rajveer Sinh Jadeja",
+    name: "Rajveersinh Jadeja",
     age: 28,
     city: "Rajkot",
     work: "Entrepreneur",
     image: "/assets/member/profile-rajveer.webp"
   },
   {
-    name: "Devika Ba",
+    name: "Devikaba",
     age: 26,
     city: "Ahmedabad",
     work: "Architect",
     image: "/assets/member/profile-devika.webp"
   },
   {
-    name: "Nandini Ba",
+    name: "Nandiniba",
     age: 29,
     city: "Udaipur",
     work: "Doctor",
     image: "/assets/member/profile-nandini.webp"
   },
   {
-    name: "Yuvraj Sinh Parmar",
+    name: "Yuvrajsinh Parmar",
     age: 29,
     city: "Vadodara",
     work: "Business Owner",

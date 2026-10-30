@@ -174,7 +174,7 @@ export default function BiodataShowcase() {
               </div>
 
               <div className="mt-8 border-t border-[#decfbe] pt-4 text-center text-[8px] uppercase tracking-[0.16em] text-[#6e5b4b] sm:mt-10 sm:pt-5 sm:text-[9px] sm:tracking-[0.2em]">
-                Kshatriya Matrimonial
+                Royal Rajputana Matrimonial
                 Society
               </div>
             </article>

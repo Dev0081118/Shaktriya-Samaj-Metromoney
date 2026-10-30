@@ -28,10 +28,10 @@ import {
 } from "../motion/gsap";
 
 const stageImages = [
-  "/assets/public/profile-creation-heritage.webp",
-  "/assets/public/discover-heritage.webp",
-  "/assets/public/express-interest-tradition.webp",
-  "/assets/public/joyful-mutual-match.webp"
+  "/assets/public/hiw-stage-1-profile.jpg",
+  "/assets/public/hiw-stage-2-discover.jpg",
+  "/assets/public/hiw-stage-3-interest.jpg",
+  "/assets/public/hiw-stage-4-match.jpg"
 ];
 
 export default function HowItWorksPage() {
@@ -393,117 +393,65 @@ export default function HowItWorksPage() {
       ref={
         root
       }
-      className="min-h-screen bg-subtle-texture"
+      className="min-h-screen bg-[#1a080b]"
     >
-      <Header solid />
+      <Header />
 
       <main>
         {/* =========================================
             HERO WITH BACKGROUND IMAGE
         ========================================== */}
 
-        <section className="relative overflow-hidden bg-subtle-texture">
+        <section className="relative overflow-hidden bg-[#1a080b]">
           <div
             aria-hidden="true"
             className="absolute inset-0"
           >
             <img
-              src="/assets/public/how-it-works.webp"
-              alt=""
+              src="/assets/public/how-it-works-hero-royal.jpg"
+              alt="Rajput royal palace grand durbar"
               className="h-full w-full object-cover object-center"
             />
 
-            <div className="absolute inset-0 bg-[#F5F0E8]/24" />
+            {/* Left text readability - preserves vibrant palace image */}
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(26,8,11,0.88)_0%,rgba(26,8,11,0.60)_42%,rgba(26,8,11,0.18)_75%,transparent_100%)]" />
 
-            <div className="absolute inset-0 bg-gradient-to-r from-[#F5F0E8]/78 via-[#F5F0E8]/42 to-transparent" />
+            {/* Top nav bar integration */}
+            <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/70 via-black/25 to-transparent" />
 
-            <div className="absolute inset-0 bg-gradient-to-t from-[#F5F0E8]/28 via-transparent to-transparent" />
+            {/* Bottom seamless blend into damask wallpaper section */}
+            <div className="absolute inset-x-0 bottom-0 h-36 bg-[linear-gradient(0deg,#1a080b_0%,rgba(26,8,11,0.75)_35%,transparent_100%)]" />
           </div>
 
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -left-48 top-0 h-[520px] w-[520px] rounded-full bg-[#C49B70]/12 blur-[140px]"
+            className="pointer-events-none absolute -left-48 top-0 h-[520px] w-[520px] rounded-full bg-[#8B2635]/20 blur-[140px]"
           />
 
           <div className="page-container relative z-10">
-            <div className="grid min-h-[720px] items-center gap-14 py-24 sm:py-28 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20 lg:py-36">
+            <div className="grid min-h-[720px] items-center gap-14 pb-24 pt-36 sm:pb-28 sm:pt-40 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20 lg:pb-36 lg:pt-44">
               <div data-hiw-reveal>
                 <div className="flex items-center gap-4">
-                  <span className="h-px w-10 bg-[#AA7A42]" />
+                  <span className="h-px w-10 bg-[#C49B70]" />
 
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#91683F]">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#D1A46F]">
                     {t(
                       "howPage.hero.eyebrow"
                     )}
                   </p>
                 </div>
 
-                <h1 className="mt-6 max-w-[820px] font-display text-[54px] font-medium leading-[0.92] tracking-[-0.04em] text-[#281A18] sm:text-[68px] lg:text-[88px]">
+                <h1 className="mt-6 max-w-[820px] font-display text-[54px] font-medium leading-[0.92] tracking-[-0.04em] text-white sm:text-[68px] lg:text-[88px]">
                   {t(
                     "howPage.hero.title"
                   )}
                 </h1>
 
-                <p className="mt-8 max-w-[650px] text-[14px] leading-8 text-[#6F6159] sm:text-[15px]">
+                <p className="mt-8 max-w-[650px] text-[14px] leading-8 text-[#E8DDD0]/80 sm:text-[15px]">
                   {t(
                     "howPage.hero.body"
                   )}
                 </p>
-              </div>
-
-              <div
-                data-hiw-reveal
-                className="max-w-[420px] border-l border-[#B99C7E]/45 pl-8 backdrop-blur-[1px] lg:justify-self-end lg:pl-10"
-              >
-                <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#91683F]">
-                  {t(
-                    "howPage.hero.summaryLabel"
-                  )}
-                </p>
-
-                <div className="mt-6 grid grid-cols-2 gap-6">
-                  <div>
-                    <strong className="font-display text-[46px] font-medium text-[#681D25]">
-                      09
-                    </strong>
-
-                    <p className="mt-1 text-[11px] leading-5 text-[#756A60]">
-                      {t(
-                        "howPage.hero.steps"
-                      )}
-                    </p>
-                  </div>
-
-                  <div>
-                    <strong className="font-display text-[46px] font-medium text-[#681D25]">
-                      04
-                    </strong>
-
-                    <p className="mt-1 text-[11px] leading-5 text-[#756A60]">
-                      {t(
-                        "howPage.hero.stages"
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-7 flex items-start gap-3 border-t border-[#B99C7E]/45 pt-6">
-                  <ShieldCheck
-                    size={
-                      17
-                    }
-                    strokeWidth={
-                      1.5
-                    }
-                    className="mt-1 shrink-0 text-[#681D25]"
-                  />
-
-                  <p className="text-[11px] leading-6 text-[#685A53]">
-                    {t(
-                      "howPage.hero.note"
-                    )}
-                  </p>
-                </div>
               </div>
             </div>
           </div>
@@ -513,10 +461,10 @@ export default function HowItWorksPage() {
             JOURNEY
         ========================================== */}
 
-        <section className="relative overflow-hidden bg-texture-dark py-20 text-white sm:py-24 lg:py-32 border-y border-[#3d2422]">
+        <section className="relative overflow-hidden bg-damask-maroon py-20 text-white sm:py-24 lg:py-32 border-y border-[#4a181d] shadow-[inset_0_20px_40px_rgba(0,0,0,0.35),inset_0_-20px_40px_rgba(0,0,0,0.35)]">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -left-52 top-40 h-[520px] w-[520px] rounded-full bg-[#681D25]/25 blur-[140px]"
+            className="pointer-events-none absolute -left-52 top-40 h-[520px] w-[520px] rounded-full bg-[#8B2635]/15 blur-[140px]"
           />
 
           <div
